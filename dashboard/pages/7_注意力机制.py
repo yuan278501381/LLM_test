@@ -267,15 +267,15 @@ with col_main_heat:
 
 with col_cmp_heat:
     st.markdown("#### [SCALE COMPARISON // 缩放因子效应对比]")
-    st.markdown("当高维空间 $d_k$ 很大时，点积的方差膨胀为 $d_k$。如果不除以 $\\sqrt{d_k}$，Softmax 会将概率推向极端的 0 和 1，导致梯度归零。")
+    st.caption("当高维空间 $d_k$ 很大时，点积方差膨胀为 $d_k$。如果不除以 $\\sqrt{d_k}$，Softmax 会将概率推向极端 0 和 1 导致梯度死锁。")
     
     fig_scaled_thumb = plot_attention_heatmap_nlp(
-        head_0_weights, raw_tokens, raw_tokens, title="[SCALED] 有缩放 1/√d_k (平滑稳定)"
+        head_0_weights, raw_tokens, raw_tokens, title="[SCALED] 1/√d_k 缩放 (平滑聚焦)"
     )
     st.plotly_chart(fig_scaled_thumb, use_container_width=True)
     
     fig_unscaled_thumb = plot_attention_heatmap_nlp(
-        head_0_unscaled, raw_tokens, raw_tokens, title="[UNSCALED] 无缩放 (极化饱和/梯度消失)"
+        head_0_unscaled, raw_tokens, raw_tokens, title="[UNSCALED] 未缩放 (极化失效)"
     )
     st.plotly_chart(fig_unscaled_thumb, use_container_width=True)
 

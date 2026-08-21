@@ -217,7 +217,7 @@ for i in range(num_layers):
             attention_weights=layer_attn_weights[i],
             tokens_x=raw_tokens,
             tokens_y=raw_tokens,
-            title=f"Block #{i+1} Attention (Head 0)",
+            title=f"Block #{i+1} (Head 0)",
         )
         st.plotly_chart(fig_layer, use_container_width=True)
 

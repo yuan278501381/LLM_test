@@ -9,7 +9,7 @@ dashboard.components.charts - 世界级 Plotly 可视化图表引擎 (2026 工�
 - 优化器多轨竞速对比
 - 权重参数空间寻优轨迹 (严格防图例与色条重叠)
 - 3D 词嵌入空间与语义平行四边形矢量流形
-- 序列记忆衰减与注意力热力矩阵
+- 序列记忆衰减与注意力热力矩阵 (严格防顶部 X 轴与标题重叠)
 - 下一词概率水平柱状图
 """
 
@@ -55,7 +55,7 @@ def _apply_light_theme(fig: go.Figure, title: str | None = None) -> go.Figure:
             size=11,
             color=LIGHT_PALETTE["font_color"],
         ),
-        "margin": dict(l=45, r=45, t=55 if title else 25, b=45),
+        "margin": dict(l=45, r=45, t=50 if title else 25, b=45),
         "hoverlabel": dict(
             bgcolor="#ffffff",
             bordercolor="#cbd5e1",
@@ -637,7 +637,7 @@ def plot_memory_decay_heatmap(
     tokens: list[str],
     title: str | None = None,
 ) -> go.Figure:
-    """绘制 RNN 序列记忆强度的衰减热力图 (带微白间隔网格)"""
+    """绘制 RNN 序列记忆强度的衰减热力图 (带微白间隔网格，彻底防重叠)"""
     n_steps = len(hidden_states)
     
     memory_matrix = np.zeros((n_steps, n_steps))
@@ -665,19 +665,26 @@ def plot_memory_decay_heatmap(
             len=0.85,
             x=1.02,
         ),
-        hovertemplate="Current: %{y}<br>History: %{x}<br>Strength: %{z:.3f}<extra></extra>",
+        hovertemplate="当前词 (Query): <b>%{y}</b><br>历史词 (Key): <b>%{x}</b><br>记忆强度: <b>%{z:.3f}</b><extra></extra>",
     ))
     
     fig.update_layout(
-        xaxis_title="历史词汇 (History Tokens)",
-        yaxis_title="当前时间步 (Current Step)",
-        yaxis=dict(autorange="reversed"),
+        xaxis=dict(
+            side="bottom",
+            title=dict(text="历史词汇 (History Keys)", font=dict(size=11, color="#64748b")),
+            tickangle=-25 if len(tokens) > 6 else 0,
+        ),
+        yaxis=dict(
+            autorange="reversed",
+            title=dict(text="当前步 (Current Query)", font=dict(size=11, color="#64748b")),
+        ),
+        margin=dict(l=60, r=60, t=50 if title else 25, b=50),
     )
     return _apply_light_theme(fig, title)
 
 
 # ---------------------------------------------------------------------------
-# 10. 注意力机制热力图 (Attention Heatmap)
+# 10. 注意力机制热力图 (Attention Heatmap - 彻底杜绝顶部文字挤压与重叠)
 # ---------------------------------------------------------------------------
 def plot_attention_heatmap_nlp(
     attention_weights: np.ndarray,
@@ -685,7 +692,14 @@ def plot_attention_heatmap_nlp(
     tokens_y: list[str],
     title: str | None = None,
 ) -> go.Figure:
-    """绘制 N×N 注意力权重热力图 (带微白间隔网格)"""
+    """
+    绘制 N×N 注意力权重热力图 (2026 工业级防重叠排版)。
+    
+    关键防撞车设计：
+    - X 轴刻度置于顶部方便阅读，但免除顶部冗长大标题文字撞车
+    - 垂直预留充足 margin，防止 title 与顶部词汇重合
+    - 丰富的 Hover 悬停气泡完整呈现 Query -> Key 关系与精准百分比
+    """
     fig = go.Figure(data=go.Heatmap(
         z=attention_weights,
         x=tokens_x,
@@ -696,20 +710,34 @@ def plot_attention_heatmap_nlp(
         ygap=2,
         colorbar=dict(
             title=dict(text="Weight", font=dict(size=10, color="#0f172a")),
-            thickness=12,
+            thickness=11,
             len=0.85,
             x=1.02,
+            y=0.48,
         ),
         zmin=0.0,
         zmax=1.0,
-        hovertemplate="Query: %{y}<br>Key: %{x}<br>Attention: %{z:.4f}<extra></extra>",
+        hovertemplate="Query (生成词): <b>%{y}</b><br>Key (关注词): <b>%{x}</b><br>Attention 权重: <b>%{z:.2%}</b><extra></extra>",
     ))
 
+    # 根据序列长度自适应刻度倾斜角度
+    tick_angle = -30 if len(tokens_x) > 6 else 0
+
     fig.update_layout(
-        xaxis_title="Keys (被关注的历史词)",
-        yaxis_title="Queries (当前正在生成的词)",
-        yaxis=dict(autorange="reversed"),
-        xaxis=dict(side="top"),
+        xaxis=dict(
+            side="top",
+            tickangle=tick_angle,
+            tickfont=dict(size=10, family="JetBrains Mono", color="#334155"),
+            # 顶部不放长标题，完全避免与图表主标题和刻度挤在一起
+            title=None,
+        ),
+        yaxis=dict(
+            autorange="reversed",
+            tickfont=dict(size=10, family="JetBrains Mono", color="#334155"),
+            title=dict(text="Queries", font=dict(size=10, color="#64748b")),
+        ),
+        # 顶部留足空间放 title 和顶部词汇刻度
+        margin=dict(l=60, r=60, t=65 if title else 45, b=30),
     )
     return _apply_light_theme(fig, title)
 
@@ -747,5 +775,6 @@ def plot_token_probabilities(
         xaxis_title="Probability (置信概率)",
         yaxis_title="Token",
         xaxis=dict(range=[0, min(1.0, float(max(top_probs)) * 1.25)]),
+        margin=dict(l=55, r=55, t=50 if title else 25, b=45),
     )
     return _apply_light_theme(fig, title)
