@@ -1,7 +1,10 @@
 # Copyright (c) 2026 Yy1 (yuan278501381) | MIT License
 """
-里程碑 6: 序列记忆与遗忘瓶颈
+里程碑 6: 序列记忆与遗忘瓶颈 (Sequence Memory & Forgetting) - 零基础入门保姆级教学平台
+
+解剖循环神经网络 (RNN) 的隐藏状态传递机制、长期序列信息压缩与记忆衰减的数学瓶颈。
 """
+
 import os
 import sys
 
@@ -12,87 +15,242 @@ if _PROJECT_ROOT not in sys.path:
 import numpy as np
 import streamlit as st
 
-from dashboard.styles.theme import apply_custom_theme, render_hero_header, render_page_guide
 from dashboard.components.charts import plot_memory_decay_heatmap
+from dashboard.styles.theme import (
+    apply_custom_theme,
+    render_hero_header,
+    render_metric_card,
+    render_page_guide,
+    render_section_heading,
+)
+from nn_core.embeddings import Embedding, get_mini_vocab, get_pretrained_embeddings
+from nn_core.rnn import RNNCell
 
-try:
-    from nn_core.embeddings import Embedding
-    from nn_core.rnn import RNNCell
-except ImportError:
-    class Embedding:
-        def __init__(self, d_model): self.d_model = d_model
-        def forward(self, token_id): return np.random.randn(self.d_model)
-    class RNNCell:
-        def __init__(self, input_dim, hidden_dim): self.hidden_dim = hidden_dim
-        def forward(self, x, h_prev): return np.tanh(np.random.randn(self.hidden_dim) + h_prev * 0.5)
+st.set_page_config(
+    page_title="Sequence Memory · NN Playground",
+    layout="wide",
+)
 
-st.set_page_config(page_title="序列记忆", layout="wide")
 apply_custom_theme()
 
 render_hero_header(
     title="序列记忆与遗忘瓶颈",
-    subtitle="RNN的状态传递与长期记忆衰减挑战",
+    subtitle="解剖循环神经网络 (RNN) 的时序记忆机理：隐藏状态递推 $h_t = \\tanh(x_t W_{xh} + h_{t-1} W_{hh} + b)$ 与长程遗忘瓶颈",
     badge_text="MILESTONE 06 // SEQUENCE & FORGETTING",
     badge_type="purple",
 )
 
+# ---------------------------------------------------------------------------
+# 零基础保姆级指引 (Zero-Barrier Beginner Guide)
+# ---------------------------------------------------------------------------
 render_page_guide(
-    title="M06 · 序列记忆与遗忘瓶颈 // Sequence Memory & Forgetting",
-    plain_intro="想象你正在听一段很长的故事。RNN就像一个记性不太好的听众——它能记住刚说过的几个词，但随着故事越来越长，开头说了什么就渐渐模糊了。这就是'遗忘瓶颈'！",
-    hyperparams_desc="• <b>输入句子</b>：提供一段文字来测试 RNN 的记忆能力。<br>• <b>隐藏层维度</b>：增加维度可能略微缓解遗忘，但无法根治长距离依赖问题。",
-    telemetry_desc="• <b>上：状态传递动画</b>：模拟 RNN 顺次处理每一个词。<br>• <b>中：记忆衰减热力图</b>：当前词的隐状态对之前词的保留强度，颜色越浅遗忘越严重。<br>• <b>下：对比卡片</b>：引出注意力机制的必要性。",
+    title="序列记忆与遗忘瓶颈入门",
+    plain_intro=(
+        "<b>RNN 就像一个记性有限的听书人</b>。<br>"
+        "当听到一句话时，它用一个固定大小的<b>隐藏状态向量 $h_t$（相当于短期大脑记忆）</b>顺次吸收每个词。<br>"
+        "每读一个新词，旧的记忆就会被压缩、覆盖一部分。<br>"
+        "⚠️ <b>致命缺陷</b>：当句子达到 10~20 个词以上时，最开头的关键信息（如主语是谁）就会被彻底稀释忘光！"
+    ),
+    hyperparams_desc=(
+        "• <b>预设测试句子</b>：选择短句（5词）或长句（15+词）观察记忆衰减现象。<br>"
+        "• <b>RNN 隐藏层维度 (Hidden Dim)</b>：相当于记忆背包的容量（8/16/32 维）。<br>"
+        "• <b>记忆保持系数</b>：调节循环权重对历史状态的衰减速率。"
+    ),
+    telemetry_desc=(
+        "• <b>时序流水线色块</b>：直观展示每一个时间步的词汇与记忆激活强度。<br>"
+        "• <b>记忆留存衰减热力图</b>：展示第 $t$ 步时对第 $k$ 步历史词汇的记忆强度（越靠右上角颜色越浅代表遗忘越严重）。<br>"
+        "• <b>句首主语留存率</b>：量化评估长程关键信息的衰减比例。"
+    ),
     experiments=[
-        "<b>第 1 步</b>：输入一个长句子，观察右侧热力图右上角是否变白（遗忘）。",
-        "<b>第 2 步</b>：调整隐藏层维度，观察衰减速度的微小变化。",
-        "<b>第 3 步</b>：思考如何才能不被前面的内容遮蔽？(答案是：直接回头看所有内容)",
+        "<b>第 1 步【体验短句记忆】</b>：在左侧选择 <code>短句测试 (5 词)</code>，观察下方热力图每个词之间都有深蓝色的连接，记忆留存率高达 80% 以上！",
+        "<b>第 2 步【目睹长句遗忘灾难】</b>：切换为 <code>超长叙事句 (16 词)</code>，观察热力图右上角大面积变白！读到最后几个词时，对句首'king'的记忆几乎彻底归零！",
+        "<b>第 3 步【尝试增大容量】</b>：把【隐藏层维度】调到 32，观察虽然略微改善，但根本无法解决固定容量压缩的瓶颈——从而理解<b>为什么 2017 年 Attention 机制颠覆了 RNN</b>！",
     ],
 )
 
-st.sidebar.markdown("#### HYPERPARAMETERS // 超参数")
-text_input = st.sidebar.text_input("输入句子", "The cat sat on the mat and then the dog came and chased the cat away")
-hidden_dim = st.sidebar.selectbox("隐藏层维度", [8, 16, 32], index=1)
+# ---------------------------------------------------------------------------
+# 词表与模型初始化
+# ---------------------------------------------------------------------------
+raw_vocab = get_mini_vocab()
+vocab_words = list(raw_vocab.keys())
+embed_weights = get_pretrained_embeddings(len(vocab_words), d_model=32)
 
-# 处理句子
-tokens = text_input.strip().split()
-if not tokens:
-    tokens = ["Empty"]
+embedding_layer = Embedding(vocab_size=len(vocab_words), d_model=32)
+embedding_layer.weights = embed_weights
 
-emb_dim = 8
-emb = Embedding(d_model=emb_dim)
-rnn = RNNCell(input_dim=emb_dim, hidden_dim=hidden_dim)
+# ---------------------------------------------------------------------------
+# 侧边栏参数面板
+# ---------------------------------------------------------------------------
+st.sidebar.markdown("#### HYPERPARAMETERS // 超参数与输入")
 
-# 逐步处理
-hidden_states = []
-h_prev = np.zeros(hidden_dim)
-for idx, token in enumerate(tokens):
-    x = emb.forward(idx)  # dummy token id
-    h_prev = rnn.forward(x, h_prev)
-    hidden_states.append(h_prev.copy())
+sentence_presets = {
+    "短句测试 (5 词 - 短程易记)": "the king and queen sleep",
+    "中等长度句 (9 词 - 记忆开始衰减)": "the cat sat on the mat and sleep well",
+    "超长叙事句 (16 词 - 严重遗忘瓶颈)": "the king of china went to paris and then the queen traveled to rome",
+    "自定义输入 (Custom Input)...": "",
+}
 
-# 主区域
-# 上半部：隐藏状态传递示意 (简化用 columns)
-st.markdown("#### 隐藏状态顺次传递过程")
-cols = st.columns(len(tokens))
-for i, (col, token) in enumerate(zip(cols, tokens)):
-    with col:
-        # 用颜色深浅表示一点激活状态 (模拟)
-        intensity = np.linalg.norm(hidden_states[i])
-        bg_color = f"rgba(29, 78, 216, {min(1.0, 0.2 + intensity*0.1)})"
-        html = f"""<div style="background:{bg_color}; padding:10px; border-radius:4px; text-align:center; color:#fff; font-size:12px; height:80px; display:flex; align-items:center; justify-content:center; flex-direction:column;">
-        <b>{token}</b><br>t={i}</div>"""
-        st.markdown(html, unsafe_allow_html=True)
-        if i < len(tokens) - 1:
-            st.markdown("<div style='text-align:center;'>⬇️</div>", unsafe_allow_html=True)
+selected_preset = st.sidebar.selectbox(
+    "测试句子预设",
+    list(sentence_presets.keys()),
+    index=2,
+    help="对比不同长度文本在 RNN 中的记忆留存表现。",
+)
 
-# 中部：记忆衰减热力图
-st.markdown("---")
-fig_decay = plot_memory_decay_heatmap(hidden_states, tokens)
+if "自定义" in selected_preset:
+    input_text = st.sidebar.text_input(
+        "自定义英文句子",
+        "the dog and cat run fast and then sleep on the big cold mat",
+        help="请输入空格分隔的英文单词（优先使用词表内的常见词汇）。",
+    )
+else:
+    input_text = sentence_presets[selected_preset]
+
+hidden_dim = st.sidebar.select_slider(
+    "RNN 隐藏状态容量 (Hidden Dim)",
+    options=[8, 16, 32],
+    value=16,
+    help="循环神经网络隐藏层神经元数量。容量越大能记住的信息相对略多，但无法突破理论瓶颈。",
+)
+
+# ---------------------------------------------------------------------------
+# 分词与 RNN 逐步前向计算
+# ---------------------------------------------------------------------------
+raw_tokens = [w.lower().strip(",.!?") for w in input_text.strip().split() if w.strip()]
+if not raw_tokens:
+    raw_tokens = ["the", "cat", "sleep"]
+
+# 映射到词表
+token_indices = [raw_vocab.get(w, 0) for w in raw_tokens]
+tokens_array = np.array([token_indices])
+
+# 提取词嵌入: (1, seq_len, 32)
+embedded_seq = embedding_layer.forward(tokens_array)
+
+# 实例化 RNN 单元并逐步处理
+rnn_cell = RNNCell(input_size=32, hidden_size=hidden_dim)
+hidden_states_list = rnn_cell.step_sequence(embedded_seq)
+
+seq_len = len(raw_tokens)
+
+# 计算句首词 (t=0) 在最后一步 (t=T-1) 的记忆余弦相似度
+h_first = hidden_states_list[0].ravel()
+h_last = hidden_states_list[-1].ravel()
+retention_rate = float(
+    np.abs(np.dot(h_first, h_last)) / (np.linalg.norm(h_first) * np.linalg.norm(h_last) + 1e-12)
+)
+
+# ---------------------------------------------------------------------------
+# 遥测指标卡
+# ---------------------------------------------------------------------------
+metric_grid_html = (
+    '<div class="metric-grid">'
+    + render_metric_card(
+        "SEQUENCE LENGTH // 序列总长度",
+        f"{seq_len} TOKENS",
+        delta="长文本模式" if seq_len > 10 else "短文本模式",
+        delta_type="neutral",
+        icon_name="database",
+    )
+    + render_metric_card(
+        "HEAD RETENTION // 句首记忆留存率",
+        f"{retention_rate * 100:.1f}%",
+        delta="严重遗忘 (SEVERE)" if retention_rate < 0.35 else ("轻度衰减" if retention_rate < 0.65 else "留存良好"),
+        delta_type="negative" if retention_rate < 0.35 else ("neutral" if retention_rate < 0.65 else "positive"),
+        icon_name="activity",
+    )
+    + render_metric_card(
+        "HIDDEN CAPACITY // 记忆背包维度",
+        f"{hidden_dim}-DIM",
+        delta="固定容量瓶颈",
+        delta_type="neutral",
+        icon_name="cpu",
+    )
+    + render_metric_card(
+        "BOTTLENECK STATUS // 信息漏斗状态",
+        "FORGETTING" if seq_len > 8 else "STABLE",
+        delta="需 Attention 拯救" if seq_len > 8 else "信息未溢出",
+        delta_type="negative" if seq_len > 8 else "positive",
+        icon_name="target",
+    )
+    + "</div>"
+)
+st.markdown(metric_grid_html, unsafe_allow_html=True)
+
+# ---------------------------------------------------------------------------
+# 主视图区 1：时序流水线逐步流动
+# ---------------------------------------------------------------------------
+render_section_heading("STEP-BY-STEP RECURRENT FLOW // RNN 隐状态顺次传递管道", icon_name="activity")
+
+# 生成可视化时序卡片
+steps_html_parts = []
+for i, token in enumerate(raw_tokens):
+    h_norm = float(np.linalg.norm(hidden_states_list[i]))
+    # 颜色深度随时间与能量映射
+    alpha = min(0.9, max(0.2, h_norm / 4.0))
+    tag_bg = f"rgba(29, 78, 216, {alpha})"
+    
+    steps_html_parts.append(
+        f"""
+        <div style="flex: 1; min-width: 75px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0.6rem 0.4rem; text-align: center; box-shadow: 0 2px 4px rgba(15,23,42,0.03);">
+            <div style="font-size: 0.68rem; color: #64748b; font-weight: 700; text-transform: uppercase;">t = {i}</div>
+            <div style="font-size: 0.95rem; font-weight: 800; color: #0f172a; margin: 0.2rem 0; font-family:'JetBrains Mono';">{token}</div>
+            <div style="background: {tag_bg}; color: #ffffff; font-size: 0.68rem; font-weight: 700; border-radius: 4px; padding: 0.15rem 0.3rem;">
+                ||h||={h_norm:.2f}
+            </div>
+        </div>
+        """
+    )
+
+flow_container_html = (
+    '<div style="display: flex; gap: 0.4rem; overflow-x: auto; padding: 0.5rem 0; margin-bottom: 1.2rem;">'
+    + "".join(steps_html_parts)
+    + "</div>"
+)
+st.markdown(flow_container_html, unsafe_allow_html=True)
+
+# ---------------------------------------------------------------------------
+# 主视图区 2：记忆衰减热力图
+# ---------------------------------------------------------------------------
+render_section_heading("MEMORY DECAY HEATMAP // 序列记忆与历史衰减矩阵", icon_name="target")
+
+fig_decay = plot_memory_decay_heatmap(
+    hidden_states=hidden_states_list,
+    tokens=raw_tokens,
+    title="RNN RECURRENT MEMORY DECAY // 隐状态历史关联度矩阵 (越靠右上角颜色越浅代表遗忘)",
+)
 st.plotly_chart(fig_decay, use_container_width=True)
 
-# 底部：对比标注卡片
-st.markdown("---")
-col_l, col_r = st.columns(2)
-with col_l:
-    st.error("#### ⚠️ RNN 的致命缺陷\n\n序列越长，早期信息的特征在隐藏状态向量中被稀释得越严重。所有的历史信息都被强行压缩到一个固定大小的向量中，成为**遗忘瓶颈**。")
-with col_r:
-    st.success("#### 💡 这就是为什么我们需要注意力机制\n\n如果每个词在处理时，都能直接查阅整个序列中所有的历史词汇，不受距离限制，那么遗忘瓶颈将被彻底打破。下一课，我们将引入 Attention！")
+# ---------------------------------------------------------------------------
+# 底部理论对比卡片：RNN 遗忘瓶颈 vs Attention 动态路由
+# ---------------------------------------------------------------------------
+render_section_heading("ARCHITECTURAL EVOLUTION // 为什么必须从 RNN 进化到 Attention？", icon_name="zap")
+
+col_rnn, col_attn = st.columns(2)
+with col_rnn:
+    with st.container(border=True):
+        st.markdown(
+            """
+            #### ⚠️ 循环神经网络 (RNN) 的致命局限
+            - **固定容量漏斗 (Information Bottleneck)**：
+              无论句子是 5 个词还是 1000 个词，所有历史信息都被强制压缩到同一个固定大小的 $h_t$ 向量中；
+            - **长程梯度消失 (Vanishing Gradients)**：
+              反向传播需要跨越数十个时间步长做连乘（BPTT），前端梯度呈指数级衰减为零；
+            - **无法并行计算**：
+              第 $t$ 步的计算必须等待第 $t-1$ 步完成，完全无法利用现代 GPU 的数千个核心做矩阵并行加速。
+            """
+        )
+
+with col_attn:
+    with st.container(border=True):
+        st.markdown(
+            """
+            #### 💡 注意力机制 (Attention) 的范式革命
+            - **$O(1)$ 任意距离直达路由**：
+              取消递归传递链，每一个词都能以光速直接“回头看”整个句子的所有词汇；
+            - **全局矩阵并行共振**：
+              所有 Token 的 Query/Key/Value 矩阵一次性送入 GPU，单步完成 $N \times N$ 全对全关联计算；
+            - **动态聚光灯 (Dynamic Spotlight)**：
+              根据上下文动态分配权重，彻底攻克长程记忆与代词回指难题！
+            """
+        )

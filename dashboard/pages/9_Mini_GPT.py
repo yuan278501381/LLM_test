@@ -1,9 +1,13 @@
 # Copyright (c) 2026 Yy1 (yuan278501381) | MIT License
 """
-里程碑 9: Mini-GPT
+里程碑 9: Mini-GPT 文本生成 (Auto-Regressive Text Generation) - 零基础入门保姆级教学平台
+
+解剖现代大语言模型 (ChatGPT/GPT-4) 的自回归生成原理：Next-Token 概率预测、Temperature 温度采样、Top-k 过滤与实时注意力追踪。
 """
+
 import os
 import sys
+import time
 
 _PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 if _PROJECT_ROOT not in sys.path:
@@ -11,114 +15,344 @@ if _PROJECT_ROOT not in sys.path:
 
 import numpy as np
 import streamlit as st
-import time
 
-from dashboard.styles.theme import apply_custom_theme, render_hero_header, render_page_guide
-from dashboard.components.charts import plot_token_probabilities, plot_attention_heatmap_nlp
+from dashboard.components.charts import plot_attention_heatmap_nlp, plot_token_probabilities
+from dashboard.styles.theme import (
+    apply_custom_theme,
+    render_hero_header,
+    render_metric_card,
+    render_page_guide,
+    render_section_heading,
+)
+from nn_core.embeddings import get_mini_vocab, get_pretrained_embeddings
+from nn_core.gpt import TinyGPT
 
-st.set_page_config(page_title="Mini-GPT", layout="wide")
+st.set_page_config(
+    page_title="Mini-GPT · NN Playground",
+    layout="wide",
+)
+
 apply_custom_theme()
 
 render_hero_header(
-    title="Mini-GPT 文本生成",
-    subtitle="将积木拼成完全体：自回归逐词生成与采样",
-    badge_text="MILESTONE 09 // AUTO-REGRESSIVE GEN",
-    badge_type="brand-blue",
+    title="Mini-GPT 文本生成与自回归采样",
+    subtitle="将所有积木拼成完全体：自回归逐 Token 采样、Next-Token 概率分布、Temperature 创造力调控与实时注意力追踪",
+    badge_text="MILESTONE 09 // AUTO-REGRESSIVE GPT",
+    badge_type="blue",
 )
 
+# ---------------------------------------------------------------------------
+# 零基础保姆级指引 (Zero-Barrier Beginner Guide)
+# ---------------------------------------------------------------------------
 render_page_guide(
-    title="M09 · Mini-GPT 文本生成 // Mini-GPT Text Generation",
-    plain_intro="终于到了最激动人心的时刻！我们把所有零件——词嵌入、注意力机制、Transformer 积木——拼成一个完整的微型 GPT。虽然它的词汇量很小，但它能展示 ChatGPT 的核心工作原理：一个字一个字地'猜'下一个最可能的词！",
-    hyperparams_desc="• <b>Temperature</b>：控制生成的创造力。越低越保守，越高越随机。<br>• <b>Top-k</b>：丢弃概率太小的词，防止生成无意义的乱码。<br>• <b>生成长度</b>：要让模型接续生成的词数。",
-    telemetry_desc="• <b>文本实时显示</b>：打字机效果展示 GPT 逐词吐出的内容。<br>• <b>下一词概率分布</b>：模型心里的'候选项排行榜'。<br>• <b>T值效果对比</b>：直观理解 Temperature 是如何重塑概率分布的。",
+    title="Mini-GPT 文本生成入门",
+    plain_intro=(
+        "<b>终于到了见证奇迹的时刻——我们把前面的所有技术拼成了一个微型 ChatGPT！</b><br>"
+        "GPT 的本质其实非常纯粹：<b>它永远只做一件事——猜下一个词 (Next-Token Prediction)</b>。<br>"
+        "它给词表中每一个词打一个概率分（如'女王': 45%, '国王': 20%, '桌子': 0.1%）；<br>"
+        "然后根据你设定的<b>温度 (Temperature)</b> 进行概率轮盘赌，抽中一个词拼到句子末尾，再重复这个过程！"
+    ),
+    hyperparams_desc=(
+        "• <b>提示词 (Prompt)</b>：给 GPT 的开头引导语（如 <code>the king and</code>）。<br>"
+        "• <b>采样温度 (Temperature)</b>：控制创造力。T=0.1 极度确定保守，T=0.8 均衡灵动，T=2.0 天马行空。<br>"
+        "• <b>Top-k 过滤</b>：只在概率最高的前 K 个词中采样，过滤掉离谱的长尾词。<br>"
+        "• <b>生成长度 (Max Tokens)</b>：让模型接续生成的词数。"
+    ),
+    telemetry_desc=(
+        "• <b>实时生成文本流</b>：打字机效果逐词呈现 GPT 吐出的新词汇。<br>"
+        "• <b>下一词概率分布柱状图</b>：实时揭秘模型心中的'候选词排行榜'。<br>"
+        "• <b>当前步注意力矩阵</b>：展示最新生成的词正在重点关注前文的哪些线索。"
+    ),
     experiments=[
-        "<b>第 1 步</b>：把 Temperature 调到 0.1，生成文本会非常确定，多次点击生成结果都一样。",
-        "<b>第 2 步</b>：把 Temperature 调到 2.0，观察概率分布是否变得平缓，生成的句子是否开始跳脱。",
-        "<b>第 3 步</b>：观察打字机生成时下方概率图的实时变化，体会自回归'Auto-Regressive'的含义。",
+        "<b>第 1 步【体验确定性生成】</b>：把左侧【Temperature】设为 <code>0.1</code>，点击【开始自回归生成】，观察柱状图顶端出现尖锐的绝对优势词，多次生成结果完全一致！",
+        "<b>第 2 步【体验高创造力】</b>：把【Temperature】调到 <code>1.5</code>，观察概率柱状图变得平坦，模型开始给出出人意料的词汇组合！",
+        "<b>第 3 步【单步执行推演】</b>：点击【单步生成下一个 Token】，一步一步观察每一次吐词时注意力热力图和概率柱状图的动态演进！",
     ],
 )
 
-vocab = ["The", "quick", "brown", "fox", "jumps", "over", "the", "lazy", "dog", 
-         "hello", "world", "AI", "is", "awesome", "today", "tomorrow", "good", "bad", "apple"]
+# ---------------------------------------------------------------------------
+# 模型与词表初始化
+# ---------------------------------------------------------------------------
+raw_vocab = get_mini_vocab()
+vocab_words = list(raw_vocab.keys())
+inv_vocab = {v: k for k, v in raw_vocab.items()}
+vocab_size = len(vocab_words)
 
-st.sidebar.markdown("#### HYPERPARAMETERS // 超参数")
-prompt = st.sidebar.selectbox("Prompt 输入", ["The quick brown", "AI is", "hello", "自定义..."])
-if prompt == "自定义...":
-    prompt = st.sidebar.text_input("自定义 Prompt", "The quick")
+# 实例化 TinyGPT 模型
+@st.cache_resource
+def load_tiny_gpt():
+    gpt_model = TinyGPT(
+        vocab_size=vocab_size,
+        max_seq_len=24,
+        d_model=32,
+        num_heads=4,
+        num_layers=2,
+    )
+    # 注入具有语义特征的预训练嵌入
+    pretrained_w = get_pretrained_embeddings(vocab_size, d_model=32)
+    gpt_model.wte = pretrained_w
+    return gpt_model
 
-temperature = st.sidebar.slider("Temperature", 0.1, 2.0, 0.8, step=0.1)
-gen_len = st.sidebar.slider("生成长度", 1, 15, 5)
-top_k = st.sidebar.slider("Top-k", 2, len(vocab), 5)
-gen_button = st.sidebar.button("🎬 开始生成 // GENERATE")
+gpt = load_tiny_gpt()
 
-# 文本生成展示区
-st.markdown("#### 💬 生成过程")
-out_container = st.empty()
-prob_container = st.empty()
-attn_container = st.empty()
+# ---------------------------------------------------------------------------
+# 侧边栏参数面板
+# ---------------------------------------------------------------------------
+st.sidebar.markdown("#### HYPERPARAMETERS // 超参数与控制")
 
-def apply_temperature(probs, temp):
-    logits = np.log(probs + 1e-9)
-    scaled_logits = logits / temp
-    exp_logits = np.exp(scaled_logits - np.max(scaled_logits))
-    return exp_logits / np.sum(exp_logits)
+prompt_presets = {
+    "经典王族开头": "the king and queen",
+    "动作与地点开头": "the cat went to paris",
+    "动物伙伴开头": "the puppy and kitten run",
+    "国家与首都开头": "the china and japan were",
+    "自定义 Prompt...": "",
+}
 
-# 底部对比面板 (静态)
-st.markdown("---")
-st.markdown("#### 🌡️ Temperature 效果对比 (静态演示)")
-col1, col2, col3 = st.columns(3)
-base_probs = np.random.dirichlet(np.ones(len(vocab)) * 0.5)
+selected_prompt_key = st.sidebar.selectbox(
+    "Prompt 预设",
+    list(prompt_presets.keys()),
+    index=0,
+)
 
-with col1:
-    fig1 = plot_token_probabilities(apply_temperature(base_probs, 0.1), vocab, top_k=5, title="T = 0.1 (绝对自信/保守)")
-    st.plotly_chart(fig1, use_container_width=True)
-with col2:
-    fig2 = plot_token_probabilities(apply_temperature(base_probs, 1.0), vocab, top_k=5, title="T = 1.0 (原始分布)")
-    st.plotly_chart(fig2, use_container_width=True)
-with col3:
-    fig3 = plot_token_probabilities(apply_temperature(base_probs, 2.0), vocab, top_k=5, title="T = 2.0 (混乱/高创造力)")
-    st.plotly_chart(fig3, use_container_width=True)
+if "自定义" in selected_prompt_key:
+    custom_prompt = st.sidebar.text_input("输入自定义英文 Prompt", "the king and")
+    current_prompt_text = custom_prompt if custom_prompt.strip() else "the king and"
+else:
+    current_prompt_text = prompt_presets[selected_prompt_key]
 
-if gen_button:
-    current_text = prompt
-    tokens_so_far = prompt.strip().split()
+temperature = st.sidebar.slider(
+    "采样温度 (Temperature)",
+    min_value=0.1,
+    max_value=2.0,
+    value=0.7,
+    step=0.1,
+    help="调节 Softmax 概率平滑度。越小越趋近贪婪选择（确定/保守），越大越随机平权（高创造力/不稳定）。",
+)
+
+top_k = st.sidebar.slider(
+    "Top-k 截断采样",
+    min_value=1,
+    max_value=min(20, vocab_size),
+    value=8,
+    help="仅保留预测概率最高的前 k 个 Token 并重新归一化采样，彻底剔除低概率无关词汇。",
+)
+
+gen_tokens_count = st.sidebar.slider(
+    "生成 Token 数量",
+    min_value=1,
+    max_value=10,
+    value=4,
+    help="模型连续自回归预测的新词数量。",
+)
+
+col_btn1, col_btn2 = st.sidebar.columns(2)
+with col_btn1:
+    btn_generate_all = st.button("🚀 一键生成", type="primary", use_container_width=True)
+with col_btn2:
+    btn_step_one = st.button("🎬 单步推演", use_container_width=True)
+
+# ---------------------------------------------------------------------------
+# 会话状态管理 (Session State)
+# ---------------------------------------------------------------------------
+if "current_generated_tokens" not in st.session_state or st.session_state.get("last_prompt") != current_prompt_text:
+    init_tokens = [w.lower().strip(",.!?") for w in current_prompt_text.strip().split() if w.strip()]
+    st.session_state.current_generated_tokens = init_tokens
+    st.session_state.last_prompt = current_prompt_text
+    st.session_state.step_counter = 0
+
+# ---------------------------------------------------------------------------
+# 模型预测核心函数
+# ---------------------------------------------------------------------------
+def compute_next_token_distribution(tokens_list: list[str], temp: float, k: int):
+    """根据当前 Token 列表计算下一个 Token 的概率分布"""
+    # 截断到最大序列长度
+    truncated = tokens_list[-20:]
+    token_ids = [raw_vocab.get(w, 0) for w in truncated]
+    context = np.array([token_ids], dtype=np.int32)
     
-    for step in range(gen_len):
-        out_container.markdown(f"> **{current_text}** `...`")
-        
-        # 模拟前向传播预测概率
-        raw_probs = np.random.dirichlet(np.ones(len(vocab)))
-        final_probs = apply_temperature(raw_probs, temperature)
-        
-        # top-k masking
-        top_indices = np.argsort(final_probs)[-top_k:]
-        masked_probs = np.zeros_like(final_probs)
-        masked_probs[top_indices] = final_probs[top_indices]
-        masked_probs = masked_probs / np.sum(masked_probs)
-        
-        # 绘图
-        with prob_container:
-            fig_prob = plot_token_probabilities(masked_probs, vocab, top_k=top_k, title=f"Step {step+1}: 预测分布")
-            st.plotly_chart(fig_prob, use_container_width=True)
-            
-        with attn_container:
-            # 模拟最后一步的注意力
-            curr_len = len(tokens_so_far)
-            attn = np.random.rand(curr_len, curr_len)
-            attn[np.triu_indices(curr_len, 1)] = 0
-            attn = attn / (attn.sum(axis=-1, keepdims=True) + 1e-9)
-            fig_attn = plot_attention_heatmap_nlp(attn, tokens_so_far, tokens_so_far, title=f"Step {step+1}: 实时注意力")
-            st.plotly_chart(fig_attn, use_container_width=True)
-            
-        # 采样 (为简单直接取最大或随机)
-        # 按照分布采样
-        next_word_idx = np.random.choice(len(vocab), p=masked_probs)
-        next_word = vocab[next_word_idx]
-        
-        tokens_so_far.append(next_word)
-        current_text += f" <span style='color:#1d4ed8; font-weight:bold;'>{next_word}</span>"
-        
-        out_container.markdown(f"> **{current_text}**", unsafe_allow_html=True)
-        time.sleep(0.5)  # 打字机停顿
-        
-    st.balloons()
+    # 前向传播得到 logits: (1, T, vocab_size)
+    logits = gpt.forward(context)
+    next_logits = logits[0, -1, :] / max(temp, 1e-4)
+    
+    # 减去最大值防止溢出
+    exp_logits = np.exp(next_logits - np.max(next_logits))
+    probs = exp_logits / np.sum(exp_logits)
+    
+    # Top-K 截断
+    top_indices = np.argsort(probs)[-k:]
+    masked_probs = np.zeros_like(probs)
+    masked_probs[top_indices] = probs[top_indices]
+    masked_probs = masked_probs / (np.sum(masked_probs) + 1e-12)
+    
+    return masked_probs, truncated
+
+# ---------------------------------------------------------------------------
+# 触发生成逻辑
+# ---------------------------------------------------------------------------
+if btn_generate_all:
+    tokens_so_far = [w.lower().strip(",.!?") for w in current_prompt_text.strip().split() if w.strip()]
+    for _ in range(gen_tokens_count):
+        probs, _ = compute_next_token_distribution(tokens_so_far, temperature, top_k)
+        sampled_id = np.random.choice(vocab_size, p=probs)
+        sampled_word = inv_vocab.get(sampled_id, "the")
+        tokens_so_far.append(sampled_word)
+    st.session_state.current_generated_tokens = tokens_so_far
+    st.session_state.step_counter += gen_tokens_count
+
+elif btn_step_one:
+    tokens_so_far = list(st.session_state.current_generated_tokens)
+    probs, _ = compute_next_token_distribution(tokens_so_far, temperature, top_k)
+    sampled_id = np.random.choice(vocab_size, p=probs)
+    sampled_word = inv_vocab.get(sampled_id, "the")
+    tokens_so_far.append(sampled_word)
+    st.session_state.current_generated_tokens = tokens_so_far
+    st.session_state.step_counter += 1
+
+# 获取当前状态下的预测概率
+current_tokens = st.session_state.current_generated_tokens
+current_probs, current_context_tokens = compute_next_token_distribution(current_tokens, temperature, top_k)
+
+top_predicted_id = int(np.argmax(current_probs))
+top_predicted_word = inv_vocab.get(top_predicted_id, "the")
+top_predicted_prob = float(current_probs[top_predicted_id])
+
+# ---------------------------------------------------------------------------
+# 遥测指标卡
+# ---------------------------------------------------------------------------
+metric_grid_html = (
+    '<div class="metric-grid">'
+    + render_metric_card(
+        "TOP PREDICTION // 下一词预测之王",
+        top_predicted_word.upper(),
+        delta=f"置信度 {top_predicted_prob * 100:.1f}%",
+        delta_type="positive" if top_predicted_prob > 0.4 else "neutral",
+        icon_name="target",
+    )
+    + render_metric_card(
+        "TEMPERATURE // 创造力系数",
+        f"T = {temperature:.1f}",
+        delta="确定模式" if temperature < 0.4 else ("均衡创作" if temperature <= 1.0 else "发散混乱"),
+        delta_type="positive" if 0.4 <= temperature <= 1.0 else "neutral",
+        icon_name="zap",
+    )
+    + render_metric_card(
+        "TOP-K CANDIDATES // 采样候选池",
+        f"{top_k} TOKENS",
+        delta="已过滤低频长尾",
+        delta_type="positive",
+        icon_name="cpu",
+    )
+    + render_metric_card(
+        "TOTAL TOKENS // 当前序列长度",
+        f"{len(current_tokens)} TOKENS",
+        delta=f"已接续生成 +{len(current_tokens) - len(current_prompt_text.split())} 词",
+        delta_type="positive",
+        icon_name="database",
+    )
+    + "</div>"
+)
+st.markdown(metric_grid_html, unsafe_allow_html=True)
+
+# ---------------------------------------------------------------------------
+# 主视图区 1：自回归实时文本输出展示
+# ---------------------------------------------------------------------------
+render_section_heading("LIVE TEXT STREAM // 实时自回归文本流 (打字机效果)", icon_name="activity")
+
+prompt_len = len(current_prompt_text.strip().split())
+tokens_html_list = []
+
+for idx, tok in enumerate(current_tokens):
+    if idx < prompt_len:
+        # Prompt 词汇：深灰经典样式
+        tokens_html_list.append(
+            f'<span style="background:#f1f5f9; color:#0f172a; border:1px solid #cbd5e1; padding:0.25rem 0.6rem; border-radius:6px; font-weight:700; font-family:\'JetBrains Mono\';">{tok}</span>'
+        )
+    else:
+        # GPT 生成的新词：高亮皇家蓝徽章
+        tokens_html_list.append(
+            f'<span style="background:#eff6ff; color:#1d4ed8; border:1px solid #93c5fd; padding:0.25rem 0.6rem; border-radius:6px; font-weight:800; font-family:\'JetBrains Mono\'; box-shadow:0 2px 6px rgba(37,99,235,0.12);">✨ {tok}</span>'
+        )
+
+text_stream_html = (
+    f"""
+    <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:1.4rem; line-height:2.2; box-shadow:0 2px 8px rgba(15,23,42,0.03); margin-bottom:1.2rem;">
+        <div style="font-size:0.75rem; font-weight:700; color:#64748b; text-transform:uppercase; margin-bottom:0.6rem;">
+            💬 GPT Current Context Window (上下文窗口):
+        </div>
+        <div style="display:flex; flex-wrap:wrap; gap:0.5rem; align-items:center;">
+            {" ".join(tokens_html_list)}
+            <span style="display:inline-block; width:8px; height:18px; background:#1d4ed8; animation:blink 1s infinite;"></span>
+        </div>
+    </div>
+    """
+)
+st.markdown(text_stream_html, unsafe_allow_html=True)
+
+# ---------------------------------------------------------------------------
+# 主视图区 2：下一词概率柱状图 & 实时注意力热力图
+# ---------------------------------------------------------------------------
+col_bar, col_attn = st.columns([1.2, 1])
+
+with col_bar:
+    render_section_heading(f"NEXT-TOKEN PROBABILITIES // 下一个词候选排行榜 (T={temperature})", icon_name="target")
+    fig_probs = plot_token_probabilities(
+        token_probs=current_probs,
+        vocab=vocab_words,
+        top_k=top_k,
+        title=f"PROBABILITY DISTRIBUTION // 下一词概率柱状图 (Top {top_k})",
+    )
+    st.plotly_chart(fig_probs, use_container_width=True)
+
+with col_attn:
+    render_section_heading("STEP ATTENTION FOCUS // 当前步注意力聚光灯", icon_name="zap")
+    # 提取多层 Transformer 的注意力权重
+    all_attn = gpt.get_all_attention_weights()
+    if all_attn:
+        # 取最后一层第 0 头的注意力
+        last_layer_attn = all_attn[-1][0, 0]
+        fig_realtime_attn = plot_attention_heatmap_nlp(
+            attention_weights=last_layer_attn,
+            tokens_x=current_context_tokens,
+            tokens_y=current_context_tokens,
+            title="Transformer Layer 2 Attention",
+        )
+        st.plotly_chart(fig_realtime_attn, use_container_width=True)
+    else:
+        st.info("模型正在初始化注意力矩阵...")
+
+# ---------------------------------------------------------------------------
+# 底部理论对比：Temperature 对概率分布的几何塑造
+# ---------------------------------------------------------------------------
+render_section_heading("TEMPERATURE DYNAMICS // 温度参数对概率分布的塑造原理", icon_name="activity")
+
+col_t1, col_t2, col_t3 = st.columns(3)
+
+# 构造一个基准的 Logits 分布演示
+toy_logits = np.array([4.0, 3.2, 2.1, 1.5, 0.8, -0.5, -1.2])
+toy_words = ["queen", "king", "princess", "prince", "woman", "cat", "dog"]
+
+def toy_softmax(l_arr, t_val):
+    scaled = l_arr / t_val
+    exps = np.exp(scaled - np.max(scaled))
+    return exps / np.sum(exps)
+
+with col_t1:
+    with st.container(border=True):
+        st.markdown("#### 🥶 T = 0.1 (绝对自信 / 贪心模式)")
+        st.caption("最高分被无限放大，其余概率归零。每次点击生成的词绝对确定。")
+        fig_t1 = plot_token_probabilities(toy_softmax(toy_logits, 0.1), toy_words, top_k=5, title="T=0.1 极度尖锐")
+        st.plotly_chart(fig_t1, use_container_width=True)
+
+with col_t2:
+    with st.container(border=True):
+        st.markdown("#### ⚖️ T = 0.7 (标准均衡 / 创作模式)")
+        st.caption("高分词依然占优，但赋予次高分词适度机会，展现生动多样的表达。")
+        fig_t2 = plot_token_probabilities(toy_softmax(toy_logits, 0.7), toy_words, top_k=5, title="T=0.7 经典推荐")
+        st.plotly_chart(fig_t2, use_container_width=True)
+
+with col_t3:
+    with st.container(border=True):
+        st.markdown("#### 🔥 T = 2.0 (最大混乱 / 幻觉模式)")
+        st.caption("差异被强行抹平，所有词概率趋同，模型极易产生乱码和幻觉。")
+        fig_t3 = plot_token_probabilities(toy_softmax(toy_logits, 2.0), toy_words, top_k=5, title="T=2.0 极度平坦")
+        st.plotly_chart(fig_t3, use_container_width=True)

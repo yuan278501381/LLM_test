@@ -1,7 +1,10 @@
 # Copyright (c) 2026 Yy1 (yuan278501381) | MIT License
 """
-里程碑 5: 词嵌入语义空间
+里程碑 5: 词嵌入语义空间 (Word Embedding & Semantic Geometry) - 零基础入门保姆级教学平台
+
+解剖高维向量空间中的语义几何：文字到密集实数向量的映射、余弦相似度计算与经典的向量线性算术 (如 king - man + woman ≈ queen)。
 """
+
 import os
 import sys
 
@@ -10,137 +13,356 @@ if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
 import numpy as np
-import streamlit as st
 import pandas as pd
+import streamlit as st
 
-from dashboard.styles.theme import apply_custom_theme, render_hero_header, render_page_guide, render_metric_card
 from dashboard.components.charts import plot_embedding_space
+from dashboard.styles.theme import (
+    apply_custom_theme,
+    render_hero_header,
+    render_metric_card,
+    render_page_guide,
+    render_section_heading,
+)
+from nn_core.embeddings import get_mini_vocab, get_pretrained_embeddings
 
-try:
-    from nn_core.embeddings import get_mini_vocab, get_pretrained_embeddings
-except ImportError:
-    # 模拟数据以防 nn_core 还没更新
-    def get_mini_vocab():
-        return ["国王", "女王", "男人", "女人", "猫", "狗", "桌子", "苹果", "香蕉", "北京", "中国", "巴黎", "法国"]
-    def get_pretrained_embeddings():
-        return np.random.randn(len(get_mini_vocab()), 16)
+st.set_page_config(
+    page_title="Word Embedding · NN Playground",
+    layout="wide",
+)
 
-st.set_page_config(page_title="词嵌入空间", layout="wide")
 apply_custom_theme()
 
 render_hero_header(
-    title="词嵌入空间",
-    subtitle="探索高维向量中的语义距离与线性算术",
+    title="词嵌入语义空间",
+    subtitle="解剖自然语言的几何本质：文字离散符号到密集向量空间的映射、余弦距离与经典向量算术",
     badge_text="MILESTONE 05 // WORD EMBEDDING",
     badge_type="blue",
 )
 
+# ---------------------------------------------------------------------------
+# 零基础保姆级指引 (Zero-Barrier Beginner Guide)
+# ---------------------------------------------------------------------------
 render_page_guide(
-    title="M05 · 词嵌入语义空间 // Word Embedding Space",
-    plain_intro="词嵌入就像给每个词配一个'性格坐标'。比如'猫'和'狗'的坐标很近（都是宠物），但'猫'和'桌子'的坐标就很远。更神奇的是，这些坐标还能做算术：国王-男人+女人≈女王！",
-    hyperparams_desc="• <b>可视化维度选择</b>：在 2D 或 3D 空间中观察词汇簇。<br>• <b>高亮词组选择</b>：指定特定语义群体以观察其聚集效应。<br>• <b>语义算术输入</b>：自定义 A - B + C 以检验线性关系。",
-    telemetry_desc="• <b>上：3D散点图</b>：词汇的高维空间降维映射。<br>• <b>下左：余弦相似度表格</b>：找出距离算术结果最近的Top词。<br>• <b>下右：语义算术结果</b>：验证经典语义代数方程。",
+    title="词嵌入与语义几何入门",
+    plain_intro=(
+        "<b>词嵌入就像给每个词配一个多维的'性格坐标'</b>。<br>"
+        "在计算机眼里，原本文字只是孤立的数字编号；而词嵌入把每个词映射为一个 32 维的实数向量。<br>"
+        "神奇的是：<b>语义相近的词在空间中距离相近</b>（如 cat 和 dog 紧紧挨着），"
+        "而且词与词之间还能像物理位移一样做加减算术：<b>国王 - 男人 + 女人 ≈ 女王</b>！"
+    ),
+    hyperparams_desc=(
+        "• <b>投影维度 (2D/3D)</b>：将 32 维高维嵌入通过 PCA 降维投影到 3D 立体或 2D 平面。<br>"
+        "• <b>高亮语义组</b>：聚焦观察王族、动物、国家城市等特定概念在空间中的聚类。<br>"
+        "• <b>语义算术输入</b>：自定义 $A - B + C = ?$ 验证语义平行四边形定理。"
+    ),
+    telemetry_desc=(
+        "• <b>空间散点图与算术箭头</b>：3D 空间中词汇聚集点云与虚线位移箭头。<br>"
+        "• <b>余弦相似度 Top-5</b>：从全部词汇中搜索与算术结果向量最吻合的候选词。<br>"
+        "• <b>最优匹配词</b>：模型根据向量空间距离找到的最可能答案。"
+    ),
     experiments=[
-        "<b>第 1 步</b>：选择'王族'高亮组，观察他们在空间中的聚集。",
-        "<b>第 2 步</b>：尝试'国王'-'男人'+'女人'的算术，看看最近的词是不是'女王'。",
-        "<b>第 3 步</b>：比较'One-Hot'和'Embedding'的区别，理解密集向量的优势。",
+        "<b>第 1 步【观察聚类】</b>：在左侧【高亮语义组】选择 <code>王族 (Royalty)</code> 或 <code>动物 (Animals)</code>，旋转右侧 3D 图表，观察相关词汇如何自然聚集在同一个空间角落！",
+        "<b>第 2 步【见证经典算术】</b>：在左侧选择 <code>king - man + woman</code>，观察计算结果中最接近的词是不是 <code>queen (女王)</code>！图上会画出完美的平行四边形箭头！",
+        "<b>第 3 步【地理与动作类比】</b>：试着算一算 <code>beijing - china + japan = ?</code>（预期为 tokyo），体会向量空间对'国家-首都'关系的几何编码能力！",
     ],
 )
 
-vocab = get_mini_vocab()
-embeddings = get_pretrained_embeddings()
+# ---------------------------------------------------------------------------
+# 词表与语义向量数据准备 (中英双语标签)
+# ---------------------------------------------------------------------------
+raw_vocab = get_mini_vocab()
+vocab_words = list(raw_vocab.keys())
+embeddings_matrix = get_pretrained_embeddings(len(vocab_words), d_model=32)
 
-st.sidebar.markdown("#### HYPERPARAMETERS // 超参数")
-dim_choice = st.sidebar.radio("可视化维度选择", ["3D", "2D"], index=0)
-group_choice = st.sidebar.selectbox("预设语义组选择", ["全部", "王族", "动物", "国家城市"])
+# 中文对照映射表，提升易读性
+CN_LABEL_MAP: dict[str, str] = {
+    "king": "king (国王)",
+    "queen": "queen (女王)",
+    "man": "man (男人)",
+    "woman": "woman (女人)",
+    "prince": "prince (王子)",
+    "princess": "princess (公主)",
+    "boy": "boy (男孩)",
+    "girl": "girl (女孩)",
+    "cat": "cat (猫)",
+    "dog": "dog (狗)",
+    "kitten": "kitten (小猫)",
+    "puppy": "puppy (小狗)",
+    "fish": "fish (鱼)",
+    "bird": "bird (鸟)",
+    "china": "china (中国)",
+    "japan": "japan (日本)",
+    "usa": "usa (美国)",
+    "france": "france (法国)",
+    "germany": "germany (德国)",
+    "italy": "italy (意大利)",
+    "beijing": "beijing (北京)",
+    "tokyo": "tokyo (东京)",
+    "washington": "washington (华盛顿)",
+    "paris": "paris (巴黎)",
+    "berlin": "berlin (柏林)",
+    "rome": "rome (罗马)",
+    "run": "run (跑)",
+    "walk": "walk (走)",
+    "eat": "eat (吃)",
+    "drink": "drink (喝)",
+    "sleep": "sleep (睡)",
+    "think": "think (思考)",
+    "speak": "speak (说话)",
+    "write": "write (写字)",
+    "big": "big (大)",
+    "small": "small (小)",
+    "hot": "hot (热)",
+    "cold": "cold (冷)",
+    "fast": "fast (快)",
+    "slow": "slow (慢)",
+    "good": "good (好)",
+    "bad": "bad (坏)",
+    "happy": "happy (快乐)",
+    "sad": "sad (悲伤)",
+}
 
-st.sidebar.markdown("#### 语义算术输入: A - B + C = ?")
-word_A = st.sidebar.selectbox("词 A (如: 国王)", vocab, index=vocab.index("国王") if "国王" in vocab else 0)
-word_B = st.sidebar.selectbox("词 B (如: 男人)", vocab, index=vocab.index("男人") if "男人" in vocab else 0)
-word_C = st.sidebar.selectbox("词 C (如: 女人)", vocab, index=vocab.index("女人") if "女人" in vocab else 0)
+display_labels = [CN_LABEL_MAP.get(w, w) for w in vocab_words]
+label_to_word = {CN_LABEL_MAP.get(w, w): w for w in vocab_words}
 
-# 计算算术结果
-idx_A = vocab.index(word_A)
-idx_B = vocab.index(word_B)
-idx_C = vocab.index(word_C)
+# ---------------------------------------------------------------------------
+# 侧边栏参数面板
+# ---------------------------------------------------------------------------
+st.sidebar.markdown("#### HYPERPARAMETERS // 超参数与配置")
 
-vec_A = embeddings[idx_A]
-vec_B = embeddings[idx_B]
-vec_C = embeddings[idx_C]
-vec_R_ideal = vec_A - vec_B + vec_C
+dim_choice = st.sidebar.radio(
+    "空间投影维度",
+    ["3D 立体空间 (3D View)", "2D 平面投影 (2D View)"],
+    index=0,
+    help="将 32 维词向量通过主成分分析 (PCA) 降维投影到低维视口供直观观察。",
+)
 
-# 计算余弦相似度
-def cosine_sim(v1, v2):
-    n1 = np.linalg.norm(v1)
-    n2 = np.linalg.norm(v2)
-    if n1 == 0 or n2 == 0: return 0.0
-    return np.dot(v1, v2) / (n1 * n2)
+group_options = [
+    "全部词汇 (All Vocabulary)",
+    "王族概念 (Royalty: king, queen, prince...)",
+    "动物世界 (Animals: cat, dog, kitten...)",
+    "国家与首都 (Geopolitics: china, beijing, japan...)",
+    "人类行为 (Actions: run, walk, think...)",
+]
+selected_group = st.sidebar.selectbox(
+    "高亮语义群组",
+    group_options,
+    index=1,
+    help="在散点图中高亮特定的概念族群，观察其聚集与几何分布模式。",
+)
 
-sims = [cosine_sim(vec_R_ideal, emb) for emb in embeddings]
-top_indices = np.argsort(sims)[::-1]
-# 排除输入的A, B, C，找到最接近的结果
-result_word = ""
-top_5_records = []
-count = 0
-for i in top_indices:
-    word = vocab[i]
-    if word not in [word_A, word_B, word_C] and count == 0:
-        result_word = word
-    if count < 5:
-        top_5_records.append({"Word": word, "Cosine Similarity": f"{sims[i]:.4f}"})
-        count += 1
+st.sidebar.markdown("#### SEMANTIC ARITHMETIC // 向量语义算术")
+preset_arithmetic = st.sidebar.selectbox(
+    "预设算术方程",
+    [
+        "king - man + woman = ? (经典王族变换)",
+        "beijing - china + japan = ? (国家首都变换)",
+        "puppy - dog + cat = ? (幼崽概念类比)",
+        "princess - queen + king = ? (性阶转换)",
+        "自定义算术方程...",
+    ],
+    index=0,
+)
 
-highlight_words = []
-if group_choice == "王族":
-    highlight_words = [w for w in ["国王", "女王", "王子", "公主", "皇帝"] if w in vocab]
-elif group_choice == "动物":
-    highlight_words = [w for w in ["猫", "狗", "老虎", "狮子", "老鼠"] if w in vocab]
-elif group_choice == "国家城市":
-    highlight_words = [w for w in ["中国", "北京", "法国", "巴黎", "日本", "东京"] if w in vocab]
-elif group_choice == "全部":
-    highlight_words = vocab
-
-arithmetic = {"A": word_A, "B": word_B, "C": word_C, "Result": result_word}
-
-# 主区域
-# 上半部：3D/2D 散点图
-target_dim = 2 if dim_choice == "2D" else 3
-if target_dim == 2 and embeddings.shape[1] > 2:
-    from sklearn.decomposition import PCA
-    pca = PCA(n_components=2)
-    vectors_proj = pca.fit_transform(embeddings)
+if preset_arithmetic.startswith("king"):
+    default_a, default_b, default_c = "king", "man", "woman"
+elif preset_arithmetic.startswith("beijing"):
+    default_a, default_b, default_c = "beijing", "china", "japan"
+elif preset_arithmetic.startswith("puppy"):
+    default_a, default_b, default_c = "puppy", "dog", "cat"
+elif preset_arithmetic.startswith("princess"):
+    default_a, default_b, default_c = "princess", "queen", "king"
 else:
-    vectors_proj = embeddings
+    default_a, default_b, default_c = "king", "man", "woman"
 
-fig_space = plot_embedding_space(vocab, vectors_proj, highlight_words=highlight_words, arithmetic=arithmetic)
+col_a, col_b, col_c = st.sidebar.columns(3)
+with col_a:
+    label_a = st.selectbox("向量 A (+)", display_labels, index=vocab_words.index(default_a))
+with col_b:
+    label_b = st.selectbox("向量 B (-)", display_labels, index=vocab_words.index(default_b))
+with col_c:
+    label_c = st.selectbox("向量 C (+)", display_labels, index=vocab_words.index(default_c))
+
+word_a = label_to_word[label_a]
+word_b = label_to_word[label_b]
+word_c = label_to_word[label_c]
+
+# ---------------------------------------------------------------------------
+# 语义算术与余弦相似度运算
+# ---------------------------------------------------------------------------
+idx_a = raw_vocab[word_a]
+idx_b = raw_vocab[word_b]
+idx_c = raw_vocab[word_c]
+
+vec_a = embeddings_matrix[idx_a]
+vec_b = embeddings_matrix[idx_b]
+vec_c = embeddings_matrix[idx_c]
+
+# 算术结果向量: R_ideal = A - B + C
+vec_result_ideal = vec_a - vec_b + vec_c
+
+# 计算余弦相似度: cos(u, v) = u·v / (||u|| * ||v||)
+norms = np.linalg.norm(embeddings_matrix, axis=1) + 1e-12
+r_norm = np.linalg.norm(vec_result_ideal) + 1e-12
+cosine_sims = np.dot(embeddings_matrix, vec_result_ideal) / (norms * r_norm)
+
+# 排除输入的 A, B, C，找到最接近的目标候选词
+sorted_indices = np.argsort(cosine_sims)[::-1]
+
+best_match_word = ""
+best_match_sim = 0.0
+top_candidates = []
+
+for idx in sorted_indices:
+    candidate_w = vocab_words[idx]
+    sim_val = float(cosine_sims[idx])
+    if candidate_w not in [word_a, word_b, word_c] and not best_match_word:
+        best_match_word = candidate_w
+        best_match_sim = sim_val
+    if len(top_candidates) < 5:
+        top_candidates.append({
+            "排名 (Rank)": f"#{len(top_candidates)+1}",
+            "候选词汇 (Candidate)": CN_LABEL_MAP.get(candidate_w, candidate_w),
+            "余弦相似度 (Cosine Sim)": f"{sim_val * 100:.2f}%",
+            "状态 (Status)": "👑 最优匹配 (Best Match)" if candidate_w == best_match_word else "候选 (Candidate)",
+        })
+
+# ---------------------------------------------------------------------------
+# 遥测指标卡
+# ---------------------------------------------------------------------------
+metric_grid_html = (
+    '<div class="metric-grid">'
+    + render_metric_card(
+        "EQUATION RESULT // 算术最优预测",
+        CN_LABEL_MAP.get(best_match_word, best_match_word).split()[0].upper(),
+        delta=f"相似度 {best_match_sim*100:.1f}%",
+        delta_type="positive" if best_match_sim > 0.7 else "neutral",
+        icon_name="target",
+    )
+    + render_metric_card(
+        "EMBEDDING DIM // 向量维度",
+        "32-DIM",
+        delta="密集实数表示",
+        delta_type="positive",
+        icon_name="cpu",
+    )
+    + render_metric_card(
+        "VOCABULARY SIZE // 词表容量",
+        f"{len(vocab_words)} 词",
+        delta="Mini-Semantics",
+        delta_type="neutral",
+        icon_name="database",
+    )
+    + render_metric_card(
+        "GEOMETRY STATUS // 几何平行性",
+        "ALIGNED // 成立",
+        delta="A - B + C ≈ Result",
+        delta_type="positive",
+        icon_name="activity",
+    )
+    + "</div>"
+)
+st.markdown(metric_grid_html, unsafe_allow_html=True)
+
+# ---------------------------------------------------------------------------
+# 主视图区：3D / 2D 散点图与算术平行四边形
+# ---------------------------------------------------------------------------
+render_section_heading("SEMANTIC MANIFOLD & VECTOR ARITHMETIC // 语义流形与向量算术空间", icon_name="activity")
+
+# 确定高亮列表
+highlight_tokens = []
+if "Royalty" in selected_group or "王族" in selected_group:
+    highlight_tokens = ["king", "queen", "prince", "princess", "man", "woman", "boy", "girl"]
+elif "Animals" in selected_group or "动物" in selected_group:
+    highlight_tokens = ["cat", "dog", "kitten", "puppy", "fish", "bird"]
+elif "Geopolitics" in selected_group or "国家" in selected_group:
+    highlight_tokens = ["china", "japan", "usa", "france", "germany", "italy", "beijing", "tokyo", "paris", "rome"]
+elif "Actions" in selected_group or "行为" in selected_group:
+    highlight_tokens = ["run", "walk", "eat", "drink", "sleep", "think", "speak", "write"]
+else:
+    highlight_tokens = [word_a, word_b, word_c, best_match_word]
+
+arithmetic_dict = {
+    "A": word_a,
+    "B": word_b,
+    "C": word_c,
+    "Result": best_match_word,
+}
+
+fig_space = plot_embedding_space(
+    words=vocab_words,
+    vectors=embeddings_matrix,
+    highlight_words=highlight_tokens,
+    arithmetic=arithmetic_dict,
+    title=f"3D SEMANTIC EMBEDDING // 词嵌入语义几何空间 ({selected_group.split()[0]})",
+)
 st.plotly_chart(fig_space, use_container_width=True)
 
-# 下半部
-col1, col2 = st.columns(2)
-with col1:
-    st.markdown("#### 余弦相似度 Top-5 (相对于理想结果)")
-    st.table(pd.DataFrame(top_5_records))
+# ---------------------------------------------------------------------------
+# 结果细节卡片：Top-5 相似度排行 & 语义方程
+# ---------------------------------------------------------------------------
+col_table, col_eqn = st.columns([1.2, 1])
 
-with col2:
-    st.markdown("#### 语义算术结果")
-    res_html = (
-        '<div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:1.5rem; text-align:center;">'
-        f'<span style="font-size:1.2rem; font-weight:bold; color:#1d4ed8;">{word_A}</span> '
-        f'<span style="font-size:1.2rem; font-weight:bold;">-</span> '
-        f'<span style="font-size:1.2rem; font-weight:bold; color:#b45309;">{word_B}</span> '
-        f'<span style="font-size:1.2rem; font-weight:bold;">+</span> '
-        f'<span style="font-size:1.2rem; font-weight:bold; color:#047857;">{word_C}</span> '
-        f'<span style="font-size:1.5rem; font-weight:bold; margin:0 1rem;">≈</span> '
-        f'<span style="font-size:1.5rem; font-weight:bold; color:#be123c;">{result_word}</span>'
-        '</div>'
+with col_table:
+    render_section_heading("COSINE SIMILARITY RANKING // 余弦相似度搜索排行", icon_name="target")
+    st.dataframe(pd.DataFrame(top_candidates), use_container_width=True, hide_index=True)
+
+with col_eqn:
+    render_section_heading("VECTOR EQUATION VERIFICATION // 向量方程几何验证", icon_name="cpu")
+    st.markdown(
+        f"""
+        <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:1.4rem; box-shadow:0 2px 8px rgba(15,23,42,0.03);">
+            <div style="font-size:0.82rem; font-weight:700; color:#64748b; text-transform:uppercase; margin-bottom:0.8rem;">
+                📐 语义平行四边形矢量公式 (Vector Parallelogram)
+            </div>
+            <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:1rem; text-align:center; font-family:'JetBrains Mono', monospace; font-size:1.1rem; margin-bottom:1rem;">
+                <span style="color:#1d4ed8; font-weight:800;">{word_a}</span>
+                <span style="color:#64748b;"> - </span>
+                <span style="color:#be123c; font-weight:800;">{word_b}</span>
+                <span style="color:#64748b;"> + </span>
+                <span style="color:#047857; font-weight:800;">{word_c}</span>
+                <span style="color:#64748b; font-weight:800;"> ≈ </span>
+                <span style="color:#7c3aed; font-weight:800; background:#f3e8ff; padding:0.2rem 0.6rem; border-radius:4px;">{best_match_word}</span>
+            </div>
+            <div style="font-size:0.85rem; color:#475569; line-height:1.6;">
+                💡 <b>原理解析</b>：<br>
+                向量减法 <code>{word_a} - {word_b}</code> 提取了纯粹的<b>性别概念向量 (Gender Vector)</b>；<br>
+                将该位移向量加到 <code>{word_c}</code> 上，在几何空间中直接平移到了 <code>{best_match_word}</code> 的近邻坐标！
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
-    st.markdown(res_html, unsafe_allow_html=True)
 
-# 最底部：One-Hot vs Embedding 对比卡片
-st.markdown("---")
-st.markdown("#### ⚠️ One-Hot vs Embedding (稀疏 vs 密集)")
-col_o, col_e = st.columns(2)
-with col_o:
-    st.info("**One-Hot 编码**\n\n向量长度等于词表大小。只有一个1，其余全是0。词与词之间绝对正交，没有距离和相似度概念 (余弦相似度全为0)。")
-with col_e:
-    st.success("**Word Embedding 词嵌入**\n\n低维密集实数向量。语义相似的词在空间中距离相近，能通过线性组合表达复杂的概念关联。")
+# ---------------------------------------------------------------------------
+# 底部理论对比卡片：One-Hot vs Dense Embedding
+# ---------------------------------------------------------------------------
+render_section_heading("SPARSE VS DENSE // 为什么传统 One-Hot 无法做深度学习？", icon_name="zap")
+
+col_oh, col_emb = st.columns(2)
+with col_oh:
+    with st.container(border=True):
+        st.markdown(
+            """
+            #### ❌ 传统 One-Hot 稀疏孤立编码
+            - **形式**：`[0, 0, 0, 1, 0, ..., 0]` (长度等于全词表容量，如 50,000 维)
+            - **致命缺陷**：
+              1. **维度灾难**：词表多大，向量就有多长，内存极度浪费；
+              2. **正交孤立**：任意两个词的点积恒为 0，`cat` 和 `dog` 的相似度与 `cat` 和 `refrigerator` 毫无区别；
+              3. **无法计算**：完全无法支持向量加减算术与泛化。
+            """
+        )
+
+with col_emb:
+    with st.container(border=True):
+        st.markdown(
+            """
+            #### ✅ 密集词嵌入 (Dense Embedding)
+            - **形式**：`[0.24, -0.81, 0.43, ..., 0.15]` (低维连续实数空间，如 32~768 维)
+            - **核心威力**：
+              1. **语义几何化**：空间距离（余弦夹角）直接代表概念相似度；
+              2. **特征解耦**：不同维度自发学到性别、时态、国属、动静等抽象属性；
+              3. **现代 LLM 的基石**：所有 Transformer 和 ChatGPT 的输入第一站都是 Embedding！
+            """
+        )

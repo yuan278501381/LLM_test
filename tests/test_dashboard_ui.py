@@ -7,9 +7,9 @@ tests/test_dashboard_ui.py - 工业级 Dashboard UI、组件、SVG 与 E2E 全�
 2. 高对比度亮色卡片 HTML 结构与缩进安全性
 3. 2D 合成数据集全类型与维度一致性矩阵
 4. 经典一键实验预设方案可训练性
-5. 6 大核心 Plotly 图表渲染与布局无重叠
+5. 11 大核心 Plotly 图表渲染与布局无重叠 (包含 M05~M09 新增图表)
 6. 网络拓扑图与单样本动态探针可视化
-7. Streamlit 全站 5 大页面端到端 (E2E) AppTest 与交互仿真（按钮点击、预设切换、参数热调整）
+7. Streamlit 全站 10 大页面 (app + 9 大里程碑页面) 端到端 (E2E) AppTest 与交互仿真
 """
 
 import os
@@ -20,10 +20,14 @@ from streamlit.testing.v1 import AppTest
 
 from dashboard.components.charts import (
     plot_activation_heatmap,
+    plot_attention_heatmap_nlp,
     plot_decision_boundary,
+    plot_embedding_space,
     plot_gradient_histograms,
     plot_loss_curve,
+    plot_memory_decay_heatmap,
     plot_multi_loss_curves,
+    plot_token_probabilities,
     plot_weight_histograms,
     plot_weight_trajectory,
 )
@@ -173,6 +177,33 @@ class TestChartFactory:
         fig = plot_weight_trajectory(traj)
         assert isinstance(fig, go.Figure)
 
+    def test_plot_embedding_space(self):
+        words = ["king", "queen", "man", "woman", "apple"]
+        vecs = np.random.randn(5, 32)
+        fig = plot_embedding_space(
+            words, vecs, highlight_words=["king", "queen"], arithmetic={"A": "king", "B": "man", "C": "woman", "Result": "queen"}
+        )
+        assert isinstance(fig, go.Figure)
+
+    def test_plot_memory_decay_heatmap(self):
+        hidden_states = [np.random.randn(1, 16) for _ in range(5)]
+        tokens = ["the", "cat", "sat", "on", "mat"]
+        fig = plot_memory_decay_heatmap(hidden_states, tokens)
+        assert isinstance(fig, go.Figure)
+
+    def test_plot_attention_heatmap_nlp(self):
+        attn_matrix = np.random.rand(5, 5)
+        attn_matrix[np.triu_indices(5, 1)] = 0
+        tokens = ["the", "cat", "sat", "on", "mat"]
+        fig = plot_attention_heatmap_nlp(attn_matrix, tokens, tokens)
+        assert isinstance(fig, go.Figure)
+
+    def test_plot_token_probabilities(self):
+        probs = np.array([0.1, 0.5, 0.2, 0.15, 0.05])
+        vocab = ["the", "cat", "dog", "king", "queen"]
+        fig = plot_token_probabilities(probs, vocab, top_k=3)
+        assert isinstance(fig, go.Figure)
+
 
 class TestNetworkTopologyViz:
     """测试网络拓扑与活性探针渲染"""
@@ -197,7 +228,7 @@ class TestNetworkTopologyViz:
 
 
 class TestStreamlitAppE2E:
-    """Streamlit 全站 AppTest E2E 自动化端到端测试与交互仿真"""
+    """Streamlit 全站 10 大页面 (App + 9 大里程碑) AppTest E2E 自动化端到端测试与交互仿真"""
 
     def test_app_landing_page_e2e(self):
         app_path = os.path.abspath(
@@ -207,51 +238,95 @@ class TestStreamlitAppE2E:
         assert not at.exception, f"app.py runtime error: {at.exception}"
 
     def test_page1_perceptron_e2e(self):
-        page1_path = os.path.abspath(
+        page_path = os.path.abspath(
             os.path.join(
                 os.path.dirname(__file__), "..", "dashboard", "pages", "1_单神经元感知器.py"
             )
         )
-        at = AppTest.from_file(page1_path, default_timeout=20).run()
+        at = AppTest.from_file(page_path, default_timeout=20).run()
         assert not at.exception, f"Page 1 runtime error: {at.exception}"
 
     def test_page2_deep_network_e2e(self):
-        page2_path = os.path.abspath(
+        page_path = os.path.abspath(
             os.path.join(os.path.dirname(__file__), "..", "dashboard", "pages", "2_多层网络.py")
         )
-        at = AppTest.from_file(page2_path, default_timeout=20).run()
+        at = AppTest.from_file(page_path, default_timeout=20).run()
         assert not at.exception, f"Page 2 runtime error: {at.exception}"
 
     def test_page3_optimizer_arena_e2e(self):
-        page3_path = os.path.abspath(
+        page_path = os.path.abspath(
             os.path.join(os.path.dirname(__file__), "..", "dashboard", "pages", "3_优化器对比.py")
         )
-        at = AppTest.from_file(page3_path, default_timeout=20).run()
+        at = AppTest.from_file(page_path, default_timeout=20).run()
         assert not at.exception, f"Page 3 runtime error: {at.exception}"
 
     def test_page4_parameter_lab_e2e(self):
-        page4_path = os.path.abspath(
+        page_path = os.path.abspath(
             os.path.join(os.path.dirname(__file__), "..", "dashboard", "pages", "4_参数实验室.py")
         )
-        at = AppTest.from_file(page4_path, default_timeout=20).run()
+        at = AppTest.from_file(page_path, default_timeout=20).run()
         assert not at.exception, f"Page 4 runtime error: {at.exception}"
 
     def test_page4_button_interactions_e2e(self):
         """测试 Page 4 的交互按钮：训练 50 轮与单步微调"""
-        page4_path = os.path.abspath(
+        page_path = os.path.abspath(
             os.path.join(os.path.dirname(__file__), "..", "dashboard", "pages", "4_参数实验室.py")
         )
-        at = AppTest.from_file(page4_path, default_timeout=25).run()
+        at = AppTest.from_file(page_path, default_timeout=25).run()
         assert not at.exception
 
-        # 点击训练 50 轮
         train_btn = next((b for b in at.button if "50" in b.label), None)
         if train_btn:
             train_btn.click().run()
             assert not at.exception, f"Page 4 train 50 button error: {at.exception}"
 
-        # 点击单步微调
         step_btn = next((b for b in at.button if "微调" in b.label or "STEP" in b.label), None)
         if step_btn:
             step_btn.click().run()
             assert not at.exception, f"Page 4 step button error: {at.exception}"
+
+    def test_page5_embedding_space_e2e(self):
+        """测试 M05: 词嵌入语义空间页面"""
+        page_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "dashboard", "pages", "5_词嵌入空间.py")
+        )
+        at = AppTest.from_file(page_path, default_timeout=25).run()
+        assert not at.exception, f"Page 5 runtime error: {at.exception}"
+
+    def test_page6_sequence_memory_e2e(self):
+        """测试 M06: 序列记忆与遗忘瓶颈页面"""
+        page_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "dashboard", "pages", "6_序列记忆.py")
+        )
+        at = AppTest.from_file(page_path, default_timeout=25).run()
+        assert not at.exception, f"Page 6 runtime error: {at.exception}"
+
+    def test_page7_attention_mechanism_e2e(self):
+        """测试 M07: 注意力机制页面"""
+        page_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "dashboard", "pages", "7_注意力机制.py")
+        )
+        at = AppTest.from_file(page_path, default_timeout=25).run()
+        assert not at.exception, f"Page 7 runtime error: {at.exception}"
+
+    def test_page8_transformer_block_e2e(self):
+        """测试 M08: Transformer 结构块页面"""
+        page_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "dashboard", "pages", "8_Transformer.py")
+        )
+        at = AppTest.from_file(page_path, default_timeout=25).run()
+        assert not at.exception, f"Page 8 runtime error: {at.exception}"
+
+    def test_page9_mini_gpt_e2e(self):
+        """测试 M09: Mini-GPT 文本生成页面与交互按钮"""
+        page_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "dashboard", "pages", "9_Mini_GPT.py")
+        )
+        at = AppTest.from_file(page_path, default_timeout=25).run()
+        assert not at.exception, f"Page 9 runtime error: {at.exception}"
+
+        # 测试一键生成按钮
+        gen_btn = next((b for b in at.button if "一键" in b.label or "生成" in b.label), None)
+        if gen_btn:
+            gen_btn.click().run()
+            assert not at.exception, f"Page 9 generate button error: {at.exception}"
