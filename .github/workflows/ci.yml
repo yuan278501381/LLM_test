@@ -107,7 +107,7 @@ jobs:
           retention-days: 30
 
       - name: 上传覆盖率到 Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v7
         if: matrix.os == 'ubuntu-latest' && matrix.python == '3.11'
         with:
           file: reports/coverage.xml
