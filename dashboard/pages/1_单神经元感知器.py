@@ -50,6 +50,12 @@ render_hero_header(
     badge_type="blue",
 )
 
+st.info(
+    "💡 **极速概念辨析与入门指引**：\n"
+    "- 👈 **左侧边栏**：是您作为人类架构师手动控制的 **【超参数 (Hyperparameters)】**（例如：学习率、训练轮数、激活函数、样本量）。\n"
+    "- 👆 **上方 4 张仪表盘卡片**：是神经网络通过反向传播算法，**自主训练计算出来的【最终学习成果 (Learned Parameters)】**（如最终损失、准确率、模型算出的直线方程参数），您无需手动填写它们。"
+)
+
 # ---------------------------------------------------------------------------
 # 侧边栏参数面板 (由 knowledge 元数据驱动，带丰富 Tooltip)
 # ---------------------------------------------------------------------------
@@ -138,14 +144,18 @@ w_final = dense_layer.weights.ravel()
 b_final = float(dense_layer.biases.ravel()[0])
 
 # ---------------------------------------------------------------------------
-# 遥测指标卡 (安全拼接 HTML)
+# 遥测指标卡 (模型自动学习输出结果)
 # ---------------------------------------------------------------------------
+sign_b = "+" if b_final >= 0 else "-"
+abs_b = abs(b_final)
+hyperplane_str = f"{w_final[0]:.2f}x₁ + {w_final[1]:.2f}x₂ {sign_b} {abs_b:.2f} = 0"
+
 grid_html = (
     '<div class="metric-grid">'
-    + render_metric_card("FINAL LOSS // 最终损失", f"{final_loss:.4f}", delta="CONVERGED" if final_loss < 0.2 else "TRAINING", delta_type="positive" if final_loss < 0.2 else "neutral", icon_name="trending-down")
-    + render_metric_card("ACCURACY // 准确率", f"{final_acc:.1%}", delta="OPTIMAL" if final_acc >= 0.95 else "PROGRESSING", delta_type="positive" if final_acc >= 0.9 else "neutral", icon_name="target")
-    + render_metric_card("WEIGHT [W₁, W₂] // 权重", f"[{w_final[0]:.2f}, {w_final[1]:.2f}]", delta=f"BIAS 偏置 b = {b_final:.2f}", delta_type="neutral", icon_name="sliders")
-    + render_metric_card("HYPERPLANE // 空间超平面", f"{w_final[0]:.2f}x₁ + {w_final[1]:.2f}x₂ + {b_final:.2f} = 0", delta="DECISION BOUNDARY", delta_type="neutral", icon_name="activity")
+    + render_metric_card("FINAL LOSS // 最终训练损失", f"{final_loss:.4f}", delta="已收敛 (CONVERGED)" if final_loss < 0.2 else "训练中 (TRAINING)", delta_type="positive" if final_loss < 0.2 else "neutral", icon_name="trending-down")
+    + render_metric_card("ACCURACY // 分类准确率", f"{final_acc:.1%}", delta="达标 (OPTIMAL)" if final_acc >= 0.95 else "收敛中", delta_type="positive" if final_acc >= 0.9 else "neutral", icon_name="target")
+    + render_metric_card("LEARNED WEIGHTS // 模型自主学得权重", f"[{w_final[0]:.2f}, {w_final[1]:.2f}]", delta=f"偏置截距 b = {b_final:.2f}", delta_type="neutral", icon_name="sliders")
+    + render_metric_card("DECISION LINE // 学得的直线方程", f'<span style="font-size:1.05rem;">{hyperplane_str}</span>', delta="模型自动求解的决策分界面", delta_type="positive", icon_name="activity")
     + '</div>'
 )
 st.markdown(grid_html, unsafe_allow_html=True)
