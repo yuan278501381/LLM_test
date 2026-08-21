@@ -1,40 +1,130 @@
 # Copyright (c) 2026 Yy1 (yuan278501381) | MIT License
 """
-dashboard.components.param_panel - 可复用的参数控制面板
+dashboard.components.param_panel - 世界级交互式参数控制中枢
 
-提供标准化的 Streamlit 侧边栏控件集合，确保各页面参数控件一致。
+提供结构清晰、交互丝滑的侧边栏控制面板：
+- 经典实验一键预设库 (Instant Presets)
+- 数据集拓扑选择与噪声调节
+- 深度神经网络架构配置 (层数/神经元/激活/初始化)
+- 训练超参数与优化器选择
+- 正则化与防过拟合策略
+- 实时神经元活性探针点选取
 """
 
+from typing import Any
 import streamlit as st
 
 
-def render_dataset_selector(key_prefix: str = "") -> tuple[str, int, float, int]:
-    """
-    渲染数据集选择控件。
+# ---------------------------------------------------------------------------
+# 经典实验预设库
+# ---------------------------------------------------------------------------
+PRESETS = {
+    "自定义配置 (Custom)": {
+        "desc": "自由配置所有超参数与网络架构",
+        "dataset": "🌙 Moons",
+        "n_samples": 250,
+        "noise": 0.12,
+        "n_layers": 2,
+        "neurons": [8, 4],
+        "activation": "ReLU",
+        "initializer": "he",
+        "optimizer": "Adam",
+        "lr": 0.05,
+        "epochs": 150,
+    },
+    "🎯 线性可分基准 (Linear Baseline)": {
+        "desc": "单层感知机即可完美求解的经典线性分类问题",
+        "dataset": "🫧 Blobs",
+        "n_samples": 200,
+        "noise": 0.10,
+        "n_layers": 1,
+        "neurons": [1],
+        "activation": "Sigmoid",
+        "initializer": "xavier",
+        "optimizer": "SGD",
+        "lr": 0.1,
+        "epochs": 100,
+    },
+    "❌ XOR 历史困境与破解 (XOR Problem)": {
+        "desc": "明斯基提出的异或难题：单层失效，2层隐藏层轻松破解非线性决策",
+        "dataset": "❌ XOR",
+        "n_samples": 300,
+        "noise": 0.08,
+        "n_layers": 2,
+        "neurons": [8, 4],
+        "activation": "Tanh",
+        "initializer": "xavier",
+        "optimizer": "Adam",
+        "lr": 0.05,
+        "epochs": 200,
+    },
+    "🌀 双螺旋奇点挑战 (Spiral Singularity)": {
+        "desc": "高曲率流形分类，检验深度网络的深层特征扭曲拟合能力",
+        "dataset": "🌀 Spiral",
+        "n_samples": 400,
+        "noise": 0.15,
+        "n_layers": 3,
+        "neurons": [16, 12, 8],
+        "activation": "LeakyReLU",
+        "initializer": "he",
+        "optimizer": "Adam",
+        "lr": 0.03,
+        "epochs": 300,
+    },
+    "💥 梯度消失复现与拯救 (Vanishing Gradient)": {
+        "desc": "深层 Sigmoid + Random 初始化导致前端梯度归零 vs ReLU + He 救场",
+        "dataset": "⭕ Circles",
+        "n_samples": 300,
+        "noise": 0.10,
+        "n_layers": 4,
+        "neurons": [12, 12, 12, 12],
+        "activation": "Sigmoid",
+        "initializer": "random",
+        "optimizer": "SGD",
+        "lr": 0.05,
+        "epochs": 200,
+    },
+}
 
-    Returns:
-        (dataset_name, n_samples, noise, random_state)
-    """
-    st.sidebar.subheader("📊 数据集")
+
+def render_presets_selector(key_prefix: str = "") -> dict[str, Any] | None:
+    """渲染一键实验预设选择器"""
+    st.sidebar.markdown("### ⚡ 经典实验预设")
+    preset_choice = st.sidebar.selectbox(
+        "选择经典实验场景",
+        list(PRESETS.keys()),
+        key=f"{key_prefix}preset_choice",
+    )
+    preset_data = PRESETS[preset_choice]
+
+    if preset_choice != "自定义配置 (Custom)":
+        st.sidebar.caption(f"💡 {preset_data['desc']}")
+        return preset_data
+    return None
+
+
+def render_dataset_selector(key_prefix: str = "", default_dataset: str = "🌙 Moons") -> tuple[str, int, float, int]:
+    """渲染数据集选择与参数卡片"""
+    st.sidebar.markdown("### 📊 数据集拓扑")
+
+    dataset_options = ["🌙 Moons", "⭕ Circles", "❌ XOR", "🌀 Spiral", "🫧 Blobs"]
+    default_idx = dataset_options.index(default_dataset) if default_dataset in dataset_options else 0
+
     dataset = st.sidebar.selectbox(
-        "选择数据集",
-        ["🌙 Moons", "⭕ Circles", "❌ XOR", "🌀 Spiral"],
+        "数据分布类型",
+        dataset_options,
+        index=default_idx,
         key=f"{key_prefix}dataset",
     )
     dataset_name = dataset.split(" ")[1].lower()
 
-    n_samples = st.sidebar.slider(
-        "样本数量", 50, 1000, 200, step=50,
-        key=f"{key_prefix}n_samples",
-    )
-    noise = st.sidebar.slider(
-        "噪声强度", 0.0, 0.5, 0.1, step=0.01,
-        key=f"{key_prefix}noise",
-    )
-    random_state = st.sidebar.number_input(
-        "随机种子", 0, 9999, 42,
-        key=f"{key_prefix}random_state",
-    )
+    col1, col2 = st.sidebar.columns(2)
+    with col1:
+        n_samples = st.slider("样本量 (N)", 50, 1000, 250, step=50, key=f"{key_prefix}n_samples")
+    with col2:
+        noise = st.slider("噪声强度", 0.0, 0.4, 0.1, step=0.02, key=f"{key_prefix}noise")
+
+    random_state = st.sidebar.number_input("随机种子 (Seed)", 0, 9999, 42, key=f"{key_prefix}random_state")
 
     return dataset_name, n_samples, noise, random_state
 
@@ -42,48 +132,54 @@ def render_dataset_selector(key_prefix: str = "") -> tuple[str, int, float, int]
 def render_network_params(
     allow_multi_layer: bool = True,
     key_prefix: str = "",
-) -> dict:
-    """
-    渲染网络结构控件。
-
-    Returns:
-        {
-            'n_layers': int,
-            'neurons_per_layer': list[int],
-            'activation': str,
-            'initializer': str,
-        }
-    """
-    st.sidebar.subheader("🧱 网络结构")
+    default_layers: int = 2,
+    default_neurons: list[int] | None = None,
+    default_act: str = "ReLU",
+    default_init: str = "he",
+) -> dict[str, Any]:
+    """渲染网络架构参数中枢"""
+    st.sidebar.markdown("### 🧱 网络架构配置")
 
     if allow_multi_layer:
         n_layers = st.sidebar.slider(
-            "隐藏层数", 1, 6, 2,
+            "隐藏层层数", 1, 5, default_layers,
             key=f"{key_prefix}n_layers",
+            help="增加深度可学习更复杂的空间拓扑折叠",
         )
     else:
         n_layers = 1
 
     neurons_per_layer = []
+    defaults = default_neurons or [8, 4, 4, 4, 4]
+
     for i in range(n_layers):
+        default_val = defaults[i] if i < len(defaults) else 4
         n = st.sidebar.slider(
-            f"第 {i+1} 层神经元数",
-            2, 64, 8 if i == 0 else 4,
+            f"隐藏层 #{i+1} 神经元数",
+            1 if not allow_multi_layer else 2, 64, default_val,
             key=f"{key_prefix}neurons_{i}",
         )
         neurons_per_layer.append(n)
 
-    activation = st.sidebar.selectbox(
-        "激活函数",
-        ["ReLU", "Sigmoid", "Tanh", "LeakyReLU"],
-        key=f"{key_prefix}activation",
-    )
-
-    initializer = st.sidebar.selectbox(
-        "权重初始化",
-        ["xavier", "he", "random", "zeros"],
-        key=f"{key_prefix}initializer",
-    )
+    col1, col2 = st.sidebar.columns(2)
+    with col1:
+        act_options = ["ReLU", "Sigmoid", "Tanh", "LeakyReLU"]
+        act_idx = act_options.index(default_act) if default_act in act_options else 0
+        activation = st.selectbox(
+            "激活函数",
+            act_options,
+            index=act_idx,
+            key=f"{key_prefix}activation",
+        )
+    with col2:
+        init_options = ["he", "xavier", "random", "zeros"]
+        init_idx = init_options.index(default_init) if default_init in init_options else 0
+        initializer = st.selectbox(
+            "参数初始化",
+            init_options,
+            index=init_idx,
+            key=f"{key_prefix}initializer",
+        )
 
     return {
         "n_layers": n_layers,
@@ -93,89 +189,65 @@ def render_network_params(
     }
 
 
-def render_training_params(key_prefix: str = "") -> dict:
-    """
-    渲染训练超参数控件。
+def render_training_params(
+    key_prefix: str = "",
+    default_opt: str = "Adam",
+    default_lr: float = 0.05,
+    default_epochs: int = 150,
+) -> dict[str, Any]:
+    """渲染训练超参数控制台"""
+    st.sidebar.markdown("### ⚙️ 训练与优化器")
 
-    Returns:
-        {
-            'learning_rate': float,
-            'epochs': int,
-            'batch_size': int,
-            'optimizer': str,
-            'loss': str,
-        }
-    """
-    st.sidebar.subheader("⚙️ 训练参数")
-
+    opt_options = ["Adam", "SGD", "Momentum", "RMSProp"]
+    opt_idx = opt_options.index(default_opt) if default_opt in opt_options else 0
     optimizer = st.sidebar.selectbox(
-        "优化器",
-        ["Adam", "SGD", "Momentum", "RMSProp"],
+        "优化算法",
+        opt_options,
+        index=opt_idx,
         key=f"{key_prefix}optimizer",
     )
 
-    learning_rate = st.sidebar.select_slider(
-        "学习率",
-        options=[0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0],
-        value=0.01,
-        key=f"{key_prefix}lr",
-    )
+    col1, col2 = st.sidebar.columns(2)
+    with col1:
+        lr = st.number_input(
+            "学习率 (LR)",
+            min_value=0.0001,
+            max_value=2.0,
+            value=default_lr,
+            step=0.01,
+            format="%.4f",
+            key=f"{key_prefix}learning_rate",
+        )
+    with col2:
+        batch_size = st.selectbox(
+            "Batch Size",
+            [16, 32, 64, 128, 256, 0],
+            format_func=lambda x: "Full (全量)" if x == 0 else str(x),
+            index=1,
+            key=f"{key_prefix}batch_size",
+        )
 
     epochs = st.sidebar.slider(
-        "训练轮数 (Epochs)", 10, 2000, 200, step=10,
+        "训练轮数 (Epochs)",
+        10, 800, default_epochs, step=10,
         key=f"{key_prefix}epochs",
     )
 
-    batch_size = st.sidebar.select_slider(
-        "批大小 (Batch Size)",
-        options=[4, 8, 16, 32, 64, 128, 256],
-        value=32,
-        key=f"{key_prefix}batch_size",
-    )
-
     return {
-        "learning_rate": learning_rate,
-        "epochs": epochs,
-        "batch_size": batch_size,
         "optimizer": optimizer,
+        "learning_rate": lr,
+        "batch_size": batch_size if batch_size > 0 else None,
+        "epochs": epochs,
     }
 
 
-def render_regularization_params(key_prefix: str = "") -> dict:
-    """
-    渲染正则化控件。
-
-    Returns:
-        {
-            'type': str | None,
-            'strength': float,
-            'dropout_rate': float,
-        }
-    """
-    st.sidebar.subheader("🛡️ 正则化")
-
-    reg_type = st.sidebar.selectbox(
-        "正则化类型",
-        ["无", "L1", "L2"],
-        key=f"{key_prefix}reg_type",
-    )
-
-    strength = 0.01
-    if reg_type != "无":
-        strength = st.sidebar.select_slider(
-            "正则化强度 (λ)",
-            options=[0.0001, 0.001, 0.01, 0.05, 0.1, 0.5],
-            value=0.01,
-            key=f"{key_prefix}reg_strength",
-        )
-
-    dropout_rate = st.sidebar.slider(
-        "Dropout 比例", 0.0, 0.8, 0.0, step=0.05,
-        key=f"{key_prefix}dropout_rate",
-    )
-
-    return {
-        "type": reg_type if reg_type != "无" else None,
-        "strength": strength,
-        "dropout_rate": dropout_rate,
-    }
+def render_probe_point_selector(key_prefix: str = "") -> tuple[float, float]:
+    """渲染单样本活性探针坐标微调器"""
+    st.sidebar.markdown("### 📍 神经元活性探针 (Probe)")
+    st.sidebar.caption("设置测试样本坐标，观察信号如何在各层神经元间流淌与点亮：")
+    col1, col2 = st.sidebar.columns(2)
+    with col1:
+        px = st.number_input("探针 x₁", -3.0, 3.0, 0.5, step=0.1, key=f"{key_prefix}probe_x")
+    with col2:
+        py = st.number_input("探针 x₂", -3.0, 3.0, 0.5, step=0.1, key=f"{key_prefix}probe_y")
+    return float(px), float(py)

@@ -1,24 +1,18 @@
 # Copyright (c) 2026 Yy1 (yuan278501381) | MIT License
 """
-里程碑 1: 单神经元感知器 — 理解最小计算单元
+🎯 里程碑 1: 单神经元感知器 (Single Neuron Perceptron)
 
-本页面使用一个最简单的网络（Dense(2,1) + Sigmoid）来演示:
-    - 前向传播的计算过程
-    - 损失函数如何衡量预测误差
-    - 反向传播如何计算梯度
-    - 参数更新如何改善预测
-
-通过拖动学习率滑块，直观感受学习率对收敛的影响。
+微观解构最小计算单元：前向传播、损失函数、反向传播与权重空间寻优。
 """
 
 import os
 import sys
-import time
 
 _PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
+import numpy as np
 import streamlit as st
 
 from dashboard.components.charts import (
@@ -26,133 +20,123 @@ from dashboard.components.charts import (
     plot_loss_curve,
     plot_weight_trajectory,
 )
-from datasets.generators import make_circles, make_moons, make_xor
-from nn_core.activations import LeakyReLU, ReLU, Sigmoid, Tanh
-from nn_core.callbacks import TrainingHistory
+from dashboard.components.param_panel import render_dataset_selector
+from dashboard.styles.theme import (
+    apply_custom_theme,
+    render_hero_header,
+    render_metric_card,
+)
+from dashboard.utils.state import ACTIVATION_MAP, OPTIMIZER_MAP, get_dataset
 from nn_core.layers import Dense
 from nn_core.losses import BinaryCrossEntropy
 from nn_core.model import Sequential
-from nn_core.optimizers import SGD
-from nn_core.tensor import set_seed
 
-st.set_page_config(page_title="🎯 单神经元感知器", layout="wide")
-st.title("🎯 里程碑 1: 单神经元感知器")
-st.markdown("**理解最小计算单元** — 一个神经元如何学会在二维空间中画一条分割线。")
-
-# ---------------------------------------------------------------------------
-# 侧边栏参数
-# ---------------------------------------------------------------------------
-st.sidebar.header("🎛️ 参数控制")
-
-# 数据集
-st.sidebar.subheader("📊 数据集")
-dataset_choice = st.sidebar.selectbox(
-    "选择数据集",
-    ["🌙 Moons", "⭕ Circles", "❌ XOR"],
-    key="m1_dataset",
+st.set_page_config(
+    page_title="单神经元感知器 · NN Playground",
+    page_icon="🎯",
+    layout="wide",
 )
 
-n_samples = st.sidebar.slider("样本数量", 50, 500, 200, step=50, key="m1_n")
-noise = st.sidebar.slider("噪声强度", 0.0, 0.5, 0.1, step=0.01, key="m1_noise")
-seed = st.sidebar.number_input("随机种子", 0, 9999, 42, key="m1_seed")
+apply_custom_theme()
 
-# 超参数
-st.sidebar.subheader("⚙️ 训练参数")
-activation_name = st.sidebar.selectbox(
-    "激活函数", ["Sigmoid", "Tanh", "ReLU", "LeakyReLU"], key="m1_act"
+render_hero_header(
+    title="🎯 单神经元感知器",
+    subtitle="解剖深度学习最小计算基元：线性加权 $Z = XW + b$、非线性激活与梯度下降的几何本质",
+    badge_text="MILESTONE 1 · ATOMIC COMPUTATION",
+    badge_type="blue",
 )
-learning_rate = st.sidebar.select_slider(
-    "学习率",
-    options=[0.0001, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0],
-    value=0.1, key="m1_lr",
+
+# ---------------------------------------------------------------------------
+# 侧边栏参数面板
+# ---------------------------------------------------------------------------
+dataset_name, n_samples, noise, random_state = render_dataset_selector(
+    key_prefix="m1_", default_dataset="🫧 Blobs"
 )
-epochs = st.sidebar.slider("训练轮数", 10, 1000, 200, step=10, key="m1_epochs")
+
+st.sidebar.markdown("### 🧬 神经元超参数")
+activation_name = st.sidebar.selectbox("激活函数", ["Sigmoid", "ReLU", "Tanh", "LeakyReLU"], key="m1_act")
+optimizer_name = st.sidebar.selectbox("优化器", ["SGD", "Momentum", "RMSProp", "Adam"], key="m1_opt")
+
+col1, col2 = st.sidebar.columns(2)
+with col1:
+    lr = st.number_input("学习率 (LR)", 0.001, 2.0, 0.1, step=0.01, format="%.3f", key="m1_lr")
+with col2:
+    epochs = st.slider("训练轮数", 10, 500, 100, step=10, key="m1_epochs")
 
 # ---------------------------------------------------------------------------
-# 生成数据
+# 数据生成与模型训练
 # ---------------------------------------------------------------------------
-set_seed(seed)
+X, y = get_dataset(dataset_name, n_samples, noise, random_state)
 
-dataset_map = {
-    "🌙 Moons": make_moons,
-    "⭕ Circles": make_circles,
-    "❌ XOR": make_xor,
-}
-X, y = dataset_map[dataset_choice](n_samples=n_samples, noise=noise, random_state=seed)
+# 构建单神经元模型: Input(2) -> Dense(2, 1) -> Activation
+model = Sequential()
+dense_layer = Dense(2, 1, initializer="random")
+model.add(dense_layer)
+model.add(ACTIVATION_MAP[activation_name]())
+
+loss_fn = BinaryCrossEntropy()
+optimizer = OPTIMIZER_MAP[optimizer_name](learning_rate=lr)
+
+# 记录权重轨迹
+weight_trajectory = [dense_layer.weights.copy()]
+
+# 训练循环并记录历史
+history: dict[str, list[float]] = {"loss": [], "accuracy": []}
+
+for _ in range(epochs):
+    # 前向
+    y_pred = model.forward(X, training=True)
+    loss = loss_fn.forward(y_pred, y)
+    acc = float(np.mean((y_pred >= 0.5).astype(float) == y))
+
+    history["loss"].append(loss)
+    history["accuracy"].append(acc)
+
+    # 反向
+    dloss = loss_fn.backward()
+    model.backward(dloss)
+
+    # 优化更新
+    optimizer.step(model.layers)
+    weight_trajectory.append(dense_layer.weights.copy())
+
+final_loss = history["loss"][-1] if history["loss"] else 0.0
+final_acc = history["accuracy"][-1] if history["accuracy"] else 0.0
+w_final = dense_layer.weights.ravel()
+b_final = float(dense_layer.biases.ravel()[0])
 
 # ---------------------------------------------------------------------------
-# 训练按钮
+# 遥测指标卡
 # ---------------------------------------------------------------------------
-train_btn = st.sidebar.button("🚀 开始训练", type="primary", use_container_width=True)
+st.markdown(
+    f"""
+    <div class="metric-grid">
+        {render_metric_card("最终损失 (Loss)", f"{final_loss:.4f}", delta="收敛状态", delta_type="positive" if final_loss < 0.2 else "neutral", icon="📉")}
+        {render_metric_card("分类准确率 (Acc)", f"{final_acc:.1%}", delta="+100%" if final_acc >= 0.95 else "+提升中", delta_type="positive" if final_acc >= 0.9 else "neutral", icon="🎯")}
+        {render_metric_card("权重向量 [w₁, w₂]", f"[{w_final[0]:.2f}, {w_final[1]:.2f}]", delta=f"偏置 b = {b_final:.2f}", delta_type="neutral", icon="⚖️")}
+        {render_metric_card("分界面方程", f"{w_final[0]:.2f}x₁ + {w_final[1]:.2f}x₂ + {b_final:.2f} = 0", delta="超平面", delta_type="neutral", icon="📐")}
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
-if train_btn:
-    set_seed(seed)
+# ---------------------------------------------------------------------------
+# 可视化布局
+# ---------------------------------------------------------------------------
+col_left, col_right = st.columns([1.1, 1])
 
-    # 构建单神经元模型
-    act_map = {"Sigmoid": Sigmoid, "Tanh": Tanh, "ReLU": ReLU, "LeakyReLU": LeakyReLU}
-    model = Sequential()
-    model.add(Dense(2, 1, initializer="xavier"))
-    model.add(act_map[activation_name]())
+with col_left:
+    fig_boundary = plot_decision_boundary(
+        model, X, y, title=f"🗺️ 决策边界 · {activation_name} 激活空间"
+    )
+    st.plotly_chart(fig_boundary, use_container_width=True)
 
-    loss_fn = BinaryCrossEntropy()
-    optimizer = SGD(learning_rate=learning_rate)
-    history_cb = TrainingHistory(snapshot_interval=max(1, epochs // 50))
+with col_right:
+    fig_loss = plot_loss_curve(history, title="📈 训练损失与准确率演进")
+    st.plotly_chart(fig_loss, use_container_width=True)
 
-    # 训练
-    with st.spinner("🔄 训练中..."):
-        t0 = time.perf_counter()
-        history = model.train(
-            X, y, epochs=epochs, batch_size=n_samples,
-            loss_fn=loss_fn, optimizer=optimizer,
-            callbacks=[history_cb],
-        )
-        elapsed = time.perf_counter() - t0
-
-    # ---- 指标卡片 ----
-    m1, m2, m3 = st.columns(3)
-    m1.metric("最终 Loss", f"{history['loss'][-1]:.4f}")
-    m2.metric("最终 Accuracy", f"{history['accuracy'][-1]:.1%}")
-    m3.metric("训练耗时", f"{elapsed:.2f}s")
-
-    # ---- 可视化 (2x2 布局) ----
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.plotly_chart(
-            plot_decision_boundary(model, X, y, title="🗺️ 决策边界"),
-            use_container_width=True,
-        )
-
-    with col2:
-        st.plotly_chart(
-            plot_loss_curve(history, title="📈 训练曲线"),
-            use_container_width=True,
-        )
-
-    col3, col4 = st.columns(2)
-
-    with col3:
-        if history_cb.snapshots:
-            st.plotly_chart(
-                plot_weight_trajectory(history_cb.snapshots, layer_idx=0, title="🛤️ 权重变化轨迹"),
-                use_container_width=True,
-            )
-
-    with col4, st.expander("💡 概念说明", expanded=True):
-        st.markdown(f"""
-            **当前配置**:
-            - 网络: Dense(2→1) + {activation_name}
-            - 学习率: {learning_rate}
-            - 优化器: SGD
-
-            **关键观察**:
-            1. **决策边界**: 单神经元只能画一条「线」来分割空间。
-               对于 Moons/XOR 这类非线性问题，它无法完美分类。
-            2. **学习率的影响**:
-               - 太小 (0.001): Loss 下降极慢
-               - 合适 (0.01-0.1): 平稳收敛
-               - 太大 (1.0): Loss 震荡甚至发散
-            3. **这就是为什么我们需要多层网络** → 前往里程碑 2
-            """)
-else:
-    st.info("👈 调整左侧参数后，点击 **「🚀 开始训练」** 按钮开始实验。")
+# 底部权重轨迹图
+st.markdown("### 🌀 权重参数空间寻优轨迹")
+st.caption("展示参数 $(w_1, w_2)$ 从随机初始位置沿损失梯度向最优解移动的完整流线：")
+fig_traj = plot_weight_trajectory(weight_trajectory, title="参数空间 (w₁, w₂) 梯度下降路径")
+st.plotly_chart(fig_traj, use_container_width=True)

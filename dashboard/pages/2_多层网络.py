@@ -1,19 +1,18 @@
 # Copyright (c) 2026 Yy1 (yuan278501381) | MIT License
 """
-里程碑 2: 多层网络 — 理解深度的力量
+🧬 里程碑 2: 多层网络与活性探针 (Deep Networks & Neuron Probe)
 
-演示多层堆叠如何解决单神经元无法处理的非线性问题，
-以及权重初始化、梯度消失等深层网络的关键挑战。
+理解「深度」的特征流形扭曲力量：多层链式法则、神经元动态激活探针、梯度消失/爆炸诊断。
 """
 
 import os
 import sys
-import time
 
 _PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
+import numpy as np
 import streamlit as st
 
 from dashboard.components.charts import (
@@ -21,146 +20,205 @@ from dashboard.components.charts import (
     plot_decision_boundary,
     plot_gradient_histograms,
     plot_loss_curve,
-    plot_weight_histograms,
 )
 from dashboard.components.network_viz import plot_network_topology
 from dashboard.components.param_panel import (
     render_dataset_selector,
     render_network_params,
+    render_presets_selector,
+    render_probe_point_selector,
     render_training_params,
 )
-from dashboard.utils.state import OPTIMIZER_MAP, build_model
-from datasets.generators import make_circles, make_moons, make_spiral, make_xor
-from nn_core.callbacks import TrainingHistory
-from nn_core.tensor import set_seed
+from dashboard.styles.theme import (
+    apply_custom_theme,
+    render_hero_header,
+    render_metric_card,
+    render_preset_badge,
+)
+from dashboard.utils.state import ACTIVATION_MAP, OPTIMIZER_MAP, get_dataset
+from nn_core.activations import Activation
+from nn_core.layers import Dense
+from nn_core.losses import BinaryCrossEntropy
+from nn_core.model import Sequential
 
-st.set_page_config(page_title="🧱 多层网络", layout="wide")
-st.title("🧱 里程碑 2: 多层网络")
-st.markdown("**理解深度的力量** — 多层堆叠如何拟合复杂的非线性决策边界。")
+st.set_page_config(
+    page_title="多层网络与活性探针 · NN Playground",
+    page_icon="🧬",
+    layout="wide",
+)
+
+apply_custom_theme()
+
+render_hero_header(
+    title="🧬 多层网络与动态活性探针",
+    subtitle="探索深度非线性流形折叠 · 实时探针微观捕获信号在神经元间的点亮与流动 · 梯度健康诊断",
+    badge_text="MILESTONE 2 · DEEP REPRESENTATION",
+    badge_type="purple",
+)
 
 # ---------------------------------------------------------------------------
-# 侧边栏
+# 侧边栏控制面板 (含预设)
 # ---------------------------------------------------------------------------
-st.sidebar.header("🎛️ 参数控制")
-dataset_name, n_samples, noise, seed = render_dataset_selector(key_prefix="m2_")
-net_params = render_network_params(allow_multi_layer=True, key_prefix="m2_")
-train_params = render_training_params(key_prefix="m2_")
+preset = render_presets_selector(key_prefix="m2_")
 
-train_btn = st.sidebar.button("🚀 开始训练", type="primary", use_container_width=True, key="m2_train")
-
-# ---------------------------------------------------------------------------
-# 生成数据
-# ---------------------------------------------------------------------------
-set_seed(seed)
-dataset_fn = {"moons": make_moons, "circles": make_circles, "xor": make_xor, "spiral": make_spiral}
-X, y = dataset_fn.get(dataset_name, make_moons)(n_samples=n_samples, noise=noise, random_state=seed)
-
-if train_btn:
-    set_seed(seed)
-
-    # 构建模型
-    model = build_model(
-        n_inputs=2, n_outputs=1,
-        hidden_layers=net_params["neurons_per_layer"],
-        activation=net_params["activation"],
-        initializer=net_params["initializer"],
-        output_activation="Sigmoid",
+if preset:
+    render_preset_badge(
+        "已激活预设",
+        f"数据集: {preset['dataset']} | 层数: {preset['n_layers']} | 激活: {preset['activation']} | 优化器: {preset['optimizer']}",
     )
-
-    # 优化器 & 损失函数
-    opt_cls = OPTIMIZER_MAP[train_params["optimizer"]]
-    optimizer = opt_cls(learning_rate=train_params["learning_rate"])
-    from nn_core.losses import BinaryCrossEntropy
-    loss_fn = BinaryCrossEntropy()
-
-    history_cb = TrainingHistory(snapshot_interval=max(1, train_params["epochs"] // 30))
-
-    with st.spinner("🔄 训练中..."):
-        t0 = time.perf_counter()
-        history = model.train(
-            X, y, epochs=train_params["epochs"],
-            batch_size=train_params["batch_size"],
-            loss_fn=loss_fn, optimizer=optimizer,
-            callbacks=[history_cb],
-        )
-        elapsed = time.perf_counter() - t0
-
-    # 指标
-    m1, m2, m3, m4 = st.columns(4)
-    m1.metric("最终 Loss", f"{history['loss'][-1]:.4f}")
-    m2.metric("最终 Accuracy", f"{history['accuracy'][-1]:.1%}")
-    m3.metric("网络深度", f"{net_params['n_layers']} 层")
-    m4.metric("训练耗时", f"{elapsed:.2f}s")
-
-    # ---- 网络结构 + 决策边界 ----
-    col1, col2 = st.columns(2)
-
-    with col1:
-        layer_sizes = [2] + net_params["neurons_per_layer"] + [1]
-        # 提取权重用于可视化
-        dense_weights = [
-            info["weights"] for info in model.get_snapshot()["layers"]
-            if info["type"] == "Dense" and info["weights"] is not None
-        ]
-        st.plotly_chart(
-            plot_network_topology(layer_sizes, weights=dense_weights, title="🧬 网络结构"),
-            use_container_width=True,
-        )
-
-    with col2:
-        st.plotly_chart(
-            plot_decision_boundary(model, X, y, title="🗺️ 决策边界"),
-            use_container_width=True,
-        )
-
-    # ---- Loss + 权重分布 ----
-    col3, col4 = st.columns(2)
-
-    with col3:
-        st.plotly_chart(
-            plot_loss_curve(history, title="📈 训练曲线"),
-            use_container_width=True,
-        )
-
-    with col4:
-        snapshot = model.get_snapshot()
-        st.plotly_chart(
-            plot_weight_histograms(snapshot, title="📊 权重分布"),
-            use_container_width=True,
-        )
-
-    # ---- 梯度分布 + 激活热力图 ----
-    col5, col6 = st.columns(2)
-
-    with col5:
-        st.plotly_chart(
-            plot_gradient_histograms(snapshot, title="🔥 梯度分布"),
-            use_container_width=True,
-        )
-
-    with col6:
-        # 找到第一个激活函数层的索引
-        act_indices = [
-            i for i, info in enumerate(snapshot["layers"])
-            if info["type"] in ("ReLU", "Sigmoid", "Tanh", "LeakyReLU")
-            and info["output"] is not None
-        ]
-        if act_indices:
-            st.plotly_chart(
-                plot_activation_heatmap(snapshot, layer_idx=act_indices[0], title="⚡ 激活值热力图"),
-                use_container_width=True,
-            )
-
-    # 概念说明
-    with st.expander("💡 关键观察", expanded=False):
-        st.markdown("""
-        1. **层数与拟合能力**: 单层网络只能画直线；2层能画曲线；3+层能拟合任意复杂边界
-        2. **权重初始化的影响**:
-           - `zeros`: 所有神经元学到相同特征（对称性问题），训练失败
-           - `xavier`: 适配 Sigmoid/Tanh，保持信号方差稳定
-           - `he`: 适配 ReLU，补偿一半神经元被置零
-        3. **梯度直方图**: 如果深层的梯度趋近于 0 → 梯度消失；趋近于极大值 → 梯度爆炸
-        4. **激活热力图**: 观察每层输出的分布是否健康（不全为0，不全饱和）
-        """)
+    dataset_name = preset["dataset"].split(" ")[1].lower()
+    n_samples = preset["n_samples"]
+    noise = preset["noise"]
+    random_state = 42
+    n_layers = preset["n_layers"]
+    neurons_per_layer = preset["neurons"]
+    activation_name = preset["activation"]
+    initializer = preset["initializer"]
+    optimizer_name = preset["optimizer"]
+    lr = preset["lr"]
+    epochs = preset["epochs"]
+    batch_size = None
 else:
-    st.info("👈 调整参数后，点击 **「🚀 开始训练」** 开始实验。")
+    dataset_name, n_samples, noise, random_state = render_dataset_selector(
+        key_prefix="m2_", default_dataset="🌙 Moons"
+    )
+    net_params = render_network_params(
+        allow_multi_layer=True, key_prefix="m2_", default_layers=2, default_neurons=[8, 4]
+    )
+    n_layers = net_params["n_layers"]
+    neurons_per_layer = net_params["neurons_per_layer"]
+    activation_name = net_params["activation"]
+    initializer = net_params["initializer"]
+
+    train_params = render_training_params(key_prefix="m2_", default_opt="Adam", default_lr=0.05, default_epochs=150)
+    optimizer_name = train_params["optimizer"]
+    lr = train_params["learning_rate"]
+    batch_size = train_params["batch_size"]
+    epochs = train_params["epochs"]
+
+# 探针坐标选择器
+probe_x, probe_y = render_probe_point_selector(key_prefix="m2_")
+probe_pt = (probe_x, probe_y)
+
+# ---------------------------------------------------------------------------
+# 数据与模型训练
+# ---------------------------------------------------------------------------
+X, y = get_dataset(dataset_name, n_samples, noise, random_state)
+
+# 构建多层网络
+model = Sequential()
+current_dim = 2
+for i in range(n_layers):
+    out_dim = neurons_per_layer[i]
+    model.add(Dense(current_dim, out_dim, initializer=initializer))
+    model.add(ACTIVATION_MAP[activation_name]())
+    current_dim = out_dim
+
+# 输出层
+model.add(Dense(current_dim, 1, initializer=initializer))
+model.add(ACTIVATION_MAP["Sigmoid"]())
+
+loss_fn = BinaryCrossEntropy()
+optimizer = OPTIMIZER_MAP[optimizer_name](learning_rate=lr)
+
+# 训练网络
+history = model.train(
+    X, y, loss_fn=loss_fn, optimizer=optimizer, epochs=epochs, batch_size=batch_size, verbose=False
+)
+
+final_loss = history["loss"][-1] if history["loss"] else 0.0
+final_acc = history["accuracy"][-1] if history["accuracy"] else 0.0
+
+# ---------------------------------------------------------------------------
+# 神经元动态活性探针 (Single-Sample Forward Telemetry)
+# ---------------------------------------------------------------------------
+probe_input = np.array([[probe_x, probe_y]])
+probe_activations: list[np.ndarray] = [probe_input]  # 输入层激活值
+
+# 逐层推导并捕获激活
+curr_signal = probe_input
+all_activations: list[np.ndarray] = []
+dense_weights: list[np.ndarray] = []
+dense_grads: list[np.ndarray] = []
+layer_names: list[str] = []
+
+dense_count = 0
+for layer in model.layers:
+    if isinstance(layer, Dense):
+        dense_count += 1
+        curr_signal = layer.forward(curr_signal, training=False)
+        dense_weights.append(layer.weights)
+        if layer.grad_weights is not None:
+            dense_grads.append(layer.grad_weights)
+            layer_names.append(f"Dense #{dense_count}")
+    elif isinstance(layer, Activation):
+        curr_signal = layer.forward(curr_signal)
+        probe_activations.append(curr_signal.copy())
+        # 同时对全量样本前向捕获热力图数据
+        full_act = layer.forward(layer.input_cache) if hasattr(layer, "input_cache") else curr_signal
+        all_activations.append(full_act)
+
+# 模型输出预测概率
+probe_prob = float(curr_signal.ravel()[0])
+probe_pred_class = 1 if probe_prob >= 0.5 else 0
+
+# 拓扑层维度
+layer_sizes = [2] + neurons_per_layer + [1]
+
+# 梯度健康度检测
+min_grad_norm = min([float(np.mean(np.abs(g))) for g in dense_grads]) if dense_grads else 0.0
+grad_health_status = "🟢 梯度流动健康"
+if min_grad_norm < 1e-4:
+    grad_health_status = "⚠️ 检测到底层梯度消失 (Vanishing)"
+elif min_grad_norm > 50.0:
+    grad_health_status = "🚨 检测到底层梯度爆炸 (Exploding)"
+
+# ---------------------------------------------------------------------------
+# 遥测指标卡
+# ---------------------------------------------------------------------------
+st.markdown(
+    f"""
+    <div class="metric-grid">
+        {render_metric_card("最终 Loss", f"{final_loss:.4f}", delta="收敛完成", delta_type="positive" if final_loss < 0.2 else "neutral", icon="📉")}
+        {render_metric_card("准确率 (Acc)", f"{final_acc:.1%}", delta=f"拟合 {dataset_name}", delta_type="positive" if final_acc >= 0.9 else "neutral", icon="🎯")}
+        {render_metric_card("探针响应 P(Y=1)", f"{probe_prob:.1%}", delta=f"判定为类别 {probe_pred_class}", delta_type="positive" if probe_pred_class == 1 else "neutral", icon="📍")}
+        {render_metric_card("梯度健康度", f"{min_grad_norm:.2e}", delta=grad_health_status, delta_type="positive" if "健康" in grad_health_status else "negative", icon="🌊")}
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+# ---------------------------------------------------------------------------
+# 可视化布局 (双栏联动)
+# ---------------------------------------------------------------------------
+col_topo, col_bound = st.columns([1.1, 1])
+
+with col_topo:
+    fig_topo = plot_network_topology(
+        layer_sizes=layer_sizes,
+        weights=dense_weights,
+        neuron_activations=probe_activations,
+        title=f"🧬 拓扑与活性探针 (输入点: x₁={probe_x:.2f}, x₂={probe_y:.2f})",
+    )
+    st.plotly_chart(fig_topo, use_container_width=True)
+
+with col_bound:
+    fig_bound = plot_decision_boundary(
+        model, X, y, probe_point=probe_pt, title="🗺️ 空间决策流形与探针定位"
+    )
+    st.plotly_chart(fig_bound, use_container_width=True)
+
+# ---------------------------------------------------------------------------
+# 深度诊断：逐层激活热力图 & 梯度直方图
+# ---------------------------------------------------------------------------
+col_heat, col_grad = st.columns(2)
+
+with col_heat:
+    if all_activations:
+        fig_heat = plot_activation_heatmap(all_activations, title="🔥 逐层神经元激活强度热力图")
+        st.plotly_chart(fig_heat, use_container_width=True)
+
+with col_grad:
+    if dense_grads:
+        fig_grad = plot_gradient_histograms(dense_grads, layer_names, title="🌊 反向传播梯度流分布 (消失/爆炸检测)")
+        st.plotly_chart(fig_grad, use_container_width=True)
