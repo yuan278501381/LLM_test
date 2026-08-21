@@ -12,9 +12,13 @@ _PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".
 if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
+import importlib
 import numpy as np
 import pandas as pd
 import streamlit as st
+
+import dashboard.components.charts
+importlib.reload(dashboard.components.charts)
 
 from dashboard.components.charts import plot_embedding_space
 from dashboard.styles.theme import (
