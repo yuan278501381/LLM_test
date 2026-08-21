@@ -1,0 +1,238 @@
+# Copyright (c) 2026 Yy1 (yuan278501381) | MIT License
+# =============================================================================
+# 主 CI 管线 — 多平台 × 多版本矩阵测试 + 代码质量 + 安全扫描 + 构建
+# =============================================================================
+name: CI
+
+on:
+  push:
+    branches: [main, develop, "feature/**"]
+  pull_request:
+    branches: [main, develop]
+
+# 同一分支/PR 只保留最新的运行
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  UV_SYSTEM_PYTHON: false
+  PYTHON_DEFAULT: "3.11"
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # 阶段 1: 代码质量门禁 (快速反馈)
+  # ---------------------------------------------------------------------------
+  lint:
+    name: 🔍 Lint & Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装 uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: 安装 Python
+        run: uv python install ${{ env.PYTHON_DEFAULT }}
+
+      - name: 安装依赖
+        run: uv sync --frozen
+
+      - name: Ruff 代码检查
+        run: uv run ruff check . --output-format=github
+
+      - name: Ruff 格式检查
+        run: uv run ruff format --check .
+
+  typecheck:
+    name: 🏷️ 类型检查
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装 uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: 安装 Python
+        run: uv python install ${{ env.PYTHON_DEFAULT }}
+
+      - name: 安装依赖
+        run: uv sync --frozen
+
+      - name: Pyright 类型检查
+        run: uv run pyright nn_core/ datasets/
+
+  # ---------------------------------------------------------------------------
+  # 阶段 2: 矩阵测试 (全覆盖)
+  # ---------------------------------------------------------------------------
+  test:
+    name: 🧪 Test (${{ matrix.os }} / py${{ matrix.python }})
+    needs: [lint]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装 uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: 安装 Python ${{ matrix.python }}
+        run: uv python install ${{ matrix.python }}
+
+      - name: 安装依赖
+        run: uv sync --frozen
+
+      - name: 运行测试 (带覆盖率)
+        run: uv run pytest tests/ -v --tb=short --junitxml=reports/junit.xml --cov=nn_core --cov=datasets --cov-report=xml:reports/coverage.xml --cov-report=term-missing
+
+      - name: 上传测试报告
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-${{ matrix.os }}-py${{ matrix.python }}
+          path: reports/
+          retention-days: 30
+
+      - name: 上传覆盖率到 Codecov
+        uses: codecov/codecov-action@v4
+        if: matrix.os == 'ubuntu-latest' && matrix.python == '3.11'
+        with:
+          file: reports/coverage.xml
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  # ---------------------------------------------------------------------------
+  # 阶段 3: 构建验证
+  # ---------------------------------------------------------------------------
+  build:
+    name: 📦 构建验证
+    needs: [test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装 uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: 安装 Python
+        run: uv python install ${{ env.PYTHON_DEFAULT }}
+
+      - name: 构建 wheel & sdist
+        run: uv build
+
+      - name: 验证构建产物
+        run: |
+          ls -la dist/
+          # 确保两种分发格式都生成了
+          test -f dist/*.whl
+          test -f dist/*.tar.gz
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          retention-days: 30
+
+  # ---------------------------------------------------------------------------
+  # 阶段 4: Docker 镜像构建
+  # ---------------------------------------------------------------------------
+  docker:
+    name: 🐳 Docker 构建
+    needs: [test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 设置 Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 构建 Docker 镜像 (不推送)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          tags: nn-playground:ci-${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+  # ---------------------------------------------------------------------------
+  # 阶段 5: 安全扫描
+  # ---------------------------------------------------------------------------
+  security:
+    name: 🔒 安全扫描
+    needs: [lint]
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装 uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: 安装 Python
+        run: uv python install ${{ env.PYTHON_DEFAULT }}
+
+      - name: 安装依赖
+        run: uv sync --frozen
+
+      - name: 依赖安全审计
+        run: uv run pip-audit --strict
+        continue-on-error: true
+
+      - name: Bandit 安全静态分析
+        run: uv run bandit -r nn_core/ datasets/ -f json -o reports/bandit.json || true
+
+      - name: 上传安全报告
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-reports
+          path: reports/
+          retention-days: 30
+
+  # ---------------------------------------------------------------------------
+  # 最终门禁: 所有检查通过
+  # ---------------------------------------------------------------------------
+  ci-passed:
+    name: ✅ CI 通过
+    if: always()
+    needs: [lint, typecheck, test, build, docker, security]
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检查所有必须阶段
+        run: |
+          echo "Lint:      ${{ needs.lint.result }}"
+          echo "Typecheck: ${{ needs.typecheck.result }}"
+          echo "Test:      ${{ needs.test.result }}"
+          echo "Build:     ${{ needs.build.result }}"
+          echo "Docker:    ${{ needs.docker.result }}"
+          echo "Security:  ${{ needs.security.result }}"
+
+          if [[ "${{ needs.lint.result }}" != "success" ]] || \
+             [[ "${{ needs.test.result }}" != "success" ]] || \
+             [[ "${{ needs.build.result }}" != "success" ]]; then
+            echo "❌ 核心阶段未通过"
+            exit 1
+          fi
+          echo "✅ 所有核心阶段通过"

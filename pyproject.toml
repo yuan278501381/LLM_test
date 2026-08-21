@@ -1,0 +1,147 @@
+[project]
+name = "nn-playground"
+version = "0.1.0"
+description = "手搓神经网络可视化实验平台 - 从零用纯 NumPy 构建神经网络，配合交互式可视化仪表板"
+authors = [{name = "Yy1", email = "yuan278501381@users.noreply.github.com"}]
+requires-python = ">=3.11"
+license = {text = "MIT"}
+readme = "README.md"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Education",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+    "numpy>=1.26",
+    "streamlit>=1.38",
+    "plotly>=5.22",
+    "scikit-learn>=1.5",
+]
+
+[project.urls]
+Homepage = "https://github.com/yuan278501381/nn-playground"
+Repository = "https://github.com/yuan278501381/nn-playground"
+Issues = "https://github.com/yuan278501381/nn-playground/issues"
+
+# ---------------------------------------------------------------------------
+# 开发依赖 (按用途分组)
+# ---------------------------------------------------------------------------
+[project.optional-dependencies]
+dev = [
+    # 测试
+    "pytest>=8.0",
+    "pytest-cov>=6.0",
+    # Lint & Format
+    "ruff>=0.8",
+    # 类型检查
+    "pyright>=1.1",
+    # 安全扫描
+    "bandit>=1.8",
+    "pip-audit>=2.7",
+    # Pre-commit
+    "pre-commit>=4.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["nn_core", "datasets"]
+
+# ---------------------------------------------------------------------------
+# Pytest 配置
+# ---------------------------------------------------------------------------
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = [
+    "-ra",                   # 显示所有非 pass 的测试摘要
+    "--strict-markers",       # 未注册的 marker 报错
+    "--strict-config",        # 配置错误报错
+]
+markers = [
+    "slow: 标记慢速测试 (deselect with '-m \"not slow\"')",
+]
+
+# ---------------------------------------------------------------------------
+# Ruff 配置 (替代 flake8 + black + isort)
+# ---------------------------------------------------------------------------
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+# Dashboard 页面有 sys.path 动态修改，不适合标准 lint 检查
+exclude = ["dashboard/"]
+
+[tool.ruff.lint]
+select = [
+    "E",     # pycodestyle errors
+    "W",     # pycodestyle warnings
+    "F",     # pyflakes
+    "I",     # isort (导入排序)
+    "N",     # pep8-naming
+    "UP",    # pyupgrade
+    "B",     # flake8-bugbear
+    "SIM",   # flake8-simplify
+    "TCH",   # flake8-type-checking
+    "RUF",   # ruff 专有规则
+]
+ignore = [
+    "E501",   # 行长度由 formatter 控制
+    "E741",   # 允许 l 等单字符变量名（数学惯例）
+    "N802",   # 允许 X, y 等大写变量（机器学习惯例）
+    "N803",   # 允许大写参数名
+    "N806",   # 允许函数内大写变量
+    "B006",   # 允许默认可变参数（如 list）
+    "UP007",  # 允许 Optional[X] 写法
+    "RUF001", # 允许字符串中的全角标点（中文项目）
+    "RUF002", # 允许文档字符串中的全角标点（中文项目）
+    "RUF003", # 允许注释中的全角标点（中文项目）
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["nn_core", "datasets", "dashboard"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+docstring-code-format = true
+
+# ---------------------------------------------------------------------------
+# Pyright 类型检查配置
+# ---------------------------------------------------------------------------
+[tool.pyright]
+pythonVersion = "3.11"
+pythonPlatform = "All"
+include = ["nn_core", "datasets"]
+exclude = ["dashboard", "tests", ".venv", "scripts"]
+typeCheckingMode = "basic"
+reportMissingImports = true
+reportMissingTypeStubs = false
+
+# ---------------------------------------------------------------------------
+# Coverage 配置
+# ---------------------------------------------------------------------------
+[tool.coverage.run]
+source = ["nn_core", "datasets"]
+branch = true
+omit = ["*/tests/*", "*/dashboard/*"]
+
+[tool.coverage.report]
+precision = 2
+show_missing = true
+skip_covered = false
+fail_under = 80
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if __name__ == .__main__.",
+    "raise NotImplementedError",
+    "pass",
+    "\\.\\.\\.",
+]

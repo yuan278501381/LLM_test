@@ -1,0 +1,23 @@
+# Docker 构建上下文排除 — 最小化 COPY 体积
+.git
+.github
+.venv
+.vscode
+.idea
+.pytest_cache
+.ruff_cache
+__pycache__
+*.pyc
+*.pyo
+*.egg-info
+dist
+build
+logs/*.json
+tests/
+scripts/
+*.md
+!README.md
+LICENSE
+.gitignore
+.editorconfig
+.pre-commit-config.yaml
