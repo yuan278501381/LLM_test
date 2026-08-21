@@ -1,7 +1,7 @@
 # Copyright (c) 2026 Yy1 (yuan278501381) | MIT License
 """
 NN Playground - 手搓神经网络可视化实验平台
-Streamlit 主入口 (现代极简纯净亮色高对比度首页)
+Streamlit 主入口 (交互式可点击 Bento 导航中枢)
 """
 
 import os
@@ -33,31 +33,44 @@ render_hero_header(
 )
 
 
-def _render_bento_card(icon_name: str, icon_color: str, tag: str, tag_class: str, title: str, desc: str, feature: str) -> str:
-    """生成纯净白高对比度卡片 HTML"""
+def _render_bento_nav_card(
+    page_route: str,
+    icon_name: str,
+    icon_color: str,
+    tag: str,
+    tag_class: str,
+    title: str,
+    desc: str,
+    feature: str,
+) -> str:
+    """生成整卡可点击直达目标详情页的 Neo-Bento 导航卡片 HTML"""
     icon_html = svg_icon(icon_name, size=22, color=icon_color)
     return (
-        f'<div class="cyber-card">'
+        f'<a href="{page_route}" target="_self" class="cyber-nav-card">'
         f'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.8rem;">'
         f'<div>{icon_html}</div>'
         f'<span class="pill-badge {tag_class}">{tag}</span>'
         f'</div>'
-        f'<h3 style="margin:0 0 0.5rem 0;color:#0f172a;font-size:1.22rem;font-weight:700;">{title}</h3>'
-        f'<p style="color:#475569;font-size:0.9rem;line-height:1.6;margin-bottom:1rem;">{desc}</p>'
-        f'<div style="font-size:0.8rem;color:{icon_color};font-family:\'JetBrains Mono\';font-weight:700;">'
+        f'<h3 style="margin:0 0 0.5rem 0;color:#0f172a;font-size:1.24rem;font-weight:800;">{title}</h3>'
+        f'<p style="color:#475569;font-size:0.9rem;line-height:1.6;margin-bottom:0.8rem;">{desc}</p>'
+        f'<div style="font-size:0.78rem;color:{icon_color};font-family:\'JetBrains Mono\';font-weight:700;margin-bottom:0.6rem;">'
         f'FEATURE: {feature}'
         f'</div>'
+        f'<div class="nav-action-link" style="color:{icon_color};">'
+        f'ENTER LAB // 点击进入实验 &rarr;'
         f'</div>'
+        f'</a>'
     )
 
 
 # ---------------------------------------------------------------------------
-# 首页 Bento 卡片矩阵 (2x2 网格分列渲染)
+# 首页 Bento 卡片矩阵 (2x2 可点击交互导航网格)
 # ---------------------------------------------------------------------------
 col1, col2 = st.columns(2)
 
 with col1:
-    card1_html = _render_bento_card(
+    card1_html = _render_bento_nav_card(
+        page_route="单神经元感知器",
         icon_name="target",
         icon_color="#1d4ed8",
         tag="M01 // PERCEPTRON",
@@ -68,7 +81,8 @@ with col1:
     )
     st.markdown(card1_html, unsafe_allow_html=True)
 
-    card3_html = _render_bento_card(
+    card3_html = _render_bento_nav_card(
+        page_route="优化器对比",
         icon_name="zap",
         icon_color="#b45309",
         tag="M03 // OPTIMIZER ARENA",
@@ -80,7 +94,8 @@ with col1:
     st.markdown(card3_html, unsafe_allow_html=True)
 
 with col2:
-    card2_html = _render_bento_card(
+    card2_html = _render_bento_nav_card(
+        page_route="多层网络",
         icon_name="layers",
         icon_color="#6d28d9",
         tag="M02 // TOPOLOGY & PROBE",
@@ -91,7 +106,8 @@ with col2:
     )
     st.markdown(card2_html, unsafe_allow_html=True)
 
-    card4_html = _render_bento_card(
+    card4_html = _render_bento_nav_card(
+        page_route="参数实验室",
         icon_name="terminal",
         icon_color="#047857",
         tag="M04 // PARAMETER LAB",
@@ -135,8 +151,8 @@ with col_stats:
         f'</div>'
         f'<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;margin-top:0.8rem;">'
         f'<div style="background:#f8fafc;border:1px solid #e2e8f0;padding:0.8rem;border-radius:8px;text-align:center;">'
-        f'<div style="font-size:1.45rem;font-weight:800;color:#1d4ed8;font-family:\'JetBrains Mono\';">66 / 66</div>'
-        f'<div style="font-size:0.72rem;color:#64748b;font-weight:700;text-transform:uppercase;">UNIT TESTS PASS</div>'
+        f'<div style="font-size:1.45rem;font-weight:800;color:#1d4ed8;font-family:\'JetBrains Mono\';">85 / 85</div>'
+        f'<div style="font-size:0.72rem;color:#64748b;font-weight:700;text-transform:uppercase;">UNIT & E2E TESTS</div>'
         f'</div>'
         f'<div style="background:#f8fafc;border:1px solid #e2e8f0;padding:0.8rem;border-radius:8px;text-align:center;">'
         f'<div style="font-size:1.45rem;font-weight:800;color:#047857;font-family:\'JetBrains Mono\';">&lt; 1e-5</div>'

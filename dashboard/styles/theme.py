@@ -119,6 +119,46 @@ header {background-color: transparent !important;}
 }
 
 /* -------------------------------------------------------------------------
+   交互式导航卡片 (Clickable Bento Navigation Card)
+------------------------------------------------------------------------- */
+.cyber-nav-card {
+    background: #ffffff !important;
+    border: 1px solid var(--border-card) !important;
+    border-radius: 14px !important;
+    padding: 1.4rem !important;
+    margin-bottom: 1.1rem !important;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04) !important;
+    transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    text-decoration: none !important;
+    display: block !important;
+    cursor: pointer !important;
+    color: inherit !important;
+    position: relative !important;
+}
+
+.cyber-nav-card:hover {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 12px 28px -4px rgba(37, 99, 235, 0.14) !important;
+    transform: translateY(-3px) !important;
+}
+
+.cyber-nav-card .nav-action-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--brand-blue);
+    margin-top: 0.8rem;
+    transition: all 0.2s ease;
+}
+
+.cyber-nav-card:hover .nav-action-link {
+    transform: translateX(4px);
+    color: #1d4ed8;
+}
+
+/* -------------------------------------------------------------------------
    标题与 Hero Header (高对比度深色渐变)
 ------------------------------------------------------------------------- */
 .hero-title {
