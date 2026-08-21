@@ -6,7 +6,7 @@ dashboard.styles.theme - 世界级纯净现代亮色视觉引擎 (Light Mode Des
 - 纯净白卡片与多维高对比排版（杜绝任何浅色字发虚、被白层遮挡的问题）
 - 侧边栏与主工作区完全亮色统一（深色文字 + 浅色底板）
 - 极简高精矢量 SVG 图标
-- 严格杜绝 Markdown 多行缩进解析冲突
+- 严格杜绝 Markdown 多行缩进与标签嵌套断裂
 """
 
 import streamlit as st
@@ -99,7 +99,7 @@ header {background-color: transparent !important;}
 }
 
 /* -------------------------------------------------------------------------
-   纯白卡片体系 (杜绝任何暗色底板与发虚白字)
+   纯白卡片容器体系 (原生 Streamlit Container 与自定义卡片统一)
 ------------------------------------------------------------------------- */
 .cyber-card {
     background: #ffffff !important;
@@ -118,44 +118,40 @@ header {background-color: transparent !important;}
     transform: translateY(-2px) !important;
 }
 
-/* -------------------------------------------------------------------------
-   交互式导航卡片 (Clickable Bento Navigation Card)
-------------------------------------------------------------------------- */
-.cyber-nav-card {
-    background: #ffffff !important;
-    border: 1px solid var(--border-card) !important;
+/* Streamlit 原生 Border Container 极客化封装 */
+[data-testid="stVerticalBlockBorderWrapper"] {
+    border-color: var(--border-card) !important;
     border-radius: 14px !important;
-    padding: 1.4rem !important;
-    margin-bottom: 1.1rem !important;
-    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04) !important;
-    transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    text-decoration: none !important;
-    display: block !important;
-    cursor: pointer !important;
-    color: inherit !important;
-    position: relative !important;
+    background-color: #ffffff !important;
+    padding: 0.5rem !important;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04) !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    margin-bottom: 1rem !important;
 }
 
-.cyber-nav-card:hover {
+[data-testid="stVerticalBlockBorderWrapper"]:hover {
     border-color: #3b82f6 !important;
-    box-shadow: 0 12px 28px -4px rgba(37, 99, 235, 0.14) !important;
-    transform: translateY(-3px) !important;
+    box-shadow: 0 10px 24px -2px rgba(37, 99, 235, 0.12) !important;
+    transform: translateY(-2px) !important;
 }
 
-.cyber-nav-card .nav-action-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    font-size: 0.82rem;
-    font-weight: 700;
-    color: var(--brand-blue);
-    margin-top: 0.8rem;
-    transition: all 0.2s ease;
+/* Streamlit PageLink 按钮组件增强 */
+[data-testid="stPageLink-NavLink"] {
+    background: #eff6ff !important;
+    border: 1px solid #bfdbfe !important;
+    border-radius: 8px !important;
+    font-weight: 700 !important;
+    font-size: 0.86rem !important;
+    color: var(--brand-blue) !important;
+    padding: 0.45rem 0.9rem !important;
+    transition: all 0.2s ease !important;
+    text-decoration: none !important;
 }
 
-.cyber-nav-card:hover .nav-action-link {
-    transform: translateX(4px);
-    color: #1d4ed8;
+[data-testid="stPageLink-NavLink"]:hover {
+    background: #dbeafe !important;
+    border-color: var(--brand-blue) !important;
+    transform: translateX(3px) !important;
 }
 
 /* -------------------------------------------------------------------------
