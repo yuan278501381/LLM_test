@@ -126,20 +126,22 @@ class Sequential:
         self,
         X: np.ndarray,
         y: np.ndarray,
-        epochs: int,
-        batch_size: int,
-        loss_fn: Any,
-        optimizer: Any,
+        epochs: int = 100,
+        batch_size: int | None = None,
+        loss_fn: Any = None,
+        optimizer: Any = None,
         callbacks: list[Any] | None = None,
         X_val: np.ndarray | None = None,
         y_val: np.ndarray | None = None,
+        verbose: bool = False,
+        **kwargs: Any,
     ) -> dict[str, list[float]]:
         """
         执行完整的训练循环。
 
         训练流程（每个 epoch）:
             1. 打乱数据
-            2. 按 batch_size 切分 mini-batch
+            2. 按 batch_size 切分 mini-batch (若 batch_size 为 None 则执行全量 Batch GD)
             3. 每个 batch: forward → loss → backward → optimizer.step
             4. 记录 epoch 级别的平均指标
             5. 可选: 计算验证集指标
@@ -149,12 +151,14 @@ class Sequential:
             X: 训练数据，shape (n_samples, n_features)
             y: 训练标签，shape (n_samples, n_outputs)
             epochs: 训练轮数
-            batch_size: 批大小
+            batch_size: 批大小（None 或 <=0 表示全量批次）
             loss_fn: 损失函数实例
             optimizer: 优化器实例
             callbacks: 回调列表，可选
             X_val: 验证数据，可选
             y_val: 验证标签，可选
+            verbose: 是否输出详细日志
+            **kwargs: 额外扩展参数
 
         Returns:
             history 字典: {
@@ -166,6 +170,9 @@ class Sequential:
         """
         tid = uuid.uuid4().hex[:8]
         n_samples = X.shape[0]
+        actual_batch_size = (
+            n_samples if (batch_size is None or batch_size <= 0) else min(batch_size, n_samples)
+        )
         callbacks = callbacks or []
 
         history: dict[str, list[float]] = {
@@ -176,10 +183,11 @@ class Sequential:
         }
 
         logger.info(
-            "[%s] 开始训练: epochs=%d, batch_size=%d, 样本数=%d, 优化器=%s",
+            "[%s] 开始训练: epochs=%d, batch_size=%d (actual=%d), 样本数=%d, 优化器=%s",
             tid,
             epochs,
-            batch_size,
+            batch_size if batch_size is not None else -1,
+            actual_batch_size,
             n_samples,
             optimizer,
         )
@@ -197,8 +205,8 @@ class Sequential:
             epoch_correct = 0
             epoch_total = 0
 
-            for start in range(0, n_samples, batch_size):
-                end = min(start + batch_size, n_samples)
+            for start in range(0, n_samples, actual_batch_size):
+                end = min(start + actual_batch_size, n_samples)
                 X_batch = X_shuffled[start:end]
                 y_batch = y_shuffled[start:end]
                 batch_n = end - start

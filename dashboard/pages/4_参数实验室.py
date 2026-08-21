@@ -100,11 +100,11 @@ if "m4_model" not in st.session_state or st.sidebar.button("RESET // 重置模�
     st.session_state["m4_model"] = m
     st.session_state["m4_history"] = {"loss": [], "accuracy": []}
     st.session_state["m4_epoch_count"] = 0
-    st.session_state["m4_optimizer"] = OPTIMIZER_MAP[optimizer_name](learning_rate=lr)
+    st.session_state["m4_opt_instance"] = OPTIMIZER_MAP[optimizer_name](learning_rate=lr)
 
 model: Sequential = st.session_state["m4_model"]
 history: dict[str, list[float]] = st.session_state["m4_history"]
-opt_instance = st.session_state["m4_optimizer"]
+opt_instance = st.session_state.get("m4_opt_instance", OPTIMIZER_MAP[optimizer_name](learning_rate=lr))
 
 # ---------------------------------------------------------------------------
 # 训练控制中枢 (Train / Step)

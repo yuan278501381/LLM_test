@@ -139,7 +139,7 @@ def get_dataset(
     noise: float = 0.1,
     random_state: int = 42,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """统一获取 2D 合成数据集"""
+    """统一获取 2D 合成数据集 (返回 y 为 (n, 1) 二分类标签)"""
     from datasets.generators import make_blobs, make_circles, make_moons, make_spiral, make_xor
 
     clean_name = name.lower().strip()
@@ -152,6 +152,8 @@ def get_dataset(
     elif "spiral" in clean_name:
         return make_spiral(n_samples=n_samples, noise=noise, random_state=random_state)
     elif "blob" in clean_name:
-        return make_blobs(n_samples=n_samples, noise=noise, centers=2, random_state=random_state)
+        X, y_onehot = make_blobs(n_samples=n_samples, noise=noise, n_classes=2, random_state=random_state)
+        y = np.argmax(y_onehot, axis=1).reshape(-1, 1).astype(np.float64)
+        return X, y
     return make_moons(n_samples=n_samples, noise=noise, random_state=random_state)
 
