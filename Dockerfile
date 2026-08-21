@@ -7,7 +7,7 @@
 # =============================================================================
 
 # ---- 阶段 1: 构建依赖 ----
-FROM python:3.11-slim AS builder
+FROM python:3.14-slim AS builder
 
 # 安装 uv (极速包管理器)
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
@@ -30,7 +30,7 @@ RUN uv sync --frozen --no-dev
 
 
 # ---- 阶段 2: 精简运行镜像 ----
-FROM python:3.11-slim AS runtime
+FROM python:3.14-slim AS runtime
 
 # 安全加固: 使用非 root 用户
 RUN groupadd --gid 1000 appuser && \
