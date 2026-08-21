@@ -1,6 +1,6 @@
 # Copyright (c) 2026 Yy1 (yuan278501381) | MIT License
 """
-里程碑 2: 多层网络与活性探针 (Deep Networks & Neuron Probe)
+里程碑 2: 多层网络与活性探针 (Deep Networks & Neuron Probe) - 无硬编码 · 知识图谱深度解析
 
 理解「深度」的特征流形扭曲力量：多层链式法则、神经元动态激活探针、梯度消失/爆炸诊断。
 """
@@ -23,18 +23,25 @@ from dashboard.components.charts import (
 from dashboard.components.network_viz import plot_network_topology
 from dashboard.components.param_panel import (
     render_dataset_selector,
+    render_deep_dive_card,
     render_network_params,
     render_presets_selector,
     render_probe_point_selector,
     render_training_params,
 )
+from dashboard.constants.knowledge import ACTIVATIONS, INITIALIZERS, OPTIMIZERS
 from dashboard.styles.theme import (
     apply_custom_theme,
     render_hero_header,
     render_metric_card,
     render_preset_badge,
 )
-from dashboard.utils.state import ACTIVATION_MAP, OPTIMIZER_MAP, get_dataset
+from dashboard.utils.state import (
+    get_dataset,
+    resolve_activation,
+    resolve_initializer,
+    resolve_optimizer,
+)
 from nn_core.activations import Activation
 from nn_core.layers import Dense
 from nn_core.losses import BinaryCrossEntropy
@@ -55,16 +62,16 @@ render_hero_header(
 )
 
 # ---------------------------------------------------------------------------
-# 侧边栏控制面板 (含预设)
+# 侧边栏控制面板 (含预设，由 knowledge 元数据驱动)
 # ---------------------------------------------------------------------------
 preset = render_presets_selector(key_prefix="m2_")
 
 if preset:
+    dataset_name = preset["dataset"]
     render_preset_badge(
-        "已激活预设",
-        f"数据集: {preset['dataset']} | 深度: {preset['n_layers']} 层 | 激活: {preset['activation']} | 优化器: {preset['optimizer']}",
+        "已激活经典预设方案",
+        f"数据集: {dataset_name} | 深度: {preset['n_layers']} 层 | 激活: {preset['activation']} | 初始化: {preset['initializer']} | 优化器: {preset['optimizer']}",
     )
-    dataset_name = preset["dataset"].split(" ")[0].lower()
     n_samples = preset["n_samples"]
     noise = preset["noise"]
     random_state = 42
@@ -78,7 +85,7 @@ if preset:
     batch_size = None
 else:
     dataset_name, n_samples, noise, random_state = render_dataset_selector(
-        key_prefix="m2_", default_dataset="Moons (双月分布)"
+        key_prefix="m2_", default_dataset="moons"
     )
     net_params = render_network_params(
         allow_multi_layer=True, key_prefix="m2_", default_layers=2, default_neurons=[8, 4]
@@ -103,25 +110,29 @@ probe_pt = (probe_x, probe_y)
 # ---------------------------------------------------------------------------
 X, y = get_dataset(dataset_name, n_samples, noise, random_state)
 
+act_cls = resolve_activation(activation_name)
+init_name = resolve_initializer(initializer)
+opt_cls = resolve_optimizer(optimizer_name)
+
 # 构建多层网络
 model = Sequential()
 current_dim = 2
 for i in range(n_layers):
     out_dim = neurons_per_layer[i]
-    model.add(Dense(current_dim, out_dim, initializer=initializer))
-    model.add(ACTIVATION_MAP[activation_name]())
+    model.add(Dense(current_dim, out_dim, initializer=init_name))
+    model.add(act_cls())
     current_dim = out_dim
 
 # 输出层
-model.add(Dense(current_dim, 1, initializer=initializer))
-model.add(ACTIVATION_MAP["Sigmoid"]())
+model.add(Dense(current_dim, 1, initializer=init_name))
+model.add(resolve_activation("Sigmoid")())
 
 loss_fn = BinaryCrossEntropy()
-optimizer = OPTIMIZER_MAP[optimizer_name](learning_rate=lr)
+optimizer = opt_cls(learning_rate=float(lr))
 
 # 训练网络
 history = model.train(
-    X, y, loss_fn=loss_fn, optimizer=optimizer, epochs=epochs, batch_size=batch_size, verbose=False
+    X, y, loss_fn=loss_fn, optimizer=optimizer, epochs=int(epochs), batch_size=batch_size, verbose=False
 )
 
 final_loss = history["loss"][-1] if history["loss"] else 0.0
@@ -161,21 +172,21 @@ layer_sizes = [2] + neurons_per_layer + [1]
 
 min_grad_norm = min([float(np.mean(np.abs(g))) for g in dense_grads]) if dense_grads else 0.0
 if min_grad_norm < 1e-4:
-    grad_health_status = "VANISHING GRADIENT"
+    grad_health_status = "VANISHING (梯度消失)"
 elif min_grad_norm > 50.0:
-    grad_health_status = "EXPLODING GRADIENT"
+    grad_health_status = "EXPLODING (梯度爆炸)"
 else:
-    grad_health_status = "HEALTHY GRADIENT"
+    grad_health_status = "HEALTHY (梯度健康)"
 
 # ---------------------------------------------------------------------------
-# 遥测指标卡 (安全拼接 HTML)
+# 遥测指标卡 (中英双语标签)
 # ---------------------------------------------------------------------------
 grid_html = (
     '<div class="metric-grid">'
-    + render_metric_card("FINAL LOSS", f"{final_loss:.4f}", delta="CONVERGED", delta_type="positive" if final_loss < 0.2 else "neutral", icon_name="trending-down")
-    + render_metric_card("ACCURACY", f"{final_acc:.1%}", delta=dataset_name.upper(), delta_type="positive" if final_acc >= 0.9 else "neutral", icon_name="target")
-    + render_metric_card("PROBE RESPONSE", f"{probe_prob:.1%}", delta=f"CLASS {probe_pred_class}", delta_type="positive" if probe_pred_class == 1 else "neutral", icon_name="crosshair")
-    + render_metric_card("GRADIENT NORM", f"{min_grad_norm:.2e}", delta=grad_health_status, delta_type="positive" if "HEALTHY" in grad_health_status else "negative", icon_name="activity")
+    + render_metric_card("FINAL LOSS // 最终损失", f"{final_loss:.4f}", delta="CONVERGED" if final_loss < 0.2 else "TRAINING", delta_type="positive" if final_loss < 0.2 else "neutral", icon_name="trending-down")
+    + render_metric_card("ACCURACY // 准确率", f"{final_acc:.1%}", delta=dataset_name.upper(), delta_type="positive" if final_acc >= 0.9 else "neutral", icon_name="target")
+    + render_metric_card("PROBE RESPONSE // 探针响应", f"{probe_prob:.1%}", delta=f"CLASS 预测类别 {probe_pred_class}", delta_type="positive" if probe_pred_class == 1 else "neutral", icon_name="crosshair")
+    + render_metric_card("GRADIENT NORM // 梯度范数", f"{min_grad_norm:.2e}", delta=grad_health_status, delta_type="positive" if "HEALTHY" in grad_health_status else "negative", icon_name="activity")
     + '</div>'
 )
 st.markdown(grid_html, unsafe_allow_html=True)
@@ -214,3 +225,10 @@ with col_grad:
     if dense_grads:
         fig_grad = plot_gradient_histograms(dense_grads, layer_names, title="GRADIENT FLOW // 反向传播梯度流分布")
         st.plotly_chart(fig_grad, use_container_width=True)
+
+# 深度知识学习指南 (折叠微观原理解析)
+act_meta = ACTIVATIONS.get(activation_name, ACTIVATIONS.get(activation_name.split(" ")[0], ACTIVATIONS["ReLU"]))
+init_meta = INITIALIZERS.get(initializer, INITIALIZERS.get(initializer.split(" ")[0].lower(), INITIALIZERS["he"]))
+opt_meta = OPTIMIZERS.get(optimizer_name, OPTIMIZERS.get(optimizer_name.split(" ")[0], OPTIMIZERS["Adam"]))
+
+render_deep_dive_card("多层网络拓扑、激活与初始化微观解析", [act_meta, init_meta, opt_meta])

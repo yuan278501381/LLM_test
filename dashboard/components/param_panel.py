@@ -1,109 +1,40 @@
 # Copyright (c) 2026 Yy1 (yuan278501381) | MIT License
 """
-dashboard.components.param_panel - 世界级交互式参数控制中枢 (极简极客风格)
+dashboard.components.param_panel - 世界级参数控制中枢 (Zero Hardcoding · 深度学习提示与案例解析)
 
-提供结构清晰、交互丝滑的侧边栏控制面板：
-- 经典实验一键预设库 (Instant Presets)
-- 数据集拓扑选择与噪声调节
-- 深度神经网络架构配置 (层数/神经元/激活/初始化)
-- 训练超参数与优化器选择
-- 正则化与防过拟合策略
-- 实时神经元活性探针点选取
+所有选项、标签、数学公式、详细含义与学习案例均由 dashboard.constants.knowledge 元数据驱动。
+为每个组件注入详尽的 Tooltip (`help`)，帮助用户透彻理解每个超参数的几何物理意义与实际训练影响。
 """
 
 from typing import Any
+
 import streamlit as st
+from dashboard.constants.knowledge import (
+    ACTIVATIONS,
+    DATASETS,
+    INITIALIZERS,
+    OPTIMIZERS,
+    PRESETS_REGISTRY,
+    REGULARIZERS,
+)
+from dashboard.styles.icons import svg_icon
 
-
-# ---------------------------------------------------------------------------
-# 经典实验预设库
-# ---------------------------------------------------------------------------
-PRESETS = {
-    "自定义配置 (Custom)": {
-        "desc": "自由配置所有超参数与网络架构",
-        "dataset": "Moons (双月分布)",
-        "n_samples": 250,
-        "noise": 0.12,
-        "n_layers": 2,
-        "neurons": [8, 4],
-        "activation": "ReLU",
-        "initializer": "he",
-        "optimizer": "Adam",
-        "lr": 0.05,
-        "epochs": 150,
-    },
-    "线性可分基准 (Linear Baseline)": {
-        "desc": "单层感知机即可完美求解的经典线性分类问题",
-        "dataset": "Blobs (高斯聚类)",
-        "n_samples": 200,
-        "noise": 0.10,
-        "n_layers": 1,
-        "neurons": [1],
-        "activation": "Sigmoid",
-        "initializer": "xavier",
-        "optimizer": "SGD",
-        "lr": 0.1,
-        "epochs": 100,
-    },
-    "XOR 历史困境与破解 (XOR Problem)": {
-        "desc": "明斯基异或难题：单层线性失效，双层隐藏层破解非线性决策",
-        "dataset": "XOR (正交分布)",
-        "n_samples": 300,
-        "noise": 0.08,
-        "n_layers": 2,
-        "neurons": [8, 4],
-        "activation": "Tanh",
-        "initializer": "xavier",
-        "optimizer": "Adam",
-        "lr": 0.05,
-        "epochs": 200,
-    },
-    "双螺旋奇点挑战 (Spiral Singularity)": {
-        "desc": "高曲率流形分类，检验深度网络的非线性特征空间扭曲拟合能力",
-        "dataset": "Spiral (双螺旋)",
-        "n_samples": 400,
-        "noise": 0.15,
-        "n_layers": 3,
-        "neurons": [16, 12, 8],
-        "activation": "LeakyReLU",
-        "initializer": "he",
-        "optimizer": "Adam",
-        "lr": 0.03,
-        "epochs": 300,
-    },
-    "梯度消失复现与拯救 (Vanishing Gradient)": {
-        "desc": "深层 Sigmoid + Random 初始化导致前端梯度归零 vs ReLU + He 救场",
-        "dataset": "Circles (同心圆)",
-        "n_samples": 300,
-        "noise": 0.10,
-        "n_layers": 4,
-        "neurons": [12, 12, 12, 12],
-        "activation": "Sigmoid",
-        "initializer": "random",
-        "optimizer": "SGD",
-        "lr": 0.05,
-        "epochs": 200,
-    },
-}
-
-DATASET_LABEL_MAP = {
-    "Moons (双月分布)": "moons",
-    "Circles (同心圆)": "circles",
-    "XOR (正交分布)": "xor",
-    "Spiral (双螺旋)": "spiral",
-    "Blobs (高斯聚类)": "blobs",
-}
+# 导出兼容别名
+PRESETS = PRESETS_REGISTRY
 
 
 def render_presets_selector(key_prefix: str = "") -> dict[str, Any] | None:
     """渲染一键实验预设选择器"""
     st.sidebar.markdown("#### PRESET // 经典实验预设")
+
+    preset_options = list(PRESETS_REGISTRY.keys())
     preset_choice = st.sidebar.selectbox(
-        "选择预设模板",
-        list(PRESETS.keys()),
+        "选择实验预设方案",
+        preset_options,
+        help="点击一键载入深度学习历史上的经典实验配置（如明斯基 XOR 困境、双螺旋奇点、梯度消失等）。",
         key=f"{key_prefix}preset_choice",
     )
-    preset_data = PRESETS[preset_choice]
+    preset_data = PRESETS_REGISTRY[preset_choice]
 
     if preset_choice != "自定义配置 (Custom)":
         st.sidebar.caption(f"{preset_data['desc']}")
@@ -112,31 +43,55 @@ def render_presets_selector(key_prefix: str = "") -> dict[str, Any] | None:
 
 
 def render_dataset_selector(
-    key_prefix: str = "", default_dataset: str = "Moons (双月分布)"
+    key_prefix: str = "", default_dataset: str = "moons"
 ) -> tuple[str, int, float, int]:
-    """渲染数据集选择与参数卡片"""
+    """渲染数据集选择与参数卡片 (带详尽数学含义与场景 Tooltip)"""
     st.sidebar.markdown("#### DATASET // 数据集拓扑")
 
-    dataset_options = list(DATASET_LABEL_MAP.keys())
-    default_idx = dataset_options.index(default_dataset) if default_dataset in dataset_options else 0
+    dataset_labels = [meta.label for meta in DATASETS.values()]
+    dataset_ids = list(DATASETS.keys())
 
-    dataset_label = st.sidebar.selectbox(
-        "分布类型",
-        dataset_options,
+    clean_default = default_dataset.lower()
+    default_idx = next(
+        (i for i, d_id in enumerate(dataset_ids) if d_id in clean_default or clean_default in d_id),
+        0,
+    )
+
+    selected_label = st.sidebar.selectbox(
+        "分布类型 (Distribution)",
+        dataset_labels,
         index=default_idx,
+        help="选择 2D 特征空间的数据集流形结构。不同的几何拓扑对网络深度与激活函数非线性有不同的要求。",
         key=f"{key_prefix}dataset",
     )
-    dataset_name = DATASET_LABEL_MAP[dataset_label]
+
+    # 找到选中的 metadata 并显示其详尽学习提示
+    selected_meta = next(m for m in DATASETS.values() if m.label == selected_label)
 
     col1, col2 = st.sidebar.columns(2)
     with col1:
-        n_samples = st.slider("样本量 (N)", 50, 1000, 250, step=50, key=f"{key_prefix}n_samples")
+        n_samples = st.slider(
+            "样本量 (N)",
+            50, 1000, 250, step=50,
+            help="数据集中的总样本点数量。样本量越大，决策边界泛化越平滑，单轮计算量成正比增加。",
+            key=f"{key_prefix}n_samples",
+        )
     with col2:
-        noise = st.slider("噪声比 (Noise)", 0.0, 0.4, 0.1, step=0.02, key=f"{key_prefix}noise")
+        noise = st.slider(
+            "噪声比 (Noise)",
+            0.0, 0.4, 0.1, step=0.02,
+            help="高斯噪声标准差。噪声越大，两类数据在边界处重叠越严重，考验模型的正则化抗过拟合能力。",
+            key=f"{key_prefix}noise",
+        )
 
-    random_state = st.sidebar.number_input("随机种子 (Seed)", 0, 9999, 42, key=f"{key_prefix}random_state")
+    random_state = st.sidebar.number_input(
+        "随机种子 (Seed)",
+        0, 9999, 42,
+        help="控制伪随机数发生器起点，确保数据生成与实验结果可 100% 稳定复现。",
+        key=f"{key_prefix}random_state",
+    )
 
-    return dataset_name, n_samples, noise, random_state
+    return selected_meta.id, n_samples, noise, int(random_state)
 
 
 def render_network_params(
@@ -147,14 +102,15 @@ def render_network_params(
     default_act: str = "ReLU",
     default_init: str = "he",
 ) -> dict[str, Any]:
-    """渲染网络架构参数中枢"""
+    """渲染网络架构参数中枢 (带丰富公式与影响 Tooltip)"""
     st.sidebar.markdown("#### ARCHITECTURE // 网络架构")
 
     if allow_multi_layer:
         n_layers = st.sidebar.slider(
-            "隐藏层深度 (Depth)", 1, 5, default_layers,
+            "隐藏层深度 (Depth)",
+            1, 5, default_layers,
+            help="隐藏层数量。网络越深，能够执行的「非线性空间流形折叠」次数越多，但对梯度反向传播的要求也越高。",
             key=f"{key_prefix}n_layers",
-            help="增加网络深度以学习更复杂的非线性拓扑折叠",
         )
     else:
         n_layers = 1
@@ -167,35 +123,53 @@ def render_network_params(
         n = st.sidebar.slider(
             f"隐藏层 #{i+1} 神经元数",
             1 if not allow_multi_layer else 2, 64, default_val,
+            help=f"第 {i+1} 隐藏层的特征维度。神经元数量越多，该层对复杂空间分界面的拟合容量越大。",
             key=f"{key_prefix}neurons_{i}",
         )
         neurons_per_layer.append(n)
 
+    act_labels = [meta.label for meta in ACTIVATIONS.values() if meta.id != "Softmax"]
+    act_ids = [meta.id for meta in ACTIVATIONS.values() if meta.id != "Softmax"]
+    act_default_idx = next(
+        (i for i, a_id in enumerate(act_ids) if a_id.lower() in default_act.lower()),
+        0,
+    )
+
+    init_labels = [meta.label for meta in INITIALIZERS.values()]
+    init_ids = list(INITIALIZERS.keys())
+    init_default_idx = next(
+        (i for i, i_id in enumerate(init_ids) if i_id.lower() in default_init.lower()),
+        0,
+    )
+
     col1, col2 = st.sidebar.columns(2)
     with col1:
-        act_options = ["ReLU", "Sigmoid", "Tanh", "LeakyReLU"]
-        act_idx = act_options.index(default_act) if default_act in act_options else 0
-        activation = st.selectbox(
+        selected_act_label = st.selectbox(
             "激活函数",
-            act_options,
-            index=act_idx,
+            act_labels,
+            index=act_default_idx,
+            help="赋予神经网络非线性表达能力的数学变换。没有激活函数的多层网络会退化为单层线性变换。",
             key=f"{key_prefix}activation",
         )
     with col2:
-        init_options = ["he", "xavier", "random", "zeros"]
-        init_idx = init_options.index(default_init) if default_init in init_options else 0
-        initializer = st.selectbox(
-            "参数初始化",
-            init_options,
-            index=init_idx,
+        selected_init_label = st.selectbox(
+            "权重初始化",
+            init_labels,
+            index=init_default_idx,
+            help="网络初始权重的概率分布。合理的方差缩放初始化（如 He / Xavier）是深层网络避免梯度消失的关键。",
             key=f"{key_prefix}initializer",
         )
+
+    act_meta = next(m for m in ACTIVATIONS.values() if m.label == selected_act_label)
+    init_meta = next(m for m in INITIALIZERS.values() if m.label == selected_init_label)
 
     return {
         "n_layers": n_layers,
         "neurons_per_layer": neurons_per_layer,
-        "activation": activation,
-        "initializer": initializer,
+        "activation": act_meta.id,
+        "activation_label": act_meta.label,
+        "initializer": init_meta.id,
+        "initializer_label": init_meta.label,
     }
 
 
@@ -205,17 +179,25 @@ def render_training_params(
     default_lr: float = 0.05,
     default_epochs: int = 150,
 ) -> dict[str, Any]:
-    """渲染训练超参数控制台"""
+    """渲染训练超参数控制台 (带优化器数学公式与影响 Tooltip)"""
     st.sidebar.markdown("#### OPTIMIZER // 优化算法")
 
-    opt_options = ["Adam", "SGD", "Momentum", "RMSProp"]
-    opt_idx = opt_options.index(default_opt) if default_opt in opt_options else 0
-    optimizer = st.sidebar.selectbox(
-        "算法类型",
-        opt_options,
-        index=opt_idx,
+    opt_labels = [meta.label for meta in OPTIMIZERS.values()]
+    opt_ids = list(OPTIMIZERS.keys())
+    opt_default_idx = next(
+        (i for i, o_id in enumerate(opt_ids) if o_id.lower() in default_opt.lower()),
+        0,
+    )
+
+    selected_opt_label = st.sidebar.selectbox(
+        "算法类型 (Algorithm)",
+        opt_labels,
+        index=opt_default_idx,
+        help="指导参数沿着损失曲面梯度方向寻优的更新策略（动量累积、自适应步长等）。",
         key=f"{key_prefix}optimizer",
     )
+
+    opt_meta = next(m for m in OPTIMIZERS.values() if m.label == selected_opt_label)
 
     col1, col2 = st.sidebar.columns(2)
     with col1:
@@ -226,38 +208,60 @@ def render_training_params(
             value=default_lr,
             step=0.01,
             format="%.4f",
+            help="参数更新步长 $\\eta$。过大易导致损失震荡发散，过小会导致收敛缓慢陷入局部极小。",
             key=f"{key_prefix}learning_rate",
         )
     with col2:
         batch_size = st.selectbox(
-            "Batch Size",
+            "批大小 (Batch)",
             [16, 32, 64, 128, 256, 0],
             format_func=lambda x: "Full (全量)" if x == 0 else str(x),
             index=1,
+            help="每次参数更新所使用的样本数量。Mini-batch 兼具计算效率与适度随机扰动（利于逃逸鞍点）。",
             key=f"{key_prefix}batch_size",
         )
 
     epochs = st.sidebar.slider(
         "训练轮数 (Epochs)",
         10, 800, default_epochs, step=10,
+        help="全量数据集被前向与反向遍历的总循环次数。",
         key=f"{key_prefix}epochs",
     )
 
     return {
-        "optimizer": optimizer,
-        "learning_rate": lr,
+        "optimizer": opt_meta.id,
+        "optimizer_label": opt_meta.label,
+        "learning_rate": float(lr),
         "batch_size": batch_size if batch_size > 0 else None,
-        "epochs": epochs,
+        "epochs": int(epochs),
     }
 
 
 def render_probe_point_selector(key_prefix: str = "") -> tuple[float, float]:
     """渲染单样本活性探针坐标微调器"""
     st.sidebar.markdown("#### PROBE // 神经元活性探针")
-    st.sidebar.caption("设置测试样本坐标，捕获前向传递中各层神经元激活强度：")
+    st.sidebar.caption("设置虚拟测试样本 (x₁, x₂)，实时捕获信号在前向各层神经元中的激发状态：")
     col1, col2 = st.sidebar.columns(2)
     with col1:
-        px = st.number_input("探针坐标 x₁", -3.0, 3.0, 0.5, step=0.1, key=f"{key_prefix}probe_x")
+        px = st.number_input("探针坐标 x₁", -3.0, 3.0, 0.5, step=0.1, help="探针样本在特征 x₁ 轴的坐标值", key=f"{key_prefix}probe_x")
     with col2:
-        py = st.number_input("探针坐标 x₂", -3.0, 3.0, 0.5, step=0.1, key=f"{key_prefix}probe_y")
+        py = st.number_input("探针坐标 x₂", -3.0, 3.0, 0.5, step=0.1, help="探针样本在特征 x₂ 轴的坐标值", key=f"{key_prefix}probe_y")
     return float(px), float(py)
+
+
+def render_deep_dive_card(
+    title: str,
+    meta_items: list[Any],
+    icon_name: str = "terminal",
+) -> None:
+    """渲染富文本微观原理解析与学习案例卡片 (Collapsible Deep Dive)"""
+    icon_svg = svg_icon(icon_name, size=16, color="#1d4ed8")
+    with st.expander(f"📖 微观原理解析与学习指南：{title}", expanded=False):
+        for item in meta_items:
+            formula_line = f"`{item.formula}`" if hasattr(item, "formula") else ""
+            st.markdown(
+                f"##### **{item.label}** {formula_line}\n"
+                f"- 💡 **详细含义**: {item.desc}\n"
+                f"- ⚡ **实际影响**: {getattr(item, 'impact', getattr(item, 'difficulty', ''))}\n"
+                f"- 🎯 **学习案例**: {item.example}\n"
+            )

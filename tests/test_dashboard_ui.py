@@ -28,7 +28,13 @@ from dashboard.components.network_viz import plot_network_topology
 from dashboard.components.param_panel import PRESETS
 from dashboard.styles.icons import svg_icon
 from dashboard.styles.theme import render_metric_card
-from dashboard.utils.state import ACTIVATION_MAP, OPTIMIZER_MAP, build_model, get_dataset
+from dashboard.utils.state import (
+    build_model,
+    get_dataset,
+    resolve_activation,
+    resolve_initializer,
+    resolve_optimizer,
+)
 from nn_core.layers import Dense
 from nn_core.losses import BinaryCrossEntropy
 from nn_core.model import Sequential
@@ -122,16 +128,19 @@ class TestAllPresetsExecution:
 
             model = Sequential()
             prev_dim = 2
+            act_cls = resolve_activation(p["activation"])
+            init_name = resolve_initializer(p["initializer"])
             for n_neurons in p["neurons"]:
-                model.add(Dense(prev_dim, n_neurons, initializer=p["initializer"]))
-                model.add(ACTIVATION_MAP[p["activation"]]())
+                model.add(Dense(prev_dim, n_neurons, initializer=init_name))
+                model.add(act_cls())
                 prev_dim = n_neurons
 
-            model.add(Dense(prev_dim, 1, initializer=p["initializer"]))
-            model.add(ACTIVATION_MAP["Sigmoid"]())
+            model.add(Dense(prev_dim, 1, initializer=init_name))
+            model.add(resolve_activation("Sigmoid")())
 
             loss_fn = BinaryCrossEntropy()
-            opt = OPTIMIZER_MAP[p["optimizer"]](learning_rate=p["lr"])
+            opt_cls = resolve_optimizer(p["optimizer"])
+            opt = opt_cls(learning_rate=p["lr"])
 
             hist = model.train(
                 X, y, loss_fn=loss_fn, optimizer=opt, epochs=5, batch_size=32, verbose=False

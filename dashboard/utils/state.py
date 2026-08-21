@@ -1,9 +1,14 @@
 # Copyright (c) 2026 Yy1 (yuan278501381) | MIT License
 """
-dashboard.utils.state - Streamlit Session State 统一管理
+dashboard.utils.state - Streamlit Session State 与元数据解析中枢 (Zero Hardcoding)
 
-集中管理所有页面的会话状态，包括模型实例、训练历史、
-实验快照等，确保跨页面状态一致性。
+基于 dashboard.constants.knowledge 统一元数据驱动，提供无硬编码的：
+- 激活函数解析
+- 优化器解析
+- 初始化器解析
+- 正则化器解析
+- 数据集获取
+- Session State 安全管理
 """
 
 import os
@@ -18,6 +23,13 @@ _PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".
 if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
+from dashboard.constants.knowledge import (
+    ACTIVATIONS,
+    DATASETS,
+    INITIALIZERS,
+    OPTIMIZERS,
+    REGULARIZERS,
+)
 from nn_core.activations import LeakyReLU, ReLU, Sigmoid, Softmax, Tanh
 from nn_core.layers import Dense, Dropout
 from nn_core.losses import MSE, BinaryCrossEntropy, CategoricalCrossEntropy
@@ -40,34 +52,97 @@ def reset_state() -> None:
     """清除所有训练相关的 session state"""
     keys_to_remove = [
         k for k in st.session_state.keys()
-        if k.startswith(("model_", "history_", "snapshot_", "training_"))
+        if k.startswith(("model_", "history_", "snapshot_", "training_", "m4_"))
     ]
     for k in keys_to_remove:
         del st.session_state[k]
 
 
 # ---------------------------------------------------------------------------
-# 激活函数 / 优化器 / 损失函数 注册表
+# 映射注册表 (由 knowledge 元数据驱动，拒绝硬编码)
 # ---------------------------------------------------------------------------
-ACTIVATION_MAP: dict[str, type] = {
-    "Sigmoid": Sigmoid,
+_RAW_ACTIVATION_CLASSES: dict[str, type] = {
     "ReLU": ReLU,
+    "Sigmoid": Sigmoid,
     "Tanh": Tanh,
     "LeakyReLU": LeakyReLU,
+    "Softmax": Softmax,
 }
 
-OPTIMIZER_MAP: dict[str, type] = {
+_RAW_OPTIMIZER_CLASSES: dict[str, type] = {
+    "Adam": Adam,
     "SGD": SGD,
     "Momentum": Momentum,
     "RMSProp": RMSProp,
-    "Adam": Adam,
 }
+
+_RAW_LOSS_CLASSES: dict[str, type] = {
+    "BinaryCrossEntropy": BinaryCrossEntropy,
+    "MSE": MSE,
+    "CategoricalCrossEntropy": CategoricalCrossEntropy,
+}
+
+# 动态构建包含 ID 与 Label 的全局查询字典
+ACTIVATION_MAP: dict[str, type] = {}
+for act_id, meta in ACTIVATIONS.items():
+    cls = _RAW_ACTIVATION_CLASSES[act_id]
+    ACTIVATION_MAP[act_id] = cls
+    ACTIVATION_MAP[meta.label] = cls
+
+OPTIMIZER_MAP: dict[str, type] = {}
+for opt_id, meta in OPTIMIZERS.items():
+    cls = _RAW_OPTIMIZER_CLASSES[opt_id]
+    OPTIMIZER_MAP[opt_id] = cls
+    OPTIMIZER_MAP[meta.label] = cls
+
+INITIALIZER_MAP: dict[str, str] = {}
+for init_id, meta in INITIALIZERS.items():
+    INITIALIZER_MAP[init_id] = init_id
+    INITIALIZER_MAP[meta.label] = init_id
 
 LOSS_MAP: dict[str, type] = {
     "MSE": MSE,
+    "MSE (均方误差)": MSE,
     "BinaryCrossEntropy": BinaryCrossEntropy,
+    "BinaryCrossEntropy (二元交叉熵)": BinaryCrossEntropy,
     "CategoricalCrossEntropy": CategoricalCrossEntropy,
+    "CategoricalCrossEntropy (多元交叉熵)": CategoricalCrossEntropy,
 }
+
+
+def resolve_activation(name: str) -> type:
+    """智能解析激活函数（支持 ID、中英双语 Label 及前缀）"""
+    if name in ACTIVATION_MAP:
+        return ACTIVATION_MAP[name]
+    clean = name.split(" ")[0].strip()
+    return ACTIVATION_MAP.get(clean, ReLU)
+
+
+def resolve_optimizer(name: str) -> type:
+    """智能解析优化器（支持 ID、中英双语 Label 及前缀）"""
+    if name in OPTIMIZER_MAP:
+        return OPTIMIZER_MAP[name]
+    clean = name.split(" ")[0].strip()
+    return OPTIMIZER_MAP.get(clean, Adam)
+
+
+def resolve_initializer(name: str) -> str:
+    """智能解析初始化器名称"""
+    if name in INITIALIZER_MAP:
+        return INITIALIZER_MAP[name]
+    clean = name.split(" ")[0].strip().lower()
+    return INITIALIZER_MAP.get(clean, "he")
+
+
+def resolve_regularizer(name: str | None, strength: float = 0.01) -> Any:
+    """智能解析正则化器"""
+    if not name or "None" in name:
+        return None
+    if "L1" in name:
+        return L1(lambda_=strength)
+    if "L2" in name:
+        return L2(lambda_=strength)
+    return None
 
 
 def build_model(
@@ -81,54 +156,29 @@ def build_model(
     dropout_rate: float = 0.0,
     output_activation: str | None = None,
 ) -> Sequential:
-    """
-    根据参数配置构建 Sequential 模型。
-
-    Args:
-        n_inputs: 输入特征维度
-        n_outputs: 输出维度
-        hidden_layers: 隐藏层神经元列表，如 [16, 8]
-        activation: 隐藏层激活函数名称
-        initializer: 权重初始化策略
-        regularizer_type: 正则化类型 ('L1'|'L2'|None)
-        regularizer_strength: 正则化强度
-        dropout_rate: Dropout 比例 (0 = 不使用)
-        output_activation: 输出层激活函数
-
-    Returns:
-        构建好的 Sequential 模型
-    """
-    act_cls = ACTIVATION_MAP.get(activation, ReLU)
-
-    # 构建正则化器
-    reg = None
-    if regularizer_type == "L1":
-        reg = L1(lambda_=regularizer_strength)
-    elif regularizer_type == "L2":
-        reg = L2(lambda_=regularizer_strength)
+    """根据元数据构建 Sequential 模型"""
+    act_cls = resolve_activation(activation)
+    init_name = resolve_initializer(initializer)
+    reg = resolve_regularizer(regularizer_type, regularizer_strength)
 
     model = Sequential()
 
     # 隐藏层
     prev_dim = n_inputs
     for n_neurons in hidden_layers:
-        model.add(Dense(prev_dim, n_neurons, initializer=initializer, regularizer=reg))
+        model.add(Dense(prev_dim, n_neurons, initializer=init_name, regularizer=reg))
         model.add(act_cls())
         if dropout_rate > 0:
             model.add(Dropout(rate=dropout_rate))
         prev_dim = n_neurons
 
     # 输出层
-    model.add(Dense(prev_dim, n_outputs, initializer=initializer))
+    model.add(Dense(prev_dim, n_outputs, initializer=init_name))
 
     # 输出层激活
     if output_activation:
-        out_act_cls = {
-            "Sigmoid": Sigmoid,
-            "Softmax": Softmax,
-        }.get(output_activation)
-        if out_act_cls:
-            model.add(out_act_cls())
+        out_act_cls = resolve_activation(output_activation)
+        model.add(out_act_cls())
 
     return model
 
@@ -156,4 +206,3 @@ def get_dataset(
         y = np.argmax(y_onehot, axis=1).reshape(-1, 1).astype(np.float64)
         return X, y
     return make_moons(n_samples=n_samples, noise=noise, random_state=random_state)
-
