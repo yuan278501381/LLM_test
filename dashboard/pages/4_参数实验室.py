@@ -152,14 +152,14 @@ col_btn1, col_btn2, col_btn3 = st.columns([1, 1, 2])
 
 with col_btn1:
     if st.button("TRAIN // 训练 50 轮", key="m4_train_50"):
-        hist = model.train(X, y, loss_fn=loss_fn, optimizer=opt_instance, epochs=50, batch_size=batch_size, verbose=False)
+        hist = model.train(X, y, loss_fn=loss_fn, optimizer=opt_instance, epochs=50, batch_size=batch_size)
         history["loss"].extend(hist["loss"])
         history["accuracy"].extend(hist["accuracy"])
         st.session_state["m4_epoch_count"] += 50
 
 with col_btn2:
     if st.button("STEP // 单步微调", key="m4_step_1"):
-        hist = model.train(X, y, loss_fn=loss_fn, optimizer=opt_instance, epochs=1, batch_size=batch_size, verbose=False)
+        hist = model.train(X, y, loss_fn=loss_fn, optimizer=opt_instance, epochs=1, batch_size=batch_size)
         history["loss"].extend(hist["loss"])
         history["accuracy"].extend(hist["accuracy"])
         st.session_state["m4_epoch_count"] += 1

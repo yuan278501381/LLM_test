@@ -132,7 +132,7 @@ optimizer = opt_cls(learning_rate=float(lr))
 
 # 训练网络
 history = model.train(
-    X, y, loss_fn=loss_fn, optimizer=optimizer, epochs=int(epochs), batch_size=batch_size, verbose=False
+    X, y, loss_fn=loss_fn, optimizer=optimizer, epochs=int(epochs), batch_size=batch_size
 )
 
 final_loss = history["loss"][-1] if history["loss"] else 0.0

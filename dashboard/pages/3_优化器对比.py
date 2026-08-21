@@ -122,7 +122,7 @@ for opt_meta in optimizer_items:
     loss_fn = BinaryCrossEntropy()
 
     hist = model_clone.train(
-        X, y, loss_fn=loss_fn, optimizer=opt_instance, epochs=int(epochs), batch_size=32, verbose=False
+        X, y, loss_fn=loss_fn, optimizer=opt_instance, epochs=int(epochs), batch_size=32
     )
 
     histories[opt_meta.id] = hist

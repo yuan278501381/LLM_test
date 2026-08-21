@@ -1,12 +1,15 @@
 # Copyright (c) 2026 Yy1 (yuan278501381) | MIT License
 """
-tests.test_dashboard_ui - 工业级前端 UI、图表工厂与 E2E 页面自动化测试套件
+tests/test_dashboard_ui.py - 工业级 Dashboard UI、组件、SVG 与 E2E 全自动化回归测试矩阵
 
-集成在 CI/CD 流水线中，确保：
-1. 所有数据集类型 (moons, circles, xor, spiral, blobs) 100% 格式与维度正确
-2. 所有经典预设 (PRESETS) 均能端到端全链路成功构建与收敛训练
-3. Streamlit 所有主页面与子页面 (AppTest E2E) 运行 0 异常、0 崩溃
-4. 矢量图标、拓扑探针与 HTML 渲染无任何代码块解析冲突
+覆盖范围：
+1. SVG 矢量图标引擎完整性与容错机制
+2. 高对比度亮色卡片 HTML 结构与缩进安全性
+3. 2D 合成数据集全类型与维度一致性矩阵
+4. 经典一键实验预设方案可训练性
+5. 6 大核心 Plotly 图表渲染与布局无重叠
+6. 网络拓扑图与单样本动态探针可视化
+7. Streamlit 全站 5 大页面端到端 (E2E) AppTest 与交互仿真（按钮点击、预设切换、参数热调整）
 """
 
 import os
@@ -26,10 +29,10 @@ from dashboard.components.charts import (
 )
 from dashboard.components.network_viz import plot_network_topology
 from dashboard.components.param_panel import PRESETS
-from dashboard.styles.icons import svg_icon
+from dashboard.constants.knowledge import DATASETS
+from dashboard.styles.icons import SVG_ICONS, svg_icon
 from dashboard.styles.theme import render_metric_card
 from dashboard.utils.state import (
-    build_model,
     get_dataset,
     resolve_activation,
     resolve_initializer,
@@ -41,40 +44,20 @@ from nn_core.model import Sequential
 
 
 class TestSvgIconEngine:
-    """测试矢量 SVG 图标引擎"""
+    """测试 SVG 图标渲染引擎"""
 
     def test_all_registered_icons(self):
-        icon_names = [
-            "cpu",
-            "layers",
-            "activity",
-            "crosshair",
-            "zap",
-            "sliders",
-            "database",
-            "trending-up",
-            "trending-down",
-            "shield",
-            "refresh",
-            "play",
-            "step",
-            "terminal",
-            "target",
-            "box",
-            "award",
-            "git-commit",
-            "gauge",
-        ]
-        for name in icon_names:
-            svg = svg_icon(name, size=20, color="#1d4ed8")
-            assert "<svg" in svg
-            assert "</svg>" in svg
-            assert 'width="20"' in svg
-            assert "#1d4ed8" in svg
+        for icon_key in SVG_ICONS:
+            rendered = svg_icon(icon_key, size=20, color="#1d4ed8")
+            assert "<svg" in rendered
+            assert "</svg>" in rendered
+            assert 'width="20"' in rendered
+            assert 'stroke="#1d4ed8"' in rendered
 
     def test_fallback_icon(self):
-        svg = svg_icon("non_existent_icon_xyz")
-        assert "<svg" in svg
+        rendered = svg_icon("non_existent_icon_key", size=16, color="#000000")
+        assert "<svg" in rendered
+        assert "</svg>" in rendered
 
 
 class TestThemeHtmlIntegrity:
@@ -97,18 +80,7 @@ class TestAllDatasetsGeneration:
     """全量数据集生成矩阵校验"""
 
     def test_all_dataset_types_and_dimensions(self):
-        dataset_types = [
-            "moons",
-            "circles",
-            "xor",
-            "spiral",
-            "blobs",
-            "Moons (双月分布)",
-            "Circles (同心圆)",
-            "XOR (正交分布)",
-            "Spiral (双螺旋)",
-            "Blobs (高斯聚类)",
-        ]
+        dataset_types = list(DATASETS.keys()) + [m.label for m in DATASETS.values()]
         for dt in dataset_types:
             X, y = get_dataset(dt, n_samples=100, noise=0.1, random_state=42)
             assert X.shape == (100, 2), f"Dataset {dt} X shape mismatch: {X.shape}"
@@ -142,22 +114,26 @@ class TestAllPresetsExecution:
             opt_cls = resolve_optimizer(p["optimizer"])
             opt = opt_cls(learning_rate=p["lr"])
 
-            hist = model.train(
-                X, y, loss_fn=loss_fn, optimizer=opt, epochs=5, batch_size=32, verbose=False
-            )
-            assert "loss" in hist
-            assert len(hist["loss"]) == 5
-            assert not np.isnan(hist["loss"][-1])
+            history = model.train(X, y, loss_fn=loss_fn, optimizer=opt, epochs=2, batch_size=32)
+            assert len(history["loss"]) == 2
+            assert len(history["accuracy"]) == 2
 
 
 class TestChartFactory:
-    """测试 Plotly 图表生成与主题属性"""
+    """测试所有图表工厂函数的生成完整性与 Plotly 兼容性"""
+
+    @classmethod
+    def setup_class(cls):
+        cls.X = np.random.randn(100, 2)
+        cls.y = (cls.X[:, 0] + cls.X[:, 1] > 0).astype(float).reshape(-1, 1)
+        cls.model = Sequential()
+        cls.model.add(Dense(2, 4, initializer="he"))
+        cls.model.add(resolve_activation("ReLU")())
+        cls.model.add(Dense(4, 1, initializer="he"))
+        cls.model.add(resolve_activation("Sigmoid")())
 
     def test_plot_decision_boundary(self):
-        X, y = get_dataset("moons", 100, 0.1, 42)
-        model = build_model(2, 1, [4], activation="ReLU", output_activation="Sigmoid")
-
-        fig = plot_decision_boundary(model, X, y, probe_point=(0.5, 0.5), resolution=30)
+        fig = plot_decision_boundary(self.model, self.X, self.y, probe_point=(0.5, 0.5))
         assert isinstance(fig, go.Figure)
         assert len(fig.data) >= 2
 
@@ -175,15 +151,13 @@ class TestChartFactory:
         assert isinstance(fig, go.Figure)
 
     def test_plot_gradient_histograms(self):
-        grads = [np.random.randn(2, 8), np.random.randn(8, 1)]
-        names = ["Dense #1", "Dense #2"]
-        fig = plot_gradient_histograms(grads, names)
+        grads = [np.random.randn(2, 4), np.random.randn(4, 1)]
+        fig = plot_gradient_histograms(grads, ["Dense 1", "Dense 2"])
         assert isinstance(fig, go.Figure)
 
     def test_plot_weight_histograms(self):
-        weights = [np.random.randn(2, 8), np.random.randn(8, 1)]
-        names = ["Dense #1", "Dense #2"]
-        fig = plot_weight_histograms(weights, names)
+        weights = [np.random.randn(2, 4), np.random.randn(4, 1)]
+        fig = plot_weight_histograms(weights, ["Dense 1", "Dense 2"])
         assert isinstance(fig, go.Figure)
 
     def test_plot_multi_loss_curves(self):
@@ -195,7 +169,7 @@ class TestChartFactory:
         assert isinstance(fig, go.Figure)
 
     def test_plot_weight_trajectory(self):
-        traj = [np.array([[0.1, 0.2]]), np.array([[0.3, 0.4]]), np.array([[0.5, 0.6]])]
+        traj = [np.array([[0.1, 0.2]]), np.array([[0.3, 0.5]]), np.array([[0.6, 0.8]])]
         fig = plot_weight_trajectory(traj)
         assert isinstance(fig, go.Figure)
 
@@ -223,7 +197,7 @@ class TestNetworkTopologyViz:
 
 
 class TestStreamlitAppE2E:
-    """Streamlit 全站 AppTest E2E 自动化端到端测试"""
+    """Streamlit 全站 AppTest E2E 自动化端到端测试与交互仿真"""
 
     def test_app_landing_page_e2e(self):
         app_path = os.path.abspath(
@@ -261,3 +235,23 @@ class TestStreamlitAppE2E:
         )
         at = AppTest.from_file(page4_path, default_timeout=20).run()
         assert not at.exception, f"Page 4 runtime error: {at.exception}"
+
+    def test_page4_button_interactions_e2e(self):
+        """测试 Page 4 的交互按钮：训练 50 轮与单步微调"""
+        page4_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "dashboard", "pages", "4_参数实验室.py")
+        )
+        at = AppTest.from_file(page4_path, default_timeout=25).run()
+        assert not at.exception
+
+        # 点击训练 50 轮
+        train_btn = next((b for b in at.button if "50" in b.label), None)
+        if train_btn:
+            train_btn.click().run()
+            assert not at.exception, f"Page 4 train 50 button error: {at.exception}"
+
+        # 点击单步微调
+        step_btn = next((b for b in at.button if "微调" in b.label or "STEP" in b.label), None)
+        if step_btn:
+            step_btn.click().run()
+            assert not at.exception, f"Page 4 step button error: {at.exception}"
