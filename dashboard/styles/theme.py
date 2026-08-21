@@ -3,9 +3,11 @@
 dashboard.styles.theme - 世界级 Neo-Bento 赛博深色玻璃拟态视觉引擎
 
 提供全局 CSS 注入、高分屏排版优化、发光卡片、状态指示灯、指标卡等世界级 UI 组件。
+全系采用极简高精矢量 SVG 图标，杜绝一切 Emoji 元素。
 """
 
 import streamlit as st
+from dashboard.styles.icons import svg_icon
 
 
 def apply_custom_theme() -> None:
@@ -25,7 +27,7 @@ def apply_custom_theme() -> None:
             --bg-deep: #080c14;
             --bg-card: rgba(15, 23, 42, 0.65);
             --bg-card-hover: rgba(30, 41, 59, 0.8);
-            --border-glow: rgba(56, 189, 248, 0.2);
+            --border-glow: rgba(56, 189, 248, 0.25);
             --border-subtle: rgba(255, 255, 255, 0.08);
             --neon-blue: #38bdf8;
             --neon-indigo: #818cf8;
@@ -66,7 +68,7 @@ def apply_custom_theme() -> None:
 
         /* 侧边栏玻璃拟态美化 */
         [data-testid="stSidebar"] {
-            background-color: rgba(8, 12, 20, 0.85) !important;
+            background-color: rgba(8, 12, 20, 0.88) !important;
             backdrop-filter: blur(20px) saturate(180%) !important;
             border-right: 1px solid var(--border-subtle) !important;
         }
@@ -84,8 +86,8 @@ def apply_custom_theme() -> None:
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             border: 1px solid var(--border-subtle);
-            border-radius: 16px;
-            padding: 1.5rem;
+            border-radius: 14px;
+            padding: 1.4rem;
             margin-bottom: 1.2rem;
             box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -109,26 +111,22 @@ def apply_custom_theme() -> None:
             transform: translateY(-2px);
         }
 
-        .cyber-card-interactive {
-            cursor: pointer;
-        }
-
         /* -------------------------------------------------------------------------
            标题与 Hero Header
         ------------------------------------------------------------------------- */
         .hero-title {
-            font-size: 2.6rem !important;
+            font-size: 2.4rem !important;
             font-weight: 800 !important;
             background: linear-gradient(135deg, #ffffff 0%, #38bdf8 50%, #818cf8 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             letter-spacing: -0.03em;
-            margin-bottom: 0.4rem !important;
+            margin-bottom: 0.3rem !important;
             line-height: 1.2 !important;
         }
 
         .hero-subtitle {
-            font-size: 1.1rem;
+            font-size: 1.05rem;
             color: var(--text-muted);
             font-weight: 400;
             margin-bottom: 1.5rem;
@@ -162,30 +160,31 @@ def apply_custom_theme() -> None:
         }
 
         .telemetry-label {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.06em;
             color: #94a3b8;
             font-weight: 600;
             display: flex;
             align-items: center;
-            gap: 0.4rem;
+            gap: 0.45rem;
         }
 
         .telemetry-value {
-            font-size: 1.6rem;
+            font-size: 1.55rem;
             font-weight: 700;
             color: #f8fafc;
             font-family: 'JetBrains Mono', monospace;
-            margin: 0.2rem 0;
+            margin: 0.25rem 0;
+            letter-spacing: -0.02em;
         }
 
         .telemetry-delta {
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             font-weight: 500;
             display: flex;
             align-items: center;
-            gap: 0.2rem;
+            gap: 0.25rem;
         }
 
         .delta-positive { color: #34d399; }
@@ -198,13 +197,14 @@ def apply_custom_theme() -> None:
         .pill-badge {
             display: inline-flex;
             align-items: center;
-            gap: 0.35rem;
+            gap: 0.4rem;
             padding: 0.25rem 0.75rem;
             border-radius: 9999px;
-            font-size: 0.75rem;
+            font-size: 0.72rem;
             font-weight: 600;
-            letter-spacing: 0.02em;
+            letter-spacing: 0.05em;
             text-transform: uppercase;
+            font-family: 'JetBrains Mono', monospace;
         }
 
         .pill-blue {
@@ -232,25 +232,26 @@ def apply_custom_theme() -> None:
         }
 
         .status-dot {
-            width: 8px;
-            height: 8px;
+            width: 6px;
+            height: 6px;
             border-radius: 50%;
             display: inline-block;
-            box-shadow: 0 0 8px currentColor;
+            box-shadow: 0 0 6px currentColor;
         }
 
         /* -------------------------------------------------------------------------
-           按钮交互与呼吸动效
+           按钮交互与现代阴影
         ------------------------------------------------------------------------- */
         .stButton>button {
-            border-radius: 10px !important;
+            border-radius: 8px !important;
             font-weight: 600 !important;
-            letter-spacing: 0.01em !important;
-            padding: 0.55rem 1.25rem !important;
+            font-size: 0.85rem !important;
+            letter-spacing: 0.02em !important;
+            padding: 0.5rem 1.2rem !important;
             border: 1px solid rgba(255, 255, 255, 0.12) !important;
             background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9)) !important;
             color: #f8fafc !important;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
         }
 
@@ -263,17 +264,6 @@ def apply_custom_theme() -> None:
 
         .stButton>button:active {
             transform: translateY(1px) !important;
-        }
-
-        /* -------------------------------------------------------------------------
-           Plotly 图表容器美化
-        ------------------------------------------------------------------------- */
-        .js-plotly-plot .plotly .modebar {
-            opacity: 0.3 !important;
-            transition: opacity 0.2s ease !important;
-        }
-        .js-plotly-plot .plotly:hover .modebar {
-            opacity: 1 !important;
         }
         </style>
         """,
@@ -306,19 +296,38 @@ def render_hero_header(
     )
 
 
+def render_section_heading(title: str, icon_name: str = "activity", subtext: str | None = None) -> None:
+    """渲染带极简矢量图标的分区标题"""
+    icon_html = svg_icon(icon_name, size=18, color="#38bdf8")
+    sub_html = f'<div style="color: #94a3b8; font-size: 0.85rem; margin-top: 0.2rem;">{subtext}</div>' if subtext else ""
+    st.markdown(
+        f"""
+        <div style="margin-top: 1.4rem; margin-bottom: 0.8rem;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                {icon_html}
+                <span style="font-size: 1.15rem; font-weight: 700; color: #f8fafc; letter-spacing: -0.01em;">{title}</span>
+            </div>
+            {sub_html}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def render_metric_card(
     label: str,
     value: str,
     delta: str | None = None,
     delta_type: str = "neutral",
-    icon: str = "⚡",
+    icon_name: str = "activity",
 ) -> str:
-    """生成科技感遥测指标卡 HTML"""
+    """生成带矢量 SVG 图标的科技感遥测指标卡 HTML"""
     delta_class = f"delta-{delta_type}"
     delta_html = f'<div class="telemetry-delta {delta_class}">{delta}</div>' if delta else ""
+    icon_svg = svg_icon(icon_name, size=14, color="#38bdf8")
     return f"""
     <div class="telemetry-card">
-        <div class="telemetry-label"><span>{icon}</span> {label}</div>
+        <div class="telemetry-label"><span>{icon_svg}</span> {label}</div>
         <div class="telemetry-value">{value}</div>
         {delta_html}
     </div>
@@ -327,10 +336,13 @@ def render_metric_card(
 
 def render_preset_badge(preset_name: str, desc: str) -> None:
     """渲染预设方案的说明卡片"""
+    icon_zap = svg_icon("zap", size=14, color="#38bdf8")
     st.markdown(
         f"""
         <div style="background: rgba(56, 189, 248, 0.08); border-left: 3px solid #38bdf8; padding: 0.6rem 0.9rem; border-radius: 0 8px 8px 0; margin-bottom: 1rem; font-size: 0.85rem; color: #cbd5e1;">
-            <strong style="color: #38bdf8;">⚡ 已加载预设: {preset_name}</strong><br>
+            <div style="display: flex; align-items: center; gap: 0.4rem; font-weight: 600; color: #38bdf8; margin-bottom: 0.2rem;">
+                {icon_zap} 预设方案: {preset_name}
+            </div>
             <span>{desc}</span>
         </div>
         """,

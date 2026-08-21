@@ -1,8 +1,8 @@
 # Copyright (c) 2026 Yy1 (yuan278501381) | MIT License
 """
-dashboard.components.charts - 世界级 Plotly 可视化图表引擎
+dashboard.components.charts - 世界级 Plotly 可视化图表引擎 (极简极客风格)
 
-封装所有 Plotly 图表的生成逻辑，提供极客级深空霓虹主题与丝滑交互体验。
+封装所有 Plotly 图表的生成逻辑，提供极简深空霓虹主题与交互体验（杜绝一切 Emoji）。
 - 连续平滑概率场决策边界（支持探针样本点高亮）
 - 发光 Loss 曲线与最小损失标注
 - 多层梯度与权重流形直方图
@@ -52,7 +52,7 @@ def _apply_cyber_theme(fig: go.Figure, title: str | None = None) -> go.Figure:
             size=12,
             color=CYBER_PALETTE["font_color"],
         ),
-        "margin": dict(l=35, r=25, t=55 if title else 25, b=35),
+        "margin": dict(l=35, r=25, t=50 if title else 25, b=35),
         "hoverlabel": dict(
             bgcolor="rgba(15, 23, 42, 0.95)",
             bordercolor="rgba(56, 189, 248, 0.4)",
@@ -73,7 +73,7 @@ def _apply_cyber_theme(fig: go.Figure, title: str | None = None) -> go.Figure:
     if title:
         layout_update["title"] = dict(
             text=f"<b>{title}</b>",
-            font=dict(size=15, color="#f8fafc"),
+            font=dict(size=14, color="#f8fafc"),
             x=0.02,
             y=0.96,
         )
@@ -91,11 +91,11 @@ def plot_decision_boundary(
     y: np.ndarray,
     probe_point: tuple[float, float] | None = None,
     resolution: int = 100,
-    title: str = "🗺️ 连续概率决策流形",
+    title: str = "DECISION MANIFOLD // 连续概率决策流形",
 ) -> go.Figure:
     """
     绘制模型在 2D 空间的高清连续概率场决策边界。
-    支持叠加交互式探针点（Probe Point）。
+    支持叠加交互式探针点 (Probe Point)。
     """
     margin = 0.3
     x_min, x_max = X[:, 0].min() - margin, X[:, 0].max() + margin
@@ -144,7 +144,7 @@ def plot_decision_boundary(
             x=X[mask, 0],
             y=X[mask, 1],
             mode="markers",
-            name=f"类别 {cls_idx}",
+            name=f"Class {cls_idx}",
             marker=dict(
                 size=7,
                 color=color,
@@ -152,7 +152,7 @@ def plot_decision_boundary(
                 opacity=0.9,
             ),
             hovertemplate=(
-                f"<b>类别 {cls_idx}</b><br>"
+                f"<b>Class {cls_idx}</b><br>"
                 + "x₁: %{x:.3f}<br>"
                 + "x₂: %{y:.3f}<extra></extra>"
             ),
@@ -165,22 +165,22 @@ def plot_decision_boundary(
             x=[px],
             y=[py],
             mode="markers+text",
-            name="📍 活性探针点",
-            text=["探针"],
+            name="PROBE POINT",
+            text=["PROBE"],
             textposition="top center",
-            textfont=dict(color="#fbbf24", size=11, family="JetBrains Mono"),
+            textfont=dict(color="#fbbf24", size=10, family="JetBrains Mono"),
             marker=dict(
-                size=16,
+                size=14,
                 color="#fbbf24",
                 symbol="cross",
-                line=dict(width=2.5, color="#ffffff"),
+                line=dict(width=2.0, color="#ffffff"),
             ),
-            hovertemplate="<b>📍 实时激活探针点</b><br>x₁: %{x:.3f}<br>x₂: %{y:.3f}<extra></extra>",
+            hovertemplate="<b>PROBE POINT // 活性探针点</b><br>x₁: %{x:.3f}<br>x₂: %{y:.3f}<extra></extra>",
         ))
 
     fig.update_layout(
-        xaxis_title="特征维 x₁",
-        yaxis_title="特征维 x₂",
+        xaxis_title="Feature x₁",
+        yaxis_title="Feature x₂",
         legend=dict(
             orientation="h",
             yanchor="bottom",
@@ -201,12 +201,12 @@ def plot_decision_boundary(
 # ---------------------------------------------------------------------------
 def plot_loss_curve(
     history: dict[str, list[float]],
-    title: str = "📈 训练收敛动态轨迹",
+    title: str = "TRAINING DYNAMICS // 损失与准确率收敛",
 ) -> go.Figure:
     """绘制带极光填充与双指标监控的训练收敛图"""
     fig = make_subplots(
         rows=1, cols=2,
-        subplot_titles=("📉 Loss 损失收敛", "🎯 Accuracy 准确率提升"),
+        subplot_titles=("LOSS CONVERGENCE", "ACCURACY PROGRESSION"),
         horizontal_spacing=0.12,
     )
 
@@ -228,14 +228,13 @@ def plot_loss_curve(
             ),
             row=1, col=1,
         )
-        # 最优值标记
         fig.add_trace(
             go.Scatter(
                 x=[epochs[min_idx]], y=[losses[min_idx]],
                 mode="markers",
                 name="Min Loss",
-                marker=dict(size=8, color=CYBER_PALETTE["accent"], symbol="star"),
-                hovertemplate=f"最优 Loss: {losses[min_idx]:.4f} (Epoch {epochs[min_idx]})<extra></extra>",
+                marker=dict(size=8, color=CYBER_PALETTE["accent"], symbol="diamond"),
+                hovertemplate=f"Min Loss: {losses[min_idx]:.4f} (Epoch {epochs[min_idx]})<extra></extra>",
                 showlegend=False,
             ),
             row=1, col=1,
@@ -270,7 +269,7 @@ def plot_loss_curve(
 # ---------------------------------------------------------------------------
 def plot_activation_heatmap(
     activations: list[np.ndarray],
-    title: str = "🔥 逐层神经元激活强度分布",
+    title: str = "ACTIVATION HEATMAP // 逐层神经元激活分布",
 ) -> go.Figure:
     """绘制各层神经元输出的激活热力矩阵"""
     n_layers = len(activations)
@@ -281,15 +280,14 @@ def plot_activation_heatmap(
     )
 
     for idx, act in enumerate(activations):
-        # 仅取前 30 个代表样本做热力呈现
         sample_act = act[:30] if act.shape[0] > 30 else act
         fig.add_trace(
             go.Heatmap(
                 z=sample_act,
                 colorscale="Viridis",
                 showscale=(idx == n_layers - 1),
-                colorbar=dict(title=dict(text="激活值", side="right")),
-                hovertemplate="样本: %{y}<br>神经元: %{x}<br>激活值: %{z:.3f}<extra></extra>",
+                colorbar=dict(title=dict(text="Activation", side="right")),
+                hovertemplate="Sample: %{y}<br>Neuron: %{x}<br>Value: %{z:.3f}<extra></extra>",
             ),
             row=1, col=idx + 1,
         )
@@ -305,7 +303,7 @@ def plot_activation_heatmap(
 def plot_gradient_histograms(
     gradients: list[np.ndarray],
     layer_names: list[str],
-    title: str = "🌊 反向传播梯度流分布 (梯度消失/爆炸诊断)",
+    title: str = "GRADIENT FLOW // 反向传播梯度流分布",
 ) -> go.Figure:
     """绘制各层权重的梯度分布直方图"""
     fig = go.Figure()
@@ -321,13 +319,13 @@ def plot_gradient_histograms(
             opacity=0.65,
             marker_color=color,
             nbinsx=40,
-            hovertemplate=f"<b>{name}</b><br>梯度区间: %{{x:.4f}}<br>参数量: %{{y}}<extra></extra>",
+            hovertemplate=f"<b>{name}</b><br>Gradient Range: %{{x:.4f}}<br>Count: %{{y}}<extra></extra>",
         ))
 
     fig.update_layout(
         barmode="overlay",
-        xaxis_title="梯度值 ∂L/∂W",
-        yaxis_title="频次统计",
+        xaxis_title="Gradient ∂L/∂W",
+        yaxis_title="Frequency",
         legend=dict(orientation="h", y=1.08, x=1, xanchor="right"),
     )
 
@@ -340,7 +338,7 @@ def plot_gradient_histograms(
 def plot_weight_histograms(
     weights: list[np.ndarray],
     layer_names: list[str],
-    title: str = "⚖️ 各层权重参数分布 (初始化与正则化状态)",
+    title: str = "WEIGHT SPECTRUM // 各层权重参数分布",
 ) -> go.Figure:
     """绘制各层权重的参数分布"""
     fig = go.Figure()
@@ -355,13 +353,13 @@ def plot_weight_histograms(
             opacity=0.65,
             marker_color=color,
             nbinsx=40,
-            hovertemplate=f"<b>{name}</b><br>权重值: %{{x:.4f}}<br>参数量: %{{y}}<extra></extra>",
+            hovertemplate=f"<b>{name}</b><br>Weight Value: %{{x:.4f}}<br>Count: %{{y}}<extra></extra>",
         ))
 
     fig.update_layout(
         barmode="overlay",
-        xaxis_title="权重参数值 W",
-        yaxis_title="频次统计",
+        xaxis_title="Weight Parameter W",
+        yaxis_title="Frequency",
         legend=dict(orientation="h", y=1.08, x=1, xanchor="right"),
     )
 
@@ -373,7 +371,7 @@ def plot_weight_histograms(
 # ---------------------------------------------------------------------------
 def plot_multi_loss_curves(
     histories: dict[str, dict[str, list[float]]],
-    title: str = "🏎️ 优化器多轨竞速收敛对比",
+    title: str = "OPTIMIZER BENCHMARK // 优化器多轨收敛对比",
 ) -> go.Figure:
     """绘制多种优化器同屏收敛速度对比"""
     fig = go.Figure()
@@ -396,7 +394,7 @@ def plot_multi_loss_curves(
 
     fig.update_layout(
         xaxis_title="Epoch",
-        yaxis_title="Loss 损失值 (对数坐标)",
+        yaxis_title="Loss (Log Scale)",
         yaxis_type="log",
         legend=dict(
             orientation="h",
@@ -416,7 +414,7 @@ def plot_multi_loss_curves(
 # ---------------------------------------------------------------------------
 def plot_weight_trajectory(
     trajectory: list[np.ndarray],
-    title: str = "🌀 权重参数在优化流形中的搜索轨迹",
+    title: str = "PARAMETER TRAJECTORY // 参数空间梯度搜索路径",
 ) -> go.Figure:
     """绘制 2D 参数空间中的优化轨迹"""
     fig = go.Figure()
@@ -425,43 +423,41 @@ def plot_weight_trajectory(
         w1_vals = [float(w.ravel()[0]) for w in trajectory]
         w2_vals = [float(w.ravel()[1]) for w in trajectory]
 
-        # 连线轨迹
         fig.add_trace(go.Scatter(
             x=w1_vals, y=w2_vals,
             mode="lines+markers",
-            name="优化路径",
+            name="Path",
             line=dict(color=CYBER_PALETTE["primary"], width=2.5),
             marker=dict(
                 size=5,
                 color=list(range(len(w1_vals))),
                 colorscale="Viridis",
                 showscale=True,
-                colorbar=dict(title=dict(text="步数 (Step)")),
+                colorbar=dict(title=dict(text="Step")),
             ),
             hovertemplate="Step %{marker.color}: w₁=%{x:.3f}, w₂=%{y:.3f}<extra></extra>",
         ))
 
-        # 起点与终点
         fig.add_trace(go.Scatter(
             x=[w1_vals[0]], y=[w2_vals[0]],
             mode="markers+text",
-            name="起点",
-            text=["起点"],
+            name="Origin",
+            text=["START"],
             textposition="bottom right",
-            marker=dict(size=12, color=CYBER_PALETTE["secondary"], symbol="circle"),
+            marker=dict(size=11, color=CYBER_PALETTE["secondary"], symbol="circle"),
         ))
         fig.add_trace(go.Scatter(
             x=[w1_vals[-1]], y=[w2_vals[-1]],
             mode="markers+text",
-            name="终点",
-            text=["终点"],
+            name="Optimal",
+            text=["FINAL"],
             textposition="top right",
-            marker=dict(size=14, color=CYBER_PALETTE["accent"], symbol="star"),
+            marker=dict(size=12, color=CYBER_PALETTE["accent"], symbol="diamond"),
         ))
 
     fig.update_layout(
-        xaxis_title="参数 w₁",
-        yaxis_title="参数 w₂",
+        xaxis_title="Parameter w₁",
+        yaxis_title="Parameter w₂",
     )
 
     return _apply_cyber_theme(fig, title)

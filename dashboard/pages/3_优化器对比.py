@@ -1,6 +1,6 @@
 # Copyright (c) 2026 Yy1 (yuan278501381) | MIT License
 """
-🏎️ 里程碑 3: 优化器多轨竞速对比 (Optimizer Arena)
+里程碑 3: 优化器多轨竞速对比 (Optimizer Arena)
 
 同一起跑线对比 SGD, Momentum, RMSProp 与 Adam 的收敛效率、鞍面逃逸与超参数敏感度。
 """
@@ -28,6 +28,7 @@ from dashboard.styles.theme import (
     apply_custom_theme,
     render_hero_header,
     render_metric_card,
+    render_section_heading,
 )
 from dashboard.utils.state import ACTIVATION_MAP, OPTIMIZER_MAP, get_dataset
 from nn_core.layers import Dense
@@ -35,17 +36,16 @@ from nn_core.losses import BinaryCrossEntropy
 from nn_core.model import Sequential
 
 st.set_page_config(
-    page_title="优化器多轨竞速 · NN Playground",
-    page_icon="🏎️",
+    page_title="Optimizer Arena · NN Playground",
     layout="wide",
 )
 
 apply_custom_theme()
 
 render_hero_header(
-    title="🏎️ 优化器多轨竞速对比",
+    title="优化器多轨竞速对比",
     subtitle="同一网络拓扑与初始权重起点，全方位对比 SGD / Momentum / RMSProp / Adam 的收敛动力学",
-    badge_text="MILESTONE 3 · CONVERGENCE DYNAMICS",
+    badge_text="MILESTONE 03 // CONVERGENCE DYNAMICS",
     badge_type="amber",
 )
 
@@ -53,7 +53,7 @@ render_hero_header(
 # 侧边栏控制面板
 # ---------------------------------------------------------------------------
 dataset_name, n_samples, noise, random_state = render_dataset_selector(
-    key_prefix="m3_", default_dataset="🌙 Moons"
+    key_prefix="m3_", default_dataset="Moons (双月分布)"
 )
 
 net_params = render_network_params(
@@ -64,7 +64,7 @@ neurons_per_layer = net_params["neurons_per_layer"]
 activation_name = net_params["activation"]
 initializer = net_params["initializer"]
 
-st.sidebar.markdown("### 🏎️ 竞速超参数")
+st.sidebar.markdown("#### HYPERPARAMETERS // 竞速超参数")
 col1, col2 = st.sidebar.columns(2)
 with col1:
     lr = st.number_input("基准学习率 (LR)", 0.001, 1.0, 0.03, step=0.01, format="%.3f", key="m3_lr")
@@ -110,7 +110,6 @@ for opt_name in optimizer_names:
     final_loss = hist["loss"][-1] if hist["loss"] else 1.0
     final_acc = hist["accuracy"][-1] if hist["accuracy"] else 0.0
 
-    # 寻找首次达到 Loss < 0.2 的 Epoch
     converged_epoch = next((i + 1 for i, l in enumerate(hist["loss"]) if l < 0.25), "未收敛")
 
     leaderboard_rows.append({
@@ -121,7 +120,6 @@ for opt_name in optimizer_names:
         "_raw_loss": final_loss,
     })
 
-# 排序得出冠军
 leaderboard_rows.sort(key=lambda x: x["_raw_loss"])
 champion = leaderboard_rows[0]["优化器"]
 champion_loss = leaderboard_rows[0]["最终 Loss"]
@@ -133,10 +131,10 @@ champion_acc = leaderboard_rows[0]["最终准确率"]
 st.markdown(
     f"""
     <div class="metric-grid">
-        {render_metric_card("🏆 竞速冠军", champion, delta=f"Loss: {champion_loss} | Acc: {champion_acc}", delta_type="positive", icon="🥇")}
-        {render_metric_card("基准数据分布", dataset_name.upper(), delta=f"N={n_samples} | 噪声={noise}", delta_type="neutral", icon="📊")}
-        {render_metric_card("统一初始权重", initializer.upper(), delta=f"{n_layers} 隐藏层", delta_type="neutral", icon="⚖️")}
-        {render_metric_card("竞速总轮数", f"{epochs} Epochs", delta=f"统一学习率 LR={lr}", delta_type="neutral", icon="⏱️")}
+        {render_metric_card("BENCHMARK WINNER", champion, delta=f"Loss: {champion_loss} | Acc: {champion_acc}", delta_type="positive", icon_name="award")}
+        {render_metric_card("TOPOLOGY", dataset_name.upper(), delta=f"N={n_samples} | NOISE={noise}", delta_type="neutral", icon_name="database")}
+        {render_metric_card("INITIALIZER", initializer.upper(), delta=f"{n_layers} HIDDEN LAYERS", delta_type="neutral", icon_name="layers")}
+        {render_metric_card("TOTAL EPOCHS", f"{epochs} EPOCHS", delta=f"LR = {lr}", delta_type="neutral", icon_name="activity")}
     </div>
     """,
     unsafe_allow_html=True,
@@ -145,17 +143,17 @@ st.markdown(
 # ---------------------------------------------------------------------------
 # 核心可视化：多轨 Loss 对比图
 # ---------------------------------------------------------------------------
-fig_multi_loss = plot_multi_loss_curves(histories, title="🏎️ 多优化器 Loss 对数收敛曲线")
+fig_multi_loss = plot_multi_loss_curves(histories, title="OPTIMIZER BENCHMARK // 优化器多轨收敛对比")
 st.plotly_chart(fig_multi_loss, use_container_width=True)
 
 # ---------------------------------------------------------------------------
 # 排行榜与四分屏决策边界对比
 # ---------------------------------------------------------------------------
-st.markdown("### 🏁 优化器性能排行榜")
+render_section_heading("优化器收敛效能排行榜", icon_name="award")
 df_board = pd.DataFrame(leaderboard_rows).drop(columns=["_raw_loss"])
 st.dataframe(df_board, use_container_width=True, hide_index=True)
 
-st.markdown("### 🗺️ 四大优化器最终决策边界并排透视")
+render_section_heading("四大优化器最终决策边界并排透视", icon_name="crosshair")
 cols = st.columns(4)
 
 for idx, opt_name in enumerate(optimizer_names):

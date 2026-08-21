@@ -1,6 +1,6 @@
 # Copyright (c) 2026 Yy1 (yuan278501381) | MIT License
 """
-🧬 里程碑 2: 多层网络与活性探针 (Deep Networks & Neuron Probe)
+里程碑 2: 多层网络与活性探针 (Deep Networks & Neuron Probe)
 
 理解「深度」的特征流形扭曲力量：多层链式法则、神经元动态激活探针、梯度消失/爆炸诊断。
 """
@@ -19,7 +19,6 @@ from dashboard.components.charts import (
     plot_activation_heatmap,
     plot_decision_boundary,
     plot_gradient_histograms,
-    plot_loss_curve,
 )
 from dashboard.components.network_viz import plot_network_topology
 from dashboard.components.param_panel import (
@@ -42,17 +41,16 @@ from nn_core.losses import BinaryCrossEntropy
 from nn_core.model import Sequential
 
 st.set_page_config(
-    page_title="多层网络与活性探针 · NN Playground",
-    page_icon="🧬",
+    page_title="Deep Topology & Probe · NN Playground",
     layout="wide",
 )
 
 apply_custom_theme()
 
 render_hero_header(
-    title="🧬 多层网络与动态活性探针",
+    title="多层网络与动态活性探针",
     subtitle="探索深度非线性流形折叠 · 实时探针微观捕获信号在神经元间的点亮与流动 · 梯度健康诊断",
-    badge_text="MILESTONE 2 · DEEP REPRESENTATION",
+    badge_text="MILESTONE 02 // DEEP TOPOLOGY & PROBE",
     badge_type="purple",
 )
 
@@ -64,9 +62,9 @@ preset = render_presets_selector(key_prefix="m2_")
 if preset:
     render_preset_badge(
         "已激活预设",
-        f"数据集: {preset['dataset']} | 层数: {preset['n_layers']} | 激活: {preset['activation']} | 优化器: {preset['optimizer']}",
+        f"数据集: {preset['dataset']} | 深度: {preset['n_layers']} 层 | 激活: {preset['activation']} | 优化器: {preset['optimizer']}",
     )
-    dataset_name = preset["dataset"].split(" ")[1].lower()
+    dataset_name = preset["dataset"].split(" ")[0].lower()
     n_samples = preset["n_samples"]
     noise = preset["noise"]
     random_state = 42
@@ -80,7 +78,7 @@ if preset:
     batch_size = None
 else:
     dataset_name, n_samples, noise, random_state = render_dataset_selector(
-        key_prefix="m2_", default_dataset="🌙 Moons"
+        key_prefix="m2_", default_dataset="Moons (双月分布)"
     )
     net_params = render_network_params(
         allow_multi_layer=True, key_prefix="m2_", default_layers=2, default_neurons=[8, 4]
@@ -133,9 +131,8 @@ final_acc = history["accuracy"][-1] if history["accuracy"] else 0.0
 # 神经元动态活性探针 (Single-Sample Forward Telemetry)
 # ---------------------------------------------------------------------------
 probe_input = np.array([[probe_x, probe_y]])
-probe_activations: list[np.ndarray] = [probe_input]  # 输入层激活值
+probe_activations: list[np.ndarray] = [probe_input]
 
-# 逐层推导并捕获激活
 curr_signal = probe_input
 all_activations: list[np.ndarray] = []
 dense_weights: list[np.ndarray] = []
@@ -154,24 +151,21 @@ for layer in model.layers:
     elif isinstance(layer, Activation):
         curr_signal = layer.forward(curr_signal)
         probe_activations.append(curr_signal.copy())
-        # 同时对全量样本前向捕获热力图数据
         full_act = layer.forward(layer.input_cache) if hasattr(layer, "input_cache") else curr_signal
         all_activations.append(full_act)
 
-# 模型输出预测概率
 probe_prob = float(curr_signal.ravel()[0])
 probe_pred_class = 1 if probe_prob >= 0.5 else 0
 
-# 拓扑层维度
 layer_sizes = [2] + neurons_per_layer + [1]
 
-# 梯度健康度检测
 min_grad_norm = min([float(np.mean(np.abs(g))) for g in dense_grads]) if dense_grads else 0.0
-grad_health_status = "🟢 梯度流动健康"
 if min_grad_norm < 1e-4:
-    grad_health_status = "⚠️ 检测到底层梯度消失 (Vanishing)"
+    grad_health_status = "VANISHING GRADIENT"
 elif min_grad_norm > 50.0:
-    grad_health_status = "🚨 检测到底层梯度爆炸 (Exploding)"
+    grad_health_status = "EXPLODING GRADIENT"
+else:
+    grad_health_status = "HEALTHY GRADIENT"
 
 # ---------------------------------------------------------------------------
 # 遥测指标卡
@@ -179,10 +173,10 @@ elif min_grad_norm > 50.0:
 st.markdown(
     f"""
     <div class="metric-grid">
-        {render_metric_card("最终 Loss", f"{final_loss:.4f}", delta="收敛完成", delta_type="positive" if final_loss < 0.2 else "neutral", icon="📉")}
-        {render_metric_card("准确率 (Acc)", f"{final_acc:.1%}", delta=f"拟合 {dataset_name}", delta_type="positive" if final_acc >= 0.9 else "neutral", icon="🎯")}
-        {render_metric_card("探针响应 P(Y=1)", f"{probe_prob:.1%}", delta=f"判定为类别 {probe_pred_class}", delta_type="positive" if probe_pred_class == 1 else "neutral", icon="📍")}
-        {render_metric_card("梯度健康度", f"{min_grad_norm:.2e}", delta=grad_health_status, delta_type="positive" if "健康" in grad_health_status else "negative", icon="🌊")}
+        {render_metric_card("FINAL LOSS", f"{final_loss:.4f}", delta="CONVERGED", delta_type="positive" if final_loss < 0.2 else "neutral", icon_name="trending-down")}
+        {render_metric_card("ACCURACY", f"{final_acc:.1%}", delta=dataset_name.upper(), delta_type="positive" if final_acc >= 0.9 else "neutral", icon_name="target")}
+        {render_metric_card("PROBE RESPONSE", f"{probe_prob:.1%}", delta=f"CLASS {probe_pred_class}", delta_type="positive" if probe_pred_class == 1 else "neutral", icon_name="crosshair")}
+        {render_metric_card("GRADIENT NORM", f"{min_grad_norm:.2e}", delta=grad_health_status, delta_type="positive" if "HEALTHY" in grad_health_status else "negative", icon_name="activity")}
     </div>
     """,
     unsafe_allow_html=True,
@@ -198,13 +192,13 @@ with col_topo:
         layer_sizes=layer_sizes,
         weights=dense_weights,
         neuron_activations=probe_activations,
-        title=f"🧬 拓扑与活性探针 (输入点: x₁={probe_x:.2f}, x₂={probe_y:.2f})",
+        title=f"TOPOLOGY & PROBE // 激活探针响应 (x₁={probe_x:.2f}, x₂={probe_y:.2f})",
     )
     st.plotly_chart(fig_topo, use_container_width=True)
 
 with col_bound:
     fig_bound = plot_decision_boundary(
-        model, X, y, probe_point=probe_pt, title="🗺️ 空间决策流形与探针定位"
+        model, X, y, probe_point=probe_pt, title="DECISION MANIFOLD // 空间决策流形与探针定位"
     )
     st.plotly_chart(fig_bound, use_container_width=True)
 
@@ -215,10 +209,10 @@ col_heat, col_grad = st.columns(2)
 
 with col_heat:
     if all_activations:
-        fig_heat = plot_activation_heatmap(all_activations, title="🔥 逐层神经元激活强度热力图")
+        fig_heat = plot_activation_heatmap(all_activations, title="ACTIVATION HEATMAP // 逐层神经元激活分布")
         st.plotly_chart(fig_heat, use_container_width=True)
 
 with col_grad:
     if dense_grads:
-        fig_grad = plot_gradient_histograms(dense_grads, layer_names, title="🌊 反向传播梯度流分布 (消失/爆炸检测)")
+        fig_grad = plot_gradient_histograms(dense_grads, layer_names, title="GRADIENT FLOW // 反向传播梯度流分布")
         st.plotly_chart(fig_grad, use_container_width=True)

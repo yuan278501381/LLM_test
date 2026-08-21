@@ -3,11 +3,20 @@
 dashboard.styles - 前端视觉系统与设计规范
 """
 
-from dashboard.styles.theme import apply_custom_theme, render_hero_header, render_metric_card, render_preset_badge
+from dashboard.styles.icons import svg_icon
+from dashboard.styles.theme import (
+    apply_custom_theme,
+    render_hero_header,
+    render_metric_card,
+    render_preset_badge,
+    render_section_heading,
+)
 
 __all__ = [
     "apply_custom_theme",
     "render_hero_header",
     "render_metric_card",
     "render_preset_badge",
+    "render_section_heading",
+    "svg_icon",
 ]
