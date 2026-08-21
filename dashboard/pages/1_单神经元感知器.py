@@ -191,17 +191,17 @@ col_left, col_right = st.columns([1.1, 1])
 
 with col_left:
     fig_boundary = plot_decision_boundary(
-        model, X, y, title=f"DECISION BOUNDARY // {act_meta.id.upper()} 空间决策流形"
+        model, X, y, title=f"DECISION MANIFOLD // {act_meta.id.upper()} 决策流形"
     )
     st.plotly_chart(fig_boundary, use_container_width=True)
 
 with col_right:
-    fig_loss = plot_loss_curve(history, title="TRAINING DYNAMICS // 损失与准确率收敛")
+    fig_loss = plot_loss_curve(history)
     st.plotly_chart(fig_loss, use_container_width=True)
 
 # 底部权重轨迹图
 render_section_heading("权重参数空间寻优轨迹 (Weight Trajectory)", icon_name="crosshair", subtext="参数 (w₁, w₂) 从初始位置沿损失梯度向全局最优收敛的连续路径：")
-fig_traj = plot_weight_trajectory(weight_trajectory, title="PARAMETER TRAJECTORY // 参数空间梯度搜索路径")
+fig_traj = plot_weight_trajectory(weight_trajectory)
 st.plotly_chart(fig_traj, use_container_width=True)
 
 # 深度知识学习指南 (折叠微观原理解析)

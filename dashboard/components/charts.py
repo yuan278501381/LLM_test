@@ -1,14 +1,16 @@
 # Copyright (c) 2026 Yy1 (yuan278501381) | MIT License
 """
-dashboard.components.charts - 世界级 Plotly 可视化图表引擎 (现代亮色极客风格 · 无重叠排版)
+dashboard.components.charts - 世界级 Plotly 可视化图表引擎 (2026 工业级设计标准 · 零重叠防碰撞)
 
-提供高对比度、清晰透亮的 Plotly 亮色图表系统（plotly_white）：
-- 连续平滑概率场决策边界（支持探针样本点高亮）
-- 发光 Loss 曲线与最小损失标注
+提供高对比度、清晰透亮、无重叠排版的 Plotly 亮色图表系统（plotly_white）：
+- 连续平滑概率场决策边界（支持探针样本点发光环）
+- 贝塞尔平滑 Loss 曲线与最小损失标注
 - 多层梯度与权重流形直方图
-- 神经元逐层激活强度热力图
-- 优化器多轨竞速轨迹图
-- 参数空间梯度寻优轨迹（严格防图例与色条重叠布局）
+- 优化器多轨竞速对比
+- 权重参数空间寻优轨迹 (严格防图例与色条重叠)
+- 3D 词嵌入空间与语义平行四边形矢量流形
+- 序列记忆衰减与注意力热力矩阵
+- 下一词概率水平柱状图
 """
 
 from typing import Any
@@ -18,18 +20,18 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 # ---------------------------------------------------------------------------
-# 全局亮色视觉调色板 (Light Mode Palette)
+# 全局亮色视觉调色板 (Light Mode Palette - 2026 Linear / Stripe 风格)
 # ---------------------------------------------------------------------------
 LIGHT_PALETTE = {
     "bg_plot": "#ffffff",
     "bg_paper": "rgba(0, 0, 0, 0)",
-    "grid": "rgba(15, 23, 42, 0.06)",
-    "zero_line": "rgba(15, 23, 42, 0.12)",
+    "grid": "rgba(15, 23, 42, 0.05)",
+    "zero_line": "rgba(15, 23, 42, 0.08)",
     "font_color": "#0f172a",
     "font_muted": "#64748b",
     "primary": "#1d4ed8",     # 纯正皇家蓝
     "secondary": "#be123c",   # 玫瑰红
-    "accent": "#047857",      # 森林翡翠绿
+    "accent": "#047857",      # 翡翠绿
     "warning": "#b45309",     # 琥珀深橙
     "purple": "#6d28d9",      # 紫罗兰
     "classes": ["#1d4ed8", "#be123c", "#047857", "#b45309", "#6d28d9"],
@@ -43,40 +45,44 @@ LIGHT_PALETTE = {
 
 
 def _apply_light_theme(fig: go.Figure, title: str | None = None) -> go.Figure:
-    """统一注入现代极简亮色图表布局属性"""
+    """统一注入现代极简亮色图表布局属性 (彻底杜绝文字与图例重叠)"""
     layout_update: dict[str, Any] = {
         "template": "plotly_white",
         "plot_bgcolor": LIGHT_PALETTE["bg_plot"],
         "paper_bgcolor": LIGHT_PALETTE["bg_paper"],
         "font": dict(
-            family="Plus Jakarta Sans, -apple-system, Segoe UI, sans-serif",
-            size=12,
+            family="JetBrains Mono, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif",
+            size=11,
             color=LIGHT_PALETTE["font_color"],
         ),
-        "margin": dict(l=40, r=40, t=55 if title else 30, b=40),
+        "margin": dict(l=45, r=45, t=55 if title else 25, b=45),
         "hoverlabel": dict(
             bgcolor="#ffffff",
             bordercolor="#cbd5e1",
-            font=dict(family="JetBrains Mono, monospace", size=12, color="#0f172a"),
+            font=dict(family="JetBrains Mono, monospace", size=11, color="#0f172a"),
         ),
         "xaxis": dict(
             gridcolor=LIGHT_PALETTE["grid"],
             zerolinecolor=LIGHT_PALETTE["zero_line"],
             tickfont=dict(size=10, color=LIGHT_PALETTE["font_muted"]),
+            linecolor="rgba(15, 23, 42, 0.1)",
         ),
         "yaxis": dict(
             gridcolor=LIGHT_PALETTE["grid"],
             zerolinecolor=LIGHT_PALETTE["zero_line"],
             tickfont=dict(size=10, color=LIGHT_PALETTE["font_muted"]),
+            linecolor="rgba(15, 23, 42, 0.1)",
         ),
     }
 
     if title:
         layout_update["title"] = dict(
             text=f"<b>{title}</b>",
-            font=dict(size=13, color="#0f172a"),
-            x=0.02,
-            y=0.96,
+            font=dict(size=12, color="#0f172a", family="JetBrains Mono"),
+            x=0.01,
+            y=0.98,
+            xanchor="left",
+            yanchor="top",
         )
 
     fig.update_layout(**layout_update)
@@ -92,9 +98,9 @@ def plot_decision_boundary(
     y: np.ndarray,
     probe_point: tuple[float, float] | None = None,
     resolution: int = 100,
-    title: str = "DECISION MANIFOLD // 连续概率决策流形",
+    title: str | None = None,
 ) -> go.Figure:
-    """绘制模型在 2D 空间的亮色连续概率场决策边界"""
+    """绘制模型在 2D 空间的亮色连续概率场决策边界 (图例置于底部，防碰撞)"""
     margin = 0.3
     x_min, x_max = X[:, 0].min() - margin, X[:, 0].max() + margin
     y_min, y_max = X[:, 1].min() - margin, X[:, 1].max() + margin
@@ -110,7 +116,7 @@ def plot_decision_boundary(
         zz = preds.reshape(xx.shape)
         colorscale = [
             [0.0, "rgba(29, 78, 216, 0.22)"],   # 类别 0 (蓝)
-            [0.5, "rgba(241, 245, 249, 0.5)"],   # 决策临界线
+            [0.5, "rgba(241, 245, 249, 0.6)"],   # 决策临界线
             [1.0, "rgba(190, 18, 60, 0.22)"],    # 类别 1 (红)
         ]
     else:
@@ -127,7 +133,7 @@ def plot_decision_boundary(
         colorscale=colorscale,
         showscale=False,
         contours=dict(showlines=True, coloring="fill"),
-        line=dict(width=1, color="rgba(15,23,42,0.1)"),
+        line=dict(width=1, color="rgba(15,23,42,0.08)"),
         hoverinfo="skip",
     ))
 
@@ -166,9 +172,9 @@ def plot_decision_boundary(
             name="PROBE POINT",
             text=["PROBE"],
             textposition="top center",
-            textfont=dict(color="#b45309", size=10, family="JetBrains Mono"),
+            textfont=dict(color="#b45309", size=10, family="JetBrains Mono", weight="bold"),
             marker=dict(
-                size=15,
+                size=14,
                 color="#b45309",
                 symbol="cross",
                 line=dict(width=2.5, color="#ffffff"),
@@ -181,11 +187,11 @@ def plot_decision_boundary(
         yaxis_title="Feature x₂",
         legend=dict(
             orientation="h",
-            yanchor="bottom",
-            y=1.02,
-            xanchor="right",
-            x=1,
-            bgcolor="rgba(255,255,255,0.85)",
+            yanchor="top",
+            y=-0.18,
+            xanchor="center",
+            x=0.5,
+            bgcolor="rgba(255,255,255,0.9)",
             bordercolor="#e2e8f0",
             borderwidth=1,
         ),
@@ -199,12 +205,12 @@ def plot_decision_boundary(
 # ---------------------------------------------------------------------------
 def plot_loss_curve(
     history: dict[str, list[float]],
-    title: str = "TRAINING DYNAMICS // 损失与准确率收敛",
+    title: str | None = None,
 ) -> go.Figure:
-    """绘制亮色训练收敛图"""
+    """绘制亮色平滑训练收敛图"""
     fig = make_subplots(
         rows=1, cols=2,
-        subplot_titles=("LOSS CONVERGENCE // 损失下降", "ACCURACY PROGRESSION // 准确率提升"),
+        subplot_titles=("LOSS CONVERGENCE // 损失收敛", "ACCURACY PROGRESSION // 准确率提升"),
         horizontal_spacing=0.12,
     )
 
@@ -218,9 +224,9 @@ def plot_loss_curve(
                 x=epochs, y=losses,
                 mode="lines",
                 name="Train Loss",
-                line=dict(color=LIGHT_PALETTE["primary"], width=2.5),
+                line=dict(color=LIGHT_PALETTE["primary"], width=2.5, shape="spline", smoothing=1.1),
                 fill="tozeroy",
-                fillcolor="rgba(29, 78, 216, 0.06)",
+                fillcolor="rgba(29, 78, 216, 0.05)",
                 hovertemplate="Epoch %{x}: Loss = %{y:.4f}<extra></extra>",
             ),
             row=1, col=1,
@@ -244,9 +250,9 @@ def plot_loss_curve(
                 x=epochs, y=accs,
                 mode="lines",
                 name="Train Acc",
-                line=dict(color=LIGHT_PALETTE["accent"], width=2.5),
+                line=dict(color=LIGHT_PALETTE["accent"], width=2.5, shape="spline", smoothing=1.1),
                 fill="tozeroy",
-                fillcolor="rgba(4, 120, 87, 0.06)",
+                fillcolor="rgba(4, 120, 87, 0.05)",
                 hovertemplate="Epoch %{x}: Acc = %{y:.2%}<extra></extra>",
             ),
             row=1, col=2,
@@ -257,6 +263,10 @@ def plot_loss_curve(
     fig.update_yaxes(title_text="Loss", row=1, col=1, gridcolor=LIGHT_PALETTE["grid"])
     fig.update_yaxes(title_text="Accuracy", row=1, col=2, gridcolor=LIGHT_PALETTE["grid"], range=[0, 1.05])
 
+    fig.update_layout(
+        showlegend=False,
+    )
+
     return _apply_light_theme(fig, title)
 
 
@@ -265,7 +275,7 @@ def plot_loss_curve(
 # ---------------------------------------------------------------------------
 def plot_activation_heatmap(
     activations: list[np.ndarray],
-    title: str = "ACTIVATION HEATMAP // 逐层神经元激活分布",
+    title: str | None = None,
 ) -> go.Figure:
     """绘制亮色各层神经元激活热力矩阵"""
     n_layers = len(activations)
@@ -287,7 +297,7 @@ def plot_activation_heatmap(
                     x=1.02,
                     thickness=12,
                     len=0.85,
-                    y=0.45,
+                    y=0.5,
                 ),
                 hovertemplate="Sample: %{y}<br>Neuron: %{x}<br>Value: %{z:.3f}<extra></extra>",
             ),
@@ -305,11 +315,10 @@ def plot_activation_heatmap(
 def plot_gradient_histograms(
     gradients: list[np.ndarray],
     layer_names: list[str],
-    title: str = "GRADIENT FLOW // 反向传播梯度流分布",
+    title: str | None = None,
 ) -> go.Figure:
-    """绘制各层梯度的亮色直方图"""
+    """绘制各层梯度的亮色直方图 (图例置于底部，防遮挡)"""
     fig = go.Figure()
-
     colors = [LIGHT_PALETTE["primary"], LIGHT_PALETTE["purple"], LIGHT_PALETTE["warning"], LIGHT_PALETTE["secondary"]]
 
     for idx, (grad, name) in enumerate(zip(gradients, layer_names, strict=False)):
@@ -330,11 +339,11 @@ def plot_gradient_histograms(
         yaxis_title="Frequency",
         legend=dict(
             orientation="h",
-            yanchor="bottom",
-            y=1.02,
-            xanchor="right",
-            x=1,
-            bgcolor="rgba(255,255,255,0.85)",
+            yanchor="top",
+            y=-0.2,
+            xanchor="center",
+            x=0.5,
+            bgcolor="rgba(255,255,255,0.9)",
             bordercolor="#e2e8f0",
             borderwidth=1,
         ),
@@ -349,9 +358,9 @@ def plot_gradient_histograms(
 def plot_weight_histograms(
     weights: list[np.ndarray],
     layer_names: list[str],
-    title: str = "WEIGHT SPECTRUM // 各层权重参数分布",
+    title: str | None = None,
 ) -> go.Figure:
-    """绘制各层权重的亮色直方图"""
+    """绘制各层权重的亮色直方图 (图例置于底部)"""
     fig = go.Figure()
     colors = [LIGHT_PALETTE["accent"], LIGHT_PALETTE["primary"], LIGHT_PALETTE["purple"], LIGHT_PALETTE["warning"]]
 
@@ -373,11 +382,11 @@ def plot_weight_histograms(
         yaxis_title="Frequency",
         legend=dict(
             orientation="h",
-            yanchor="bottom",
-            y=1.02,
-            xanchor="right",
-            x=1,
-            bgcolor="rgba(255,255,255,0.85)",
+            yanchor="top",
+            y=-0.2,
+            xanchor="center",
+            x=0.5,
+            bgcolor="rgba(255,255,255,0.9)",
             bordercolor="#e2e8f0",
             borderwidth=1,
         ),
@@ -391,9 +400,9 @@ def plot_weight_histograms(
 # ---------------------------------------------------------------------------
 def plot_multi_loss_curves(
     histories: dict[str, dict[str, list[float]]],
-    title: str = "OPTIMIZER BENCHMARK // 优化器多轨收敛对比",
+    title: str | None = None,
 ) -> go.Figure:
-    """绘制多种优化器同屏收敛速度对比"""
+    """绘制多种优化器同屏收敛速度对比 (图例置于底部居中)"""
     fig = go.Figure()
 
     for name, hist in histories.items():
@@ -409,7 +418,7 @@ def plot_multi_loss_curves(
             y=losses,
             mode="lines",
             name=name,
-            line=dict(color=color, width=2.5),
+            line=dict(color=color, width=2.5, shape="spline", smoothing=1.1),
             hovertemplate=f"<b>{name}</b><br>Epoch: %{{x}}<br>Loss: %{{y:.4f}}<extra></extra>",
         ))
 
@@ -419,11 +428,11 @@ def plot_multi_loss_curves(
         yaxis_type="log",
         legend=dict(
             orientation="h",
-            yanchor="bottom",
-            y=1.02,
-            xanchor="right",
-            x=1,
-            bgcolor="rgba(255,255,255,0.85)",
+            yanchor="top",
+            y=-0.2,
+            xanchor="center",
+            x=0.5,
+            bgcolor="rgba(255,255,255,0.9)",
             bordercolor="#e2e8f0",
             borderwidth=1,
         ),
@@ -433,13 +442,13 @@ def plot_multi_loss_curves(
 
 
 # ---------------------------------------------------------------------------
-# 7. 权重优化空间轨迹 (Weight Trajectory - 彻底防重叠排版)
+# 7. 权重优化空间轨迹 (Weight Trajectory - 彻底杜绝文字重叠)
 # ---------------------------------------------------------------------------
 def plot_weight_trajectory(
     trajectory: list[np.ndarray],
-    title: str = "PARAMETER TRAJECTORY // 参数空间梯度搜索路径",
+    title: str | None = None,
 ) -> go.Figure:
-    """绘制 2D 参数空间中的亮色优化轨迹 (严格隔离图例与颜色条)"""
+    """绘制 2D 参数空间中的优化轨迹 (图例置于底部，Colorbar 独立靠右，零重叠)"""
     fig = go.Figure()
 
     if len(trajectory) > 0 and trajectory[0].size >= 2:
@@ -449,7 +458,7 @@ def plot_weight_trajectory(
         fig.add_trace(go.Scatter(
             x=w1_vals, y=w2_vals,
             mode="lines+markers",
-            name="Path (搜索路径)",
+            name="Search Path (寻优轨迹)",
             line=dict(color=LIGHT_PALETTE["primary"], width=2.5),
             marker=dict(
                 size=5,
@@ -457,12 +466,12 @@ def plot_weight_trajectory(
                 colorscale="Blues",
                 showscale=True,
                 colorbar=dict(
-                    title=dict(text="Step // 步数", font=dict(size=11, color="#0f172a")),
-                    x=1.03,
-                    thickness=14,
-                    len=0.85,
+                    title=dict(text="Step 步数", font=dict(size=10, color="#0f172a")),
+                    x=1.02,
+                    thickness=12,
+                    len=0.8,
                     y=0.45,
-                    tickfont=dict(size=10, color="#64748b"),
+                    tickfont=dict(size=9, color="#64748b"),
                 ),
             ),
             hovertemplate="Step %{marker.color}: w₁=%{x:.3f}, w₂=%{y:.3f}<extra></extra>",
@@ -471,36 +480,36 @@ def plot_weight_trajectory(
         fig.add_trace(go.Scatter(
             x=[w1_vals[0]], y=[w2_vals[0]],
             mode="markers+text",
-            name="Start (初始点)",
+            name="Start (起点)",
             text=["START"],
             textposition="bottom right",
-            textfont=dict(color="#0f172a", family="JetBrains Mono", size=10),
+            textfont=dict(color="#be123c", family="JetBrains Mono", size=10, weight="bold"),
             marker=dict(size=11, color=LIGHT_PALETTE["secondary"], symbol="circle"),
         ))
         fig.add_trace(go.Scatter(
             x=[w1_vals[-1]], y=[w2_vals[-1]],
             mode="markers+text",
-            name="Optimal (当前极优点)",
+            name="Optimal (极优点)",
             text=["FINAL"],
             textposition="top right",
-            textfont=dict(color="#0f172a", family="JetBrains Mono", size=10),
+            textfont=dict(color="#047857", family="JetBrains Mono", size=10, weight="bold"),
             marker=dict(size=12, color=LIGHT_PALETTE["accent"], symbol="diamond"),
         ))
 
     fig.update_layout(
-        xaxis_title="Parameter w₁ (权重参数 1)",
-        yaxis_title="Parameter w₂ (权重参数 2)",
+        xaxis_title="Parameter w₁",
+        yaxis_title="Parameter w₂",
         legend=dict(
             orientation="h",
-            yanchor="bottom",
-            y=1.02,
-            xanchor="left",
-            x=0.01,
-            bgcolor="rgba(255,255,255,0.85)",
+            yanchor="top",
+            y=-0.22,
+            xanchor="center",
+            x=0.45,
+            bgcolor="rgba(255,255,255,0.9)",
             bordercolor="#e2e8f0",
             borderwidth=1,
         ),
-        margin=dict(l=40, r=70, t=55, b=40),
+        margin=dict(l=45, r=80, t=50 if title else 20, b=55),
     )
 
     return _apply_light_theme(fig, title)
@@ -514,12 +523,12 @@ def plot_embedding_space(
     vectors: np.ndarray,
     highlight_words: list[str] | None = None,
     arithmetic: dict | None = None,
-    title: str = "EMBEDDING SPACE // 词嵌入语义空间",
+    title: str | None = None,
 ) -> go.Figure:
-    """绘制词嵌入空间 (支持高亮和算术箭头)"""
+    """绘制 3D 词嵌入流形空间 (支持高亮与几何平行四边形)"""
     from sklearn.decomposition import PCA
 
-    # 降维到3D如果需要
+    # 降维到 3D
     if vectors.shape[1] > 3:
         pca = PCA(n_components=3)
         vecs_3d = pca.fit_transform(vectors)
@@ -562,18 +571,18 @@ def plot_embedding_space(
                     name=hw,
                     text=[hw],
                     textposition="top center",
-                    textfont=dict(size=12, color=LIGHT_PALETTE["primary"], weight="bold"),
+                    textfont=dict(size=11, color=LIGHT_PALETTE["primary"], family="JetBrains Mono", weight="bold"),
                     marker=dict(size=8, color=LIGHT_PALETTE["primary"]),
                     hovertemplate="Word: %{text}<extra></extra>",
                 ))
 
-    # 算术箭头 A - B + C = Result
+    # 算术矢量平行四边形 A - B + C = Result
     if arithmetic:
         A, B, C, R = arithmetic.get("A"), arithmetic.get("B"), arithmetic.get("C"), arithmetic.get("Result")
         if all(w in words for w in [A, B, C, R]):
             idx_a, idx_b, idx_c, idx_r = words.index(A), words.index(B), words.index(C), words.index(R)
             
-            # 画线 B -> A 和 C -> R
+            # 画虚线 B -> A 和 C -> R
             fig.add_trace(go.Scatter3d(
                 x=[vecs_3d[idx_b, 0], vecs_3d[idx_a, 0]],
                 y=[vecs_3d[idx_b, 1], vecs_3d[idx_a, 1]],
@@ -591,7 +600,7 @@ def plot_embedding_space(
                 line=dict(color=LIGHT_PALETTE["accent"], width=4, dash="dash"),
             ))
             
-            # 标注这四个词
+            # 标注关键 4 词
             for w, idx, color in zip([A, B, C, R], [idx_a, idx_b, idx_c, idx_r], [LIGHT_PALETTE["primary"]]*3 + [LIGHT_PALETTE["secondary"]]):
                 fig.add_trace(go.Scatter3d(
                     x=[vecs_3d[idx, 0]],
@@ -601,8 +610,8 @@ def plot_embedding_space(
                     name=w,
                     text=[w],
                     textposition="top center",
-                    textfont=dict(size=14, color=color, weight="bold"),
-                    marker=dict(size=10, color=color),
+                    textfont=dict(size=12, color=color, family="JetBrains Mono", weight="bold"),
+                    marker=dict(size=9, color=color),
                 ))
 
     fig.update_layout(
@@ -614,7 +623,7 @@ def plot_embedding_space(
             yaxis=dict(showbackground=False, gridcolor=LIGHT_PALETTE["grid"]),
             zaxis=dict(showbackground=False, gridcolor=LIGHT_PALETTE["grid"]),
         ),
-        margin=dict(l=0, r=0, t=40, b=0),
+        margin=dict(l=0, r=0, t=30 if title else 0, b=0),
         showlegend=False,
     )
     return _apply_light_theme(fig, title)
@@ -626,12 +635,11 @@ def plot_embedding_space(
 def plot_memory_decay_heatmap(
     hidden_states: list[np.ndarray],
     tokens: list[str],
-    title: str = "MEMORY DECAY // 序列记忆与遗忘瓶颈",
+    title: str | None = None,
 ) -> go.Figure:
-    """绘制 RNN 序列记忆强度的衰减热力图"""
+    """绘制 RNN 序列记忆强度的衰减热力图 (带微白间隔网格)"""
     n_steps = len(hidden_states)
     
-    # 计算当前步对各历史步的记忆强度 (余弦相似度绝对值作为近似指标)
     memory_matrix = np.zeros((n_steps, n_steps))
     for i in range(n_steps):
         for j in range(i + 1):
@@ -641,7 +649,6 @@ def plot_memory_decay_heatmap(
             norm_j = np.linalg.norm(v_j) + 1e-8
             memory_matrix[i, j] = np.abs(np.dot(v_i, v_j) / (norm_i * norm_j))
 
-    # 下三角矩阵保留，其余置 nan
     memory_matrix[np.triu_indices(n_steps, 1)] = np.nan
 
     fig = go.Figure(data=go.Heatmap(
@@ -650,7 +657,14 @@ def plot_memory_decay_heatmap(
         y=tokens,
         colorscale="Blues",
         showscale=True,
-        colorbar=dict(title=dict(text="Memory Strength", font=dict(size=10))),
+        xgap=2,
+        ygap=2,
+        colorbar=dict(
+            title=dict(text="Memory", font=dict(size=10, color="#0f172a")),
+            thickness=12,
+            len=0.85,
+            x=1.02,
+        ),
         hovertemplate="Current: %{y}<br>History: %{x}<br>Strength: %{z:.3f}<extra></extra>",
     ))
     
@@ -669,27 +683,31 @@ def plot_attention_heatmap_nlp(
     attention_weights: np.ndarray,
     tokens_x: list[str],
     tokens_y: list[str],
-    title: str = "ATTENTION WEIGHTS // 注意力分配矩阵",
+    title: str | None = None,
 ) -> go.Figure:
-    """绘制 N×N 注意力权重热力图"""
-    n_q = len(tokens_y)
-    n_k = len(tokens_x)
-    
+    """绘制 N×N 注意力权重热力图 (带微白间隔网格)"""
     fig = go.Figure(data=go.Heatmap(
         z=attention_weights,
         x=tokens_x,
         y=tokens_y,
         colorscale="Blues",
         showscale=True,
-        colorbar=dict(title=dict(text="Weight", font=dict(size=10))),
+        xgap=2,
+        ygap=2,
+        colorbar=dict(
+            title=dict(text="Weight", font=dict(size=10, color="#0f172a")),
+            thickness=12,
+            len=0.85,
+            x=1.02,
+        ),
         zmin=0.0,
         zmax=1.0,
-        hovertemplate="Query: %{y}<br>Key: %{x}<br>Weight: %{z:.4f}<extra></extra>",
+        hovertemplate="Query: %{y}<br>Key: %{x}<br>Attention: %{z:.4f}<extra></extra>",
     ))
 
     fig.update_layout(
-        xaxis_title="Keys (被关注的词)",
-        yaxis_title="Queries (当前处理的词)",
+        xaxis_title="Keys (被关注的历史词)",
+        yaxis_title="Queries (当前正在生成的词)",
         yaxis=dict(autorange="reversed"),
         xaxis=dict(side="top"),
     )
@@ -703,10 +721,9 @@ def plot_token_probabilities(
     token_probs: np.ndarray,
     vocab: list[str],
     top_k: int = 15,
-    title: str = "NEXT TOKEN PREDICTION // 下一个词概率分布",
+    title: str | None = None,
 ) -> go.Figure:
-    """水平柱状图展示下一个 Token 的概率分布"""
-    # 找到 top_k 的索引
+    """水平柱状图展示下一个 Token 的概率分布 (圆角与清晰外显标签)"""
     top_indices = np.argsort(token_probs)[-top_k:]
     top_probs = token_probs[top_indices]
     top_words = [vocab[i] for i in top_indices]
@@ -722,12 +739,13 @@ def plot_token_probabilities(
         ),
         text=[f"{p:.1%}" for p in top_probs],
         textposition="outside",
-        hovertemplate="Token: %{y}<br>Prob: %{x:.4f}<extra></extra>",
+        textfont=dict(family="JetBrains Mono", size=10, color="#0f172a"),
+        hovertemplate="Token: <b>%{y}</b><br>Probability: %{x:.4f}<extra></extra>",
     ))
 
     fig.update_layout(
-        xaxis_title="Probability",
+        xaxis_title="Probability (置信概率)",
         yaxis_title="Token",
-        xaxis=dict(range=[0, min(1.0, max(top_probs) * 1.2)]),
+        xaxis=dict(range=[0, min(1.0, float(max(top_probs)) * 1.25)]),
     )
     return _apply_light_theme(fig, title)
