@@ -168,19 +168,17 @@ else:
     grad_health_status = "HEALTHY GRADIENT"
 
 # ---------------------------------------------------------------------------
-# 遥测指标卡
+# 遥测指标卡 (安全拼接 HTML)
 # ---------------------------------------------------------------------------
-st.markdown(
-    f"""
-    <div class="metric-grid">
-        {render_metric_card("FINAL LOSS", f"{final_loss:.4f}", delta="CONVERGED", delta_type="positive" if final_loss < 0.2 else "neutral", icon_name="trending-down")}
-        {render_metric_card("ACCURACY", f"{final_acc:.1%}", delta=dataset_name.upper(), delta_type="positive" if final_acc >= 0.9 else "neutral", icon_name="target")}
-        {render_metric_card("PROBE RESPONSE", f"{probe_prob:.1%}", delta=f"CLASS {probe_pred_class}", delta_type="positive" if probe_pred_class == 1 else "neutral", icon_name="crosshair")}
-        {render_metric_card("GRADIENT NORM", f"{min_grad_norm:.2e}", delta=grad_health_status, delta_type="positive" if "HEALTHY" in grad_health_status else "negative", icon_name="activity")}
-    </div>
-    """,
-    unsafe_allow_html=True,
+grid_html = (
+    '<div class="metric-grid">'
+    + render_metric_card("FINAL LOSS", f"{final_loss:.4f}", delta="CONVERGED", delta_type="positive" if final_loss < 0.2 else "neutral", icon_name="trending-down")
+    + render_metric_card("ACCURACY", f"{final_acc:.1%}", delta=dataset_name.upper(), delta_type="positive" if final_acc >= 0.9 else "neutral", icon_name="target")
+    + render_metric_card("PROBE RESPONSE", f"{probe_prob:.1%}", delta=f"CLASS {probe_pred_class}", delta_type="positive" if probe_pred_class == 1 else "neutral", icon_name="crosshair")
+    + render_metric_card("GRADIENT NORM", f"{min_grad_norm:.2e}", delta=grad_health_status, delta_type="positive" if "HEALTHY" in grad_health_status else "negative", icon_name="activity")
+    + '</div>'
 )
+st.markdown(grid_html, unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
 # 可视化布局 (双栏联动)

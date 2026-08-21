@@ -10,6 +10,7 @@ import os
 import sys
 from typing import Any
 
+import numpy as np
 import streamlit as st
 
 # 将项目根目录加入 sys.path
@@ -130,3 +131,27 @@ def build_model(
             model.add(out_act_cls())
 
     return model
+
+
+def get_dataset(
+    name: str,
+    n_samples: int = 200,
+    noise: float = 0.1,
+    random_state: int = 42,
+) -> tuple[np.ndarray, np.ndarray]:
+    """统一获取 2D 合成数据集"""
+    from datasets.generators import make_blobs, make_circles, make_moons, make_spiral, make_xor
+
+    clean_name = name.lower().strip()
+    if "moon" in clean_name:
+        return make_moons(n_samples=n_samples, noise=noise, random_state=random_state)
+    elif "circle" in clean_name:
+        return make_circles(n_samples=n_samples, noise=noise, random_state=random_state)
+    elif "xor" in clean_name:
+        return make_xor(n_samples=n_samples, noise=noise, random_state=random_state)
+    elif "spiral" in clean_name:
+        return make_spiral(n_samples=n_samples, noise=noise, random_state=random_state)
+    elif "blob" in clean_name:
+        return make_blobs(n_samples=n_samples, noise=noise, centers=2, random_state=random_state)
+    return make_moons(n_samples=n_samples, noise=noise, random_state=random_state)
+

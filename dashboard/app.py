@@ -1,7 +1,7 @@
 # Copyright (c) 2026 Yy1 (yuan278501381) | MIT License
 """
 NN Playground - 手搓神经网络可视化实验平台
-Streamlit 主入口 (Neo-Bento 赛博极简高精首页)
+Streamlit 主入口 (现代极简纯净亮色高对比度首页)
 """
 
 import os
@@ -21,91 +21,86 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# 注入世界级深色玻璃拟态主题
+# 注入世界级极简高对比度亮色主题
 apply_custom_theme()
 
 # Hero 区域
 render_hero_header(
     title="NN Playground",
-    subtitle="零框架手搓神经网络 · 全参数透明可视化实验平台 · 击碎深度学习黑盒",
+    subtitle="零框架手搓神经网络 · 全参数透明可视化实验平台 · 彻底击碎深度学习黑盒",
     badge_text="WORLD-CLASS ARCHITECTURE · PURE NUMPY CORE",
     badge_type="blue",
 )
 
+
+def _render_bento_card(icon_name: str, icon_color: str, tag: str, tag_class: str, title: str, desc: str, feature: str) -> str:
+    """生成纯净白高对比度卡片 HTML"""
+    icon_html = svg_icon(icon_name, size=22, color=icon_color)
+    return (
+        f'<div class="cyber-card">'
+        f'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.8rem;">'
+        f'<div>{icon_html}</div>'
+        f'<span class="pill-badge {tag_class}">{tag}</span>'
+        f'</div>'
+        f'<h3 style="margin:0 0 0.5rem 0;color:#0f172a;font-size:1.22rem;font-weight:700;">{title}</h3>'
+        f'<p style="color:#475569;font-size:0.9rem;line-height:1.6;margin-bottom:1rem;">{desc}</p>'
+        f'<div style="font-size:0.8rem;color:{icon_color};font-family:\'JetBrains Mono\';font-weight:700;">'
+        f'FEATURE: {feature}'
+        f'</div>'
+        f'</div>'
+    )
+
+
 # ---------------------------------------------------------------------------
-# 首页 Bento 卡片矩阵 (Bento Grid)
+# 首页 Bento 卡片矩阵 (2x2 网格分列渲染)
 # ---------------------------------------------------------------------------
-icon_target = svg_icon("target", size=20, color="#38bdf8")
-icon_layers = svg_icon("layers", size=20, color="#c084fc")
-icon_zap = svg_icon("zap", size=20, color="#fbbf24")
-icon_terminal = svg_icon("terminal", size=20, color="#34d399")
+col1, col2 = st.columns(2)
 
-st.markdown(
-    f"""
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.2rem; margin-bottom: 2rem;">
-        <!-- 卡片 1 -->
-        <div class="cyber-card">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.8rem;">
-                <div>{icon_target}</div>
-                <span class="pill-badge pill-blue">M01 // PERCEPTRON</span>
-            </div>
-            <h3 style="margin: 0 0 0.5rem 0; color: #f8fafc; font-size: 1.2rem;">单神经元感知器</h3>
-            <p style="color: #94a3b8; font-size: 0.88rem; line-height: 1.5; margin-bottom: 1rem;">
-                解构最小计算单元：前向计算 $Z=XW+b$、交叉熵损失、反向传播链式推导与权重轨迹寻优。
-            </p>
-            <div style="font-size: 0.78rem; color: #38bdf8; font-family: 'JetBrains Mono'; font-weight: 500;">
-                FEATURE: 2D 线性分界面 · Loss 收敛曲线 · 权重参数空间轨迹
-            </div>
-        </div>
+with col1:
+    card1_html = _render_bento_card(
+        icon_name="target",
+        icon_color="#1d4ed8",
+        tag="M01 // PERCEPTRON",
+        tag_class="pill-blue",
+        title="单神经元感知器",
+        desc="解构最小计算单元：线性前向计算 Z=XW+b、交叉熵损失、反向传播链式推导与权重轨迹寻优。",
+        feature="2D 线性分界面 · Loss 收敛曲线 · 权重参数空间轨迹",
+    )
+    st.markdown(card1_html, unsafe_allow_html=True)
 
-        <!-- 卡片 2 -->
-        <div class="cyber-card">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.8rem;">
-                <div>{icon_layers}</div>
-                <span class="pill-badge pill-purple">M02 // TOPOLOGY & PROBE</span>
-            </div>
-            <h3 style="margin: 0 0 0.5rem 0; color: #f8fafc; font-size: 1.2rem;">多层网络与活性探针</h3>
-            <p style="color: #94a3b8; font-size: 0.88rem; line-height: 1.5; margin-bottom: 1rem;">
-                理解「深度」的非线性流形折叠。内置单样本动态活性探针，实时观测信号在各层神经元中的点亮状态。
-            </p>
-            <div style="font-size: 0.78rem; color: #c084fc; font-family: 'JetBrains Mono'; font-weight: 500;">
-                FEATURE: 神经元活性探针 · 激活热力图 · 梯度消失/爆炸直方图
-            </div>
-        </div>
+    card3_html = _render_bento_card(
+        icon_name="zap",
+        icon_color="#b45309",
+        tag="M03 // OPTIMIZER ARENA",
+        tag_class="pill-amber",
+        title="优化器同屏竞速",
+        desc="同一起跑线对比 SGD、Momentum、RMSProp 与 Adam，观测动量累积、自适应学习率与偏差修正的威力。",
+        feature="多轨 Loss 对比 · 决策边界拟合速率 · 收敛步数排行榜",
+    )
+    st.markdown(card3_html, unsafe_allow_html=True)
 
-        <!-- 卡片 3 -->
-        <div class="cyber-card">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.8rem;">
-                <div>{icon_zap}</div>
-                <span class="pill-badge pill-amber">M03 // OPTIMIZER ARENA</span>
-            </div>
-            <h3 style="margin: 0 0 0.5rem 0; color: #f8fafc; font-size: 1.2rem;">优化器同屏竞速</h3>
-            <p style="color: #94a3b8; font-size: 0.88rem; line-height: 1.5; margin-bottom: 1rem;">
-                同一起跑线对比 SGD、Momentum、RMSProp 与 Adam，观测动量累积、自适应学习率与偏差修正的威力。
-            </p>
-            <div style="font-size: 0.78rem; color: #fbbf24; font-family: 'JetBrains Mono'; font-weight: 500;">
-                FEATURE: 多轨 Loss 对比 · 决策边界拟合速率 · 收敛步数排行榜
-            </div>
-        </div>
+with col2:
+    card2_html = _render_bento_card(
+        icon_name="layers",
+        icon_color="#6d28d9",
+        tag="M02 // TOPOLOGY & PROBE",
+        tag_class="pill-purple",
+        title="多层网络与活性探针",
+        desc="理解「深度」的非线性流形折叠。内置单样本动态活性探针，实时观测信号在各层神经元中的点亮状态。",
+        feature="神经元活性探针 · 激活热力图 · 梯度消失/爆炸直方图",
+    )
+    st.markdown(card2_html, unsafe_allow_html=True)
 
-        <!-- 卡片 4 -->
-        <div class="cyber-card">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.8rem;">
-                <div>{icon_terminal}</div>
-                <span class="pill-badge pill-emerald">M04 // PARAMETER LAB</span>
-            </div>
-            <h3 style="margin: 0 0 0.5rem 0; color: #f8fafc; font-size: 1.2rem;">全参数微观实验室</h3>
-            <p style="color: #94a3b8; font-size: 0.88rem; line-height: 1.5; margin-bottom: 1rem;">
-                工业级四宫格微观监控台，支持逐步训练 (Step-by-Step)、快照回滚、A/B 对比与全量实验日志导出。
-            </p>
-            <div style="font-size: 0.78rem; color: #34d399; font-family: 'JetBrains Mono'; font-weight: 500;">
-                FEATURE: 四宫格全景遥测 · 逐步微调 · 实验快照 JSON
-            </div>
-        </div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+    card4_html = _render_bento_card(
+        icon_name="terminal",
+        icon_color="#047857",
+        tag="M04 // PARAMETER LAB",
+        tag_class="pill-emerald",
+        title="全参数微观实验室",
+        desc="工业级四宫格微观监控台，支持逐步训练 (Step-by-Step)、快照回滚、A/B 对比与全量实验日志导出。",
+        feature="四宫格全景遥测 · 逐步微调 · 实验快照 JSON",
+    )
+    st.markdown(card4_html, unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
 # 系统技术架构与工程标准
@@ -113,64 +108,57 @@ st.markdown(
 col_arch, col_stats = st.columns([1.5, 1])
 
 with col_arch:
-    icon_box = svg_icon("box", size=18, color="#38bdf8")
-    st.markdown(
-        f"""
-        <div class="cyber-card">
-            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.8rem;">
-                {icon_box}
-                <span style="font-size: 1.1rem; font-weight: 700; color: #f8fafc;">核心架构与设计原则</span>
-            </div>
-            <ul style="color: #94a3b8; font-size: 0.88rem; line-height: 1.8; margin-bottom: 0; padding-left: 1.2rem;">
-                <li><b>纯 NumPy 底层</b>: 零 PyTorch/TF 依赖，前向计算与反向传播 100% 纯手写矩阵运算</li>
-                <li><b>数学严谨性</b>: 梯度校验通过中心差分法 (Central Difference)，解析误差严格 &lt; 1e-5</li>
-                <li><b>模块化解耦</b>: <code>Activations</code>, <code>Losses</code>, <code>Layers</code>, <code>Optimizers</code>, <code>Callbacks</code> 遵循高内聚原则</li>
-                <li><b>工业级 DevOps</b>: GitHub Actions 矩阵测试 (Linux/macOS/Windows × Py3.11/12/13)、多阶段 Docker 容器化</li>
-            </ul>
-        </div>
-        """,
-        unsafe_allow_html=True,
+    icon_box = svg_icon("box", size=18, color="#1d4ed8")
+    arch_html = (
+        f'<div class="cyber-card">'
+        f'<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.8rem;">'
+        f'{icon_box}'
+        f'<span style="font-size:1.1rem;font-weight:700;color:#0f172a;">核心架构与设计原则</span>'
+        f'</div>'
+        f'<ul style="color:#334155;font-size:0.9rem;line-height:1.9;margin-bottom:0;padding-left:1.2rem;">'
+        f'<li><b>纯 NumPy 底层</b>: 零 PyTorch/TF 依赖，前向计算与反向传播 100% 纯手写矩阵运算</li>'
+        f'<li><b>数学严谨性</b>: 梯度校验通过中心差分法 (Central Difference)，解析误差严格 &lt; 1e-5</li>'
+        f'<li><b>模块化解耦</b>: <code>Activations</code>, <code>Losses</code>, <code>Layers</code>, <code>Optimizers</code>, <code>Callbacks</code> 遵循高内聚原则</li>'
+        f'<li><b>工业级 DevOps</b>: GitHub Actions 矩阵测试 (Linux/macOS/Windows × Py3.11/12/13)、多阶段 Docker 容器化</li>'
+        f'</ul>'
+        f'</div>'
     )
+    st.markdown(arch_html, unsafe_allow_html=True)
 
 with col_stats:
-    icon_activity = svg_icon("activity", size=18, color="#34d399")
-    st.markdown(
-        f"""
-        <div class="cyber-card">
-            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.8rem;">
-                {icon_activity}
-                <span style="font-size: 1.1rem; font-weight: 700; color: #f8fafc;">引擎遥测状态</span>
-            </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin-top: 0.8rem;">
-                <div style="background: rgba(8,12,20,0.6); padding: 0.8rem; border-radius: 8px; text-align: center;">
-                    <div style="font-size: 1.45rem; font-weight: 700; color: #38bdf8; font-family: 'JetBrains Mono';">66 / 66</div>
-                    <div style="font-size: 0.72rem; color: #94a3b8; text-transform: uppercase;">UNIT TESTS PASS</div>
-                </div>
-                <div style="background: rgba(8,12,20,0.6); padding: 0.8rem; border-radius: 8px; text-align: center;">
-                    <div style="font-size: 1.45rem; font-weight: 700; color: #34d399; font-family: 'JetBrains Mono';">&lt; 1e-5</div>
-                    <div style="font-size: 0.72rem; color: #94a3b8; text-transform: uppercase;">GRAD ERROR</div>
-                </div>
-                <div style="background: rgba(8,12,20,0.6); padding: 0.8rem; border-radius: 8px; text-align: center;">
-                    <div style="font-size: 1.45rem; font-weight: 700; color: #fbbf24; font-family: 'JetBrains Mono';">4 CLASS</div>
-                    <div style="font-size: 0.72rem; color: #94a3b8; text-transform: uppercase;">OPTIMIZERS</div>
-                </div>
-                <div style="background: rgba(8,12,20,0.6); padding: 0.8rem; border-radius: 8px; text-align: center;">
-                    <div style="font-size: 1.45rem; font-weight: 700; color: #c084fc; font-family: 'JetBrains Mono';">5 TYPES</div>
-                    <div style="font-size: 0.72rem; color: #94a3b8; text-transform: uppercase;">TOPOLOGIES</div>
-                </div>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
+    icon_activity = svg_icon("activity", size=18, color="#047857")
+    stats_html = (
+        f'<div class="cyber-card">'
+        f'<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.8rem;">'
+        f'{icon_activity}'
+        f'<span style="font-size:1.1rem;font-weight:700;color:#0f172a;">引擎遥测状态</span>'
+        f'</div>'
+        f'<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;margin-top:0.8rem;">'
+        f'<div style="background:#f8fafc;border:1px solid #e2e8f0;padding:0.8rem;border-radius:8px;text-align:center;">'
+        f'<div style="font-size:1.45rem;font-weight:800;color:#1d4ed8;font-family:\'JetBrains Mono\';">66 / 66</div>'
+        f'<div style="font-size:0.72rem;color:#64748b;font-weight:700;text-transform:uppercase;">UNIT TESTS PASS</div>'
+        f'</div>'
+        f'<div style="background:#f8fafc;border:1px solid #e2e8f0;padding:0.8rem;border-radius:8px;text-align:center;">'
+        f'<div style="font-size:1.45rem;font-weight:800;color:#047857;font-family:\'JetBrains Mono\';">&lt; 1e-5</div>'
+        f'<div style="font-size:0.72rem;color:#64748b;font-weight:700;text-transform:uppercase;">GRAD ERROR</div>'
+        f'</div>'
+        f'<div style="background:#f8fafc;border:1px solid #e2e8f0;padding:0.8rem;border-radius:8px;text-align:center;">'
+        f'<div style="font-size:1.45rem;font-weight:800;color:#b45309;font-family:\'JetBrains Mono\';">4 CLASS</div>'
+        f'<div style="font-size:0.72rem;color:#64748b;font-weight:700;text-transform:uppercase;">OPTIMIZERS</div>'
+        f'</div>'
+        f'<div style="background:#f8fafc;border:1px solid #e2e8f0;padding:0.8rem;border-radius:8px;text-align:center;">'
+        f'<div style="font-size:1.45rem;font-weight:800;color:#6d28d9;font-family:\'JetBrains Mono\';">5 TYPES</div>'
+        f'<div style="font-size:0.72rem;color:#64748b;font-weight:700;text-transform:uppercase;">TOPOLOGIES</div>'
+        f'</div>'
+        f'</div>'
+        f'</div>'
     )
+    st.markdown(stats_html, unsafe_allow_html=True)
 
 # 底部版权声明
 st.markdown(
-    """
-    <div style="text-align: center; color: #64748b; font-size: 0.82rem; margin-top: 2.5rem; font-family: 'JetBrains Mono';">
-        ENGINEERED BY <a href="https://github.com/yuan278501381" style="color: #38bdf8; text-decoration: none;">Yy1 (yuan278501381)</a>
-        · MIT LICENSE · COPYRIGHT (C) 2026
-    </div>
-    """,
+    """<div style="text-align: center; color: #64748b; font-size: 0.82rem; margin-top: 2.5rem; font-family: 'JetBrains Mono'; font-weight: 500;">
+ENGINEERED BY <a href="https://github.com/yuan278501381" style="color: #1d4ed8; font-weight: 700; text-decoration: none;">Yy1 (yuan278501381)</a> · MIT LICENSE · COPYRIGHT (C) 2026
+</div>""",
     unsafe_allow_html=True,
 )

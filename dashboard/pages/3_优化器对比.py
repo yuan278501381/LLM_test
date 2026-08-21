@@ -126,19 +126,17 @@ champion_loss = leaderboard_rows[0]["最终 Loss"]
 champion_acc = leaderboard_rows[0]["最终准确率"]
 
 # ---------------------------------------------------------------------------
-# 遥测指标卡
+# 遥测指标卡 (安全拼接 HTML)
 # ---------------------------------------------------------------------------
-st.markdown(
-    f"""
-    <div class="metric-grid">
-        {render_metric_card("BENCHMARK WINNER", champion, delta=f"Loss: {champion_loss} | Acc: {champion_acc}", delta_type="positive", icon_name="award")}
-        {render_metric_card("TOPOLOGY", dataset_name.upper(), delta=f"N={n_samples} | NOISE={noise}", delta_type="neutral", icon_name="database")}
-        {render_metric_card("INITIALIZER", initializer.upper(), delta=f"{n_layers} HIDDEN LAYERS", delta_type="neutral", icon_name="layers")}
-        {render_metric_card("TOTAL EPOCHS", f"{epochs} EPOCHS", delta=f"LR = {lr}", delta_type="neutral", icon_name="activity")}
-    </div>
-    """,
-    unsafe_allow_html=True,
+grid_html = (
+    '<div class="metric-grid">'
+    + render_metric_card("BENCHMARK WINNER", champion, delta=f"Loss: {champion_loss} | Acc: {champion_acc}", delta_type="positive", icon_name="award")
+    + render_metric_card("TOPOLOGY", dataset_name.upper(), delta=f"N={n_samples} | NOISE={noise}", delta_type="neutral", icon_name="database")
+    + render_metric_card("INITIALIZER", initializer.upper(), delta=f"{n_layers} HIDDEN LAYERS", delta_type="neutral", icon_name="layers")
+    + render_metric_card("TOTAL EPOCHS", f"{epochs} EPOCHS", delta=f"LR = {lr}", delta_type="neutral", icon_name="activity")
+    + '</div>'
 )
+st.markdown(grid_html, unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
 # 核心可视化：多轨 Loss 对比图

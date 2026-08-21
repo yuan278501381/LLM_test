@@ -103,19 +103,17 @@ w_final = dense_layer.weights.ravel()
 b_final = float(dense_layer.biases.ravel()[0])
 
 # ---------------------------------------------------------------------------
-# 遥测指标卡 (无 Emoji)
+# 遥测指标卡 (安全拼接 HTML)
 # ---------------------------------------------------------------------------
-st.markdown(
-    f"""
-    <div class="metric-grid">
-        {render_metric_card("FINAL LOSS", f"{final_loss:.4f}", delta="CONVERGED" if final_loss < 0.2 else "TRAINING", delta_type="positive" if final_loss < 0.2 else "neutral", icon_name="trending-down")}
-        {render_metric_card("ACCURACY", f"{final_acc:.1%}", delta="OPTIMAL" if final_acc >= 0.95 else "PROGRESSING", delta_type="positive" if final_acc >= 0.9 else "neutral", icon_name="target")}
-        {render_metric_card("WEIGHT [W₁, W₂]", f"[{w_final[0]:.2f}, {w_final[1]:.2f}]", delta=f"BIAS b = {b_final:.2f}", delta_type="neutral", icon_name="sliders")}
-        {render_metric_card("HYPERPLANE", f"{w_final[0]:.2f}x₁ + {w_final[1]:.2f}x₂ + {b_final:.2f} = 0", delta="BOUNDARY", delta_type="neutral", icon_name="activity")}
-    </div>
-    """,
-    unsafe_allow_html=True,
+grid_html = (
+    '<div class="metric-grid">'
+    + render_metric_card("FINAL LOSS", f"{final_loss:.4f}", delta="CONVERGED" if final_loss < 0.2 else "TRAINING", delta_type="positive" if final_loss < 0.2 else "neutral", icon_name="trending-down")
+    + render_metric_card("ACCURACY", f"{final_acc:.1%}", delta="OPTIMAL" if final_acc >= 0.95 else "PROGRESSING", delta_type="positive" if final_acc >= 0.9 else "neutral", icon_name="target")
+    + render_metric_card("WEIGHT [W₁, W₂]", f"[{w_final[0]:.2f}, {w_final[1]:.2f}]", delta=f"BIAS b = {b_final:.2f}", delta_type="neutral", icon_name="sliders")
+    + render_metric_card("HYPERPLANE", f"{w_final[0]:.2f}x₁ + {w_final[1]:.2f}x₂ + {b_final:.2f} = 0", delta="BOUNDARY", delta_type="neutral", icon_name="activity")
+    + '</div>'
 )
+st.markdown(grid_html, unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
 # 可视化布局

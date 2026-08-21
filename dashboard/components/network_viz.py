@@ -1,12 +1,12 @@
 # Copyright (c) 2026 Yy1 (yuan278501381) | MIT License
 """
-dashboard.components.network_viz - 动态神经元拓扑与活性探针可视化引擎 (极简极客风格)
+dashboard.components.network_viz - 动态神经元拓扑与活性探针可视化引擎 (现代亮色风格)
 
-使用 Plotly 构建世界级交互式神经网络拓扑图：
-- 节点状态响应「单样本活性探针」：根据实际激活值 $a^{[l]}$ 实时发光/渐变着色
-- 突触连线粗细与颜色映射权重大小与极性（正向青蓝、负向烈焰红）
+使用 Plotly 构建现代极简亮色神经网络拓扑图：
+- 节点状态响应「单样本活性探针」：根据实际激活值 $a^{[l]}$ 实时高对比变色
+- 突触连线粗细与颜色映射权重大小与极性（正向蓝、负向红）
 - 截断保护与超大层优雅折叠
-- 杜绝一切 Emoji，采用极简工程级规范排版
+- 亮色背景下清晰可辨
 """
 
 import numpy as np
@@ -20,7 +20,7 @@ def plot_network_topology(
     title: str = "TOPOLOGY & PROBE // 神经网络拓扑与动态活性探针",
 ) -> go.Figure:
     """
-    绘制世界级神经网络拓扑图与神经元激活状态。
+    绘制亮色神经网络拓扑图与神经元激活状态。
 
     Args:
         layer_sizes: 每层的神经元数量列表，如 [2, 8, 4, 1]
@@ -33,11 +33,10 @@ def plot_network_topology(
     """
     n_layers = len(layer_sizes)
     max_neurons = max(layer_sizes)
-    display_limit = 10  # 单层最多展示神经元个数，超出折叠
+    display_limit = 10
 
     fig = go.Figure()
 
-    # 计算每层神经元的几何坐标
     layer_positions: list[list[tuple[float, float]]] = []
     x_spacing = 1.4
 
@@ -61,17 +60,17 @@ def plot_network_topology(
                     w = weights[layer_idx]
                     if i < w.shape[0] and j < w.shape[1]:
                         w_val = float(w[i, j])
-                        width = float(np.clip(abs(w_val) * 2.8, 0.4, 4.5))
-                        alpha = float(np.clip(abs(w_val) / 2.0, 0.15, 0.85))
+                        width = float(np.clip(abs(w_val) * 2.8, 0.5, 4.5))
+                        alpha = float(np.clip(abs(w_val) / 2.0, 0.2, 0.9))
                         color = (
-                            f"rgba(56, 189, 248, {alpha})"
+                            f"rgba(37, 99, 235, {alpha})"
                             if w_val >= 0
-                            else f"rgba(251, 113, 133, {alpha})"
+                            else f"rgba(225, 29, 72, {alpha})"
                         )
                     else:
-                        width, color = 0.5, "rgba(148, 163, 184, 0.15)"
+                        width, color = 0.5, "rgba(203, 213, 225, 0.3)"
                 else:
-                    width, color = 0.6, "rgba(148, 163, 184, 0.2)"
+                    width, color = 0.6, "rgba(203, 213, 225, 0.4)"
 
                 fig.add_trace(go.Scatter(
                     x=[x1, x2], y=[y1, y2],
@@ -84,7 +83,7 @@ def plot_network_topology(
     # -------------------------------------------------------------------------
     # 2. 绘制神经元节点与活性探针 (Neuron Activation Nodes)
     # -------------------------------------------------------------------------
-    layer_labels = ["INPUT"] + [f"HIDDEN #{i}" for i in range(1, n_layers - 1)] + ["OUTPUT"]
+    layer_labels = ["INPUT", *[f"HIDDEN #{i}" for i in range(1, n_layers - 1)], "OUTPUT"]
 
     for layer_idx, positions in enumerate(layer_positions):
         xs = [p[0] for p in positions]
@@ -98,6 +97,7 @@ def plot_network_topology(
 
         node_colors = []
         node_border_colors = []
+        node_text_colors = []
         node_sizes = []
         hover_texts = []
 
@@ -105,23 +105,27 @@ def plot_network_topology(
             if layer_acts is not None and i < len(layer_acts):
                 act_val = float(layer_acts[i])
                 if act_val > 0.5:
-                    node_colors.append("rgba(56, 189, 248, 0.9)")
-                    node_border_colors.append("#38bdf8")
+                    node_colors.append("#2563eb")
+                    node_border_colors.append("#1d4ed8")
+                    node_text_colors.append("#ffffff")
                     node_sizes.append(28)
                     status = "[EXCITED // 强兴奋]"
                 elif act_val > 0.05:
-                    node_colors.append("rgba(52, 211, 153, 0.75)")
-                    node_border_colors.append("#34d399")
+                    node_colors.append("#059669")
+                    node_border_colors.append("#047857")
+                    node_text_colors.append("#ffffff")
                     node_sizes.append(26)
                     status = "[ACTIVE // 适度激活]"
                 elif act_val < -0.05:
-                    node_colors.append("rgba(251, 113, 133, 0.75)")
-                    node_border_colors.append("#fb7185")
+                    node_colors.append("#e11d48")
+                    node_border_colors.append("#be123c")
+                    node_text_colors.append("#ffffff")
                     node_sizes.append(26)
                     status = "[INHIBITED // 负向抑制]"
                 else:
-                    node_colors.append("rgba(30, 41, 59, 0.6)")
-                    node_border_colors.append("rgba(148, 163, 184, 0.4)")
+                    node_colors.append("#f1f5f9")
+                    node_border_colors.append("#cbd5e1")
+                    node_text_colors.append("#64748b")
                     node_sizes.append(22)
                     status = "[DORMANT // 休眠]"
 
@@ -131,8 +135,9 @@ def plot_network_topology(
                     + f"Status: {status}"
                 )
             else:
-                node_colors.append("rgba(15, 23, 42, 0.85)")
-                node_border_colors.append("#38bdf8" if layer_idx == 0 or layer_idx == n_layers - 1 else "#818cf8")
+                node_colors.append("#ffffff")
+                node_border_colors.append("#2563eb" if layer_idx == 0 or layer_idx == n_layers - 1 else "#7c3aed")
+                node_text_colors.append("#0f172a")
                 node_sizes.append(24)
                 hover_texts.append(f"<b>{layer_labels[layer_idx]} · Node #{i+1}/{actual_n}</b>")
 
@@ -145,7 +150,7 @@ def plot_network_topology(
                 line=dict(width=2, color=node_border_colors),
             ),
             text=[str(i + 1) for i in range(show_n)],
-            textfont=dict(size=9, color="#f8fafc", family="JetBrains Mono"),
+            textfont=dict(size=9, color=node_text_colors if any(c == "#ffffff" for c in node_text_colors) else "#0f172a", family="JetBrains Mono"),
             hovertext=hover_texts,
             hoverinfo="text",
             showlegend=False,
@@ -157,7 +162,7 @@ def plot_network_topology(
                 y=positions[-1][1] + 0.6,
                 text=f"... (+{actual_n - display_limit} hidden)",
                 showarrow=False,
-                font=dict(size=10, color="#94a3b8"),
+                font=dict(size=10, color="#64748b"),
             )
 
     # -------------------------------------------------------------------------
@@ -167,25 +172,25 @@ def plot_network_topology(
         fig.add_annotation(
             x=layer_idx * x_spacing,
             y=-0.8,
-            text=f"<b>{layer_labels[layer_idx]}</b><br><span style='color:#94a3b8; font-size:10px;'>dim={layer_sizes[layer_idx]}</span>",
+            text=f"<b>{layer_labels[layer_idx]}</b><br><span style='color:#64748b; font-size:10px;'>dim={layer_sizes[layer_idx]}</span>",
             showarrow=False,
-            font=dict(size=11, color="#f8fafc"),
+            font=dict(size=11, color="#0f172a"),
         )
 
     fig.update_layout(
         title=dict(
             text=f"<b>{title}</b>",
-            font=dict(size=14, color="#f8fafc"),
+            font=dict(size=14, color="#0f172a"),
             x=0.02,
             y=0.96,
         ),
-        template="plotly_dark",
+        template="plotly_white",
         showlegend=False,
         xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
         yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
         margin=dict(l=20, r=20, t=50, b=50),
         height=420,
-        plot_bgcolor="rgba(8, 12, 20, 0.4)",
+        plot_bgcolor="#ffffff",
         paper_bgcolor="rgba(0,0,0,0)",
     )
 

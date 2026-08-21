@@ -130,15 +130,13 @@ with col_btn2:
 
 with col_btn3:
     current_epochs = st.session_state["m4_epoch_count"]
-    st.markdown(
-        f"""
-        <div style="display: flex; align-items: center; gap: 0.8rem; height: 100%; padding-top: 0.3rem;">
-            <span class="pill-badge pill-emerald"><span class="status-dot"></span> EPOCHS: {current_epochs}</span>
-            <span class="pill-badge pill-blue">OPT: {optimizer_name} (lr={lr})</span>
-        </div>
-        """,
-        unsafe_allow_html=True,
+    badge_status = (
+        '<div style="display:flex;align-items:center;gap:0.8rem;height:100%;padding-top:0.3rem;">'
+        f'<span class="pill-badge pill-emerald"><span class="status-dot"></span> EPOCHS: {current_epochs}</span>'
+        f'<span class="pill-badge pill-blue">OPT: {optimizer_name} (lr={lr})</span>'
+        '</div>'
     )
+    st.markdown(badge_status, unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
 # 遥测指标计算与展示
@@ -154,17 +152,15 @@ layer_names = [f"Dense #{i+1}" for i in range(len(dense_layers))]
 grad_norm = float(np.mean([np.mean(np.abs(g)) for g in grads_list])) if grads_list else 0.0
 weight_norm = float(np.mean([np.mean(np.abs(w)) for w in weights_list])) if weights_list else 0.0
 
-st.markdown(
-    f"""
-    <div class="metric-grid" style="margin-top: 1rem;">
-        {render_metric_card("CURRENT LOSS", f"{current_loss:.4f}", delta=f"EPOCH #{st.session_state['m4_epoch_count']}", delta_type="positive" if current_loss < 0.2 else "neutral", icon_name="trending-down")}
-        {render_metric_card("ACCURACY", f"{current_acc:.1%}", delta="LIVE STATE", delta_type="positive" if current_acc >= 0.9 else "neutral", icon_name="target")}
-        {render_metric_card("GRADIENT NORM", f"{grad_norm:.2e}", delta="BACKPROP ACTIVITY", delta_type="neutral", icon_name="activity")}
-        {render_metric_card("WEIGHT MAGNITUDE", f"{weight_norm:.4f}", delta=f"REG: {reg_type}", delta_type="neutral", icon_name="shield")}
-    </div>
-    """,
-    unsafe_allow_html=True,
+grid_html = (
+    '<div class="metric-grid" style="margin-top:1rem;">'
+    + render_metric_card("CURRENT LOSS", f"{current_loss:.4f}", delta=f"EPOCH #{st.session_state['m4_epoch_count']}", delta_type="positive" if current_loss < 0.2 else "neutral", icon_name="trending-down")
+    + render_metric_card("ACCURACY", f"{current_acc:.1%}", delta="LIVE STATE", delta_type="positive" if current_acc >= 0.9 else "neutral", icon_name="target")
+    + render_metric_card("GRADIENT NORM", f"{grad_norm:.2e}", delta="BACKPROP ACTIVITY", delta_type="neutral", icon_name="activity")
+    + render_metric_card("WEIGHT MAGNITUDE", f"{weight_norm:.4f}", delta=f"REG: {reg_type}", delta_type="neutral", icon_name="shield")
+    + '</div>'
 )
+st.markdown(grid_html, unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
 # 四宫格全景监控 (Four-Grid Dashboard)
