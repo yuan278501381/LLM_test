@@ -27,6 +27,7 @@ from dashboard.styles.theme import (
     render_metric_card,
     render_page_guide,
     render_section_heading,
+    render_text_stream_box,
 )
 from nn_core.embeddings import get_mini_vocab, get_pretrained_embeddings
 from nn_core.gpt import TinyGPT
@@ -261,36 +262,8 @@ st.markdown(metric_grid_html, unsafe_allow_html=True)
 # 主视图区 1：自回归实时文本输出展示
 # ---------------------------------------------------------------------------
 render_section_heading("LIVE TEXT STREAM // 实时自回归文本流 (打字机效果)", icon_name="activity")
-
 prompt_len = len(current_prompt_text.strip().split())
-tokens_html_list = []
-
-for idx, tok in enumerate(current_tokens):
-    if idx < prompt_len:
-        # Prompt 词汇：深灰经典样式
-        tokens_html_list.append(
-            f'<span style="background:#f1f5f9; color:#0f172a; border:1px solid #cbd5e1; padding:0.25rem 0.6rem; border-radius:6px; font-weight:700; font-family:\'JetBrains Mono\';">{tok}</span>'
-        )
-    else:
-        # GPT 生成的新词：高亮皇家蓝徽章
-        tokens_html_list.append(
-            f'<span style="background:#eff6ff; color:#1d4ed8; border:1px solid #93c5fd; padding:0.25rem 0.6rem; border-radius:6px; font-weight:800; font-family:\'JetBrains Mono\'; box-shadow:0 2px 6px rgba(37,99,235,0.12);">✨ {tok}</span>'
-        )
-
-text_stream_html = (
-    f"""
-    <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:1.4rem; line-height:2.2; box-shadow:0 2px 8px rgba(15,23,42,0.03); margin-bottom:1.2rem;">
-        <div style="font-size:0.75rem; font-weight:700; color:#64748b; text-transform:uppercase; margin-bottom:0.6rem;">
-            💬 GPT Current Context Window (上下文窗口):
-        </div>
-        <div style="display:flex; flex-wrap:wrap; gap:0.5rem; align-items:center;">
-            {" ".join(tokens_html_list)}
-            <span style="display:inline-block; width:8px; height:18px; background:#1d4ed8; animation:blink 1s infinite;"></span>
-        </div>
-    </div>
-    """
-)
-st.markdown(text_stream_html, unsafe_allow_html=True)
+render_text_stream_box(current_tokens, prompt_len)
 
 # ---------------------------------------------------------------------------
 # 主视图区 2：下一词概率柱状图 & 实时注意力热力图

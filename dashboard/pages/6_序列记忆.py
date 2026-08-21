@@ -26,6 +26,7 @@ from dashboard.styles.theme import (
     render_metric_card,
     render_page_guide,
     render_section_heading,
+    render_sequence_flow,
 )
 from nn_core.embeddings import Embedding, get_mini_vocab, get_pretrained_embeddings
 from nn_core.rnn import RNNCell
@@ -185,33 +186,7 @@ st.markdown(metric_grid_html, unsafe_allow_html=True)
 # 主视图区 1：时序流水线逐步流动
 # ---------------------------------------------------------------------------
 render_section_heading("STEP-BY-STEP RECURRENT FLOW // RNN 隐状态顺次传递管道", icon_name="activity")
-
-# 生成可视化时序卡片
-steps_html_parts = []
-for i, token in enumerate(raw_tokens):
-    h_norm = float(np.linalg.norm(hidden_states_list[i]))
-    # 颜色深度随时间与能量映射
-    alpha = min(0.9, max(0.2, h_norm / 4.0))
-    tag_bg = f"rgba(29, 78, 216, {alpha})"
-    
-    steps_html_parts.append(
-        f"""
-        <div style="flex: 1; min-width: 75px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0.6rem 0.4rem; text-align: center; box-shadow: 0 2px 4px rgba(15,23,42,0.03);">
-            <div style="font-size: 0.68rem; color: #64748b; font-weight: 700; text-transform: uppercase;">t = {i}</div>
-            <div style="font-size: 0.95rem; font-weight: 800; color: #0f172a; margin: 0.2rem 0; font-family:'JetBrains Mono';">{token}</div>
-            <div style="background: {tag_bg}; color: #ffffff; font-size: 0.68rem; font-weight: 700; border-radius: 4px; padding: 0.15rem 0.3rem;">
-                ||h||={h_norm:.2f}
-            </div>
-        </div>
-        """
-    )
-
-flow_container_html = (
-    '<div style="display: flex; gap: 0.4rem; overflow-x: auto; padding: 0.5rem 0; margin-bottom: 1.2rem;">'
-    + "".join(steps_html_parts)
-    + "</div>"
-)
-st.markdown(flow_container_html, unsafe_allow_html=True)
+render_sequence_flow(raw_tokens, hidden_states_list)
 
 # ---------------------------------------------------------------------------
 # 主视图区 2：记忆衰减热力图

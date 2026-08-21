@@ -437,3 +437,78 @@ def render_page_guide(
             f'</div>'
         )
         st.markdown(guide_html, unsafe_allow_html=True)
+
+
+def render_sequence_flow(tokens: list[str], hidden_states: list) -> None:
+    """渲染 RNN 时序流动流水线（严格单行无缩进 HTML，确保 100% 正常渲染）"""
+    import numpy as np
+    items = []
+    for i, token in enumerate(tokens):
+        h_norm = float(np.linalg.norm(hidden_states[i])) if len(hidden_states) > i else 1.0
+        alpha = min(0.9, max(0.2, h_norm / 4.0))
+        tag_bg = f"rgba(29, 78, 216, {alpha:.3f})"
+        items.append(
+            f'<div style="flex:1;min-width:72px;background:#ffffff;border:1px solid #cbd5e1;border-radius:8px;padding:0.55rem 0.35rem;text-align:center;box-shadow:0 2px 4px rgba(15,23,42,0.03);">'
+            f'<div style="font-size:0.68rem;color:#64748b;font-weight:700;text-transform:uppercase;">t={i}</div>'
+            f'<div style="font-size:0.95rem;font-weight:800;color:#0f172a;margin:0.2rem 0;font-family:\'JetBrains Mono\';">{token}</div>'
+            f'<div style="background:{tag_bg};color:#ffffff;font-size:0.68rem;font-weight:700;border-radius:4px;padding:0.12rem 0.25rem;">||h||={h_norm:.2f}</div>'
+            f'</div>'
+        )
+    html = f'<div style="display:flex;gap:0.4rem;overflow-x:auto;padding:0.5rem 0;margin-bottom:1.2rem;">{"".join(items)}</div>'
+    st.markdown(html, unsafe_allow_html=True)
+
+
+def render_vector_equation_card(word_a: str, word_b: str, word_c: str, best_match: str) -> None:
+    """渲染语义向量方程卡片（严格单行无缩进 HTML）"""
+    html = (
+        f'<div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:1.3rem;box-shadow:0 2px 8px rgba(15,23,42,0.03);">'
+        f'<div style="font-size:0.8rem;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:0.7rem;">📐 语义平行四边形矢量公式 (Vector Parallelogram)</div>'
+        f'<div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:0.9rem;text-align:center;font-family:\'JetBrains Mono\', monospace;font-size:1.05rem;margin-bottom:0.9rem;">'
+        f'<span style="color:#1d4ed8;font-weight:800;">{word_a}</span><span style="color:#64748b;"> - </span><span style="color:#be123c;font-weight:800;">{word_b}</span><span style="color:#64748b;"> + </span><span style="color:#047857;font-weight:800;">{word_c}</span><span style="color:#64748b;font-weight:800;"> ≈ </span><span style="color:#7c3aed;font-weight:800;background:#f3e8ff;padding:0.2rem 0.5rem;border-radius:4px;">{best_match}</span>'
+        f'</div>'
+        f'<div style="font-size:0.84rem;color:#475569;line-height:1.6;">'
+        f'💡 <b>原理解析</b>：向量减法 <code>{word_a} - {word_b}</code> 提取了纯粹的<b>概念偏移向量</b>；平移加到 <code>{word_c}</code> 上，在几何空间中精确导航至 <code>{best_match}</code>！'
+        f'</div>'
+        f'</div>'
+    )
+    st.markdown(html, unsafe_allow_html=True)
+
+
+def render_architecture_flow_card() -> None:
+    """渲染 Pre-LN Transformer 结构块流程卡片（严格单行无缩进 HTML）"""
+    html = (
+        f'<div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:1.2rem;font-family:\'JetBrains Mono\', monospace;font-size:0.84rem;line-height:1.6;color:#0f172a;box-shadow:0 2px 8px rgba(15,23,42,0.03);">'
+        f'<div style="display:flex;justify-content:space-around;align-items:center;flex-wrap:wrap;gap:0.8rem;">'
+        f'<div style="background:#eff6ff;border:1px solid #bfdbfe;padding:0.7rem 1rem;border-radius:8px;text-align:center;"><span style="color:#1d4ed8;font-weight:800;">INPUT STREAM x</span><br><span style="font-size:0.72rem;color:#64748b;">(残差流主干)</span></div>'
+        f'<div style="color:#64748b;font-size:1.3rem;">➔</div>'
+        f'<div style="background:#f8fafc;border:1px solid #cbd5e1;padding:0.7rem 1rem;border-radius:8px;text-align:center;"><span style="color:#7c3aed;font-weight:800;">LayerNorm₁</span> ➔ <span style="color:#2563eb;font-weight:800;">MHA</span><br><span style="color:#059669;font-weight:700;">x = x + MHA(LN₁(x))</span></div>'
+        f'<div style="color:#64748b;font-size:1.3rem;">➔</div>'
+        f'<div style="background:#f8fafc;border:1px solid #cbd5e1;padding:0.7rem 1rem;border-radius:8px;text-align:center;"><span style="color:#7c3aed;font-weight:800;">LayerNorm₂</span> ➔ <span style="color:#b45309;font-weight:800;">GELU FFN</span><br><span style="color:#059669;font-weight:700;">x = x + FFN(LN₂(x))</span></div>'
+        f'<div style="color:#64748b;font-size:1.3rem;">➔</div>'
+        f'<div style="background:#ecfdf5;border:1px solid #a7f3d0;padding:0.7rem 1rem;border-radius:8px;text-align:center;"><span style="color:#047857;font-weight:800;">OUTPUT STREAM x</span><br><span style="font-size:0.72rem;color:#64748b;">(进入下一层)</span></div>'
+        f'</div>'
+        f'</div>'
+    )
+    st.markdown(html, unsafe_allow_html=True)
+
+
+def render_text_stream_box(tokens: list[str], prompt_len: int) -> None:
+    """渲染 GPT 打字机文本流（严格单行无缩进 HTML）"""
+    badges = []
+    for idx, tok in enumerate(tokens):
+        if idx < prompt_len:
+            badges.append(f'<span style="background:#f1f5f9;color:#0f172a;border:1px solid #cbd5e1;padding:0.22rem 0.55rem;border-radius:6px;font-weight:700;font-family:\'JetBrains Mono\';">{tok}</span>')
+        else:
+            badges.append(f'<span style="background:#eff6ff;color:#1d4ed8;border:1px solid #93c5fd;padding:0.22rem 0.55rem;border-radius:6px;font-weight:800;font-family:\'JetBrains Mono\';box-shadow:0 2px 6px rgba(37,99,235,0.12);">✨ {tok}</span>')
+    
+    html = (
+        f'<div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:1.3rem;line-height:2.2;box-shadow:0 2px 8px rgba(15,23,42,0.03);margin-bottom:1.2rem;">'
+        f'<div style="font-size:0.74rem;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:0.5rem;">💬 GPT Current Context Window (上下文窗口):</div>'
+        f'<div style="display:flex;flex-wrap:wrap;gap:0.45rem;align-items:center;">'
+        f'{" ".join(badges)}'
+        f'<span style="display:inline-block;width:7px;height:16px;background:#1d4ed8;"></span>'
+        f'</div>'
+        f'</div>'
+    )
+    st.markdown(html, unsafe_allow_html=True)
+

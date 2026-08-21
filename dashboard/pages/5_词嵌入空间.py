@@ -27,6 +27,7 @@ from dashboard.styles.theme import (
     render_metric_card,
     render_page_guide,
     render_section_heading,
+    render_vector_equation_card,
 )
 from nn_core.embeddings import get_mini_vocab, get_pretrained_embeddings
 
@@ -314,30 +315,7 @@ with col_table:
 
 with col_eqn:
     render_section_heading("VECTOR EQUATION VERIFICATION // 向量方程几何验证", icon_name="cpu")
-    st.markdown(
-        f"""
-        <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:1.4rem; box-shadow:0 2px 8px rgba(15,23,42,0.03);">
-            <div style="font-size:0.82rem; font-weight:700; color:#64748b; text-transform:uppercase; margin-bottom:0.8rem;">
-                📐 语义平行四边形矢量公式 (Vector Parallelogram)
-            </div>
-            <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:1rem; text-align:center; font-family:'JetBrains Mono', monospace; font-size:1.1rem; margin-bottom:1rem;">
-                <span style="color:#1d4ed8; font-weight:800;">{word_a}</span>
-                <span style="color:#64748b;"> - </span>
-                <span style="color:#be123c; font-weight:800;">{word_b}</span>
-                <span style="color:#64748b;"> + </span>
-                <span style="color:#047857; font-weight:800;">{word_c}</span>
-                <span style="color:#64748b; font-weight:800;"> ≈ </span>
-                <span style="color:#7c3aed; font-weight:800; background:#f3e8ff; padding:0.2rem 0.6rem; border-radius:4px;">{best_match_word}</span>
-            </div>
-            <div style="font-size:0.85rem; color:#475569; line-height:1.6;">
-                💡 <b>原理解析</b>：<br>
-                向量减法 <code>{word_a} - {word_b}</code> 提取了纯粹的<b>性别概念向量 (Gender Vector)</b>；<br>
-                将该位移向量加到 <code>{word_c}</code> 上，在几何空间中直接平移到了 <code>{best_match_word}</code> 的近邻坐标！
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    render_vector_equation_card(word_a, word_b, word_c, best_match_word)
 
 # ---------------------------------------------------------------------------
 # 底部理论对比卡片：One-Hot vs Dense Embedding

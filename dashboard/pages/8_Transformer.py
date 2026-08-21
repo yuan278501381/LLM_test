@@ -23,6 +23,7 @@ importlib.reload(dashboard.components.charts)
 from dashboard.components.charts import _apply_light_theme, plot_attention_heatmap_nlp
 from dashboard.styles.theme import (
     apply_custom_theme,
+    render_architecture_flow_card,
     render_hero_header,
     render_metric_card,
     render_page_guide,
@@ -202,35 +203,7 @@ st.markdown(metric_grid_html, unsafe_allow_html=True)
 # 主视图区 1：Pre-LN Transformer 结构块数据流拓扑
 # ---------------------------------------------------------------------------
 render_section_heading("PRE-LN ARCHITECTURE // Pre-LN Transformer 结构块内部数据流拓扑", icon_name="activity")
-
-st.markdown(
-    """
-    <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:1.2rem; font-family:'JetBrains Mono', monospace; font-size:0.85rem; line-height:1.6; color:#0f172a; box-shadow:0 2px 8px rgba(15,23,42,0.03);">
-        <div style="display:flex; justify-content:space-around; align-items:center; flex-wrap:wrap; gap:1rem;">
-            <div style="background:#eff6ff; border:1px solid #bfdbfe; padding:0.8rem 1.2rem; border-radius:8px; text-align:center;">
-                <span style="color:#1d4ed8; font-weight:800;">INPUT STREAM x</span><br>
-                <span style="font-size:0.75rem; color:#64748b;">(残差流主干道)</span>
-            </div>
-            <div style="color:#64748b; font-size:1.4rem;">➔</div>
-            <div style="background:#f8fafc; border:1px solid #cbd5e1; padding:0.8rem 1.2rem; border-radius:8px; text-align:center;">
-                <span style="color:#7c3aed; font-weight:800;">LayerNorm₁</span> ➔ <span style="color:#2563eb; font-weight:800;">Multi-Head Attention</span><br>
-                <span style="color:#059669; font-weight:700;">x = x + MHA(LN₁(x))</span> <span style="font-size:0.75rem; color:#64748b;">(残差加法)</span>
-            </div>
-            <div style="color:#64748b; font-size:1.4rem;">➔</div>
-            <div style="background:#f8fafc; border:1px solid #cbd5e1; padding:0.8rem 1.2rem; border-radius:8px; text-align:center;">
-                <span style="color:#7c3aed; font-weight:800;">LayerNorm₂</span> ➔ <span style="color:#b45309; font-weight:800;">GELU FeedForward</span><br>
-                <span style="color:#059669; font-weight:700;">x = x + FFN(LN₂(x))</span> <span style="font-size:0.75rem; color:#64748b;">(残差加法)</span>
-            </div>
-            <div style="color:#64748b; font-size:1.4rem;">➔</div>
-            <div style="background:#ecfdf5; border:1px solid #a7f3d0; padding:0.8rem 1.2rem; border-radius:8px; text-align:center;">
-                <span style="color:#047857; font-weight:800;">OUTPUT STREAM x</span><br>
-                <span style="font-size:0.75rem; color:#64748b;">(进入下一层 Block)</span>
-            </div>
-        </div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+render_architecture_flow_card()
 
 # ---------------------------------------------------------------------------
 # 主视图区 2：逐层注意力热力图同屏对比

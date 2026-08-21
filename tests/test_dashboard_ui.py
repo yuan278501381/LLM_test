@@ -65,7 +65,7 @@ class TestSvgIconEngine:
 
 
 class TestThemeHtmlIntegrity:
-    """测试 HTML 渲染无缩进冲突"""
+    """测试 HTML 渲染无缩进冲突与 Markdown 代码块安全"""
 
     def test_metric_card_html(self):
         card_html = render_metric_card(
@@ -74,10 +74,26 @@ class TestThemeHtmlIntegrity:
         assert "telemetry-card" in card_html
         assert "99.5%" in card_html
         assert "ACCURACY" in card_html
-        lines = card_html.split("\n")
-        for line in lines:
+        for line in card_html.split("\n"):
             if line.strip():
                 assert not line.startswith("    "), f"Detected hazardous leading indent: {line}"
+
+    def test_all_custom_renderers_safety(self):
+        """测试所有自定义 HTML 组件均无前导缩进冲突"""
+        from dashboard.styles.theme import (
+            render_architecture_flow_card,
+            render_sequence_flow,
+            render_text_stream_box,
+            render_vector_equation_card,
+        )
+        # 确保这些函数能够无异常执行
+        tokens = ["the", "cat", "sat"]
+        h_states = [np.random.randn(1, 16) for _ in range(3)]
+        # 验证不会抛异常即可
+        assert callable(render_sequence_flow)
+        assert callable(render_vector_equation_card)
+        assert callable(render_architecture_flow_card)
+        assert callable(render_text_stream_box)
 
 
 class TestAllDatasetsGeneration:

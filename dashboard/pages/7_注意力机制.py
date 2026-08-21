@@ -224,35 +224,29 @@ col_q, col_k, col_v = st.columns(3)
 with col_q:
     with st.container(border=True):
         st.markdown(
-            f"""
-            #### 🔍 Query (查询探针)
-            - **物理意义**：“当前词正在寻找什么？”
-            - **张量维度**：`({seq_len}, {32//num_heads})`
-            - **生成方式**：$Q = X \\cdot W_Q$
-            - **作用**：主动发起检索请求，与所有 Key 进行相似度点积。
-            """
+            f"#### 🔍 Query (查询探针)\n"
+            f"- **物理意义**：“当前词正在寻找什么？”\n"
+            f"- **张量维度**：`({seq_len}, {32//num_heads})`\n"
+            f"- **生成方式**：$Q = X \\cdot W_Q$\n"
+            f"- **作用**：主动发起检索请求，与所有 Key 进行相似度点积。"
         )
 with col_k:
     with st.container(border=True):
         st.markdown(
-            f"""
-            #### 🏷️ Key (索引标签)
-            - **物理意义**：“我包含什么特征来响应查询？”
-            - **张量维度**：`({seq_len}, {32//num_heads})`
-            - **生成方式**：$K = X \\cdot W_K$
-            - **作用**：被动接受匹配，$Q \\cdot K^T$ 产生 $N \\times N$ 相似度分数。
-            """
+            f"#### 🏷️ Key (索引标签)\n"
+            f"- **物理意义**：“我包含什么特征来响应查询？”\n"
+            f"- **张量维度**：`({seq_len}, {32//num_heads})`\n"
+            f"- **生成方式**：$K = X \\cdot W_K$\n"
+            f"- **作用**：被动接受匹配，$Q \\cdot K^T$ 产生 $N \\times N$ 相似度分数。"
         )
 with col_v:
     with st.container(border=True):
         st.markdown(
-            f"""
-            #### 📦 Value (信息载荷)
-            - **物理意义**：“我的实际语义内容”
-            - **张量维度**：`({seq_len}, {32//num_heads})`
-            - **生成方式**：$V = X \\cdot W_V$
-            - **作用**：按照 Softmax 归一化权重 $\\alpha$ 进行加权求和输出。
-            """
+            f"#### 📦 Value (信息载荷)\n"
+            f"- **物理意义**：“我的实际语义内容”\n"
+            f"- **张量维度**：`({seq_len}, {32//num_heads})`\n"
+            f"- **生成方式**：$V = X \\cdot W_V$\n"
+            f"- **作用**：按照 Softmax 归一化权重 $\\alpha$ 进行加权求和输出。"
         )
 
 # ---------------------------------------------------------------------------
