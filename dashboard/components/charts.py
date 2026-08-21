@@ -1,6 +1,6 @@
 # Copyright (c) 2026 Yy1 (yuan278501381) | MIT License
 """
-dashboard.components.charts - 世界级 Plotly 可视化图表引擎 (现代亮色极客风格)
+dashboard.components.charts - 世界级 Plotly 可视化图表引擎 (现代亮色极客风格 · 无重叠排版)
 
 提供高对比度、清晰透亮的 Plotly 亮色图表系统（plotly_white）：
 - 连续平滑概率场决策边界（支持探针样本点高亮）
@@ -8,6 +8,7 @@ dashboard.components.charts - 世界级 Plotly 可视化图表引擎 (现代亮�
 - 多层梯度与权重流形直方图
 - 神经元逐层激活强度热力图
 - 优化器多轨竞速轨迹图
+- 参数空间梯度寻优轨迹（严格防图例与色条重叠布局）
 """
 
 from typing import Any
@@ -26,17 +27,17 @@ LIGHT_PALETTE = {
     "zero_line": "rgba(15, 23, 42, 0.12)",
     "font_color": "#0f172a",
     "font_muted": "#64748b",
-    "primary": "#2563eb",     # 皇家蓝
-    "secondary": "#e11d48",   # 玫瑰红
-    "accent": "#059669",      # 极光翡翠绿
-    "warning": "#d97706",     # 琥珀橙
-    "purple": "#7c3aed",      # 紫罗兰
-    "classes": ["#2563eb", "#e11d48", "#059669", "#d97706", "#7c3aed"],
+    "primary": "#1d4ed8",     # 纯正皇家蓝
+    "secondary": "#be123c",   # 玫瑰红
+    "accent": "#047857",      # 森林翡翠绿
+    "warning": "#b45309",     # 琥珀深橙
+    "purple": "#6d28d9",      # 紫罗兰
+    "classes": ["#1d4ed8", "#be123c", "#047857", "#b45309", "#6d28d9"],
     "optimizers": {
         "SGD": "#64748b",
-        "Momentum": "#2563eb",
-        "RMSProp": "#d97706",
-        "Adam": "#059669",
+        "Momentum": "#1d4ed8",
+        "RMSProp": "#b45309",
+        "Adam": "#047857",
     },
 }
 
@@ -52,7 +53,7 @@ def _apply_light_theme(fig: go.Figure, title: str | None = None) -> go.Figure:
             size=12,
             color=LIGHT_PALETTE["font_color"],
         ),
-        "margin": dict(l=35, r=25, t=50 if title else 25, b=35),
+        "margin": dict(l=40, r=40, t=55 if title else 30, b=40),
         "hoverlabel": dict(
             bgcolor="#ffffff",
             bordercolor="#cbd5e1",
@@ -73,7 +74,7 @@ def _apply_light_theme(fig: go.Figure, title: str | None = None) -> go.Figure:
     if title:
         layout_update["title"] = dict(
             text=f"<b>{title}</b>",
-            font=dict(size=14, color="#0f172a"),
+            font=dict(size=13, color="#0f172a"),
             x=0.02,
             y=0.96,
         )
@@ -108,9 +109,9 @@ def plot_decision_boundary(
     if preds.shape[1] == 1:
         zz = preds.reshape(xx.shape)
         colorscale = [
-            [0.0, "rgba(37, 99, 235, 0.22)"],   # 类别 0 (蓝)
+            [0.0, "rgba(29, 78, 216, 0.22)"],   # 类别 0 (蓝)
             [0.5, "rgba(241, 245, 249, 0.5)"],   # 决策临界线
-            [1.0, "rgba(225, 29, 72, 0.22)"],   # 类别 1 (红)
+            [1.0, "rgba(190, 18, 60, 0.22)"],    # 类别 1 (红)
         ]
     else:
         zz = np.argmax(preds, axis=1).reshape(xx.shape).astype(float)
@@ -165,10 +166,10 @@ def plot_decision_boundary(
             name="PROBE POINT",
             text=["PROBE"],
             textposition="top center",
-            textfont=dict(color="#d97706", size=10, family="JetBrains Mono"),
+            textfont=dict(color="#b45309", size=10, family="JetBrains Mono"),
             marker=dict(
                 size=15,
-                color="#d97706",
+                color="#b45309",
                 symbol="cross",
                 line=dict(width=2.5, color="#ffffff"),
             ),
@@ -203,7 +204,7 @@ def plot_loss_curve(
     """绘制亮色训练收敛图"""
     fig = make_subplots(
         rows=1, cols=2,
-        subplot_titles=("LOSS CONVERGENCE", "ACCURACY PROGRESSION"),
+        subplot_titles=("LOSS CONVERGENCE // 损失下降", "ACCURACY PROGRESSION // 准确率提升"),
         horizontal_spacing=0.12,
     )
 
@@ -219,7 +220,7 @@ def plot_loss_curve(
                 name="Train Loss",
                 line=dict(color=LIGHT_PALETTE["primary"], width=2.5),
                 fill="tozeroy",
-                fillcolor="rgba(37, 99, 235, 0.06)",
+                fillcolor="rgba(29, 78, 216, 0.06)",
                 hovertemplate="Epoch %{x}: Loss = %{y:.4f}<extra></extra>",
             ),
             row=1, col=1,
@@ -245,7 +246,7 @@ def plot_loss_curve(
                 name="Train Acc",
                 line=dict(color=LIGHT_PALETTE["accent"], width=2.5),
                 fill="tozeroy",
-                fillcolor="rgba(5, 150, 105, 0.06)",
+                fillcolor="rgba(4, 120, 87, 0.06)",
                 hovertemplate="Epoch %{x}: Acc = %{y:.2%}<extra></extra>",
             ),
             row=1, col=2,
@@ -281,7 +282,13 @@ def plot_activation_heatmap(
                 z=sample_act,
                 colorscale="Blues",
                 showscale=(idx == n_layers - 1),
-                colorbar=dict(title=dict(text="Activation", side="right")),
+                colorbar=dict(
+                    title=dict(text="Activation", side="right", font=dict(size=10, color="#0f172a")),
+                    x=1.02,
+                    thickness=12,
+                    len=0.85,
+                    y=0.45,
+                ),
                 hovertemplate="Sample: %{y}<br>Neuron: %{x}<br>Value: %{z:.3f}<extra></extra>",
             ),
             row=1, col=idx + 1,
@@ -321,7 +328,16 @@ def plot_gradient_histograms(
         barmode="overlay",
         xaxis_title="Gradient ∂L/∂W",
         yaxis_title="Frequency",
-        legend=dict(orientation="h", y=1.08, x=1, xanchor="right"),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1,
+            bgcolor="rgba(255,255,255,0.85)",
+            bordercolor="#e2e8f0",
+            borderwidth=1,
+        ),
     )
 
     return _apply_light_theme(fig, title)
@@ -355,7 +371,16 @@ def plot_weight_histograms(
         barmode="overlay",
         xaxis_title="Weight Parameter W",
         yaxis_title="Frequency",
-        legend=dict(orientation="h", y=1.08, x=1, xanchor="right"),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1,
+            bgcolor="rgba(255,255,255,0.85)",
+            bordercolor="#e2e8f0",
+            borderwidth=1,
+        ),
     )
 
     return _apply_light_theme(fig, title)
@@ -376,7 +401,8 @@ def plot_multi_loss_curves(
         if not losses:
             continue
         epochs = list(range(1, len(losses) + 1))
-        color = LIGHT_PALETTE["optimizers"].get(name, LIGHT_PALETTE["primary"])
+        clean_key = name.split(" ")[0]
+        color = LIGHT_PALETTE["optimizers"].get(clean_key, LIGHT_PALETTE["primary"])
 
         fig.add_trace(go.Scatter(
             x=epochs,
@@ -388,16 +414,18 @@ def plot_multi_loss_curves(
         ))
 
     fig.update_layout(
-        xaxis_title="Epoch",
-        yaxis_title="Loss (Log Scale)",
+        xaxis_title="Epoch 训练轮次",
+        yaxis_title="Loss (Log 对数刻度)",
         yaxis_type="log",
         legend=dict(
             orientation="h",
-            y=1.08,
-            x=1,
+            yanchor="bottom",
+            y=1.02,
             xanchor="right",
+            x=1,
             bgcolor="rgba(255,255,255,0.85)",
             bordercolor="#e2e8f0",
+            borderwidth=1,
         ),
     )
 
@@ -405,13 +433,13 @@ def plot_multi_loss_curves(
 
 
 # ---------------------------------------------------------------------------
-# 7. 权重优化空间轨迹 (Weight Trajectory)
+# 7. 权重优化空间轨迹 (Weight Trajectory - 彻底防重叠排版)
 # ---------------------------------------------------------------------------
 def plot_weight_trajectory(
     trajectory: list[np.ndarray],
     title: str = "PARAMETER TRAJECTORY // 参数空间梯度搜索路径",
 ) -> go.Figure:
-    """绘制 2D 参数空间中的亮色优化轨迹"""
+    """绘制 2D 参数空间中的亮色优化轨迹 (严格隔离图例与颜色条)"""
     fig = go.Figure()
 
     if len(trajectory) > 0 and trajectory[0].size >= 2:
@@ -421,14 +449,21 @@ def plot_weight_trajectory(
         fig.add_trace(go.Scatter(
             x=w1_vals, y=w2_vals,
             mode="lines+markers",
-            name="Path",
+            name="Path (搜索路径)",
             line=dict(color=LIGHT_PALETTE["primary"], width=2.5),
             marker=dict(
                 size=5,
                 color=list(range(len(w1_vals))),
                 colorscale="Blues",
                 showscale=True,
-                colorbar=dict(title=dict(text="Step")),
+                colorbar=dict(
+                    title=dict(text="Step // 步数", font=dict(size=11, color="#0f172a")),
+                    x=1.03,
+                    thickness=14,
+                    len=0.85,
+                    y=0.45,
+                    tickfont=dict(size=10, color="#64748b"),
+                ),
             ),
             hovertemplate="Step %{marker.color}: w₁=%{x:.3f}, w₂=%{y:.3f}<extra></extra>",
         ))
@@ -436,25 +471,36 @@ def plot_weight_trajectory(
         fig.add_trace(go.Scatter(
             x=[w1_vals[0]], y=[w2_vals[0]],
             mode="markers+text",
-            name="Origin",
+            name="Start (初始点)",
             text=["START"],
             textposition="bottom right",
-            textfont=dict(color="#0f172a"),
+            textfont=dict(color="#0f172a", family="JetBrains Mono", size=10),
             marker=dict(size=11, color=LIGHT_PALETTE["secondary"], symbol="circle"),
         ))
         fig.add_trace(go.Scatter(
             x=[w1_vals[-1]], y=[w2_vals[-1]],
             mode="markers+text",
-            name="Optimal",
+            name="Optimal (当前极优点)",
             text=["FINAL"],
             textposition="top right",
-            textfont=dict(color="#0f172a"),
+            textfont=dict(color="#0f172a", family="JetBrains Mono", size=10),
             marker=dict(size=12, color=LIGHT_PALETTE["accent"], symbol="diamond"),
         ))
 
     fig.update_layout(
-        xaxis_title="Parameter w₁",
-        yaxis_title="Parameter w₂",
+        xaxis_title="Parameter w₁ (权重参数 1)",
+        yaxis_title="Parameter w₂ (权重参数 2)",
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="left",
+            x=0.01,
+            bgcolor="rgba(255,255,255,0.85)",
+            bordercolor="#e2e8f0",
+            borderwidth=1,
+        ),
+        margin=dict(l=40, r=70, t=55, b=40),
     )
 
     return _apply_light_theme(fig, title)
