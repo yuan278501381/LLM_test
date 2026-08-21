@@ -144,6 +144,10 @@ class Dense:
         # 计算并返回传给前一层的梯度
         return dout @ self.weights.T
 
+    def get_params_and_grads(self) -> list[tuple[np.ndarray, np.ndarray]]:
+        """返回所有可学习参数及其梯度的 (param, grad) 列表"""
+        return [(self.weights, self.grad_weights), (self.biases, self.grad_biases)]
+
     def __repr__(self) -> str:
         reg_str = f", reg={self.regularizer}" if self.regularizer else ""
         return f"Dense({self.n_inputs} → {self.n_outputs}{reg_str})"

@@ -85,3 +85,7 @@ class LayerNorm:
         
         dx = dx_norm * std_inv + dvar * 2.0 * (x - mean) / D + dmean / D
         return dx
+
+    def get_params_and_grads(self) -> list[tuple[np.ndarray, np.ndarray]]:
+        """返回所有可学习参数及其梯度的 (param, grad) 列表"""
+        return [(self.gamma, self.grad_gamma), (self.beta, self.grad_beta)]

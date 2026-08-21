@@ -348,3 +348,70 @@ with col_emb:
               3. **现代 LLM 的基石**：所有 Transformer 和 ChatGPT 的输入第一站都是 Embedding！
             """
         )
+
+# ---------------------------------------------------------------------------
+# 2026 前沿拓展：BPE 字节对分词工程实验室 (Byte-Pair Encoding Lab)
+# ---------------------------------------------------------------------------
+render_section_heading("2026 TOKENIZATION LAB // BPE 字节对分词工程与数据流水线", icon_name="cpu")
+
+st.markdown(
+    """
+    > **从文本到向量的第一站**：现代 LLM（GPT-4、LLaMA-3）并不是直接把英文单词查表的，
+    > 而是先通过 **BPE (Byte-Pair Encoding)** 将原始 UTF-8 字节逐步贪心合并为 Subword Token。
+    """
+)
+
+col_bpe_in, col_bpe_viz = st.columns([1, 1.3])
+
+with col_bpe_in:
+    with st.container(border=True):
+        st.markdown("#### [INPUT CORPUS // 分词测试文本]")
+        sample_bpe_text = st.text_area(
+            "输入任意文本观察 BPE 分词切分",
+            "the king and the queen ruled the kingdom and the queen was very happy",
+            height=100,
+            key="bpe_input_text",
+        )
+        target_vocab_size = st.slider("目标词表容量 (Vocab Size)", min_value=260, max_value=280, value=268, step=1)
+        
+        from nn_core.bpe import BytePairEncoder
+        bpe_engine = BytePairEncoder(vocab_size=target_vocab_size)
+        bpe_engine.train(sample_bpe_text)
+        
+        encoded_tokens = bpe_engine.encode(sample_bpe_text)
+        visual_chunks = bpe_engine.tokenize_visual_chunks(sample_bpe_text)
+        raw_bytes_len = len(sample_bpe_text.encode("utf-8"))
+        token_count = len(encoded_tokens)
+        compression_ratio = raw_bytes_len / max(1, token_count)
+
+with col_bpe_viz:
+    with st.container(border=True):
+        st.markdown(f"#### [TOKENIZED OUTPUT // 彩虹分词切片] (压缩比: {compression_ratio:.2f}×)")
+        st.caption(f"原始字节数: {raw_bytes_len} Bytes ➔ 压缩为: {token_count} Tokens (节省 {(1-1/compression_ratio)*100:.1f}% 序列长度)")
+        
+        # 渲染彩虹色块
+        token_colors = ["#dbeafe", "#fce7f3", "#dcfce7", "#fef3c7", "#f3e8ff", "#ffedd5"]
+        pill_html_parts = []
+        for idx, (chunk_str, tid) in enumerate(visual_chunks):
+            color = token_colors[idx % len(token_colors)]
+            display_str = repr(chunk_str)[1:-1]
+            pill_html_parts.append(
+                f'<span style="background:{color};border:1px solid rgba(0,0,0,0.1);padding:3px 7px;border-radius:5px;font-family:\'JetBrains Mono\',monospace;font-size:0.85rem;margin:2px;display:inline-block;">'
+                f'{display_str} <sub style="color:#64748b;font-size:0.65rem;">#{tid}</sub>'
+                f'</span>'
+            )
+        st.markdown('<div style="line-height:2.2;">' + "".join(pill_html_parts) + '</div>', unsafe_allow_html=True)
+
+        # 展示合并历史表
+        if bpe_engine.merge_history:
+            st.markdown("##### [MERGE LOG // 贪心最高频合并步骤]")
+            history_rows = [
+                {
+                    "步骤": f"#{m['step']}",
+                    "合并对 (Pair)": f"{m['pair_str'][0]} + {m['pair_str'][1]}",
+                    "新 Token": f"'{m['merged_str']}' (ID: {m['new_id']})",
+                    "语料频次": m['freq'],
+                }
+                for m in bpe_engine.merge_history[:6]
+            ]
+            st.dataframe(pd.DataFrame(history_rows), use_container_width=True, hide_index=True)

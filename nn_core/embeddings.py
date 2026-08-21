@@ -55,6 +55,10 @@ class Embedding:
         # 对前一层的梯度全为 0 (或不需要传播)
         return np.zeros_like(self.input_cache, dtype=np.float64)
 
+    def get_params_and_grads(self) -> list[tuple[np.ndarray, np.ndarray]]:
+        """返回所有可学习参数及其梯度的 (param, grad) 列表"""
+        return [(self.weights, self.grad_weights)]
+
     def __repr__(self) -> str:
         return f"Embedding(vocab_size={self.vocab_size}, d_model={self.d_model})"
 

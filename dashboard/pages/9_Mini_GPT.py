@@ -333,3 +333,50 @@ with col_t3:
         st.caption("差异被强行抹平，所有词概率趋同，模型极易产生乱码和幻觉。")
         fig_t3 = plot_token_probabilities(toy_softmax(toy_logits, 2.0), toy_words, top_k=5, title="T=2.0 极度平坦 (Uniform)")
         st.plotly_chart(fig_t3, use_container_width=True)
+
+# ---------------------------------------------------------------------------
+# 2026 前沿拓展：KV-Cache 自回归推理加速与显存占用实时监控
+# ---------------------------------------------------------------------------
+render_section_heading("2026 INFERENCE ACCELERATION // 自回归推理加速：KV-Cache 显存与算力优化", icon_name="zap")
+
+col_kv_info, col_kv_stat = st.columns([1.2, 1])
+
+with col_kv_info:
+    with st.container(border=True):
+        st.markdown("#### [WHY KV-CACHE? // 为什么推理必须使用 KV 缓存？]")
+        st.markdown(
+            """
+            - **无缓存推理的噩梦 ($O(N^2)$ 计算浪费)**：
+              在生成第 $t$ 个词时，如果不存历史键值对，必须将前 $t-1$ 个历史 Token 重新做完整的矩阵乘法，生成 1000 个 Token 需要重复计算 $1000^2 / 2 = 50$ 万次！
+            - **KV-Cache 破局 ($O(1)$ 单步增量推理)**：
+              过去 Token 的 Key 和 Value 已经计算定型，直接就地缓存在显存中。每一步生成只需计算**当前单个 Token** 的 Q/K/V 投影，推理吞吐暴增数十倍！
+            """
+        )
+
+with col_kv_stat:
+    with st.container(border=True):
+        st.markdown("#### [REAL-TIME TELEMETRY // 当前推理会话 KV 显存开销]")
+        
+        current_seq_tokens = len(current_tokens)
+        from nn_core.kv_cache import KVCache
+        kv_tracker = KVCache(num_layers=2, max_batch_size=1, max_seq_len=64, num_kv_heads=2, head_dim=16)
+        # 模拟填入当前 token
+        fake_kv = np.zeros((1, 2, current_seq_tokens, 16))
+        kv_tracker.update(0, fake_kv, fake_kv)
+        kv_tracker.update(1, fake_kv, fake_kv)
+        kv_stats = kv_tracker.get_memory_stats()
+        
+        flops_saved_ratio = max(1.0, current_seq_tokens / 2.0)
+        
+        st.metric(
+            label="当前 KV 缓存物理显存占用",
+            value=f"{kv_stats['used_kb']:.2f} KB",
+            delta=f"缓存槽位利用率 {kv_stats['utilization_percent']:.1f}% ({int(kv_stats['current_tokens'])}/{int(kv_stats['max_tokens'])} Tokens)",
+            delta_color="normal",
+        )
+        st.metric(
+            label="累计避免的重复计算开销 (FLOPs 节省)",
+            value=f"{flops_saved_ratio:.1f}× 吞吐提速",
+            delta=f"避免了过去 {current_seq_tokens} 步的冗余重算",
+            delta_color="normal",
+        )

@@ -14,12 +14,13 @@ if _PROJECT_ROOT not in sys.path:
 
 import importlib
 import numpy as np
+import plotly.graph_objects as go
 import streamlit as st
 
 import dashboard.components.charts
 importlib.reload(dashboard.components.charts)
 
-from dashboard.components.charts import plot_attention_heatmap_nlp
+from dashboard.components.charts import _apply_light_theme, plot_attention_heatmap_nlp
 from dashboard.styles.theme import (
     apply_custom_theme,
     render_hero_header,
@@ -310,5 +311,73 @@ with col_mask_math:
             \\text{Scores} = \\frac{QK^T}{\\sqrt{d_k}} + M
             $$
             经过 Softmax 后：$e^{-\\infty} = 0$，上三角权重被精确清零！
+            """
+        )
+
+# ---------------------------------------------------------------------------
+# 2026 前沿拓展：RoPE 旋转位置编码 vs GQA 分组查询注意力
+# ---------------------------------------------------------------------------
+render_section_heading("2026 ATTENTION EVOLUTION // 现代注意力架构跃迁：RoPE 与 GQA", icon_name="activity")
+
+col_rope, col_gqa = st.columns(2)
+
+with col_rope:
+    with st.container(border=True):
+        st.markdown("#### [ROPE // 旋转位置编码] 现代 LLM 标配")
+        st.caption("LLaMA-3/Qwen-2.5 放弃了绝对正弦编码，采用 2D 复数旋转：使注意力打分天然只取决于相对距离 (m - n)。")
+        
+        from nn_core.rope import RotaryPositionalEmbedding
+        rope_engine = RotaryPositionalEmbedding(dim=16, max_seq_len=seq_len)
+        decay_mat = rope_engine.compute_relative_decay_matrix(seq_len)
+        
+        fig_rope = go.Figure(data=go.Heatmap(
+            z=decay_mat,
+            x=raw_tokens,
+            y=raw_tokens,
+            colorscale="Viridis",
+            showscale=True,
+            xgap=2,
+            ygap=2,
+            colorbar=dict(title=dict(text="Inner Prod", font=dict(size=10, color="#0f172a")), thickness=10, len=0.8),
+            hovertemplate="Token A: %{y}<br>Token B: %{x}<br>相对内积: %{z:.3f}<extra></extra>",
+        ))
+        fig_rope.update_layout(
+            xaxis=dict(side="bottom", tickangle=-25 if seq_len > 6 else 0),
+            yaxis=dict(autorange="reversed"),
+            margin=dict(l=40, r=40, t=30, b=40),
+        )
+        fig_rope = _apply_light_theme(fig_rope, "RoPE 相对位置内积衰减矩阵 (对角线为1)")
+        st.plotly_chart(fig_rope, use_container_width=True)
+
+with col_gqa:
+    with st.container(border=True):
+        st.markdown("#### [GQA // 分组查询注意力] 显存瓶颈破局者")
+        st.caption("多个 Query 头共享同一组 Key/Value 头，大幅缩减推理时 KV-Cache 显存开销。")
+        
+        kv_heads_choice = st.radio(
+            "选择 KV 头配置架构",
+            options=["MHA (8 Q / 8 KV) - 1.0× 无压缩", "GQA (8 Q / 2 KV) - 4.0× 压缩 [推荐]", "MQA (8 Q / 1 KV) - 8.0× 极速"],
+            index=1,
+            horizontal=True,
+        )
+        
+        n_kv = 8 if "MHA" in kv_heads_choice else (2 if "GQA" in kv_heads_choice else 1)
+        from nn_core.gqa import GroupedQueryAttention
+        gqa_engine = GroupedQueryAttention(d_model=32, num_heads=8, num_kv_heads=n_kv)
+        gqa_stats = gqa_engine.get_kv_cache_savings()
+        
+        st.metric(
+            label="KV-Cache 显存吞吐压缩比",
+            value=f"{gqa_stats['compression_ratio']:.1f}× 压缩",
+            delta=f"为每步自回归推理节省 {gqa_stats['memory_saved_percent']:.1f}% 显存带宽",
+            delta_color="normal",
+        )
+        
+        # 显示路由矩阵关系
+        st.markdown(
+            f"""
+            - **Query 头数**：`8 个` (负责保持全量多角度表征能力)
+            - **Key/Value 头数**：`{n_kv} 个` (负责紧凑缓存)
+            - **广播倍数**：每组由 `{8 // n_kv} 个 Query 头` 共享 1 个 KV 键值对
             """
         )

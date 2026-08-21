@@ -265,3 +265,34 @@ with col_math:
                现代大模型（LLaMA/GPT-3/4）全面淘汰 Post-LN，将 LayerNorm 放在子层之前，确保残差主干道完全无阻碍，使得训练哪怕几百层模型也能极其稳定。
             """
         )
+
+# ---------------------------------------------------------------------------
+# 2026 前沿拓展：GELU FFN vs SwiGLU 门控前馈网络
+# ---------------------------------------------------------------------------
+render_section_heading("2026 FFN EVOLUTION // 前馈网络演进：经典 GELU vs 现代 SwiGLU 门控", icon_name="cpu")
+
+col_gelu_box, col_swiglu_box = st.columns(2)
+
+with col_gelu_box:
+    with st.container(border=True):
+        st.markdown("#### [CLASSIC FFN // 经典两层 MLP (GPT-2/3)]")
+        st.code("h = GELU(x @ W1 + b1) @ W2 + b2", language="python")
+        st.markdown(
+            """
+            - **计算路径**：升维 (4×) ➔ GELU 激活 ➔ 降维；
+            - **参数量**：$2 \\times d_{model} \\times d_{ff}$；
+            - **缺点**：缺少特征通道间的动态门控过滤。
+            """
+        )
+
+with col_swiglu_box:
+    with st.container(border=True):
+        st.markdown("#### [MODERN SWIGLU // 现代门控 FFN (LLaMA-3/Gemma-2)]")
+        st.code("out = (SiLU(x @ W_gate) * (x @ W_up)) @ W_down", language="python")
+        st.markdown(
+            """
+            - **计算路径**：双重升维 (Gate & Up) ➔ SiLU 门控相乘 ➔ 降维；
+            - **参数量**：$3 \\times d_{model} \\times \\frac{8}{3}d_{model}$ (等效总参数量)；
+            - **核心优势**：元素级门控相乘使模型拥有动态特征选择与乘法表达能力，几乎在所有现代基准测试中全面超越 GELU。
+            """
+        )
