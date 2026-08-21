@@ -387,3 +387,68 @@ PRESETS_REGISTRY: dict[str, dict[str, Any]] = {
         "epochs": 200,
     },
 }
+
+# ---------------------------------------------------------------------------
+# 7. 现代大模型架构核心组件知识库 (2026 Modern LLM Architecture)
+# ---------------------------------------------------------------------------
+@dataclass(frozen=True)
+class ArchitectureMeta:
+    id: str
+    label: str
+    formula: str
+    desc: str
+    impact: str
+    example: str
+
+    @property
+    def tip(self) -> str:
+        return (
+            f"**{self.label}**\n\n"
+            f"• **[MATHEMATICS // 核心公式]**: {self.formula}\n\n"
+            f"• **[DEFINITION // 架构解析]**: {self.desc}\n\n"
+            f"• **[DYNAMICS // 系统收益]**: {self.impact}\n\n"
+            f"• **[BENCHMARK // 工业标准]**: {self.example}"
+        )
+
+MODERN_LLM_ARCH: dict[str, ArchitectureMeta] = {
+    "BPE": ArchitectureMeta(
+        id="BPE",
+        label="BPE (Byte-Pair Encoding / 字节对分词)",
+        formula="\\arg\\max_{(x,y)} \\text{freq}(x, y) \\rightarrow z",
+        desc="通过贪心合并数据集中出现频率最高的一对连续字节或字符，自下而上地构建子词词表。在处理未登录词 (OOV) 时可优雅回退到字符级。",
+        impact="平衡了词汇表大小与序列长度，解决了传统词表庞大且稀疏的维度灾难，是现代 LLM 理解人类语言的第一道核心防线。",
+        example="GPT-4 的 tiktoken 分词器 (cl100k_base)、Llama-3 的 128K 超大容量多语种分词器。",
+    ),
+    "RoPE": ArchitectureMeta(
+        id="RoPE",
+        label="RoPE (Rotary Position Embedding / 旋转位置编码)",
+        formula="f(q, m) = (q_0+iq_1)e^{im\\theta}, \\quad \\langle f(q,m), f(k,n)\\rangle = \\text{Re}\\left(q k^* e^{i(m-n)\\theta}\\right)",
+        desc="将位置信息通过复数域的旋转矩阵注入到 Query 和 Key 中，使得其内积结果自然带入且仅依赖于相对距离 (m-n)。",
+        impact="彻底取代了早期的绝对正弦位置编码，展现出极强的长度外推泛化能力 (Length Extrapolation)，模型能轻松处理比训练时更长的文本。",
+        example="2026 几乎所有开源模型的绝对标配，如 LLaMA 全系列、Qwen、Mistral 等均采用 RoPE 及其改进变体 (YaRN/NTK)。",
+    ),
+    "GQA": ArchitectureMeta(
+        id="GQA",
+        label="GQA (Grouped-Query Attention / 分组查询注意力)",
+        formula="KV_{heads} = Q_{heads} / G, \\quad G \\in \\{1, 2, 4, 8\\}",
+        desc="介于 MHA (多头) 和 MQA (单头) 之间的折中方案。将所有的 Query 头划分为多个组，每组共享同一个 Key 和 Value 头。",
+        impact="在几乎不损失模型多头表征能力的前提下，成倍数级地压缩了推理时的 KV-Cache 显存开销与访存带宽限制。",
+        example="Llama-3-70B (8 个 KV 头服务 64 个 Q 头) 与大显存吞吐场景的标准架构。",
+    ),
+    "SwiGLU": ArchitectureMeta(
+        id="SwiGLU",
+        label="SwiGLU (Swish Gated Linear Unit / 门控前馈网络)",
+        formula="\\text{FFN}(x) = (\\text{Swish}(x W) \\otimes (x V)) W_2",
+        desc="用两个并行的线性投影矩阵代替单个矩阵，其中一路经过 Swish 激活后作为另一路的乘法门控 (Gate)，决定信息如何流转。",
+        impact="门控乘法机制引入了更高级的非线性拟合能力，在参数量相近的情况下，其知识容量和训练收敛速度均显著碾压传统 GELU MLP。",
+        example="PaLM, LLaMA-2/3 等现代底层引擎抛弃经典 Transformer MLP 后的标准非线性模块。",
+    ),
+    "KV-Cache": ArchitectureMeta(
+        id="KV-Cache",
+        label="KV-Cache (自回归推理缓存容器)",
+        formula="K_{1:t} = [K_{1:t-1}; k_t], \\quad V_{1:t} = [V_{1:t-1}; v_t]",
+        desc="在自回归 Next-Token 生成期间，将历史 Token 计算出的 Key 和 Value 张量保存于显存中，避免重复冗余的矩阵运算。",
+        impact="将 Transformer 解码步的计算时间复杂度从 $O(N^2)$ 降维至 $O(1)$，是实现高速流式输出的工程基石，但其空间复杂度会随上下文长度线性增长。",
+        example="vLLM, TensorRT-LLM, TGI 等工业级高性能推理引擎中的核心 PagedAttention 显存池化管理对象。",
+    ),
+}
