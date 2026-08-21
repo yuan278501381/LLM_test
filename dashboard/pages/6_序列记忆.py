@@ -210,7 +210,7 @@ with col_rnn:
     with st.container(border=True):
         st.markdown(
             """
-            #### ⚠️ 循环神经网络 (RNN) 的致命局限
+            #### [BOTTLENECK // 遗忘瓶颈] 循环神经网络 (RNN) 的物理极限
             - **固定容量漏斗 (Information Bottleneck)**：
               无论句子是 5 个词还是 1000 个词，所有历史信息都被强制压缩到同一个固定大小的 $h_t$ 向量中；
             - **长程梯度消失 (Vanishing Gradients)**：
@@ -224,7 +224,7 @@ with col_attn:
     with st.container(border=True):
         st.markdown(
             """
-            #### 💡 注意力机制 (Attention) 的范式革命
+            #### [PARADIGM SHIFT // 范式跃迁] 注意力机制 (Attention) 全局路由
             - **$O(1)$ 任意距离直达路由**：
               取消递归传递链，每一个词都能以光速直接“回头看”整个句子的所有词汇；
             - **全局矩阵并行共振**：

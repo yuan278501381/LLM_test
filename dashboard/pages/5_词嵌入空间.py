@@ -230,7 +230,7 @@ for idx in sorted_indices:
             "排名 (Rank)": f"#{len(top_candidates)+1}",
             "候选词汇 (Candidate)": CN_LABEL_MAP.get(candidate_w, candidate_w),
             "余弦相似度 (Cosine Sim)": f"{sim_val * 100:.2f}%",
-            "状态 (Status)": "👑 最优匹配 (Best Match)" if candidate_w == best_match_word else "候选 (Candidate)",
+            "状态 (Status)": "[OPTIMAL // 最优匹配]" if candidate_w == best_match_word else "[CANDIDATE // 候选]",
         })
 
 # ---------------------------------------------------------------------------
@@ -327,7 +327,7 @@ with col_oh:
     with st.container(border=True):
         st.markdown(
             """
-            #### ❌ 传统 One-Hot 稀疏孤立编码
+            #### [SPARSE // 稀疏孤立] 传统 One-Hot 编码
             - **形式**：`[0, 0, 0, 1, 0, ..., 0]` (长度等于全词表容量，如 50,000 维)
             - **致命缺陷**：
               1. **维度灾难**：词表多大，向量就有多长，内存极度浪费；
@@ -340,7 +340,7 @@ with col_emb:
     with st.container(border=True):
         st.markdown(
             """
-            #### ✅ 密集词嵌入 (Dense Embedding)
+            #### [DENSE // 连续密集] 词嵌入 (Word Embedding)
             - **形式**：`[0.24, -0.81, 0.43, ..., 0.15]` (低维连续实数空间，如 32~768 维)
             - **核心威力**：
               1. **语义几何化**：空间距离（余弦夹角）直接代表概念相似度；

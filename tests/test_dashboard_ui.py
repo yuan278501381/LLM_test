@@ -48,15 +48,17 @@ from nn_core.model import Sequential
 
 
 class TestSvgIconEngine:
-    """测试 SVG 图标渲染引擎"""
+    """测试 SVG 纯矢量图标渲染引擎"""
 
     def test_all_registered_icons(self):
+        assert len(SVG_ICONS) >= 20, f"Expected >= 20 vector icons, got {len(SVG_ICONS)}"
         for icon_key in SVG_ICONS:
             rendered = svg_icon(icon_key, size=20, color="#1d4ed8")
             assert "<svg" in rendered
             assert "</svg>" in rendered
             assert 'width="20"' in rendered
             assert 'stroke="#1d4ed8"' in rendered
+            assert 'viewBox="0 0 24 24"' in rendered
 
     def test_fallback_icon(self):
         rendered = svg_icon("non_existent_icon_key", size=16, color="#000000")

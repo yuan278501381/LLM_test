@@ -252,16 +252,16 @@ def render_probe_point_selector(key_prefix: str = "") -> tuple[float, float]:
 def render_deep_dive_card(
     title: str,
     meta_items: list[Any],
-    icon_name: str = "terminal",
+    icon_name: str = "book-open",
 ) -> None:
-    """渲染富文本微观原理解析与学习案例卡片 (Collapsible Deep Dive)"""
-    icon_svg = svg_icon(icon_name, size=16, color="#1d4ed8")
-    with st.expander(f"📖 微观原理解析与学习指南：{title}", expanded=False):
+    """渲染富文本微观原理解析与学习案例卡片 (Collapsible Deep Dive, 100% 矢量图标)"""
+    with st.expander(f"DEEP DIVE // 微观机理与案例解析: {title}", expanded=False):
         for item in meta_items:
             formula_line = f"`{item.formula}`" if hasattr(item, "formula") else ""
+            impact_val = getattr(item, 'impact', getattr(item, 'difficulty', ''))
             st.markdown(
                 f"##### **{item.label}** {formula_line}\n"
-                f"- 💡 **详细含义**: {item.desc}\n"
-                f"- ⚡ **实际影响**: {getattr(item, 'impact', getattr(item, 'difficulty', ''))}\n"
-                f"- 🎯 **学习案例**: {item.example}\n"
+                f"- **[CONCEPT // 详细含义]**: {item.desc}\n"
+                f"- **[IMPACT // 动态影响]**: {impact_val}\n"
+                f"- **[BENCHMARK // 实战案例]**: {item.example}\n"
             )

@@ -256,7 +256,7 @@ with col_math:
     with st.container(border=True):
         st.markdown(
             """
-            #### 💡 残差流 (Residual Stream) 的理论精髓
+            #### [RESIDUAL STREAM // 理论精髓] 残差信息总线机制
             1. **中央信息总线**：
                残差流就像一条高宽带总线，每个 Block 不重写整条总线，只以加法形式写入增量特征 $\\Delta x$；
             2. **梯度高速公路**：

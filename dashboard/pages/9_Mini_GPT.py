@@ -152,9 +152,9 @@ gen_tokens_count = st.sidebar.slider(
 
 col_btn1, col_btn2 = st.sidebar.columns(2)
 with col_btn1:
-    btn_generate_all = st.button("🚀 一键生成", type="primary", use_container_width=True)
+    btn_generate_all = st.button("RUN // 一键自回归", type="primary", use_container_width=True)
 with col_btn2:
-    btn_step_one = st.button("🎬 单步推演", use_container_width=True)
+    btn_step_one = st.button("STEP // 单步推演", use_container_width=True)
 
 # ---------------------------------------------------------------------------
 # 会话状态管理 (Session State)
@@ -315,21 +315,21 @@ def toy_softmax(l_arr, t_val):
 
 with col_t1:
     with st.container(border=True):
-        st.markdown("#### 🥶 T = 0.1 (绝对自信 / 贪心模式)")
+        st.markdown("#### [GREEDY // 绝对确定] T = 0.1")
         st.caption("最高分被无限放大，其余概率归零。每次点击生成的词绝对确定。")
-        fig_t1 = plot_token_probabilities(toy_softmax(toy_logits, 0.1), toy_words, top_k=5, title="T=0.1 极度尖锐")
+        fig_t1 = plot_token_probabilities(toy_softmax(toy_logits, 0.1), toy_words, top_k=5, title="T=0.1 极度尖锐 (Greedy)")
         st.plotly_chart(fig_t1, use_container_width=True)
 
 with col_t2:
     with st.container(border=True):
-        st.markdown("#### ⚖️ T = 0.7 (标准均衡 / 创作模式)")
+        st.markdown("#### [CREATIVE // 均衡创作] T = 0.7")
         st.caption("高分词依然占优，但赋予次高分词适度机会，展现生动多样的表达。")
-        fig_t2 = plot_token_probabilities(toy_softmax(toy_logits, 0.7), toy_words, top_k=5, title="T=0.7 经典推荐")
+        fig_t2 = plot_token_probabilities(toy_softmax(toy_logits, 0.7), toy_words, top_k=5, title="T=0.7 经典推荐 (Balanced)")
         st.plotly_chart(fig_t2, use_container_width=True)
 
 with col_t3:
     with st.container(border=True):
-        st.markdown("#### 🔥 T = 2.0 (最大混乱 / 幻觉模式)")
+        st.markdown("#### [CHAOTIC // 随机发散] T = 2.0")
         st.caption("差异被强行抹平，所有词概率趋同，模型极易产生乱码和幻觉。")
-        fig_t3 = plot_token_probabilities(toy_softmax(toy_logits, 2.0), toy_words, top_k=5, title="T=2.0 极度平坦")
+        fig_t3 = plot_token_probabilities(toy_softmax(toy_logits, 2.0), toy_words, top_k=5, title="T=2.0 极度平坦 (Uniform)")
         st.plotly_chart(fig_t3, use_container_width=True)

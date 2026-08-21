@@ -224,7 +224,7 @@ col_q, col_k, col_v = st.columns(3)
 with col_q:
     with st.container(border=True):
         st.markdown(
-            f"#### 🔍 Query (查询探针)\n"
+            f"#### [QUERY // 查询探针]\n"
             f"- **物理意义**：“当前词正在寻找什么？”\n"
             f"- **张量维度**：`({seq_len}, {32//num_heads})`\n"
             f"- **生成方式**：$Q = X \\cdot W_Q$\n"
@@ -233,7 +233,7 @@ with col_q:
 with col_k:
     with st.container(border=True):
         st.markdown(
-            f"#### 🏷️ Key (索引标签)\n"
+            f"#### [KEY // 索引标签]\n"
             f"- **物理意义**：“我包含什么特征来响应查询？”\n"
             f"- **张量维度**：`({seq_len}, {32//num_heads})`\n"
             f"- **生成方式**：$K = X \\cdot W_K$\n"
@@ -242,7 +242,7 @@ with col_k:
 with col_v:
     with st.container(border=True):
         st.markdown(
-            f"#### 📦 Value (信息载荷)\n"
+            f"#### [VALUE // 信息载荷]\n"
             f"- **物理意义**：“我的实际语义内容”\n"
             f"- **张量维度**：`({seq_len}, {32//num_heads})`\n"
             f"- **生成方式**：$V = X \\cdot W_V$\n"
@@ -266,16 +266,16 @@ with col_main_heat:
     st.plotly_chart(fig_main, use_container_width=True)
 
 with col_cmp_heat:
-    st.markdown("#### ⚖️ 缩放因子效应对比 (Scale Comparison)")
+    st.markdown("#### [SCALE COMPARISON // 缩放因子效应对比]")
     st.markdown("当高维空间 $d_k$ 很大时，点积的方差膨胀为 $d_k$。如果不除以 $\\sqrt{d_k}$，Softmax 会将概率推向极端的 0 和 1，导致梯度归零。")
     
     fig_scaled_thumb = plot_attention_heatmap_nlp(
-        head_0_weights, raw_tokens, raw_tokens, title="✅ 有缩放 1/√d_k (平滑分布)"
+        head_0_weights, raw_tokens, raw_tokens, title="[SCALED] 有缩放 1/√d_k (平滑稳定)"
     )
     st.plotly_chart(fig_scaled_thumb, use_container_width=True)
     
     fig_unscaled_thumb = plot_attention_heatmap_nlp(
-        head_0_unscaled, raw_tokens, raw_tokens, title="❌ 无缩放 (极化饱和 / 梯度消失)"
+        head_0_unscaled, raw_tokens, raw_tokens, title="[UNSCALED] 无缩放 (极化饱和/梯度消失)"
     )
     st.plotly_chart(fig_unscaled_thumb, use_container_width=True)
 
@@ -289,7 +289,7 @@ with col_mask_info:
     with st.container(border=True):
         st.markdown(
             """
-            #### 🛡️ 因果约束与单向自回归
+            #### [CAUSALITY // 因果约束] 自回归遮蔽原则
             - **生成法则**：在 GPT 生成下一个词时，模型只能依赖**已经生成的历史词汇**，绝对不能跨越时间线偷看未来的词；
             - **视觉呈现**：注意力矩阵右上角被严格置为灰色（即负无穷 $-\\infty$），Softmax 后概率恒为 0；
             - **双向模型 vs 单向模型**：
@@ -302,7 +302,7 @@ with col_mask_math:
     with st.container(border=True):
         st.markdown(
             """
-            #### 📐 因果掩码的数学实现
+            #### [MATHEMATICS // 形式化定义] 掩码矩阵方程
             $$
             M_{ij} = \\begin{cases} 0, & i \\ge j \\text{ (允许关注)} \\\\ -\\infty, & i < j \\text{ (遮蔽未来)} \\end{cases}
             $$

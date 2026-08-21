@@ -385,12 +385,12 @@ def render_metric_card(
 
 
 def render_preset_badge(preset_name: str, desc: str) -> None:
-    """渲染预设方案的说明卡片"""
+    """渲染预设方案的说明卡片 (纯矢量高精风格)"""
     icon_zap = svg_icon("zap", size=14, color="#1d4ed8")
     html = (
         f'<div style="background: #eff6ff; border-left: 4px solid #1d4ed8; padding: 0.7rem 1rem; border-radius: 0 8px 8px 0; margin-bottom: 1rem; font-size: 0.88rem; color: #1e3a8a; border: 1px solid #dbeafe; border-left-width: 4px;">'
         f'<div style="display: flex; align-items: center; gap: 0.4rem; font-weight: 700; color: #1d4ed8; margin-bottom: 0.2rem;">'
-        f'{icon_zap} 预设方案: {preset_name}'
+        f'{icon_zap} [PRESET // 预设方案]: {preset_name}'
         f'</div>'
         f'<span style="color: #334155;">{desc}</span>'
         f'</div>'
@@ -406,32 +406,46 @@ def render_page_guide(
     experiments: list[str],
 ) -> None:
     """
-    渲染全站统一的世界级高对比度【零基础新手保姆级教学指引卡片】。
+    渲染全站统一的世界级高对比度【零基础新手教学指引卡片】(100% 纯矢量 SVG 图标，无 Low 端 Emoji)。
     包含：
-    1. 🎯 通俗大白话比喻 (直击原理本质)
-    2. 👈 左侧超参数 vs 👆 顶部模型自学习成果的清晰对照
-    3. 🚀 手把手 1-2-3 步趣味实验任务
+    1. [CORE PRINCIPLE] 通俗原理解析
+    2. [PARAMETERS VS TELEMETRY] 输入超参数与输出指标的精确映射
+    3. [LAB EXPERIMENTS] 结构化实验任务
     """
-    with st.expander(f"🧭 零基础新手保姆级指引：{title}（点击可展开/折叠）", expanded=True):
+    icon_compass = svg_icon("compass", size=15, color="#1d4ed8")
+    icon_bulb = svg_icon("lightbulb", size=15, color="#1d4ed8")
+    icon_sliders = svg_icon("sliders", size=14, color="#1d4ed8")
+    icon_target = svg_icon("target", size=14, color="#047857")
+    icon_terminal = svg_icon("terminal", size=14, color="#0f172a")
+
+    with st.expander(f"GUIDE // 教学指引: {title}", expanded=True):
         items_html = "".join([f'<li style="margin-bottom:0.4rem;line-height:1.6;">{exp}</li>' for exp in experiments])
         guide_html = (
             f'<div style="color:#0f172a;font-size:0.92rem;line-height:1.7;">'
             f'<div style="background:#eff6ff;border:1px solid #bfdbfe;border-left:4px solid #1d4ed8;padding:0.75rem 1rem;border-radius:6px;margin-bottom:0.9rem;">'
-            f'<div style="font-weight:700;color:#1e40af;margin-bottom:0.2rem;">💡 大白话核心原理：</div>'
+            f'<div style="display:flex;align-items:center;gap:0.45rem;font-weight:700;color:#1e40af;margin-bottom:0.25rem;">'
+            f'{icon_bulb} <span style="text-transform:uppercase;font-size:0.8rem;letter-spacing:0.04em;">[CORE PRINCIPLE // 核心原理解析]</span>'
+            f'</div>'
             f'<div style="color:#1e293b;">{plain_intro}</div>'
             f'</div>'
             f'<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:0.9rem;">'
             f'<div style="background:#f8fafc;padding:0.85rem 1rem;border-radius:8px;border:1px solid #e2e8f0;">'
-            f'<div style="font-weight:700;color:#1d4ed8;font-size:0.86rem;margin-bottom:0.3rem;">👈 1. 左侧边栏【你要调的超参数】</div>'
+            f'<div style="display:flex;align-items:center;gap:0.4rem;font-weight:700;color:#1d4ed8;font-size:0.84rem;margin-bottom:0.35rem;">'
+            f'{icon_sliders} <span style="text-transform:uppercase;letter-spacing:0.04em;">[HYPERPARAMETERS // 控制台输入参数]</span>'
+            f'</div>'
             f'<div style="font-size:0.84rem;color:#475569;line-height:1.6;">{hyperparams_desc}</div>'
             f'</div>'
             f'<div style="background:#f8fafc;padding:0.85rem 1rem;border-radius:8px;border:1px solid #e2e8f0;">'
-            f'<div style="font-weight:700;color:#047857;font-size:0.86rem;margin-bottom:0.3rem;">👆 2. 页面中【模型自己算出的答案（只读）】</div>'
+            f'<div style="display:flex;align-items:center;gap:0.4rem;font-weight:700;color:#047857;font-size:0.84rem;margin-bottom:0.35rem;">'
+            f'{icon_target} <span style="text-transform:uppercase;letter-spacing:0.04em;">[TELEMETRY // 模型自学习遥测成果]</span>'
+            f'</div>'
             f'<div style="font-size:0.84rem;color:#475569;line-height:1.6;">{telemetry_desc}</div>'
             f'</div>'
             f'</div>'
             f'<div style="background:#f1f5f9;padding:0.85rem 1rem;border-radius:8px;border:1px solid #cbd5e1;">'
-            f'<div style="font-weight:700;color:#0f172a;font-size:0.88rem;margin-bottom:0.4rem;">🎯 3. 手把手 3 步探索实验（跟着做，立刻懂）：</div>'
+            f'<div style="display:flex;align-items:center;gap:0.4rem;font-weight:700;color:#0f172a;font-size:0.86rem;margin-bottom:0.45rem;">'
+            f'{icon_terminal} <span style="text-transform:uppercase;letter-spacing:0.04em;">[LAB EXPERIMENTS // 结构化探索任务]</span>'
+            f'</div>'
             f'<ol style="margin:0;padding-left:1.3rem;color:#334155;font-size:0.84rem;">{items_html}</ol>'
             f'</div>'
             f'</div>'
@@ -440,7 +454,7 @@ def render_page_guide(
 
 
 def render_sequence_flow(tokens: list[str], hidden_states: list) -> None:
-    """渲染 RNN 时序流动流水线（严格单行无缩进 HTML，确保 100% 正常渲染）"""
+    """渲染 RNN 时序流动流水线（纯矢量、严格单行无缩进 HTML）"""
     import numpy as np
     items = []
     for i, token in enumerate(tokens):
@@ -449,7 +463,7 @@ def render_sequence_flow(tokens: list[str], hidden_states: list) -> None:
         tag_bg = f"rgba(29, 78, 216, {alpha:.3f})"
         items.append(
             f'<div style="flex:1;min-width:72px;background:#ffffff;border:1px solid #cbd5e1;border-radius:8px;padding:0.55rem 0.35rem;text-align:center;box-shadow:0 2px 4px rgba(15,23,42,0.03);">'
-            f'<div style="font-size:0.68rem;color:#64748b;font-weight:700;text-transform:uppercase;">t={i}</div>'
+            f'<div style="font-size:0.68rem;color:#64748b;font-weight:700;text-transform:uppercase;">STEP {i}</div>'
             f'<div style="font-size:0.95rem;font-weight:800;color:#0f172a;margin:0.2rem 0;font-family:\'JetBrains Mono\';">{token}</div>'
             f'<div style="background:{tag_bg};color:#ffffff;font-size:0.68rem;font-weight:700;border-radius:4px;padding:0.12rem 0.25rem;">||h||={h_norm:.2f}</div>'
             f'</div>'
@@ -459,15 +473,20 @@ def render_sequence_flow(tokens: list[str], hidden_states: list) -> None:
 
 
 def render_vector_equation_card(word_a: str, word_b: str, word_c: str, best_match: str) -> None:
-    """渲染语义向量方程卡片（严格单行无缩进 HTML）"""
+    """渲染语义向量方程卡片（纯矢量、严格单行无缩进 HTML）"""
+    icon_math = svg_icon("crosshair", size=14, color="#1d4ed8")
+    icon_info = svg_icon("info", size=14, color="#64748b")
     html = (
         f'<div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:1.3rem;box-shadow:0 2px 8px rgba(15,23,42,0.03);">'
-        f'<div style="font-size:0.8rem;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:0.7rem;">📐 语义平行四边形矢量公式 (Vector Parallelogram)</div>'
+        f'<div style="display:flex;align-items:center;gap:0.4rem;font-size:0.78rem;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:0.7rem;">'
+        f'{icon_math} [PARALLELOGRAM THEOREM // 语义平行四边形矢量公式]'
+        f'</div>'
         f'<div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:0.9rem;text-align:center;font-family:\'JetBrains Mono\', monospace;font-size:1.05rem;margin-bottom:0.9rem;">'
         f'<span style="color:#1d4ed8;font-weight:800;">{word_a}</span><span style="color:#64748b;"> - </span><span style="color:#be123c;font-weight:800;">{word_b}</span><span style="color:#64748b;"> + </span><span style="color:#047857;font-weight:800;">{word_c}</span><span style="color:#64748b;font-weight:800;"> ≈ </span><span style="color:#7c3aed;font-weight:800;background:#f3e8ff;padding:0.2rem 0.5rem;border-radius:4px;">{best_match}</span>'
         f'</div>'
-        f'<div style="font-size:0.84rem;color:#475569;line-height:1.6;">'
-        f'💡 <b>原理解析</b>：向量减法 <code>{word_a} - {word_b}</code> 提取了纯粹的<b>概念偏移向量</b>；平移加到 <code>{word_c}</code> 上，在几何空间中精确导航至 <code>{best_match}</code>！'
+        f'<div style="font-size:0.84rem;color:#475569;line-height:1.6;display:flex;gap:0.4rem;align-items:flex-start;">'
+        f'<span>{icon_info}</span>'
+        f'<span><b>几何原理解析</b>：向量位移差 <code>{word_a} - {word_b}</code> 提取了纯粹的概念维度偏置；在流形空间中叠加到 <code>{word_c}</code> 上，高精定向导航至 <code>{best_match}</code>。</span>'
         f'</div>'
         f'</div>'
     )
@@ -475,9 +494,13 @@ def render_vector_equation_card(word_a: str, word_b: str, word_c: str, best_matc
 
 
 def render_architecture_flow_card() -> None:
-    """渲染 Pre-LN Transformer 结构块流程卡片（严格单行无缩进 HTML）"""
+    """渲染 Pre-LN Transformer 结构块流程卡片（纯矢量、严格单行无缩进 HTML）"""
+    icon_cpu = svg_icon("cpu", size=14, color="#1d4ed8")
     html = (
         f'<div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:1.2rem;font-family:\'JetBrains Mono\', monospace;font-size:0.84rem;line-height:1.6;color:#0f172a;box-shadow:0 2px 8px rgba(15,23,42,0.03);">'
+        f'<div style="display:flex;align-items:center;gap:0.4rem;font-size:0.75rem;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:0.8rem;">'
+        f'{icon_cpu} [PIPELINE TOPOLOGY // 残差主干流拓扑]'
+        f'</div>'
         f'<div style="display:flex;justify-content:space-around;align-items:center;flex-wrap:wrap;gap:0.8rem;">'
         f'<div style="background:#eff6ff;border:1px solid #bfdbfe;padding:0.7rem 1rem;border-radius:8px;text-align:center;"><span style="color:#1d4ed8;font-weight:800;">INPUT STREAM x</span><br><span style="font-size:0.72rem;color:#64748b;">(残差流主干)</span></div>'
         f'<div style="color:#64748b;font-size:1.3rem;">➔</div>'
@@ -493,17 +516,21 @@ def render_architecture_flow_card() -> None:
 
 
 def render_text_stream_box(tokens: list[str], prompt_len: int) -> None:
-    """渲染 GPT 打字机文本流（严格单行无缩进 HTML）"""
+    """渲染 GPT 文本流（纯矢量、严格单行无缩进 HTML）"""
+    icon_terminal = svg_icon("terminal", size=14, color="#1d4ed8")
+    icon_sparkle = svg_icon("sparkles", size=12, color="#1d4ed8")
     badges = []
     for idx, tok in enumerate(tokens):
         if idx < prompt_len:
             badges.append(f'<span style="background:#f1f5f9;color:#0f172a;border:1px solid #cbd5e1;padding:0.22rem 0.55rem;border-radius:6px;font-weight:700;font-family:\'JetBrains Mono\';">{tok}</span>')
         else:
-            badges.append(f'<span style="background:#eff6ff;color:#1d4ed8;border:1px solid #93c5fd;padding:0.22rem 0.55rem;border-radius:6px;font-weight:800;font-family:\'JetBrains Mono\';box-shadow:0 2px 6px rgba(37,99,235,0.12);">✨ {tok}</span>')
+            badges.append(f'<span style="background:#eff6ff;color:#1d4ed8;border:1px solid #93c5fd;padding:0.22rem 0.55rem;border-radius:6px;font-weight:800;font-family:\'JetBrains Mono\';box-shadow:0 2px 6px rgba(37,99,235,0.12);">{icon_sparkle} {tok}</span>')
     
     html = (
         f'<div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:1.3rem;line-height:2.2;box-shadow:0 2px 8px rgba(15,23,42,0.03);margin-bottom:1.2rem;">'
-        f'<div style="font-size:0.74rem;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:0.5rem;">💬 GPT Current Context Window (上下文窗口):</div>'
+        f'<div style="display:flex;align-items:center;gap:0.4rem;font-size:0.74rem;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:0.5rem;">'
+        f'{icon_terminal} [CONTEXT WINDOW // 上下文滑动窗口]:'
+        f'</div>'
         f'<div style="display:flex;flex-wrap:wrap;gap:0.45rem;align-items:center;">'
         f'{" ".join(badges)}'
         f'<span style="display:inline-block;width:7px;height:16px;background:#1d4ed8;"></span>'
@@ -511,4 +538,5 @@ def render_text_stream_box(tokens: list[str], prompt_len: int) -> None:
         f'</div>'
     )
     st.markdown(html, unsafe_allow_html=True)
+
 

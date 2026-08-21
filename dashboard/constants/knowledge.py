@@ -38,10 +38,10 @@ class ActivationMeta:
     def tip(self) -> str:
         return (
             f"**{self.label}**\n\n"
-            f"📐 **数学公式**: {self.formula}\n\n"
-            f"💡 **详细含义**: {self.desc}\n\n"
-            f"⚡ **实际影响**: {self.impact}\n\n"
-            f"🎯 **学习实例**: {self.example}"
+            f"• **[MATHEMATICS // 数学公式]**: {self.formula}\n\n"
+            f"• **[DEFINITION // 原理解析]**: {self.desc}\n\n"
+            f"• **[DYNAMICS // 梯度影响]**: {self.impact}\n\n"
+            f"• **[BENCHMARK // 实战案例]**: {self.example}"
         )
 
 
@@ -58,10 +58,10 @@ class OptimizerMeta:
     def tip(self) -> str:
         return (
             f"**{self.label}**\n\n"
-            f"📐 **更新公式**: {self.formula}\n\n"
-            f"💡 **详细含义**: {self.desc}\n\n"
-            f"⚡ **实际影响**: {self.impact}\n\n"
-            f"🎯 **学习实例**: {self.example}"
+            f"• **[MATHEMATICS // 更新公式]**: {self.formula}\n\n"
+            f"• **[DEFINITION // 原理解析]**: {self.desc}\n\n"
+            f"• **[DYNAMICS // 收敛特性]**: {self.impact}\n\n"
+            f"• **[BENCHMARK // 实战案例]**: {self.example}"
         )
 
 
@@ -78,10 +78,10 @@ class InitializerMeta:
     def tip(self) -> str:
         return (
             f"**{self.label}**\n\n"
-            f"📐 **分布公式**: {self.formula}\n\n"
-            f"💡 **详细含义**: {self.desc}\n\n"
-            f"⚡ **实际影响**: {self.impact}\n\n"
-            f"🎯 **学习实例**: {self.example}"
+            f"• **[MATHEMATICS // 分布公式]**: {self.formula}\n\n"
+            f"• **[DEFINITION // 原理解析]**: {self.desc}\n\n"
+            f"• **[DYNAMICS // 方差传播]**: {self.impact}\n\n"
+            f"• **[BENCHMARK // 实战案例]**: {self.example}"
         )
 
 
@@ -97,9 +97,9 @@ class DatasetMeta:
     def tip(self) -> str:
         return (
             f"**{self.label}**\n\n"
-            f"💡 **分布特征**: {self.desc}\n\n"
-            f"📊 **拟合难度**: {self.difficulty}\n\n"
-            f"🎯 **学习场景**: {self.example}"
+            f"• **[TOPOLOGY // 流形特征]**: {self.desc}\n\n"
+            f"• **[COMPLEXITY // 拟合难度]**: {self.difficulty}\n\n"
+            f"• **[BENCHMARK // 学习场景]**: {self.example}"
         )
 
 
@@ -116,10 +116,10 @@ class RegularizerMeta:
     def tip(self) -> str:
         return (
             f"**{self.label}**\n\n"
-            f"📐 **惩罚项**: {self.formula}\n\n"
-            f"💡 **核心原理**: {self.desc}\n\n"
-            f"⚡ **实际影响**: {self.impact}\n\n"
-            f"🎯 **学习实例**: {self.example}"
+            f"• **[MATHEMATICS // 惩罚项]**: {self.formula}\n\n"
+            f"• **[DEFINITION // 核心原理]**: {self.desc}\n\n"
+            f"• **[DYNAMICS // 几何收缩]**: {self.impact}\n\n"
+            f"• **[BENCHMARK // 实战案例]**: {self.example}"
         )
 
 
