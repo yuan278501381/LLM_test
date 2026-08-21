@@ -192,8 +192,8 @@ OPTIMIZERS: dict[str, OptimizerMeta] = {
     "Momentum": OptimizerMeta(
         id="Momentum",
         label="Momentum (动量加速梯度下降)",
-        formula="v_t = \\beta v_{t-1} + (1-\\beta)g_t, \\quad \\theta_{t+1} = \\theta_t - \\eta v_t",
-        desc="引入经典力学动量概念，参数更新不仅取决于当前梯度，还积累了历史运动的惯性速度（默认衰减系数 0.9）。",
+        formula="v_t = \\beta v_{t-1} + \\eta \\nabla W, \\quad W = W - v_t",
+        desc="引入经典力学动量概念，参数更新不仅取决于当前梯度，还累积了历史运动的惯性速度（默认保留系数 β=0.9，即保留 90% 的上一步速度）。",
         impact="有效抑制垂直于前进方向的高频震荡，在平坦梯度方向持续加速滚落，能帮助模型冲出浅局部极小值和鞍点。",
         example="目标检测网络 (YOLO) 与早期卷积神经网络 (AlexNet/VGG) 的经典高效训练配置。",
     ),
@@ -214,7 +214,7 @@ INITIALIZERS: dict[str, InitializerMeta] = {
     "he": InitializerMeta(
         id="he",
         label="He / Kaiming (何恺明正态分布)",
-        formula="W \\sim \\mathcal{N}\\left(0, \\sqrt{\\frac{2}{n_{in}}}\\right)",
+        formula="W \\sim \\mathcal{N}\\left(0,\\; \\sigma^2 = \\frac{2}{n_{in}}\\right)",
         desc="何恺明针对 ReLU 类单边抑制激活函数推导的方差补偿初始化方案，补偿了负半轴归零导致的信号能量减半。",
         impact="保持深层网络中各层激活值与梯度的方差稳定恒定，彻底避免深层前向信号衰竭或反向梯度弥散。",
         example="所有搭载 ReLU / LeakyReLU 的深层网络（如 50~152 层 ResNet）的标准标配。",
@@ -222,7 +222,7 @@ INITIALIZERS: dict[str, InitializerMeta] = {
     "xavier": InitializerMeta(
         id="xavier",
         label="Xavier / Glorot (正态分布)",
-        formula="W \\sim \\mathcal{N}\\left(0, \\sqrt{\\frac{2}{n_{in} + n_{out}}}\\right)",
+        formula="W \\sim \\mathcal{N}\\left(0,\\; \\sigma^2 = \\frac{2}{n_{in} + n_{out}}\\right)",
         desc="针对 Sigmoid / Tanh 等双边对称激活函数推导的方差匹配初始化，平衡输入与输出维度的信号能量。",
         impact="确保信号在多层线性加权传递中不会指数级放大也不会衰减为零，使浅层与深层网络协同学习。",
         example="早中期 MLP、自动编码器 (Autoencoder) 以及搭载 Sigmoid/Tanh 的经典神经网络架构。",

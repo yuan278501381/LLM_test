@@ -33,9 +33,9 @@ render_hero_header(
 )
 
 # ---------------------------------------------------------------------------
-# 首页 Bento 卡片矩阵 (2x2 原生容器网格，彻底消除 HTML 嵌套断裂)
+# 首页 Bento 卡片矩阵 (3x3 原生容器网格)
 # ---------------------------------------------------------------------------
-col1, col2 = st.columns(2)
+col1, col2, col3 = st.columns(3)
 
 with col1:
     # ---- 卡片 1: 单神经元感知器 ----
@@ -44,55 +44,35 @@ with col1:
         st.markdown(
             '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;">'
             f'<div style="display:flex;align-items:center;gap:0.5rem;">{icon_target}<span style="font-size:1.24rem;font-weight:800;color:#0f172a;">单神经元感知器</span></div>'
-            '<span class="pill-badge pill-blue">M01 // PERCEPTRON</span>'
+            '<span class="pill-badge pill-blue">M01</span>'
             '</div>',
             unsafe_allow_html=True,
         )
-        st.markdown(
-            '<p style="color:#475569;font-size:0.9rem;line-height:1.6;margin:0.4rem 0 0.6rem 0;">'
-            '解构最小计算单元：线性前向计算 Z=XW+b、交叉熵损失、反向传播链式推导与权重轨迹寻优。'
-            '</p>',
-            unsafe_allow_html=True,
-        )
-        st.markdown(
-            '<div style="font-size:0.78rem;color:#1d4ed8;font-family:\'JetBrains Mono\';font-weight:700;margin-bottom:0.8rem;">'
-            'FEATURE: 2D 线性分界面 · Loss 收敛曲线 · 权重参数空间轨迹'
-            '</div>',
-            unsafe_allow_html=True,
-        )
-        st.page_link(
-            "pages/1_单神经元感知器.py",
-            label="进入实验 // LAUNCH PERCEPTRON LAB →",
-            use_container_width=True,
-        )
+        st.page_link("pages/1_单神经元感知器.py", label="进入实验 // LAUNCH →", use_container_width=True)
 
-    # ---- 卡片 3: 优化器同屏竞速 ----
+    # ---- 卡片 4: 全参数微观实验室 ----
     with st.container(border=True):
-        icon_zap = svg_icon("zap", size=22, color="#b45309")
+        icon_terminal = svg_icon("terminal", size=22, color="#047857")
         st.markdown(
             '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;">'
-            f'<div style="display:flex;align-items:center;gap:0.5rem;">{icon_zap}<span style="font-size:1.24rem;font-weight:800;color:#0f172a;">优化器同屏竞速</span></div>'
-            '<span class="pill-badge pill-amber">M03 // ARENA</span>'
+            f'<div style="display:flex;align-items:center;gap:0.5rem;">{icon_terminal}<span style="font-size:1.24rem;font-weight:800;color:#0f172a;">全参数微观实验室</span></div>'
+            '<span class="pill-badge pill-emerald">M04</span>'
             '</div>',
             unsafe_allow_html=True,
         )
+        st.page_link("pages/4_参数实验室.py", label="进入实验 // LAUNCH →", use_container_width=True)
+
+    # ---- 卡片 7: 注意力机制 ----
+    with st.container(border=True):
+        icon_eye = svg_icon("eye", size=22, color="#047857")
         st.markdown(
-            '<p style="color:#475569;font-size:0.9rem;line-height:1.6;margin:0.4rem 0 0.6rem 0;">'
-            '同一起跑线对比 SGD、Momentum、RMSProp 与 Adam，观测动量累积、自适应学习率与偏差修正的威力。'
-            '</p>',
-            unsafe_allow_html=True,
-        )
-        st.markdown(
-            '<div style="font-size:0.78rem;color:#b45309;font-family:\'JetBrains Mono\';font-weight:700;margin-bottom:0.8rem;">'
-            'FEATURE: 多轨 Loss 对比 · 决策边界拟合速率 · 收敛步数排行榜'
+            '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;">'
+            f'<div style="display:flex;align-items:center;gap:0.5rem;">{icon_eye}<span style="font-size:1.24rem;font-weight:800;color:#0f172a;">注意力机制</span></div>'
+            '<span class="pill-badge pill-emerald">M07</span>'
             '</div>',
             unsafe_allow_html=True,
         )
-        st.page_link(
-            "pages/3_优化器对比.py",
-            label="进入实验 // LAUNCH OPTIMIZER ARENA →",
-            use_container_width=True,
-        )
+        st.page_link("pages/7_注意力机制.py", label="进入实验 // LAUNCH →", use_container_width=True)
 
 with col2:
     # ---- 卡片 2: 多层网络与活性探针 ----
@@ -101,55 +81,72 @@ with col2:
         st.markdown(
             '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;">'
             f'<div style="display:flex;align-items:center;gap:0.5rem;">{icon_layers}<span style="font-size:1.24rem;font-weight:800;color:#0f172a;">多层网络与活性探针</span></div>'
-            '<span class="pill-badge pill-purple">M02 // TOPOLOGY</span>'
+            '<span class="pill-badge pill-purple">M02</span>'
             '</div>',
             unsafe_allow_html=True,
         )
-        st.markdown(
-            '<p style="color:#475569;font-size:0.9rem;line-height:1.6;margin:0.4rem 0 0.6rem 0;">'
-            '理解「深度」的非线性流形折叠。内置单样本动态活性探针，实时观测信号在各层神经元中的点亮状态。'
-            '</p>',
-            unsafe_allow_html=True,
-        )
-        st.markdown(
-            '<div style="font-size:0.78rem;color:#6d28d9;font-family:\'JetBrains Mono\';font-weight:700;margin-bottom:0.8rem;">'
-            'FEATURE: 神经元活性探针 · 激活热力图 · 梯度消失/爆炸直方图'
-            '</div>',
-            unsafe_allow_html=True,
-        )
-        st.page_link(
-            "pages/2_多层网络.py",
-            label="进入实验 // LAUNCH DEEP TOPOLOGY LAB →",
-            use_container_width=True,
-        )
+        st.page_link("pages/2_多层网络.py", label="进入实验 // LAUNCH →", use_container_width=True)
 
-    # ---- 卡片 4: 全参数微观实验室 ----
+    # ---- 卡片 5: 词嵌入空间 ----
     with st.container(border=True):
-        icon_terminal = svg_icon("terminal", size=22, color="#047857")
+        icon_hash = svg_icon("hash", size=22, color="#1d4ed8")
         st.markdown(
             '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;">'
-            f'<div style="display:flex;align-items:center;gap:0.5rem;">{icon_terminal}<span style="font-size:1.24rem;font-weight:800;color:#0f172a;">全参数微观实验室</span></div>'
-            '<span class="pill-badge pill-emerald">M04 // PARAM LAB</span>'
+            f'<div style="display:flex;align-items:center;gap:0.5rem;">{icon_hash}<span style="font-size:1.24rem;font-weight:800;color:#0f172a;">词嵌入空间</span></div>'
+            '<span class="pill-badge pill-blue">M05</span>'
             '</div>',
             unsafe_allow_html=True,
         )
+        st.page_link("pages/5_词嵌入空间.py", label="进入实验 // LAUNCH →", use_container_width=True)
+
+    # ---- 卡片 8: Transformer ----
+    with st.container(border=True):
+        icon_box = svg_icon("box", size=22, color="#b45309")
         st.markdown(
-            '<p style="color:#475569;font-size:0.9rem;line-height:1.6;margin:0.4rem 0 0.6rem 0;">'
-            '工业级四宫格微观监控台，支持逐步训练 (Step-by-Step)、快照回滚、A/B 对比与全量实验日志导出。'
-            '</p>',
-            unsafe_allow_html=True,
-        )
-        st.markdown(
-            '<div style="font-size:0.78rem;color:#047857;font-family:\'JetBrains Mono\';font-weight:700;margin-bottom:0.8rem;">'
-            'FEATURE: 四宫格全景遥测 · 逐步微调 · 实验快照 JSON'
+            '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;">'
+            f'<div style="display:flex;align-items:center;gap:0.5rem;">{icon_box}<span style="font-size:1.24rem;font-weight:800;color:#0f172a;">Transformer</span></div>'
+            '<span class="pill-badge pill-amber">M08</span>'
             '</div>',
             unsafe_allow_html=True,
         )
-        st.page_link(
-            "pages/4_参数实验室.py",
-            label="进入实验 // LAUNCH MICRO PARAM LAB →",
-            use_container_width=True,
+        st.page_link("pages/8_Transformer.py", label="进入实验 // LAUNCH →", use_container_width=True)
+
+with col3:
+    # ---- 卡片 3: 优化器同屏竞速 ----
+    with st.container(border=True):
+        icon_zap = svg_icon("zap", size=22, color="#b45309")
+        st.markdown(
+            '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;">'
+            f'<div style="display:flex;align-items:center;gap:0.5rem;">{icon_zap}<span style="font-size:1.24rem;font-weight:800;color:#0f172a;">优化器同屏竞速</span></div>'
+            '<span class="pill-badge pill-amber">M03</span>'
+            '</div>',
+            unsafe_allow_html=True,
         )
+        st.page_link("pages/3_优化器对比.py", label="进入实验 // LAUNCH →", use_container_width=True)
+
+    # ---- 卡片 6: 序列记忆 ----
+    with st.container(border=True):
+        icon_activity = svg_icon("activity", size=22, color="#6d28d9")
+        st.markdown(
+            '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;">'
+            f'<div style="display:flex;align-items:center;gap:0.5rem;">{icon_activity}<span style="font-size:1.24rem;font-weight:800;color:#0f172a;">序列记忆与遗忘瓶颈</span></div>'
+            '<span class="pill-badge pill-purple">M06</span>'
+            '</div>',
+            unsafe_allow_html=True,
+        )
+        st.page_link("pages/6_序列记忆.py", label="进入实验 // LAUNCH →", use_container_width=True)
+
+    # ---- 卡片 9: Mini-GPT ----
+    with st.container(border=True):
+        icon_cpu = svg_icon("cpu", size=22, color="#1d4ed8")
+        st.markdown(
+            '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;">'
+            f'<div style="display:flex;align-items:center;gap:0.5rem;">{icon_cpu}<span style="font-size:1.24rem;font-weight:800;color:#0f172a;">Mini-GPT 文本生成</span></div>'
+            '<span class="pill-badge pill-blue">M09</span>'
+            '</div>',
+            unsafe_allow_html=True,
+        )
+        st.page_link("pages/9_Mini_GPT.py", label="进入实验 // LAUNCH →", use_container_width=True)
 
 # ---------------------------------------------------------------------------
 # 系统技术架构与工程标准
@@ -158,10 +155,10 @@ col_arch, col_stats = st.columns([1.5, 1])
 
 with col_arch:
     with st.container(border=True):
-        icon_box = svg_icon("box", size=18, color="#1d4ed8")
+        icon_box2 = svg_icon("box", size=18, color="#1d4ed8")
         st.markdown(
             f'<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.6rem;">'
-            f'{icon_box}'
+            f'{icon_box2}'
             f'<span style="font-size:1.1rem;font-weight:700;color:#0f172a;">核心架构与设计原则</span>'
             f'</div>',
             unsafe_allow_html=True,
@@ -177,10 +174,10 @@ with col_arch:
 
 with col_stats:
     with st.container(border=True):
-        icon_activity = svg_icon("activity", size=18, color="#047857")
+        icon_activity2 = svg_icon("activity", size=18, color="#047857")
         st.markdown(
             f'<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.6rem;">'
-            f'{icon_activity}'
+            f'{icon_activity2}'
             f'<span style="font-size:1.1rem;font-weight:700;color:#0f172a;">引擎遥测状态</span>'
             f'</div>',
             unsafe_allow_html=True,
@@ -189,7 +186,7 @@ with col_stats:
             """
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;margin-top:0.6rem;">
                 <div style="background:#f8fafc;border:1px solid #e2e8f0;padding:0.8rem;border-radius:8px;text-align:center;">
-                    <div style="font-size:1.45rem;font-weight:800;color:#1d4ed8;font-family:'JetBrains Mono';">85 / 85</div>
+                    <div style="font-size:1.45rem;font-weight:800;color:#1d4ed8;font-family:'JetBrains Mono';">125 / 125</div>
                     <div style="font-size:0.72rem;color:#64748b;font-weight:700;text-transform:uppercase;">UNIT & E2E TESTS</div>
                 </div>
                 <div style="background:#f8fafc;border:1px solid #e2e8f0;padding:0.8rem;border-radius:8px;text-align:center;">
@@ -197,12 +194,12 @@ with col_stats:
                     <div style="font-size:0.72rem;color:#64748b;font-weight:700;text-transform:uppercase;">GRAD ERROR</div>
                 </div>
                 <div style="background:#f8fafc;border:1px solid #e2e8f0;padding:0.8rem;border-radius:8px;text-align:center;">
-                    <div style="font-size:1.45rem;font-weight:800;color:#b45309;font-family:'JetBrains Mono';">4 CLASS</div>
-                    <div style="font-size:0.72rem;color:#64748b;font-weight:700;text-transform:uppercase;">OPTIMIZERS</div>
+                    <div style="font-size:1.45rem;font-weight:800;color:#b45309;font-family:'JetBrains Mono';">9 STAGES</div>
+                    <div style="font-size:0.72rem;color:#64748b;font-weight:700;text-transform:uppercase;">MILESTONES</div>
                 </div>
                 <div style="background:#f8fafc;border:1px solid #e2e8f0;padding:0.8rem;border-radius:8px;text-align:center;">
-                    <div style="font-size:1.45rem;font-weight:800;color:#6d28d9;font-family:'JetBrains Mono';">5 TYPES</div>
-                    <div style="font-size:0.72rem;color:#64748b;font-weight:700;text-transform:uppercase;">TOPOLOGIES</div>
+                    <div style="font-size:1.45rem;font-weight:800;color:#6d28d9;font-family:'JetBrains Mono';">100%</div>
+                    <div style="font-size:0.72rem;color:#64748b;font-weight:700;text-transform:uppercase;">NUMPY BACKEND</div>
                 </div>
             </div>
             """,

@@ -22,6 +22,13 @@ from nn_core.model import Sequential
 from nn_core.optimizers import SGD, Adam, Momentum, RMSProp
 from nn_core.regularizers import L1, L2
 from nn_core.tensor import clip_gradients, safe_exp, safe_log, set_seed
+from nn_core.embeddings import Embedding, PositionalEncoding, get_mini_vocab, get_pretrained_embeddings
+from nn_core.rnn import RNNCell
+from nn_core.attention import MultiHeadAttention, causal_mask, scaled_dot_product_attention
+from nn_core.layernorm import LayerNorm
+from nn_core.gelu import GELU
+from nn_core.transformer import FeedForward, TransformerBlock
+from nn_core.gpt import TinyGPT
 
 __all__ = [
     "L1",
@@ -52,6 +59,19 @@ __all__ = [
     "set_seed",
     "xavier_init",
     "zeros_init",
+    "Embedding",
+    "PositionalEncoding",
+    "get_mini_vocab",
+    "get_pretrained_embeddings",
+    "RNNCell",
+    "MultiHeadAttention",
+    "causal_mask",
+    "scaled_dot_product_attention",
+    "LayerNorm",
+    "GELU",
+    "FeedForward",
+    "TransformerBlock",
+    "TinyGPT",
 ]
 
 __version__ = "0.1.0"

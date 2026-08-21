@@ -157,7 +157,7 @@ class RMSProp(Optimizer):
     def __init__(
         self,
         learning_rate: float = 0.001,
-        beta: float = 0.999,
+        beta: float = 0.9,
         epsilon: float = 1e-8,
     ) -> None:
         super().__init__(learning_rate)

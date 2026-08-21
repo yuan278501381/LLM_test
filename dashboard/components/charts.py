@@ -504,3 +504,230 @@ def plot_weight_trajectory(
     )
 
     return _apply_light_theme(fig, title)
+
+
+# ---------------------------------------------------------------------------
+# 8. 词嵌入空间 (Word Embedding Space)
+# ---------------------------------------------------------------------------
+def plot_embedding_space(
+    words: list[str],
+    vectors: np.ndarray,
+    highlight_words: list[str] | None = None,
+    arithmetic: dict | None = None,
+    title: str = "EMBEDDING SPACE // 词嵌入语义空间",
+) -> go.Figure:
+    """绘制词嵌入空间 (支持高亮和算术箭头)"""
+    from sklearn.decomposition import PCA
+
+    # 降维到3D如果需要
+    if vectors.shape[1] > 3:
+        pca = PCA(n_components=3)
+        vecs_3d = pca.fit_transform(vectors)
+    elif vectors.shape[1] == 2:
+        vecs_3d = np.c_[vectors, np.zeros(vectors.shape[0])]
+    else:
+        vecs_3d = vectors
+
+    fig = go.Figure()
+
+    # 背景词
+    mask_bg = np.ones(len(words), dtype=bool)
+    if highlight_words:
+        for i, w in enumerate(words):
+            if w in highlight_words or (arithmetic and w in arithmetic.values()):
+                mask_bg[i] = False
+
+    if np.any(mask_bg):
+        fig.add_trace(go.Scatter3d(
+            x=vecs_3d[mask_bg, 0],
+            y=vecs_3d[mask_bg, 1],
+            z=vecs_3d[mask_bg, 2],
+            mode="markers",
+            name="背景词 (Vocabulary)",
+            text=np.array(words)[mask_bg],
+            marker=dict(size=4, color="rgba(100, 116, 139, 0.4)"),
+            hovertemplate="Word: %{text}<extra></extra>",
+        ))
+
+    # 高亮词
+    if highlight_words:
+        for hw in highlight_words:
+            if hw in words:
+                idx = words.index(hw)
+                fig.add_trace(go.Scatter3d(
+                    x=[vecs_3d[idx, 0]],
+                    y=[vecs_3d[idx, 1]],
+                    z=[vecs_3d[idx, 2]],
+                    mode="markers+text",
+                    name=hw,
+                    text=[hw],
+                    textposition="top center",
+                    textfont=dict(size=12, color=LIGHT_PALETTE["primary"], weight="bold"),
+                    marker=dict(size=8, color=LIGHT_PALETTE["primary"]),
+                    hovertemplate="Word: %{text}<extra></extra>",
+                ))
+
+    # 算术箭头 A - B + C = Result
+    if arithmetic:
+        A, B, C, R = arithmetic.get("A"), arithmetic.get("B"), arithmetic.get("C"), arithmetic.get("Result")
+        if all(w in words for w in [A, B, C, R]):
+            idx_a, idx_b, idx_c, idx_r = words.index(A), words.index(B), words.index(C), words.index(R)
+            
+            # 画线 B -> A 和 C -> R
+            fig.add_trace(go.Scatter3d(
+                x=[vecs_3d[idx_b, 0], vecs_3d[idx_a, 0]],
+                y=[vecs_3d[idx_b, 1], vecs_3d[idx_a, 1]],
+                z=[vecs_3d[idx_b, 2], vecs_3d[idx_a, 2]],
+                mode="lines",
+                name=f"{B} -> {A}",
+                line=dict(color=LIGHT_PALETTE["accent"], width=4, dash="dash"),
+            ))
+            fig.add_trace(go.Scatter3d(
+                x=[vecs_3d[idx_c, 0], vecs_3d[idx_r, 0]],
+                y=[vecs_3d[idx_c, 1], vecs_3d[idx_r, 1]],
+                z=[vecs_3d[idx_c, 2], vecs_3d[idx_r, 2]],
+                mode="lines",
+                name=f"{C} -> {R}",
+                line=dict(color=LIGHT_PALETTE["accent"], width=4, dash="dash"),
+            ))
+            
+            # 标注这四个词
+            for w, idx, color in zip([A, B, C, R], [idx_a, idx_b, idx_c, idx_r], [LIGHT_PALETTE["primary"]]*3 + [LIGHT_PALETTE["secondary"]]):
+                fig.add_trace(go.Scatter3d(
+                    x=[vecs_3d[idx, 0]],
+                    y=[vecs_3d[idx, 1]],
+                    z=[vecs_3d[idx, 2]],
+                    mode="markers+text",
+                    name=w,
+                    text=[w],
+                    textposition="top center",
+                    textfont=dict(size=14, color=color, weight="bold"),
+                    marker=dict(size=10, color=color),
+                ))
+
+    fig.update_layout(
+        scene=dict(
+            xaxis_title="Dim 1",
+            yaxis_title="Dim 2",
+            zaxis_title="Dim 3",
+            xaxis=dict(showbackground=False, gridcolor=LIGHT_PALETTE["grid"]),
+            yaxis=dict(showbackground=False, gridcolor=LIGHT_PALETTE["grid"]),
+            zaxis=dict(showbackground=False, gridcolor=LIGHT_PALETTE["grid"]),
+        ),
+        margin=dict(l=0, r=0, t=40, b=0),
+        showlegend=False,
+    )
+    return _apply_light_theme(fig, title)
+
+
+# ---------------------------------------------------------------------------
+# 9. 记忆衰减热力图 (Memory Decay Heatmap)
+# ---------------------------------------------------------------------------
+def plot_memory_decay_heatmap(
+    hidden_states: list[np.ndarray],
+    tokens: list[str],
+    title: str = "MEMORY DECAY // 序列记忆与遗忘瓶颈",
+) -> go.Figure:
+    """绘制 RNN 序列记忆强度的衰减热力图"""
+    n_steps = len(hidden_states)
+    
+    # 计算当前步对各历史步的记忆强度 (余弦相似度绝对值作为近似指标)
+    memory_matrix = np.zeros((n_steps, n_steps))
+    for i in range(n_steps):
+        for j in range(i + 1):
+            v_i = hidden_states[i].ravel()
+            v_j = hidden_states[j].ravel()
+            norm_i = np.linalg.norm(v_i) + 1e-8
+            norm_j = np.linalg.norm(v_j) + 1e-8
+            memory_matrix[i, j] = np.abs(np.dot(v_i, v_j) / (norm_i * norm_j))
+
+    # 下三角矩阵保留，其余置 nan
+    memory_matrix[np.triu_indices(n_steps, 1)] = np.nan
+
+    fig = go.Figure(data=go.Heatmap(
+        z=memory_matrix,
+        x=tokens,
+        y=tokens,
+        colorscale="Blues",
+        showscale=True,
+        colorbar=dict(title=dict(text="Memory Strength", font=dict(size=10))),
+        hovertemplate="Current: %{y}<br>History: %{x}<br>Strength: %{z:.3f}<extra></extra>",
+    ))
+    
+    fig.update_layout(
+        xaxis_title="历史词汇 (History Tokens)",
+        yaxis_title="当前时间步 (Current Step)",
+        yaxis=dict(autorange="reversed"),
+    )
+    return _apply_light_theme(fig, title)
+
+
+# ---------------------------------------------------------------------------
+# 10. 注意力机制热力图 (Attention Heatmap)
+# ---------------------------------------------------------------------------
+def plot_attention_heatmap_nlp(
+    attention_weights: np.ndarray,
+    tokens_x: list[str],
+    tokens_y: list[str],
+    title: str = "ATTENTION WEIGHTS // 注意力分配矩阵",
+) -> go.Figure:
+    """绘制 N×N 注意力权重热力图"""
+    n_q = len(tokens_y)
+    n_k = len(tokens_x)
+    
+    fig = go.Figure(data=go.Heatmap(
+        z=attention_weights,
+        x=tokens_x,
+        y=tokens_y,
+        colorscale="Blues",
+        showscale=True,
+        colorbar=dict(title=dict(text="Weight", font=dict(size=10))),
+        zmin=0.0,
+        zmax=1.0,
+        hovertemplate="Query: %{y}<br>Key: %{x}<br>Weight: %{z:.4f}<extra></extra>",
+    ))
+
+    fig.update_layout(
+        xaxis_title="Keys (被关注的词)",
+        yaxis_title="Queries (当前处理的词)",
+        yaxis=dict(autorange="reversed"),
+        xaxis=dict(side="top"),
+    )
+    return _apply_light_theme(fig, title)
+
+
+# ---------------------------------------------------------------------------
+# 11. 下一词概率柱状图 (Token Probabilities)
+# ---------------------------------------------------------------------------
+def plot_token_probabilities(
+    token_probs: np.ndarray,
+    vocab: list[str],
+    top_k: int = 15,
+    title: str = "NEXT TOKEN PREDICTION // 下一个词概率分布",
+) -> go.Figure:
+    """水平柱状图展示下一个 Token 的概率分布"""
+    # 找到 top_k 的索引
+    top_indices = np.argsort(token_probs)[-top_k:]
+    top_probs = token_probs[top_indices]
+    top_words = [vocab[i] for i in top_indices]
+
+    fig = go.Figure(go.Bar(
+        x=top_probs,
+        y=top_words,
+        orientation='h',
+        marker=dict(
+            color=top_probs,
+            colorscale="Blues",
+            line=dict(width=1, color="rgba(15,23,42,0.1)"),
+        ),
+        text=[f"{p:.1%}" for p in top_probs],
+        textposition="outside",
+        hovertemplate="Token: %{y}<br>Prob: %{x:.4f}<extra></extra>",
+    ))
+
+    fig.update_layout(
+        xaxis_title="Probability",
+        yaxis_title="Token",
+        xaxis=dict(range=[0, min(1.0, max(top_probs) * 1.2)]),
+    )
+    return _apply_light_theme(fig, title)
