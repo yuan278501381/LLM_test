@@ -229,7 +229,7 @@ INITIALIZERS: dict[str, InitializerMeta] = {
     ),
     "random": InitializerMeta(
         id="random",
-        label="Random (小方差标准正态分布)",
+        label="Random (小方差正态分布)",
         formula="W \\sim \\mathcal{N}(0, 0.01)",
         desc="最朴素的纯随机小正态分布初始化，不考虑前后层神经元维度的动态缩放关系。",
         impact="层数较深（>3层）时，前向激活值在乘法链条中迅速衰减至趋近于 0，极易引发严重的前端梯度消失。",
