@@ -6,7 +6,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![Tests](https://img.shields.io/badge/tests-96%20passed-brightgreen.svg)](#)
+[![Tests](https://img.shields.io/badge/tests-162%20passed-brightgreen.svg)](#)
 
 ## ✨ 学习路径与里程碑总览
 
@@ -24,24 +24,33 @@
 | | M08 | Transformer Block | Pre-LN 残差流、GELU FFN、多层堆叠 |
 | | M09 | Mini-GPT | 自回归生成、Temperature/Top-K 采样、实时打字机 |
 
-## 🚀 快速开始
+## 🚀 快速开始与启停最佳实践
 
 ```bash
 # 1. 安装依赖
 uv sync
 
-# 2. 运行测试（验证数学正确性 — 96 项全通过）
+# 2. 运行测试（验证数学正确性 — 162 项全通过）
 uv run pytest tests/ -v
-
-# 3. 启动可视化仪表板
-uv run streamlit run dashboard/app.py
 ```
 
-或使用 PowerShell 脚本：
+### 🖥️ 最佳工程实践：启动与退出仪表盘
+
+
+
+**1. 启动服务 (Start)**
+在您的 VSCode 集成终端或独立 PowerShell 中，导航到项目根目录并执行：
 ```powershell
-.\scripts\run_tests.ps1       # 运行测试
-.\scripts\run_dashboard.ps1   # 启动仪表板
+uv run streamlit run dashboard/app.py --server.port 8501
 ```
+> 💡 *此时服务生命周期与您的终端会话绑定，您可实时观测访问日志与报错堆栈。*
+
+**2. 优雅退出 (Stop/Exit)**
+在运行该服务的**同一终端窗口**内，按下：
+`Ctrl + C`
+> 💡 *终端会向下游发送 `SIGINT` 中断信号，干净利落地关闭 WebSocket 链接并退出底层 Python 进程，绝不留端口占用隐患。*
+
+*(或者您也可以直接使用脚本 `.\scripts\run_dashboard.ps1` 进行启动)*
 
 ## 🔧 技术栈
 
@@ -81,7 +90,7 @@ uv run streamlit run dashboard/app.py
 │   ├── constants/            # 知识元数据库 (公式, 教学隐喻)
 │   ├── styles/               # 主题系统 (SVG 图标, 指标卡片)
 │   └── utils/                # 状态管理与参数解析
-├── tests/                    # ✅ 自动化测试套件 (96 项)
+├── tests/                    # ✅ 自动化测试套件 (162 项)
 │   ├── test_activations.py   # 激活函数单元测试
 │   ├── test_layers.py        # Dense, Dropout 层单元测试
 │   ├── test_losses.py        # 损失函数单元测试
