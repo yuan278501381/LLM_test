@@ -1,6 +1,6 @@
 # Copyright (c) 2026 Yy1 (yuan278501381) | MIT License
 """
-里程碑 4: 全参数微观实验室 (Hyperparameter & Micro-State Lab) - 无硬编码 · 知识图谱深度解析
+里程碑 4: 全参数微观实验室 (Hyperparameter & Micro-State Lab) - 零基础入门保姆级教学平台
 
 工业级微观监控中枢：四宫格全景图、单步调试 (Step-by-Step)、快照对比与超参数动态热调整。
 """
@@ -38,6 +38,7 @@ from dashboard.styles.theme import (
     apply_custom_theme,
     render_hero_header,
     render_metric_card,
+    render_page_guide,
     render_section_heading,
 )
 from dashboard.utils.state import (
@@ -63,6 +64,37 @@ render_hero_header(
     subtitle="工业级四宫格微观遥测监控台 · 支持逐步微调训练 (Step-by-Step) · 参数快照热回滚与 A/B 对比",
     badge_text="MILESTONE 04 // MICRO LAB & TELEMETRY",
     badge_type="emerald",
+)
+
+# ---------------------------------------------------------------------------
+# 零基础保姆级指引 (Zero-Barrier Beginner Guide)
+# ---------------------------------------------------------------------------
+render_page_guide(
+    title="全参数微观实验室入门",
+    plain_intro=(
+        "<b>这里是神经网络的「显微镜调试台」！</b><br>"
+        "在工业界，我们不仅要看最终准不准，还要微观检查每一个神经元的健康状态：<br>"
+        "• <b>单步微调 (STEP)</b>：像按电影逐帧播放键一样，每按一次，模型只向前走 1 步，让你看清权重和梯度如何微小蠕动！<br>"
+        "• <b>过拟合与正则化 (Regularization)</b>：数据噪声大时，模型容易「死记硬背每个噪点」导致分界线千疮百孔（过拟合）。"
+        "开启 <code>L2 权重衰减</code> 可以给模型套上紧箍咒，让分界面重新变得光滑自然！"
+    ),
+    hyperparams_desc=(
+        "• <b>正则化类型 (L1/L2)</b>：惩罚过大的权重，防止过拟合。<br>"
+        "• <b>惩罚系数 (λ)</b>：紧箍咒的威力大小。<br>"
+        "• <b>控制按钮</b>：<code>TRAIN (练50轮)</code>、<code>STEP (单步走)</code>、<code>RESET (重置)</code>、<code>SNAPSHOT (存快照)</code>。"
+    ),
+    telemetry_desc=(
+        "• <b>四宫格全景图</b>：<br>"
+        "  1. 空间决策面（分界线长啥样）<br>"
+        "  2. 损失收敛曲线（成绩提升过程）<br>"
+        "  3. 逐层权重直方图（参数胖瘦分布）<br>"
+        "  4. 反向传播梯度直方图（学习推动力大小）。"
+    ),
+    experiments=[
+        "<b>第 1 步【单步微观调试】</b>：点击下方的 <code>STEP // 单步微调</code> 按钮 2~3 次，仔细观察上方训练轮数 +1，以及四宫格中直方图的细微移动！",
+        "<b>第 2 步【制造过拟合】</b>：在左侧把【噪声比 Noise】拉大到 <code>0.3</code>，正则化选 <code>None</code>，点击 <code>TRAIN // 训练 50 轮</code>，看看分界线是不是变得坑坑洼洼？",
+        "<b>第 3 步【正则化救场】</b>：在左侧把【正则化类型】切换为 <code>L2 (Weight Decay)</code>，再次点击训练，见证分界线如何瞬间恢复平滑优雅！",
+    ],
 )
 
 # ---------------------------------------------------------------------------

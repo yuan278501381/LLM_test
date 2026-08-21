@@ -3,10 +3,10 @@
 dashboard.styles.theme - 世界级纯净现代亮色视觉引擎 (Light Mode Design System)
 
 提供高对比度、无遮挡、极度清晰的现代亮色 UI 规范（Stripe / Apple / Linear 质感）：
-- 纯净白卡片与多维高对比排版（杜绝任何浅色字发虚、被白层遮挡的问题）
-- 侧边栏与主工作区完全亮色统一（深色文字 + 浅色底板）
+- 纯净白卡片与多维高对比排版
+- 侧边栏与主工作区完全亮色统一
 - 极简高精矢量 SVG 图标
-- 严格杜绝 Markdown 多行缩进与标签嵌套断裂
+- 针对零基础初学者定制的保姆级新手教学指引系统 (Zero-Barrier Beginner Pedagogy)
 """
 
 import streamlit as st
@@ -172,7 +172,7 @@ header {background-color: transparent !important;}
     font-size: 1.05rem !important;
     color: var(--text-muted) !important;
     font-weight: 500 !important;
-    margin-bottom: 1.5rem !important;
+    margin-bottom: 1.2rem !important;
     line-height: 1.6 !important;
 }
 
@@ -228,7 +228,7 @@ code, pre, .stCode {
 }
 
 .telemetry-value {
-    font-size: 1.55rem !important;
+    font-size: 1.5rem !important;
     font-weight: 800 !important;
     color: var(--text-primary) !important;
     font-family: 'JetBrains Mono', monospace !important;
@@ -337,8 +337,8 @@ def render_hero_header(
     """渲染纯净亮色高对比度 Hero 头部"""
     badge_class = f"pill-{badge_type}"
     html = (
-        f'<div style="margin-bottom: 1.8rem;">'
-        f'<div style="margin-bottom: 0.6rem;">'
+        f'<div style="margin-bottom: 1.4rem;">'
+        f'<div style="margin-bottom: 0.5rem;">'
         f'<span class="pill-badge {badge_class}"><span class="status-dot"></span>{badge_text}</span>'
         f'</div>'
         f'<h1 class="hero-title">{title}</h1>'
@@ -396,3 +396,44 @@ def render_preset_badge(preset_name: str, desc: str) -> None:
         f'</div>'
     )
     st.markdown(html, unsafe_allow_html=True)
+
+
+def render_page_guide(
+    title: str,
+    plain_intro: str,
+    hyperparams_desc: str,
+    telemetry_desc: str,
+    experiments: list[str],
+) -> None:
+    """
+    渲染全站统一的世界级高对比度【零基础新手保姆级教学指引卡片】。
+    包含：
+    1. 🎯 通俗大白话比喻 (直击原理本质)
+    2. 👈 左侧超参数 vs 👆 顶部模型自学习成果的清晰对照
+    3. 🚀 手把手 1-2-3 步趣味实验任务
+    """
+    with st.expander(f"🧭 零基础新手保姆级指引：{title}（点击可展开/折叠）", expanded=True):
+        items_html = "".join([f'<li style="margin-bottom:0.4rem;line-height:1.6;">{exp}</li>' for exp in experiments])
+        guide_html = (
+            f'<div style="color:#0f172a;font-size:0.92rem;line-height:1.7;">'
+            f'<div style="background:#eff6ff;border:1px solid #bfdbfe;border-left:4px solid #1d4ed8;padding:0.75rem 1rem;border-radius:6px;margin-bottom:0.9rem;">'
+            f'<div style="font-weight:700;color:#1e40af;margin-bottom:0.2rem;">💡 大白话核心原理：</div>'
+            f'<div style="color:#1e293b;">{plain_intro}</div>'
+            f'</div>'
+            f'<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:0.9rem;">'
+            f'<div style="background:#f8fafc;padding:0.85rem 1rem;border-radius:8px;border:1px solid #e2e8f0;">'
+            f'<div style="font-weight:700;color:#1d4ed8;font-size:0.86rem;margin-bottom:0.3rem;">👈 1. 左侧边栏【你要调的超参数】</div>'
+            f'<div style="font-size:0.84rem;color:#475569;line-height:1.6;">{hyperparams_desc}</div>'
+            f'</div>'
+            f'<div style="background:#f8fafc;padding:0.85rem 1rem;border-radius:8px;border:1px solid #e2e8f0;">'
+            f'<div style="font-weight:700;color:#047857;font-size:0.86rem;margin-bottom:0.3rem;">👆 2. 页面中【模型自己算出的答案（只读）】</div>'
+            f'<div style="font-size:0.84rem;color:#475569;line-height:1.6;">{telemetry_desc}</div>'
+            f'</div>'
+            f'</div>'
+            f'<div style="background:#f1f5f9;padding:0.85rem 1rem;border-radius:8px;border:1px solid #cbd5e1;">'
+            f'<div style="font-weight:700;color:#0f172a;font-size:0.88rem;margin-bottom:0.4rem;">🎯 3. 手把手 3 步探索实验（跟着做，立刻懂）：</div>'
+            f'<ol style="margin:0;padding-left:1.3rem;color:#334155;font-size:0.84rem;">{items_html}</ol>'
+            f'</div>'
+            f'</div>'
+        )
+        st.markdown(guide_html, unsafe_allow_html=True)

@@ -1,6 +1,6 @@
 # Copyright (c) 2026 Yy1 (yuan278501381) | MIT License
 """
-里程碑 1: 单神经元感知器 (Single Neuron Perceptron) - 无硬编码 · 知识图谱深度解析
+里程碑 1: 单神经元感知器 (Single Neuron Perceptron) - 零基础入门保姆级教学平台
 
 微观解构最小计算单元：线性加权 Z = XW + b、激活函数非线性映射、交叉熵损失、反向传播链式推导与权重轨迹寻优。
 """
@@ -29,6 +29,7 @@ from dashboard.styles.theme import (
     apply_custom_theme,
     render_hero_header,
     render_metric_card,
+    render_page_guide,
     render_section_heading,
 )
 from dashboard.utils.state import get_dataset, resolve_activation, resolve_optimizer
@@ -50,10 +51,33 @@ render_hero_header(
     badge_type="blue",
 )
 
-st.info(
-    "💡 **极速概念辨析与入门指引**：\n"
-    "- 👈 **左侧边栏**：是您作为人类架构师手动控制的 **【超参数 (Hyperparameters)】**（例如：学习率、训练轮数、激活函数、样本量）。\n"
-    "- 👆 **上方 4 张仪表盘卡片**：是神经网络通过反向传播算法，**自主训练计算出来的【最终学习成果 (Learned Parameters)】**（如最终损失、准确率、模型算出的直线方程参数），您无需手动填写它们。"
+# ---------------------------------------------------------------------------
+# 零基础保姆级指引 (Zero-Barrier Beginner Guide)
+# ---------------------------------------------------------------------------
+render_page_guide(
+    title="单神经元感知器入门",
+    plain_intro=(
+        "<b>单神经元就像一个拿尺子画直线的机器人</b>。输入特征 $(x_1, x_2)$ 是数据在地图上的横纵坐标。<br>"
+        "机器人的任务就是在二维平面上画出一根直线方程 <code>w₁·x₁ + w₂·x₂ + b = 0</code>，"
+        "把<b>蓝色点</b>（类别 0）和<b>红色点</b>（类别 1）干净利落地切开！"
+    ),
+    hyperparams_desc=(
+        "• <b>分布类型</b>：选择不同形状的数据集（如 Blobs 简单，Moons 弯曲）。<br>"
+        "• <b>激活函数</b>：如 <code>Sigmoid</code>，把输出压缩到 0~1 之间表示概率。<br>"
+        "• <b>学习率 (LR)</b>：机器人每次调整尺子的步子大小。<br>"
+        "• <b>训练轮数</b>：机器人总共练习画线的次数。"
+    ),
+    telemetry_desc=(
+        "• <b>最终训练损失 (Loss)</b>：做错题的惩罚分，<b>越接近 0 代表分得越准</b>。<br>"
+        "• <b>分类准确率 (Acc)</b>：做对的题目比例，<b>100% 代表完全切对</b>。<br>"
+        "• <b>学得权重 [w₁, w₂] 与偏置 b</b>：机器人经过训练后自己算出的直线参数。<br>"
+        "• <b>学得的直线方程</b>：在右侧图表上画出的分界线公式。"
+    ),
+    experiments=[
+        "<b>第 1 步【体验成功】</b>：在左侧【分布类型】选择 <code>Blobs (高斯聚类)</code>，观察右侧图表如何画出一条笔直的分界线，准确率轻松达到 100%！",
+        "<b>第 2 步【体验调参】</b>：试着把左侧【学习率】改成 <code>0.001</code>（太小了），看看损失下降有多慢；再改成 <code>1.5</code>（太大了），看看损失曲线是不是开始剧烈震荡！",
+        "<b>第 3 步【见证单神经元的局限】</b>：把【分布类型】换成 <code>XOR (正交异或)</code> 或 <code>Moons (双月形)</code>。你会发现一根直线无论怎么转都无法完美切开它们！这就是为什么我们需要<b>多层网络（深度学习）</b>！",
+    ],
 )
 
 # ---------------------------------------------------------------------------
@@ -155,7 +179,7 @@ grid_html = (
     + render_metric_card("FINAL LOSS // 最终训练损失", f"{final_loss:.4f}", delta="已收敛 (CONVERGED)" if final_loss < 0.2 else "训练中 (TRAINING)", delta_type="positive" if final_loss < 0.2 else "neutral", icon_name="trending-down")
     + render_metric_card("ACCURACY // 分类准确率", f"{final_acc:.1%}", delta="达标 (OPTIMAL)" if final_acc >= 0.95 else "收敛中", delta_type="positive" if final_acc >= 0.9 else "neutral", icon_name="target")
     + render_metric_card("LEARNED WEIGHTS // 模型自主学得权重", f"[{w_final[0]:.2f}, {w_final[1]:.2f}]", delta=f"偏置截距 b = {b_final:.2f}", delta_type="neutral", icon_name="sliders")
-    + render_metric_card("DECISION LINE // 学得的直线方程", f'<span style="font-size:1.05rem;">{hyperplane_str}</span>', delta="模型自动求解的决策分界面", delta_type="positive", icon_name="activity")
+    + render_metric_card("DECISION LINE // 学得的直线方程", f'<span style="font-size:1.02rem;">{hyperplane_str}</span>', delta="模型自动求解的决策分界面", delta_type="positive", icon_name="activity")
     + '</div>'
 )
 st.markdown(grid_html, unsafe_allow_html=True)
