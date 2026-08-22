@@ -133,19 +133,19 @@ header {background-color: transparent !important;}
    - 当页面无超参数控制台时 (如 M00 / 首页)：自动收拢为 240px 极简单栏，导航 100% 满宽，杜绝大片空白！
    - 当页面有超参数控制台时 (如 M01~M17)：自动展开为双栏（180px 课程罗盘 + 310px 参数微观控制台）！
 ------------------------------------------------------------------------- */
-/* 1. 单栏模式 (无超参数控件时) */
+/* 1. 单栏模式 (无超参数控件时，如 M00 / 首页) */
 [data-testid="stSidebar"].nn-sidebar-single-col,
 [data-testid="stSidebar"]:not(:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"])) {
-    width: 240px !important;
-    min-width: 240px !important;
-    max-width: 260px !important;
+    width: 250px !important;
+    min-width: 250px !important;
+    max-width: 270px !important;
     background-color: #f8fafc !important;
 }
 
 [data-testid="stSidebar"].nn-sidebar-single-col [data-testid="stSidebarContent"],
 [data-testid="stSidebar"]:not(:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"])) [data-testid="stSidebarContent"] {
     display: block !important;
-    padding: 1rem 0.6rem !important;
+    padding: 2.8rem 0.5rem 1.5rem 0.5rem !important;
     height: 100vh !important;
     overflow-y: auto !important;
 }
@@ -169,9 +169,9 @@ header {background-color: transparent !important;}
 @media (min-width: 1260px) {
     [data-testid="stSidebar"].nn-sidebar-dual-col,
     [data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"]) {
-        width: 495px !important;
-        min-width: 495px !important;
-        max-width: 530px !important;
+        width: 530px !important;
+        min-width: 530px !important;
+        max-width: 560px !important;
         background-color: #f8fafc !important;
         border-right: 1px solid #e2e8f0 !important;
     }
@@ -185,28 +185,28 @@ header {background-color: transparent !important;}
         overflow: hidden !important;
     }
 
-    /* 栏位 1：主导航航母罗盘 (Master Rail, 180px 紧凑流线) */
+    /* 栏位 1：主导航航母罗盘 (Master Rail, 170px 紧凑流线) */
     [data-testid="stSidebar"].nn-sidebar-dual-col [data-testid="stSidebarNav"],
     [data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"]) [data-testid="stSidebarNav"] {
-        width: 180px !important;
-        min-width: 180px !important;
-        max-width: 180px !important;
+        width: 170px !important;
+        min-width: 170px !important;
+        max-width: 170px !important;
         height: 100% !important;
         overflow-y: auto !important;
         border-right: 1px solid #e2e8f0 !important;
-        padding: 0.9rem 0.4rem !important;
+        padding: 2.8rem 0.4rem 1.5rem 0.4rem !important;
         background-color: #f8fafc !important;
         box-sizing: border-box !important;
     }
 
-    /* 栏位 2：微观超参数控制台 (Detail Parameter Deck, 315px 舒展宽度) */
+    /* 栏位 2：微观超参数控制台 (Detail Parameter Deck, 350px 充裕舒展宽度) */
     [data-testid="stSidebar"].nn-sidebar-dual-col [data-testid="stSidebarUserContent"],
     [data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"]) [data-testid="stSidebarUserContent"] {
         flex: 1 !important;
-        min-width: 315px !important;
+        min-width: 350px !important;
         height: 100% !important;
         overflow-y: auto !important;
-        padding: 1rem 0.85rem !important;
+        padding: 2.8rem 1rem 1.5rem 1rem !important;
         background-color: #ffffff !important;
         box-sizing: border-box !important;
     }
@@ -225,7 +225,7 @@ header {background-color: transparent !important;}
         display: flex !important;
         flex-direction: column !important;
         height: 100vh !important;
-        padding: 1rem !important;
+        padding: 2.8rem 1rem 1.5rem 1rem !important;
         overflow-y: auto !important;
     }
 
@@ -257,25 +257,33 @@ header {background-color: transparent !important;}
     display: none !important;
 }
 
+/* 绝对恒定几何尺寸：确保所有页面无论单双栏，菜单行高 100% 绝对一致 (36px) */
 [data-testid="stSidebarNav"] a,
 [data-testid="stSidebarNavLink"] {
-    min-height: 38px !important;
+    min-height: 36px !important;
+    max-height: 36px !important;
+    height: 36px !important;
+    margin-bottom: 2px !important;
+    padding: 0 0.5rem !important;
     display: flex !important;
     align-items: center !important;
-    border-radius: 8px !important;
-    padding: 0.35rem 0.65rem !important;
+    border-radius: 6px !important;
     transition: background-color 0.15s ease, border-color 0.15s ease !important;
     contain: layout style !important;
     text-decoration: none !important;
+    box-sizing: border-box !important;
 }
 
 [data-testid="stSidebarNav"] span,
 [data-testid="stSidebarNavLink"] span {
     font-weight: 600 !important;
     color: var(--text-secondary) !important;
-    font-size: 0.88rem !important;
+    font-size: 0.82rem !important;
+    line-height: 36px !important;
     transition: color 0.15s ease !important;
     white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
 }
 
 [data-testid="stSidebarNav"] a[aria-current="page"],
@@ -928,18 +936,18 @@ g.updatemenu-button {
                 headStyle = doc.createElement('style');
                 headStyle.id = 'nn-persistent-sidebar-style';
                 headStyle.textContent = `
-                    /* 1. 单栏模式 (无超参数控件时) */
+                    /* 1. 单栏模式 (无超参数控件时，如 M00 / 首页) */
                     [data-testid="stSidebar"].nn-sidebar-single-col,
                     [data-testid="stSidebar"]:not(:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"])) {
-                        width: 240px !important;
-                        min-width: 240px !important;
-                        max-width: 260px !important;
+                        width: 250px !important;
+                        min-width: 250px !important;
+                        max-width: 270px !important;
                         background-color: #f8fafc !important;
                     }
                     [data-testid="stSidebar"].nn-sidebar-single-col [data-testid="stSidebarContent"],
                     [data-testid="stSidebar"]:not(:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"])) [data-testid="stSidebarContent"] {
                         display: block !important;
-                        padding: 1rem 0.6rem !important;
+                        padding: 2.8rem 0.5rem 1.5rem 0.5rem !important;
                         height: 100vh !important;
                         overflow-y: auto !important;
                     }
@@ -961,9 +969,9 @@ g.updatemenu-button {
                     @media (min-width: 1260px) {
                         [data-testid="stSidebar"].nn-sidebar-dual-col,
                         [data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"]) {
-                            width: 495px !important;
-                            min-width: 495px !important;
-                            max-width: 530px !important;
+                            width: 530px !important;
+                            min-width: 530px !important;
+                            max-width: 560px !important;
                             background-color: #f8fafc !important;
                             border-right: 1px solid #e2e8f0 !important;
                         }
@@ -977,23 +985,23 @@ g.updatemenu-button {
                         }
                         [data-testid="stSidebar"].nn-sidebar-dual-col [data-testid="stSidebarNav"],
                         [data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"]) [data-testid="stSidebarNav"] {
-                            width: 180px !important;
-                            min-width: 180px !important;
-                            max-width: 180px !important;
+                            width: 170px !important;
+                            min-width: 170px !important;
+                            max-width: 170px !important;
                             height: 100% !important;
                             overflow-y: auto !important;
                             border-right: 1px solid #e2e8f0 !important;
-                            padding: 0.9rem 0.4rem !important;
+                            padding: 2.8rem 0.4rem 1.5rem 0.4rem !important;
                             background-color: #f8fafc !important;
                             box-sizing: border-box !important;
                         }
                         [data-testid="stSidebar"].nn-sidebar-dual-col [data-testid="stSidebarUserContent"],
                         [data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"]) [data-testid="stSidebarUserContent"] {
                             flex: 1 !important;
-                            min-width: 315px !important;
+                            min-width: 350px !important;
                             height: 100% !important;
                             overflow-y: auto !important;
-                            padding: 1rem 0.85rem !important;
+                            padding: 2.8rem 1rem 1.5rem 1rem !important;
                             background-color: #ffffff !important;
                             box-sizing: border-box !important;
                         }
@@ -1011,7 +1019,7 @@ g.updatemenu-button {
                             display: flex !important;
                             flex-direction: column !important;
                             height: 100vh !important;
-                            padding: 1rem !important;
+                            padding: 2.8rem 1rem 1.5rem 1rem !important;
                             overflow-y: auto !important;
                         }
                         [data-testid="stSidebarNav"] {
@@ -1037,19 +1045,24 @@ g.updatemenu-button {
                     [data-testid="stSidebarNav"] a,
                     [data-testid="stSidebarNavLink"] {
                         min-height: 36px !important;
+                        max-height: 36px !important;
+                        height: 36px !important;
+                        margin-bottom: 2px !important;
+                        padding: 0 0.5rem !important;
                         display: flex !important;
                         align-items: center !important;
                         border-radius: 6px !important;
-                        padding: 0.3rem 0.5rem !important;
                         transition: background-color 0.15s ease, border-color 0.15s ease !important;
                         contain: layout style !important;
                         text-decoration: none !important;
+                        box-sizing: border-box !important;
                     }
                     [data-testid="stSidebarNav"] span,
                     [data-testid="stSidebarNavLink"] span {
                         font-weight: 600 !important;
                         color: #334155 !important;
                         font-size: 0.82rem !important;
+                        line-height: 36px !important;
                         transition: color 0.15s ease !important;
                         white-space: nowrap !important;
                         overflow: hidden !important;
