@@ -137,21 +137,37 @@ header {background-color: transparent !important;}
     color: var(--text-primary) !important;
 }
 
-[data-testid="stSidebarNav"] span {
-    font-weight: 500 !important;
-    color: var(--text-secondary) !important;
-    font-size: 0.90rem !important;
-    transition: color 0.15s ease, background-color 0.15s ease !important;
-}
-
-[data-testid="stSidebarNav"] a[aria-current="page"] span {
-    color: var(--brand-blue) !important;
-    font-weight: 700 !important;
-}
-
-[data-testid="stSidebarNav"] a[aria-current="page"] {
-    background-color: rgba(37, 99, 235, 0.08) !important;
+[data-testid="stSidebarNav"] a,
+[data-testid="stSidebarNavLink"] {
+    min-height: 38px !important;
+    display: flex !important;
+    align-items: center !important;
     border-radius: 8px !important;
+    padding: 0.35rem 0.65rem !important;
+    transition: background-color 0.15s ease, border-color 0.15s ease !important;
+    contain: layout style !important;
+    text-decoration: none !important;
+}
+
+[data-testid="stSidebarNav"] span,
+[data-testid="stSidebarNavLink"] span {
+    font-weight: 600 !important;
+    color: var(--text-secondary) !important;
+    font-size: 0.88rem !important;
+    transition: color 0.15s ease !important;
+    white-space: nowrap !important;
+}
+
+[data-testid="stSidebarNav"] a[aria-current="page"],
+[data-testid="stSidebarNavLink"][aria-current="page"] {
+    background-color: rgba(37, 99, 235, 0.08) !important;
+    border-left: 3px solid #2563eb !important;
+}
+
+[data-testid="stSidebarNav"] a[aria-current="page"] span,
+[data-testid="stSidebarNavLink"][aria-current="page"] span {
+    color: var(--brand-blue) !important;
+    font-weight: 600 !important;
 }
 
 [data-testid="stSidebar"] hr {
@@ -753,7 +769,7 @@ g.updatemenu-button {
                     var spans = a.querySelectorAll('span');
                     spans.forEach(function(span) {
                         var text = span.textContent.trim();
-                        if (labelMap[text]) {
+                        if (labelMap[text] && span.textContent !== labelMap[text]) {
                             span.textContent = labelMap[text];
                         }
                     });
@@ -761,9 +777,14 @@ g.updatemenu-button {
             }
 
             formatSidebarNav();
-            setTimeout(formatSidebarNav, 150);
-            setTimeout(formatSidebarNav, 500);
-            setTimeout(formatSidebarNav, 1200);
+
+            if (!doc.__nnSidebarObserver) {
+                var observer = new window.parent.MutationObserver(function() {
+                    formatSidebarNav();
+                });
+                observer.observe(doc.body, { childList: true, subtree: true, characterData: true });
+                doc.__nnSidebarObserver = observer;
+            }
         } catch(e) {}
     })();
     </script></body></html>"""
