@@ -17,7 +17,6 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from dashboard.components.charts import (
-    plot_decision_boundary,
     plot_loss_curve,
 )
 from dashboard.components.client_player import (
@@ -30,18 +29,16 @@ from dashboard.components.param_panel import (
     render_dataset_selector,
     render_deep_dive_card,
 )
+from dashboard.components.pedagogy import render_core_result_evidence, render_lesson_evidence
 from dashboard.constants.knowledge import ACTIVATIONS, OPTIMIZERS
-from dashboard.components.pedagogy import render_lesson_evidence
 from dashboard.styles.theme import (
     anchor_badge,
     apply_custom_theme,
+    render_floating_hud_navigator,
     render_hero_header,
     render_live_param_status_bar,
     render_metric_card,
     render_page_guide,
-    render_region_anchor,
-    render_floating_hud_navigator,
-    render_section_heading,
 )
 from dashboard.utils.state import get_dataset, resolve_activation, resolve_optimizer
 from nn_core.layers import Dense
@@ -54,7 +51,8 @@ st.set_page_config(
 )
 
 apply_custom_theme()
-render_lesson_evidence("M01")
+render_lesson_evidence("M01", show_contract=True)
+render_core_result_evidence("M01")
 
 render_hero_header(
     title="单神经元感知器",
@@ -138,7 +136,7 @@ render_page_guide(
     experiments=[
         f"<b>第 1 步【寻找那根线】</b>：在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 选择 <code>Blobs (高斯聚类)</code>，观察 {anchor_badge('[D. 决策流形图]', 'purple', target_id='region-d')} 中间那根<b>加粗的黑色分界线</b>，看它如何恰好把红蓝两团点隔开！",
         f"<b>第 2 步【体验调参】</b>：试着在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 把【学习率】改成 <code>0.001</code>（步子太小），看 {anchor_badge('[E. 收敛曲线]', 'blue', target_id='region-e')} 需要很多轮才能画准；再改成 <code>1.5</code>（步子太大），看看直线是不是开始剧烈晃动！",
-        f"<b>第 3 步【见证单神经元的局限】</b>：把【分布类型】换成 <code>XOR (正交异或)</code> 或 <code>Moons (双月形)</code>。你会发现一根笔直的线无论怎么转都无法切开它们！这就是为什么我们需要<b>多层网络（深度学习）</b>！",
+        "<b>第 3 步【见证单神经元的局限】</b>：把【分布类型】换成 <code>XOR (正交异或)</code> 或 <code>Moons (双月形)</code>。你会发现一根笔直的线无论怎么转都无法切开它们！这就是为什么我们需要<b>多层网络（深度学习）</b>！",
     ],
 )
 
@@ -679,7 +677,7 @@ with st.expander(
         """
         ### 0. 核心公式逐字拆解：$Z = XW + b$ 与 $\\hat{y} = \\sigma(Z)$
         这是整个深度学习世界最基础、最通用的**第一核心公式**：
-        
+
         | 符号 | 中文名称 | 矩阵形状 (Shape) | 通俗大白话解释（它是什么？起什么作用？） |
         |:---:|:---:|:---:|:---|
         | **$X$** | **输入特征矩阵 (Inputs)** | $N \\times 2$ (样本数 × 特征数) | **你喂给机器人的原始数据**。比如 $N$ 个数据点，每个点有两个属性：$x_1$ 是横坐标，$x_2$ 是纵坐标。 |
@@ -688,37 +686,37 @@ with st.expander(
         | **$Z$** | **线性加权和 (Logits)** | $N \\times 1$ | $x_1 w_1 + x_2 w_2 + b$ 的计算结果。正数代表在直线某一侧，负数代表在另一侧，数值绝对值代表距离直线的远近。 |
         | **$\\sigma$** | **激活函数 (Activation)** | 函数映射 $\\mathbb{R} \\to (0,1)$ | **概率压缩器**。比如 Sigmoid $\\sigma(Z) = \\frac{1}{1 + e^{-Z}}$，把从 $-\\infty$ 到 $+\\infty$ 的任意实数平滑压缩到 $0 \\sim 1$ 之间。 |
         | **$\\hat{y}$** | **最终预测概率 (Output)** | $N \\times 1$ | 模型对每个点的最终预测结果。$\\hat{y} \\ge 0.5$ 判定为红点，$\\hat{y} < 0.5$ 判定为蓝点。 |
-        
+
         ---
-        
+
         ### 1. 什么是【梯度 (Gradient)】？—— “最陡的下山方向”
         * **生活比喻**：想象你被蒙上双眼放在大雾弥漫的崇山峻岭中，任务是走到山谷最低处（损失最小处）。你看不清全貌，但用脚踩一踩脚下的地面，能感受到**哪个方向坡度最陡、往哪里下坠最快**。这个“坡度最陡的指向”就是**梯度**！
         * **本质机理**：梯度是一个由偏导数组成的向量 $\\nabla L = [\\frac{\\partial L}{\\partial w_1}, \\frac{\\partial L}{\\partial w_2}, \\frac{\\partial L}{\\partial b}]$，它告诉你**权重微调一点点，总损失会往哪个方向变化**。沿着梯度的**反方向**走一步，损失就会减少！
-        
+
         ---
-        
+
         ### 2. 什么是【损失 (Loss)】？—— “做错题的扣分罚分”
         * **生活比喻**：相当于老师给你的试卷打分。如果你把红点猜成蓝点，老师就扣你 10 分；如果你百分之百猜对，扣分就是 0。
         * **本质机理**：衡量模型当前预测与真实标签之间的差距（误差）。训练模型的目标就是通过不断调整参数，让 **Loss 越接近 0 越好**。
-        
+
         ---
-        
+
         ### 3. 什么是【权重 (Weights) $w$】与【偏置 (Bias) $b$】？—— “直线的旋转与平移”
         * **生活比喻**：机器人手里拿着一根直尺：
           * **权重 $w_1, w_2$**：决定直尺在平面上的**倾斜角度（斜率）**；
           * **偏置 $b$**：决定直尺在平面上的**平行移动距离（截距）**。
         * **两者配合**：通过旋转和平移直尺，直到找到一个完美的角度与位置，把红蓝两团数据一刀切开！
-        
+
         ---
-        
+
         ### 4. 什么是【学习率 (Learning Rate / LR)】？—— “每一步迈出的步长”
         * **生活比喻**：下山时，你每一步迈出多大距离：
           * **步子太小 (如 0.0001)**：像蚂蚁爬行，走了一万步还在山顶；
           * **步子太大 (如 2.0)**：像一步跨出两米，直接从山左侧飞到了山右侧峭壁，在山谷两头疯狂乱跳（无法收敛）；
           * **黄金步长 (如 0.05~0.1)**：既能稳步下山，又不会踏空跌落。
-        
+
         ---
-        
+
         ### 5. 什么是【前向传播 (Forward)】与【反向传播 (Backward)】？
         * **前向传播 (Forward)**：**做题过程**。输入特征 $(x_1, x_2)$ 进入神经元，计算出预测结果 $\\hat{y}$，并算出当前扣了多少分 (Loss)。
         * **反向传播 (Backward)**：**订正错题过程**。拿着扣分结果，沿着数学公式倒推，找出究竟是 $w_1$ 调偏了还是 $b$ 调高了，计算出每个参数的梯度。

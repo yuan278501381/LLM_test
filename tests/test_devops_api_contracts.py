@@ -50,6 +50,9 @@ def test_pedagogy_api_contract():
     """验证 dashboard.components.pedagogy 公开接口契约"""
     required_functions = [
         "render_lesson_evidence",
+        "render_core_result_evidence",
+        "render_result_evidence",
+        "render_lesson_contract",
         "evidence_badge",
     ]
     for fn_name in required_functions:

@@ -28,13 +28,13 @@ from dashboard.components.param_panel import (
     render_network_params,
     render_training_params,
 )
+from dashboard.components.pedagogy import render_core_result_evidence, render_lesson_evidence
 from dashboard.constants.knowledge import (
     ACTIVATIONS,
     INITIALIZERS,
     OPTIMIZERS,
     REGULARIZERS,
 )
-from dashboard.components.pedagogy import render_lesson_evidence
 from dashboard.styles.theme import (
     anchor_badge,
     apply_custom_theme,
@@ -42,7 +42,6 @@ from dashboard.styles.theme import (
     render_live_param_status_bar,
     render_metric_card,
     render_page_guide,
-    render_section_heading,
 )
 from dashboard.utils.state import (
     get_dataset,
@@ -61,7 +60,8 @@ st.set_page_config(
 )
 
 apply_custom_theme()
-render_lesson_evidence("M04")
+render_lesson_evidence("M04", show_contract=True)
+render_core_result_evidence("M04")
 
 render_hero_header(
     title="全参数微观实验室",
@@ -338,8 +338,16 @@ st.markdown(
 )
 
 first_layer_w = weights_list[0] if weights_list else None
-w11_str = f"{first_layer_w[0, 0]:.3f}" if first_layer_w is not None and first_layer_w.size > 0 else "0.000"
-w12_str = f"{first_layer_w[1, 0]:.3f}" if first_layer_w is not None and first_layer_w.shape[0] > 1 else "0.000"
+w11_str = (
+    f"{first_layer_w[0, 0]:.3f}"
+    if first_layer_w is not None and first_layer_w.size > 0
+    else "0.000"
+)
+w12_str = (
+    f"{first_layer_w[1, 0]:.3f}"
+    if first_layer_w is not None and first_layer_w.shape[0] > 1
+    else "0.000"
+)
 total_params_count = sum(w.size for w in weights_list)
 
 render_live_param_status_bar(
@@ -480,22 +488,22 @@ with st.expander(
         r"""
         ### 0. 核心公式逐字拆解：L1 / L2 权重正则化
         $$L_{\\text{total}} = L_{\\text{task}} + \\lambda \\cdot \\Omega(W)$$
-        
+
         | 符号 | 中文名称 | 通俗大白话解释（它是什么？起什么作用？） |
         |:---:|:---:|:---|
         | **$L_{\\text{total}}$** | **总优化目标损失** | 最终要最小化的总罚分（任务预测误差 + 权重过大罚分）。 |
         | **$L_{\\text{task}}$** | **原始任务损失** | 模型在分类任务上做错题的交叉熵扣分。 |
         | **$\\lambda$** | **正则化惩罚系数 (Lambda)** | **戒尺的严厉程度**。$\\lambda=0$ 不管不顾；$\\lambda=0.01$ 适度约束；$\\lambda$ 过大（如 1.0）会把所有权重打成 0 导致欠拟合。 |
         | **$\\Omega(W)$** | **权重复杂度惩罚项** | • **L1 正则 (Lasso, $\\sum \|w\|$ )**：倾向于把不重要的权重**直接削成纯零 (稀疏特征选择)**；<br>• **L2 正则 (Ridge / Weight Decay, $\\frac{1}{2}\\sum w^2$ )**：倾向于让所有权重都**变得很小且均匀分布**，防止单个权重独大。 |
-        
+
         ---
-        
+
         ### 1. 什么是【过拟合 (Overfitting)】？—— “死记硬背不通变”
         * **生活比喻**：学生刷题时把题号和选项顺序全背下来了，模拟考打 100 分；但高考时换了一道数字不同的新题，当场交白卷。
         * **在图上的表现**：决策分界线变得极度扭曲崎岖，死扣每一个孤立的噪点。
-        
+
         ---
-        
+
         ### 2. 什么是【Update-to-Weight 步长比】？—— “每步微调的相对幅度”
         * **黄金准则**：每一步更新的量 $\\|\\Delta W\\|$ 与当前权重大小 $\\|W\\|$ 的比值在 **$10^{-3} \\approx 0.001$** 附近为最健康的训练状态。
         """

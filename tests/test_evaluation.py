@@ -5,6 +5,7 @@ tests/test_evaluation.py - 评估基准框架 (Harness) 与指标单元测试
 
 import numpy as np
 import pytest
+from sklearn.metrics import accuracy_score, f1_score
 
 from nn_core.evaluation import (
     EvaluationHarness,
@@ -68,6 +69,24 @@ def test_compute_accuracy_and_f1():
         compute_accuracy([0], [0, 1])
     with pytest.raises(ValueError):
         compute_f1(np.array([[0, 1]]), np.array([[0, 1]]))
+
+
+@pytest.mark.parametrize(
+    "labels,predictions",
+    [
+        ([0, 0, 1, 1], [0, 1, 1, 1]),
+        ([0, 0, 2, 2], [0, 1, 2, 1]),
+        ([2, 2, 2], [2, 1, 1]),
+    ],
+)
+def test_accuracy_and_macro_f1_match_sklearn(labels, predictions):
+    assert compute_accuracy(predictions, labels) == pytest.approx(
+        accuracy_score(labels, predictions)
+    )
+    all_labels = np.unique(np.concatenate([labels, predictions]))
+    assert compute_f1(predictions, labels) == pytest.approx(
+        f1_score(labels, predictions, labels=all_labels, average="macro", zero_division=0)
+    )
 
 
 def test_benchmark_tasks_structure():

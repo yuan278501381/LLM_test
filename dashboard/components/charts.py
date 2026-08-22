@@ -381,7 +381,7 @@ def plot_loss_curve(
 
     epochs = list(range(1, len(history.get("loss", [])) + 1))
 
-    if "loss" in history and history["loss"]:
+    if history.get("loss"):
         losses = history["loss"]
         min_idx = int(np.argmin(losses))
         fig.add_trace(
@@ -412,7 +412,7 @@ def plot_loss_curve(
             col=1,
         )
 
-    if "accuracy" in history and history["accuracy"]:
+    if history.get("accuracy"):
         accs = history["accuracy"]
         fig.add_trace(
             go.Scatter(
@@ -733,7 +733,7 @@ def plot_embedding_space(
     words: list[str],
     vectors: np.ndarray,
     highlight_words: list[str] | None = None,
-    arithmetic: dict | None = None,
+    arithmetic: dict[str, str] | None = None,
     title: str | None = None,
 ) -> go.Figure:
     """绘制 3D 词嵌入流形空间 (支持高亮与几何平行四边形)"""
@@ -799,10 +799,10 @@ def plot_embedding_space(
     # 算术矢量平行四边形 A - B + C = Result
     if arithmetic:
         A, B, C, R = (
-            arithmetic.get("A"),
-            arithmetic.get("B"),
-            arithmetic.get("C"),
-            arithmetic.get("Result"),
+            arithmetic["A"],
+            arithmetic["B"],
+            arithmetic["C"],
+            arithmetic["Result"],
         )
         if all(w in words for w in [A, B, C, R]):
             idx_a, idx_b, idx_c, idx_r = (
@@ -839,6 +839,7 @@ def plot_embedding_space(
                 [A, B, C, R],
                 [idx_a, idx_b, idx_c, idx_r],
                 [LIGHT_PALETTE["primary"]] * 3 + [LIGHT_PALETTE["secondary"]],
+                strict=False,
             ):
                 fig.add_trace(
                     go.Scatter3d(

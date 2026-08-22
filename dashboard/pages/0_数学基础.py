@@ -14,17 +14,15 @@ import numpy as np
 import plotly.graph_objects as go
 import streamlit as st
 
-from dashboard.components.pedagogy import render_lesson_evidence
+from dashboard.components.pedagogy import render_core_result_evidence, render_lesson_evidence
 from dashboard.styles.theme import (
     anchor_badge,
     apply_custom_theme,
-    render_floating_hud_navigator,
     render_formula_breakdown_card,
     render_hero_header,
     render_live_param_status_bar,
     render_metric_card,
     render_page_guide,
-    render_section_heading,
 )
 
 st.set_page_config(
@@ -33,16 +31,6 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 apply_custom_theme()
-
-# 页面空间 HUD 悬浮罗盘
-render_floating_hud_navigator(
-    [
-        {"id": "A", "name": "空间地图与教学指引", "desc": "零基础理解张量维度与链式法则导引"},
-        {"id": "B", "name": "张量形状与矩阵乘法", "desc": "拖动滑块直观验证 Z=XW+b 维度消融契约"},
-        {"id": "C", "name": "链式法则与梯度检查", "desc": "对比解析梯度与有限差分，探究浮点截断与舍入误差"},
-        {"id": "D", "name": "形成性小测验", "desc": "自测梯度更新方向与维度匹配"},
-    ]
-)
 
 # Hero 标题
 render_hero_header(
@@ -54,6 +42,7 @@ render_hero_header(
 
 # 核心教学论据
 render_lesson_evidence("M00", show_contract=True)
+render_core_result_evidence("M00")
 
 # ---------------------------------------------------------------------------
 # [A] 教学指引与蓝图导航
@@ -82,25 +71,40 @@ blueprint_sections = [
     },
     {
         "id": "D",
+        "name": "概率与交叉熵",
+        "desc": "从 logits 经 log-sum-exp 与 softmax 得到概率和交叉熵",
+        "color": "rose",
+        "target_id": "region-d",
+    },
+    {
+        "id": "E",
         "name": "形成性小测验",
         "desc": "快速检验反向传播参数更新直觉",
         "color": "purple",
-        "target_id": "region-d",
+        "target_id": "region-e",
+    },
+    {
+        "id": "F",
+        "name": "通关标准",
+        "desc": "确认能够解释 shape、梯度、概率与交叉熵",
+        "color": "blue",
+        "target_id": "region-f",
     },
 ]
 
 render_page_guide(
     title="神经网络数学基础与张量契约全景指南",
-    plain_intro="神经网络本质上是高维张量的矩阵乘法与微积分链式法则的流水线组合。在进入感知器与复杂模型前，掌握张量维度匹配（Shape Alignment）与梯度检查（Gradient Check）是避免代码报错与训练 Bug 的必备内功。",
+    plain_intro="神经网络训练需要同时理解张量运算、链式法则与概率损失。这里先建立最小数学语言：用 shape 追踪数据，用梯度描述局部变化，再把 logits 转换为概率并用交叉熵衡量预测。",
     hyperparams_desc="• batch size (N)：批次样本数，并行喂给模型的独立数据行数；\n• input features (Din)：输入特征数，每个样本包含的原始指标数量；\n• output features (Dout)：输出特征数，当前层神经元提炼出的新特征维度；\n• 有限差分步长 ε：微小扰动步长，用于数值梯度校验。",
-    telemetry_desc="• 矩阵乘法产物 Z：形状为 (batch, output_features) 的输出张量；\n• 解析梯度 ∂L/∂w：通过微积分公式直接求导得到的精确理论梯度；\n• 有限差分数值梯度：通过微小扰动 [L(w+ε)-L(w-ε)]/(2ε) 近似模拟的斜率；\n• 相对误差：解析与数值梯度的吻合度（小于 1e-5 说明理论导数完全正确）。",
+    telemetry_desc="• 矩阵乘法产物 Z：形状为 (batch, output_features) 的输出张量；\n• 解析梯度：按当前公式求得的导数；\n• 有限差分梯度：在当前输入和步长附近得到的数值近似；\n• 绝对/相对误差：只说明本次局部检查的一致程度；\n• Softmax 与交叉熵：把 logits 转成归一化概率，并衡量目标类别的负对数概率。",
     experiments=[
         "在 Section B 拖动 input features 滑块：观察权重矩阵 W 的行数与输入矩阵 X 的列数如何保持同步变化！",
         "在 Section B 观察广播机制：为什么偏置 b 只有一维 (output_features,)，却能加到全部 batch 个样本上？",
         "在 Section C 拖动 log10(ε) 从 -1 到 -12：观察相对误差为什么先变小后急剧变大（形成 U 型误差曲线）？",
-        "思考：为什么在工业级 GPU 训练中，我们总是使用 batch 并行计算而不是单样本循环？",
+        "在 Section D 调节 temperature：先预测概率分布会变尖还是变平，再观察交叉熵如何变化。",
     ],
     blueprint_sections=blueprint_sections,
+    guide_region_id="region-a",
 )
 
 # ---------------------------------------------------------------------------
@@ -108,7 +112,7 @@ render_page_guide(
 # ---------------------------------------------------------------------------
 st.markdown(
     f'<div id="region-b" class="interactive-region" style="margin-top:1.2rem;margin-bottom:0.6rem;padding:0.45rem 0.75rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">'
-    f'{anchor_badge("B", "amber")} <b>TENSOR SHAPES & MATRIX MULTIPLICATION // 张量形状与矩阵乘法契约</b>'
+    f"{anchor_badge('B', 'amber')} <b>TENSOR SHAPES & MATRIX MULTIPLICATION // 张量形状与矩阵乘法契约</b>"
     f"</div>",
     unsafe_allow_html=True,
 )
@@ -137,11 +141,31 @@ with col_shape:
         formula_latex=r"Z = X \cdot W + b",
         math_principle="矩阵乘法要求相邻维度严格对齐相消：(N, Din) × (Din, Dout) = (N, Dout)。偏置向量 b 沿 batch 维度自动广播相加。",
         params_breakdown=[
-            {"param": "X", "shape": "(batch, input_features)", "role": "输入特征矩阵：每行代表一个独立样本，每列代表一项输入属性"},
-            {"param": "W", "shape": "(input_features, output_features)", "role": "权重矩阵：把 input_features 线性组合映射为 output_features"},
-            {"param": "XW", "shape": "(batch, output_features)", "role": "矩阵点积结果：内部的 input_features 维度被求和相消，保留外侧两维"},
-            {"param": "b", "shape": "(output_features,)", "role": "偏置向量：每个输出神经元的基准偏置，沿第 0 维 (batch) 自动广播复制"},
-            {"param": "Z", "shape": "(batch, output_features)", "role": "最终线性输出张量：供后续激活函数激活或作为下一层网络的输入"},
+            {
+                "param": "X",
+                "shape": "(batch, input_features)",
+                "role": "输入特征矩阵：每行代表一个独立样本，每列代表一项输入属性",
+            },
+            {
+                "param": "W",
+                "shape": "(input_features, output_features)",
+                "role": "权重矩阵：把 input_features 线性组合映射为 output_features",
+            },
+            {
+                "param": "XW",
+                "shape": "(batch, output_features)",
+                "role": "矩阵点积结果：内部的 input_features 维度被求和相消，保留外侧两维",
+            },
+            {
+                "param": "b",
+                "shape": "(output_features,)",
+                "role": "偏置向量：每个输出神经元的基准偏置，沿第 0 维 (batch) 自动广播复制",
+            },
+            {
+                "param": "Z",
+                "shape": "(batch, output_features)",
+                "role": "最终线性输出张量：供后续激活函数激活或作为下一层网络的输入",
+            },
         ],
     )
 
@@ -151,9 +175,13 @@ with col_broadcast:
     with c1:
         batch_size = st.slider("batch size (样本数 N)", 1, 8, 4, help="同时并行计算的数据行数")
     with c2:
-        input_features = st.slider("input features (输入特征 Din)", 1, 8, 3, help="每个样本拥有的输入属性维度")
+        input_features = st.slider(
+            "input features (输入特征 Din)", 1, 8, 3, help="每个样本拥有的输入属性维度"
+        )
     with c3:
-        output_features = st.slider("output features (输出特征 Dout)", 1, 8, 2, help="当前层神经元个数 / 输出特征维度")
+        output_features = st.slider(
+            "output features (输出特征 Dout)", 1, 8, 2, help="当前层神经元个数 / 输出特征维度"
+        )
 
     x_matrix = np.arange(batch_size * input_features, dtype=float).reshape(
         batch_size, input_features
@@ -166,30 +194,47 @@ with col_broadcast:
         title="TENSOR SHAPE CONTRACT // 矩阵维度契约",
         badges=[
             {"label": "X (输入)", "value": f"({batch_size}, {input_features})", "color": "blue"},
-            {"label": "W (权重)", "value": f"({input_features}, {output_features})", "color": "amber"},
+            {
+                "label": "W (权重)",
+                "value": f"({input_features}, {output_features})",
+                "color": "amber",
+            },
             {"label": "b (偏置)", "value": f"({output_features},)", "color": "purple"},
-            {"label": "Z (输出)", "value": f"({batch_size}, {output_features})", "color": "emerald"},
+            {
+                "label": "Z (输出)",
+                "value": f"({batch_size}, {output_features})",
+                "color": "emerald",
+            },
         ],
         metrics=[
             ("内部相消维", f"{input_features}"),
             ("外部保留维", f"({batch_size}, {output_features})"),
-            ("总计算浮点数", f"{batch_size * input_features * output_features} FLOPs"),
+            ("矩阵乘法乘法次数", f"{batch_size * input_features * output_features}"),
         ],
         tag=f"DIMS: ({batch_size}, {output_features})",
         tag_color="emerald",
     )
 
-    st.markdown(f"**计算公式与实时形状映射**：`X({batch_size}, {input_features}) @ W({input_features}, {output_features}) + b({output_features},) -> Z({batch_size}, {output_features})`")
-    
+    st.markdown(
+        f"**计算公式与实时形状映射**：`X({batch_size}, {input_features}) @ W({input_features}, {output_features}) + b({output_features},) -> Z({batch_size}, {output_features})`"
+    )
+
     st.markdown("**实时输出张量数值矩阵 $Z$**：")
     st.dataframe(z_matrix, width="stretch")
+
+    with st.expander("SHAPE FAILURE // 为什么错误维度不能相乘", expanded=False):
+        st.markdown(
+            f"当前 `X` 的最后一维是 `{input_features}`。如果 `W` 的第一维改成 "
+            f"`{input_features + 1}`，内部维不相等，`X @ W` 没有定义；NumPy 会报维度错误，"
+            "而不是自动猜测应删除或补齐哪个特征。"
+        )
 
 # ---------------------------------------------------------------------------
 # [C] 链式法则与数值梯度检查实验室
 # ---------------------------------------------------------------------------
 st.markdown(
     f'<div id="region-c" class="interactive-region" style="margin-top:1.5rem;margin-bottom:0.6rem;padding:0.45rem 0.75rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">'
-    f'{anchor_badge("C", "emerald")} <b>CHAIN RULE LAB // 链式法则与数值梯度检查</b>'
+    f"{anchor_badge('C', 'emerald')} <b>CHAIN RULE LAB // 链式法则与数值梯度检查</b>"
     f"</div>",
     unsafe_allow_html=True,
 )
@@ -197,12 +242,12 @@ st.markdown(
 st.markdown(
     r"""
     考虑单样本线性回归：预测值 $z = wx + b$，损失函数 $L = (z - y)^2$。
-    
+
     * **解析梯度 (Analytic Gradient)**：通过微积分链式法则直接求导：
       $$\frac{\partial L}{\partial w} = \frac{\partial L}{\partial z} \cdot \frac{\partial z}{\partial w} = 2(z - y) \cdot x, \quad \frac{\partial L}{\partial b} = 2(z - y)$$
     * **有限差分数值梯度 (Numeric Gradient / Finite Difference)**：不依赖求导公式，给参数加上极其微小的扰动 $\epsilon$：
       $$\frac{\partial L}{\partial w} \approx \frac{L(w + \epsilon) - L(w - \epsilon)}{2\epsilon}$$
-    * **为什么需要梯度检查？** 在工业界自研复杂算子（如 FlashAttention、RoPE、MoE）时，通过有限差分双重核对，能 100% 验证反向传播求导代码是否有数学 Bug。
+    * **为什么需要梯度检查？** 有限差分可以在选定输入附近比较解析梯度与数值近似，帮助发现反向传播错误；一次通过不能排除其他输入、不可导点、随机运算或精度条件下的问题。
     """
 )
 
@@ -236,7 +281,8 @@ numeric_db = (
     scalar_loss(weight_value, bias_value + epsilon)
     - scalar_loss(weight_value, bias_value - epsilon)
 ) / (2.0 * epsilon)
-relative_error = abs(analytic_dw - numeric_dw) / (abs(analytic_dw) + abs(numeric_dw) + 1e-12)
+absolute_error = abs(analytic_dw - numeric_dw)
+relative_error = absolute_error / max(abs(analytic_dw), abs(numeric_dw), 1e-8)
 
 with result_col:
     render_live_param_status_bar(
@@ -251,6 +297,7 @@ with result_col:
             ("预测误差 (z-y)", f"{prediction - target_value:+.4f}"),
             ("解析梯度 ∂L/∂w", f"{analytic_dw:+.4f}"),
             ("数值梯度 (有限差分)", f"{numeric_dw:+.4f}"),
+            ("绝对误差", f"{absolute_error:.2e}"),
             ("相对误差", f"{relative_error:.2e}"),
         ],
         tag="EXACT MATCH [PASS]" if relative_error < 1e-5 else "STEP TUNING [WARN]",
@@ -268,12 +315,16 @@ with result_col:
     )
 
     if relative_error < 1e-5:
-        st.success(f"[PASS] 梯度的解析值与有限差分值在 ε = 10^{epsilon_exp} 下达到 100% 高精度匹配（相对误差 {relative_error:.2e} < 1e-5）！")
+        st.success(
+            f"[PASS] 在当前输入、float64 精度和 ε = 10^{epsilon_exp} 下，解析梯度与有限差分近似一致（相对误差 {relative_error:.2e} < 1e-5）。这是一项局部检查，不是对所有输入的证明。"
+        )
     else:
-        st.warning(f"[WARN] 相对误差较大 ({relative_error:.2e})。原因：当 ε 过大（>-2）时泰勒展开截断误差显著；当 ε 过小（<-9）时 IEEE 754 浮点数相减导致有效数字丢失（灾难性消去）。")
+        st.warning(
+            f"[WARN] 相对误差较大 ({relative_error:.2e})。原因：当 ε 过大（>-2）时泰勒展开截断误差显著；当 ε 过小（<-9）时 IEEE 754 浮点数相减导致有效数字丢失（灾难性消去）。"
+        )
 
 # 误差 U 型曲线
-st.markdown("##### 误差 U 型曲线：探究截断误差与浮点舍入误差的物理边界")
+st.markdown("##### 误差 U 型曲线：观察截断误差与浮点舍入误差的数值边界")
 epsilon_grid = np.logspace(-12, -1, 80)
 errors = []
 for eps in epsilon_grid:
@@ -315,11 +366,59 @@ fig_error.update_layout(
 st.plotly_chart(fig_error, width="stretch")
 
 # ---------------------------------------------------------------------------
-# [D] 形成性小测验
+# [D] 概率、log-sum-exp、Softmax 与交叉熵
 # ---------------------------------------------------------------------------
 st.markdown(
     f'<div id="region-d" class="interactive-region" style="margin-top:1.5rem;margin-bottom:0.6rem;padding:0.45rem 0.75rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">'
-    f'{anchor_badge("D", "purple")} <b>CHECK YOUR MODEL // 形成性小测验</b>'
+    f"{anchor_badge('D', 'rose')} <b>PROBABILITY & CROSS-ENTROPY // 概率与交叉熵</b>"
+    f"</div>",
+    unsafe_allow_html=True,
+)
+
+st.markdown(
+    r"""
+    分类网络先输出任意实数 **logits**，再用 Softmax 得到和为 1 的概率：
+    $$p_i=\frac{e^{z_i}}{\sum_j e^{z_j}}.$$
+    直接计算很大的 $e^{z_i}$ 可能溢出，因此先减去最大 logit；这不会改变最终概率。
+    对目标类别 $y$，单样本交叉熵是 $L=-\log p_y$。它只评价分配给目标类别的概率，
+    不是“模型是否真正理解”的直接度量。
+    """
+)
+
+prob_col, prob_result = st.columns([1, 1.4])
+with prob_col:
+    temperature = st.slider("Softmax temperature", 0.25, 2.0, 1.0, 0.25)
+    target_class = st.radio("目标类别", ("类别 A", "类别 B", "类别 C"), horizontal=True)
+
+base_logits = np.array([2.0, 1.0, -1.0], dtype=np.float64) / temperature
+logsumexp = float(np.max(base_logits) + np.log(np.sum(np.exp(base_logits - np.max(base_logits)))))
+log_probs = base_logits - logsumexp
+probabilities = np.exp(log_probs)
+target_idx = ("类别 A", "类别 B", "类别 C").index(target_class)
+cross_entropy = float(-log_probs[target_idx])
+
+with prob_result:
+    st.dataframe(
+        {
+            "类别": ["A", "B", "C"],
+            "缩放后 logit": base_logits,
+            "Softmax 概率": probabilities,
+        },
+        width="stretch",
+        hide_index=True,
+    )
+    st.markdown(
+        f"概率和：`{probabilities.sum():.12f}`　｜　目标概率：`{probabilities[target_idx]:.6f}`　｜　"
+        f"交叉熵：`{cross_entropy:.6f}`"
+    )
+    st.caption("较低 temperature 通常让同一组 logits 的分布更尖；这不保证预测更正确或更有创造力。")
+
+# ---------------------------------------------------------------------------
+# [E] 形成性小测验
+# ---------------------------------------------------------------------------
+st.markdown(
+    f'<div id="region-e" class="interactive-region" style="margin-top:1.5rem;margin-bottom:0.6rem;padding:0.45rem 0.75rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">'
+    f"{anchor_badge('E', 'purple')} <b>CHECK YOUR MODEL // 形成性小测验</b>"
     f"</div>",
     unsafe_allow_html=True,
 )
@@ -330,19 +429,24 @@ answer = st.radio(
     index=None,
 )
 if answer == "减小 w":
-    st.success("[PASS] 回答正确！根据梯度下降更新公式 w ← w - η · (∂L/∂w)，当导数为正时，减去正数使得 w 向左（变小）移动，朝着损失下降的方向前进。")
+    st.success(
+        "[PASS] 回答正确！根据梯度下降更新公式 w ← w - η · (∂L/∂w)，当导数为正时，减去正数使得 w 向左（变小）移动，朝着损失下降的方向前进。"
+    )
 elif answer is not None:
-    st.error("[FAIL] 再看一次更新公式：w ← w - η · (∂L/∂w)。注意前面的负号！负导数方向才是损失下降最快的方向。")
+    st.error(
+        "[FAIL] 再看一次更新公式：w ← w - η · (∂L/∂w)。注意前面的负号！负导数方向才是损失下降最快的方向。"
+    )
 
 # ---------------------------------------------------------------------------
-# [E] 先修基础总结与进阶通关要求
+# [F] 先修基础总结与进阶通关要求
 # ---------------------------------------------------------------------------
 st.markdown(
-    f'<div id="region-e" class="interactive-region" style="margin-top:1.5rem;margin-bottom:0.6rem;padding:0.45rem 0.75rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">'
-    f'{anchor_badge("E", "blue")} <b>MILESTONE CRITERIA // 先修基础总结与通关标准</b>'
+    f'<div id="region-f" class="interactive-region" style="margin-top:1.5rem;margin-bottom:0.6rem;padding:0.45rem 0.75rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">'
+    f"{anchor_badge('F', 'blue')} <b>MILESTONE CRITERIA // 先修基础总结与通关标准</b>"
     f"</div>",
     unsafe_allow_html=True,
 )
 
-st.caption("里程碑 M00 完成标准：能通俗解释 batch, input_features, output_features 物理意义，掌握矩阵乘法维度相消法则与有限差分梯度检查。")
-
+st.caption(
+    "里程碑 M00 完成标准：能解释 batch/input/output shape、链式法则与有限差分的局限，并能从 logits 稳定计算 Softmax 概率和交叉熵。"
+)

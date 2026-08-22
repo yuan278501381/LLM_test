@@ -17,7 +17,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from dashboard.components.charts import _apply_light_theme
-from dashboard.components.pedagogy import render_lesson_evidence
+from dashboard.components.pedagogy import render_core_result_evidence, render_lesson_evidence
 from dashboard.styles.theme import (
     anchor_badge,
     apply_custom_theme,
@@ -43,6 +43,7 @@ st.set_page_config(
 
 apply_custom_theme()
 render_lesson_evidence("M11", show_contract=True)
+render_core_result_evidence("M11")
 
 render_hero_header(
     title="音频信号与语音理解架构",
@@ -299,7 +300,7 @@ with col_wave_plot:
         yaxis=dict(title="振幅 (-1.0 ~ +1.0)", range=[-1.1, 1.1]),
         margin=dict(l=40, r=20, t=30, b=40),
     )
-    fig_wave = _apply_light_theme(fig_wave, f"微观时域振动连续波形 (前 20ms)")
+    fig_wave = _apply_light_theme(fig_wave, "微观时域振动连续波形 (前 20ms)")
     st.plotly_chart(fig_wave, width="stretch")
     with st.expander("[HOW TO READ // 读图指南] 微观时域振动波形图", expanded=False):
         st.markdown(
@@ -310,20 +311,17 @@ with col_wave_plot:
             """
         )
 
-with col_audio_play:
-    with st.container(border=True):
-        st.markdown(
-            f"#### [AUDIO PLAYER // 真实播放]\n**{wave_choice.split(' ')[0]} @ {freq_val} Hz**"
-        )
-        st.caption("由纯 NumPy 实时合成，手写 44 字节 RIFF/WAVE 标准文件头：")
-        st.audio(wav_bytes, format="audio/wav")
-        st.markdown(
-            f"""
+with col_audio_play, st.container(border=True):
+    st.markdown(f"#### [AUDIO PLAYER // 真实播放]\n**{wave_choice.split(' ')[0]} @ {freq_val} Hz**")
+    st.caption("由纯 NumPy 实时合成，手写 44 字节 RIFF/WAVE 标准文件头：")
+    st.audio(wav_bytes, format="audio/wav")
+    st.markdown(
+        f"""
             - **信号时长**：`1.0 秒`
             - **采样总点数**：`{len(raw_signal):,}` 点
             - **泛音状态**：`{"已叠加 (2x, 3x)" if add_harmonics else "纯单频"}`
             """
-        )
+    )
 
 # ---------------------------------------------------------------------------
 # Section 2: 离散傅里叶变换 (FFT) 频谱分解
@@ -455,10 +453,9 @@ with col_w_pipe:
             """
         )
 
-with col_w_info:
-    with st.container(border=True):
-        st.markdown(
-            f"""
+with col_w_info, st.container(border=True):
+    st.markdown(
+        f"""
             #### [FRAME PATCHING // 连续声学帧切片]
             - **输入频谱图尺寸**：`{mel_spec.shape[0]} 频段 × {mel_spec.shape[1]} 时间帧`
             - **分帧打包倍率 (Frame Width)**：`4 帧/特征块`
@@ -466,7 +463,7 @@ with col_w_info:
             - **单块展平维度**：`{audio_tokens.shape[1]} 维`
             - **结论边界**：这些是连续浮点特征，不是离散 token id，也不是 Whisper tokenizer。
             """
-        )
+    )
 
 # ---------------------------------------------------------------------------
 # 零基础进阶：音频语音核心公式逐字拆解与名词通俗速查
@@ -479,16 +476,16 @@ with st.expander(
         ### 0. 核心公式逐字拆解：离散傅里叶变换 (FFT) 与 梅尔刻度 (Mel Scale)
         $$X[k] = \\sum_{n=0}^{N-1} x[n] \\cdot e^{-j \\frac{2\\pi k n}{N}}$$
         $$m = 2595 \\cdot \\log_{10}\\left(1 + \\frac{f}{700}\\right)$$
-        
+
         | 符号 | 中文名称 | 通俗大白话解释（它是什么？起什么作用？） |
         |:---:|:---:|:---|
         | **$x[n]$** | **原始时域离散音频采样点** | 麦克风录到的声波振幅序列（比如 1 秒钟有 16000 个数值）。 |
         | **$X[k]$** | **频域第 $k$ 个频率通道能量** | 傅里叶变换后的结果：把混在一起的声音拆解为“低音鼓声有多强、人声有多强、高音笛声有多强”。 |
         | **$f$** | **物理频率 (Hz)** | 客观物理世界的声波振动频率（比如人耳可听范围 20Hz ~ 20000Hz）。 |
         | **$m$** | **主观听觉梅尔频率 (Mel)** | **人耳听觉仿真器**。人耳对低频非常敏感（100Hz 到 200Hz 听起来音调翻倍），但对高频很迟钝（10000Hz 到 10100Hz 几乎听不出区别）。梅尔公式将物理频率非线性压缩，低频放大分辨率，高频粗糙化。 |
-        
+
         ---
-        
+
         ### 1. 什么是【时频谱 (Spectrogram)】？—— “声音的指纹乐谱”
         * **横轴是时间**（从前奏到副歌）；**纵轴是音高频率**（从低音贝斯到高音女高音）；**颜色越亮代表该时刻该音高的嗓门越大**！
         * 整个语音识别（ASR）本质上就是把这张“彩色乐谱”当成一张图片，用视觉 Transformer 读出里面的文字！

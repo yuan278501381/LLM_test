@@ -190,6 +190,33 @@ class TestSwiGLU:
         for p, g in params:
             assert p.shape == g.shape
 
+    def test_backward_matches_centered_difference_and_rejects_bad_contracts(self):
+        rng = np.random.default_rng(20260822)
+        layer = SwiGLU(d_model=3, d_ff=4)
+        x = rng.normal(size=(2, 3))
+        upstream = rng.normal(size=(2, 3))
+        layer.forward(x)
+        analytic_dx = layer.backward(upstream)
+
+        epsilon = 1e-6
+        numerical_dx = np.zeros_like(x)
+        for index in np.ndindex(x.shape):
+            original = x[index]
+            x[index] = original + epsilon
+            plus = float(np.sum(layer.forward(x) * upstream))
+            x[index] = original - epsilon
+            minus = float(np.sum(layer.forward(x) * upstream))
+            x[index] = original
+            numerical_dx[index] = (plus - minus) / (2 * epsilon)
+        np.testing.assert_allclose(analytic_dx, numerical_dx, atol=1e-6, rtol=1e-5)
+
+        with pytest.raises(ValueError):
+            SwiGLU(d_model=0)
+        with pytest.raises(ValueError):
+            layer.forward(np.ones((2, 2)))
+        with pytest.raises(ValueError):
+            layer.backward(np.ones((2, 2)))
+
 
 # ==========================================
 # 5. KVCache 容器测试

@@ -93,11 +93,25 @@ class TinyGPT:
         max_new_tokens: int,
         temperature: float = 0.8,
         top_k: int | None = None,
+        *,
+        seed: int | None = None,
+        rng: np.random.Generator | None = None,
     ) -> list[int]:
         """
         自回归生成循环。
         """
+        if rng is not None and seed is not None:
+            raise ValueError("seed 与 rng 只能提供一个")
+        if max_new_tokens < 0:
+            raise ValueError("max_new_tokens 不能为负数")
+        if temperature < 0 or not np.isfinite(temperature):
+            raise ValueError("temperature 必须为有限非负数")
+        if top_k is not None and not 1 <= top_k <= self.vocab_size:
+            raise ValueError("top_k 必须在 [1, vocab_size] 内")
+        generator = rng if rng is not None else np.random.default_rng(seed)
         generated = list(prompt_ids)
+        if not generated or any(token < 0 or token >= self.vocab_size for token in generated):
+            raise ValueError("prompt_ids 必须是非空的合法 token ID 列表")
 
         for _ in range(max_new_tokens):
             # 截断以适应最大序列长度
@@ -125,7 +139,7 @@ class TinyGPT:
                 exp_logits = np.exp(shifted_logits)
                 probs = exp_logits / np.sum(exp_logits)
 
-                next_token = int(np.random.choice(self.vocab_size, p=probs))
+                next_token = int(generator.choice(self.vocab_size, p=probs))
             else:
                 # 贪心解码
                 next_token = int(np.argmax(next_token_logits))

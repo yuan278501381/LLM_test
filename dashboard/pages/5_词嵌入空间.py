@@ -13,6 +13,7 @@ if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
 import importlib
+
 import numpy as np
 import pandas as pd
 import streamlit as st
@@ -22,7 +23,7 @@ import dashboard.components.charts
 importlib.reload(dashboard.components.charts)
 
 from dashboard.components.charts import plot_embedding_space
-from dashboard.components.pedagogy import render_lesson_evidence
+from dashboard.components.pedagogy import render_core_result_evidence, render_lesson_evidence
 from dashboard.styles.theme import (
     anchor_badge,
     apply_custom_theme,
@@ -33,7 +34,7 @@ from dashboard.styles.theme import (
     render_section_heading,
     render_vector_equation_card,
 )
-from nn_core.embeddings import get_mini_vocab, get_pretrained_embeddings
+from nn_core.embeddings import get_mini_vocab, get_synthetic_demo_embeddings
 
 st.set_page_config(
     page_title="Word Embedding · NN Playground",
@@ -41,7 +42,8 @@ st.set_page_config(
 )
 
 apply_custom_theme()
-render_lesson_evidence("M05")
+render_lesson_evidence("M05", show_contract=True)
+render_core_result_evidence("M05")
 
 render_hero_header(
     title="词嵌入语义空间",
@@ -87,7 +89,7 @@ render_page_guide(
         {
             "id": "E",
             "name": "前沿 BPE 分词实验室",
-            "desc": "探索工业级大模型的分词切片与贪心合并过程",
+            "desc": "探索教学级 BPE 分词的切片与合并过程",
             "color": "blue",
             "target_id": "region-e",
         },
@@ -95,8 +97,8 @@ render_page_guide(
     plain_intro=(
         f"<b>词嵌入将每个词汇映射为高维空间中的'方向坐标'</b>。<br>"
         f"在神经网络中，原本孤立的字符串，会被映射为一个 32 维的实数向量。<br>"
-        f"于是，<b>词与词之间的空间距离就代表了语义的远近</b>，如 cat 和 dog 靠得很近；"
-        f"我们甚至可以在 {anchor_badge('[A. 算术控制台]', 'amber', target_id='region-a')} 直接进行向量加减：<b>国王 - 男人 + 女人 ≈ 女王</b>，并在 {anchor_badge('[D. 3D 空间]', 'purple', target_id='region-d')} 亲眼看到平行的位移虚线！<br><br>"
+        f"下方 32 维向量是<b>代码人工注入关系轴的合成数据</b>，用来学习余弦相似度和类比运算，不是语料训练结果。"
+        f"真实嵌入中的距离受训练目标、上下文和各向异性影响；<code>king - man + woman ≈ queen</code> 是某些词向量的经典现象，不等于逻辑推理证明。<br><br>"
         f"<b>【2026 前沿拓展】：BPE (字节对编码) 分词</b><br>"
         f"在查表前，现代大模型在 {anchor_badge('[E. BPE 分词实验室]', 'blue', target_id='region-e')} 采用 BPE 贪心合并策略，"
         f"将高频词缀合并为一个专属 Token，兼顾词汇量与未登录词（OOV）的处理。"
@@ -113,7 +115,7 @@ render_page_guide(
         f"• <b>在 {anchor_badge('[E. BPE 实验室]', 'blue', target_id='region-e')} 验证</b>：实时展示输入文本的字符级切片与高频词块的贪心合并轨迹。"
     ),
     experiments=[
-        f"<b>第 1 步【观察聚类】</b>：在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')}【高亮语义组】选择 <code>王族 (Royalty)</code> 或 <code>动物 (Animals)</code>，旋转 {anchor_badge('[D. 3D 图表]', 'purple', target_id='region-d')}，观察相关词汇如何自然聚集在同一个空间角落！",
+        f"<b>第 1 步【观察投影】</b>：在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 选择高亮组并旋转 {anchor_badge('[D. 3D 图表]', 'purple', target_id='region-d')}；这是合成向量的 PCA 投影，低维距离可能失真，需与原 32 维余弦值对照。",
         f"<b>第 2 步【见证经典算术】</b>：在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 选择 <code>king - man + woman</code>，观察 {anchor_badge('[C. 算术遥测]', 'emerald', target_id='region-c')} 计算结果中最接近的词是不是 <code>queen (女王)</code>！",
         f"<b>第 3 步【体验 BPE 分词合并】</b>：滚动到 {anchor_badge('[E. BPE 实验室]', 'blue', target_id='region-e')}，尝试输入长难句，观察系统如何将碎片的字母一步步合并为有意义的专属 Token！",
     ],
@@ -132,7 +134,7 @@ st.sidebar.markdown(
 # ---------------------------------------------------------------------------
 raw_vocab = get_mini_vocab()
 vocab_words = list(raw_vocab.keys())
-embeddings_matrix = get_pretrained_embeddings(len(vocab_words), d_model=32)
+embeddings_matrix = get_synthetic_demo_embeddings(len(vocab_words), d_model=32)
 
 # 中文对照映射表，提升易读性
 CN_LABEL_MAP: dict[str, str] = {
@@ -360,7 +362,7 @@ render_live_param_status_bar(
         ("向量维度 d_model", f"{embeddings_matrix.shape[1]}D"),
         ("词表规模 |V|", f"{len(vocab_words)} words"),
     ],
-    tag="LINEAR ANALOGY VERIFIED",
+    tag="SYNTHETIC GEOMETRY",
     tag_color="emerald",
 )
 
@@ -407,11 +409,10 @@ st.plotly_chart(fig_space, width="stretch")
 with st.expander("[HOW TO READ // 读图指南] 空间距离与向量语义算术", expanded=False):
     st.markdown(
         """
-        * **1. 点的相对位置**：空间中靠得越近的词，**语义越相似**（如 `cat` 和 `dog` 会自动聚成一团，`king` 和 `queen` 靠得很近）。
+        * **1. 点的相对位置**：这是人工构造的 32 维向量的 PCA 投影。投影会压缩信息，因此图上距离不是原空间距离，更不能单独证明语义。
         * **2. 彩色虚线箭头（向量算术）**：
-          * 红色箭头代表 $A \\to B$ 的语义位移（如从 `man` 走向 `king`，代表赋予“帝王统治权力”）；
-          * 蓝色箭头代表 $C \\to Result$ 的平行位移（如从 `woman` 沿同样方向位移，精确落在 `queen` 上！）；
-        * [OPTIMAL] **【最优形态】**：两个箭头几乎完全平行且长度相同，形成一个优雅的**空间平行四边形**，代表模型学会了真正的逻辑类比能力！
+          * 红、蓝箭头展示两个向量差在投影中的方向；它们的关系由演示数据人工设定。
+        * **结论边界**：图只说明“向量关系可用加减和相似度查询”，不证明模型具有逻辑类比能力。
         """
     )
 
@@ -431,7 +432,7 @@ with col_eqn:
 # ---------------------------------------------------------------------------
 # 底部理论对比卡片：One-Hot vs Dense Embedding
 # ---------------------------------------------------------------------------
-render_section_heading("SPARSE VS DENSE // 为什么传统 One-Hot 无法做深度学习？", icon_name="zap")
+render_section_heading("SPARSE VS DENSE // One-Hot 为何通常需要学习嵌入？", icon_name="zap")
 
 col_oh, col_emb = st.columns(2)
 with col_oh:
@@ -440,10 +441,10 @@ with col_oh:
             """
             #### [SPARSE // 稀疏孤立] 传统 One-Hot 编码
             - **形式**：`[0, 0, 0, 1, 0, ..., 0]` (长度等于全词表容量，如 50,000 维)
-            - **致命缺陷**：
+            - **局限**：
               1. **维度灾难**：词表多大，向量就有多长，内存极度浪费；
               2. **正交孤立**：任意两个词的点积恒为 0，`cat` 和 `dog` 的相似度与 `cat` 和 `refrigerator` 毫无区别；
-              3. **无法计算**：完全无法支持向量加减算术与泛化。
+              3. **缺少内生几何关系**：它仍可作为模型输入，但通常要通过嵌入层学习密集表示。
             """
         )
 
@@ -454,9 +455,9 @@ with col_emb:
             #### [DENSE // 连续密集] 词嵌入 (Word Embedding)
             - **形式**：`[0.24, -0.81, 0.43, ..., 0.15]` (低维连续实数空间，如 32~768 维)
             - **核心威力**：
-              1. **语义几何化**：空间距离（余弦夹角）直接代表概念相似度；
-              2. **特征解耦**：不同维度自发学到性别、时态、国属、动静等抽象属性；
-              3. **现代 LLM 的基石**：所有 Transformer 和 ChatGPT 的输入第一站都是 Embedding！
+              1. **可学习的几何表示**：训练目标可使某些几何关系与语言规律相关，但并非唯一或绝对语义尺度；
+              2. **分布式特征**：概念通常分布在多个维度，不应预设单一维必然对应某个抽象属性；
+              3. **适用范围**：许多神经语言模型使用 token embedding，具体 tokenizer、位置表示和多模态输入形式会不同。
             """
         )
 
@@ -468,13 +469,13 @@ with st.expander("[GROWTH GUIDE // 成长指南] 词嵌入与余弦相似度核�
         """
         ### 0. 核心公式逐字拆解：余弦相似度 (Cosine Similarity)
         $$\\text{Cosine}(u, v) = \\cos(\\theta) = \\frac{u \\cdot v}{\\|u\\| \\|v\\|} = \\frac{\\sum_{i=1}^d u_i v_i}{\\sqrt{\\sum u_i^2} \\cdot \\sqrt{\\sum v_i^2}}$$
-        
+
         | 符号 | 中文名称 | 通俗大白话解释（它是什么？起什么作用？） |
         |:---:|:---:|:---|
         | **$u, v$** | **待比较的两个词向量** | 比如 $u$ 代表“国王”的 32 维特征向量，$v$ 代表“女王”的 32 维特征向量。 |
         | **$u \\cdot v$** | **向量点积 (Dot Product)** | 对应维度数值相乘后累加。如果两个词在很多维度上都有相同的正负号，点积就会非常大。 |
         | **$\\|u\\|, \\|v\\|$** | **向量的长度模长 (L2 Norm)** | 消除词频或长短带来的干扰，只比较**纯粹的方向夹角**。 |
-        | **$\\text{Cosine} \\in [-1, 1]$** | **余弦相似度数值** | • **+1.0**：完全重合同义词；<br>• **0.0**：垂直正交毫无关联（如香蕉与量子力学）；<br>• **-1.0**：方向完全相反的反义词。 |
+        | **$\\text{Cosine} \\in [-1, 1]$** | **几何方向的度量** | +1 表示同向，0 表示正交，-1 表示反向。它们是数学关系，不分别等同于“同义/无关/反义”；语义解释取决于训练与上下文。 |
         """
     )
 
@@ -493,29 +494,28 @@ st.markdown(
 
 col_bpe_in, col_bpe_viz = st.columns([1, 1.3])
 
-with col_bpe_in:
-    with st.container(border=True):
-        st.markdown("#### [INPUT CORPUS // 分词测试文本]")
-        sample_bpe_text = st.text_area(
-            "输入任意文本观察 BPE 分词切分",
-            "the king and the queen ruled the kingdom and the queen was very happy",
-            height=100,
-            key="bpe_input_text",
-        )
-        target_vocab_size = st.slider(
-            "目标词表容量 (Vocab Size)", min_value=260, max_value=280, value=268, step=1
-        )
+with col_bpe_in, st.container(border=True):
+    st.markdown("#### [INPUT CORPUS // 分词测试文本]")
+    sample_bpe_text = st.text_area(
+        "输入任意文本观察 BPE 分词切分",
+        "the king and the queen ruled the kingdom and the queen was very happy",
+        height=100,
+        key="bpe_input_text",
+    )
+    target_vocab_size = st.slider(
+        "目标词表容量 (Vocab Size)", min_value=260, max_value=280, value=268, step=1
+    )
 
-        from nn_core.bpe import BytePairEncoder
+    from nn_core.bpe import BytePairEncoder
 
-        bpe_engine = BytePairEncoder(vocab_size=target_vocab_size)
-        bpe_engine.train(sample_bpe_text)
+    bpe_engine = BytePairEncoder(vocab_size=target_vocab_size)
+    bpe_engine.train(sample_bpe_text)
 
-        encoded_tokens = bpe_engine.encode(sample_bpe_text)
-        visual_chunks = bpe_engine.tokenize_visual_chunks(sample_bpe_text)
-        raw_bytes_len = len(sample_bpe_text.encode("utf-8"))
-        token_count = len(encoded_tokens)
-        compression_ratio = raw_bytes_len / max(1, token_count)
+    encoded_tokens = bpe_engine.encode(sample_bpe_text)
+    visual_chunks = bpe_engine.tokenize_visual_chunks(sample_bpe_text)
+    raw_bytes_len = len(sample_bpe_text.encode("utf-8"))
+    token_count = len(encoded_tokens)
+    compression_ratio = raw_bytes_len / max(1, token_count)
 
 with col_bpe_viz:
     with st.container(border=True):

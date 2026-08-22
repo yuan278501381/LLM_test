@@ -13,6 +13,7 @@ if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
 import importlib
+
 import numpy as np
 import plotly.graph_objects as go
 import streamlit as st
@@ -22,7 +23,7 @@ import dashboard.components.charts
 importlib.reload(dashboard.components.charts)
 
 from dashboard.components.charts import _apply_light_theme, plot_attention_heatmap_nlp
-from dashboard.components.pedagogy import render_lesson_evidence
+from dashboard.components.pedagogy import render_core_result_evidence, render_lesson_evidence
 from dashboard.styles.theme import (
     anchor_badge,
     apply_custom_theme,
@@ -32,8 +33,8 @@ from dashboard.styles.theme import (
     render_page_guide,
     render_section_heading,
 )
-from nn_core.attention import MultiHeadAttention, causal_mask, scaled_dot_product_attention
-from nn_core.embeddings import Embedding, get_mini_vocab, get_pretrained_embeddings
+from nn_core.attention import MultiHeadAttention, causal_mask
+from nn_core.embeddings import Embedding, get_mini_vocab, get_synthetic_demo_embeddings
 
 st.set_page_config(
     page_title="Attention Mechanism · NN Playground",
@@ -41,7 +42,8 @@ st.set_page_config(
 )
 
 apply_custom_theme()
-render_lesson_evidence("M07")
+render_lesson_evidence("M07", show_contract=True)
+render_core_result_evidence("M07")
 
 render_hero_header(
     title="注意力机制与动态路由",
@@ -93,18 +95,18 @@ render_page_guide(
         },
     ],
     plain_intro=(
-        f"<b>注意力机制就像考试时的'开卷查阅'</b>。<br>"
-        f"它不再强迫模型死记硬背所有前文，而是让每一个词手握一个<b>搜索探针 (Query)</b>；<br>"
-        f"去和其他所有词的<b>索引标签 (Key)</b> 做点积匹配，算出相关度得分；<br>"
-        f"最后把最相关的词的<b>信息载荷 (Value)</b> 打包提取出来！<br><br>"
-        f"<b>【2026 前沿拓展】：RoPE 与 GQA</b><br>"
-        f"现代大模型（如 Llama-3）改用 <b>RoPE 旋转位置编码</b> 使点积自带相对距离衰减；"
-        f"同时采用 <b>GQA 分组查询</b> 让多个 Query 头共享 Key/Value，极大降低了显存开销！"
+        "<b>注意力机制就像考试时的'开卷查阅'</b>。<br>"
+        "它不再强迫模型死记硬背所有前文，而是让每一个词手握一个<b>搜索探针 (Query)</b>；<br>"
+        "去和其他所有词的<b>索引标签 (Key)</b> 做点积匹配，算出相关度得分；<br>"
+        "最后把最相关的词的<b>信息载荷 (Value)</b> 打包提取出来！<br><br>"
+        "<b>【2026 前沿拓展】：RoPE 与 GQA</b><br>"
+        "现代大模型（如 Llama-3）改用 <b>RoPE 旋转位置编码</b> 使点积自带相对距离衰减；"
+        "同时采用 <b>GQA 分组查询</b> 让多个 Query 头共享 Key/Value，极大降低了显存开销！"
     ),
     hyperparams_desc=(
         f"• <b>在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 调节</b>：<br>"
         f"• <b>测试句子</b>：观察不同句子中词与词之间的注意力连线。<br>"
-        f"• <b>注意力头数 (Heads)</b>：相当于多组独立的探照灯，各自关注语法、语义或代词指代。<br>"
+        f"• <b>注意力头数 (Heads)</b>：将特征拆分到多个子空间独立计算后拼接。经训练的头可能出现专门化，但本页未训练权重不支持语法/语义标签。<br>"
         f"• <b>缩放因子开关 (1/√d_k)</b>：验证为什么高维点积必须除以 $\\sqrt{{d_k}}$ 防止 Softmax 极化失效。<br>"
         f"• <b>因果掩码 (Causal Mask)</b>：确保生成模型只能看过去、绝不能偷看未来。"
     ),
@@ -114,9 +116,9 @@ render_page_guide(
         f"• <b>在 {anchor_badge('[C. 注意力遥测]', 'emerald', target_id='region-c')} 评估</b>：分布熵与峰值极化状态。"
     ),
     experiments=[
-        f"<b>第 1 步【看懂聚光灯】</b>：观察默认句子中，词汇 <code>queen</code> 在处理时如何对 <code>king</code> 产生强烈的注意力响应！",
-        f"<b>第 2 步【体验缩放因子】</b>：在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 关闭【缩放因子 (1/√d_k)】，观察 {anchor_badge('[E. 热力图]', 'blue', target_id='region-e')}：没有缩放时，矩阵瞬间极化为非 0 即 1，梯度彻底消失！",
-        f"<b>第 3 步【探索前沿架构】</b>：滚动到底部实验室，对比 RoPE 的相对距离热力图，并切换 GQA/MHA 选项，观察显存压缩比如何从 1.0x 暴涨至 4.0x！",
+        "<b>第 1 步【看懂聚光灯】</b>：观察默认句子中，词汇 <code>queen</code> 在处理时如何对 <code>king</code> 产生强烈的注意力响应！",
+        "<b>第 2 步【体验缩放因子】</b>：关闭 <code>1/√d_k</code> 并比较 logits 方差与 softmax 熟化程度。在常用独立分量假设下，未缩放点积方差随 $d_k$ 增长，增加饱和和小梯度风险；不保证任意输入都变成 0/1。",
+        "<b>第 3 步【探索前沿架构】</b>：滚动到底部实验室，对比 RoPE 的相对距离热力图，并切换 GQA/MHA 选项，观察显存压缩比如何从 1.0x 暴涨至 4.0x！",
     ],
 )
 
@@ -133,7 +135,7 @@ st.sidebar.markdown(
 # ---------------------------------------------------------------------------
 raw_vocab = get_mini_vocab()
 vocab_words = list(raw_vocab.keys())
-embed_weights = get_pretrained_embeddings(len(vocab_words), d_model=32)
+embed_weights = get_synthetic_demo_embeddings(len(vocab_words), d_model=32)
 
 embedding_layer = Embedding(vocab_size=len(vocab_words), d_model=32)
 embedding_layer.weights = embed_weights
@@ -288,33 +290,30 @@ st.markdown(
 )
 
 col_q, col_k, col_v = st.columns(3)
-with col_q:
-    with st.container(border=True):
-        st.markdown(
-            f"#### [QUERY // 查询探针]\n"
-            f"- **物理意义**：“当前词正在寻找什么？”\n"
-            f"- **张量维度**：`({seq_len}, {32 // num_heads})`\n"
-            f"- **生成方式**：$Q = X \\cdot W_Q$\n"
-            f"- **作用**：主动发起检索请求，与所有 Key 进行相似度点积。"
-        )
-with col_k:
-    with st.container(border=True):
-        st.markdown(
-            f"#### [KEY // 索引标签]\n"
-            f"- **物理意义**：“我包含什么特征来响应查询？”\n"
-            f"- **张量维度**：`({seq_len}, {32 // num_heads})`\n"
-            f"- **生成方式**：$K = X \\cdot W_K$\n"
-            f"- **作用**：被动接受匹配，$Q \\cdot K^T$ 产生 $N \\times N$ 相似度分数。"
-        )
-with col_v:
-    with st.container(border=True):
-        st.markdown(
-            f"#### [VALUE // 信息载荷]\n"
-            f"- **物理意义**：“我的实际语义内容”\n"
-            f"- **张量维度**：`({seq_len}, {32 // num_heads})`\n"
-            f"- **生成方式**：$V = X \\cdot W_V$\n"
-            f"- **作用**：按照 Softmax 归一化权重 $\\alpha$ 进行加权求和输出。"
-        )
+with col_q, st.container(border=True):
+    st.markdown(
+        f"#### [QUERY // 查询探针]\n"
+        f"- **物理意义**：“当前词正在寻找什么？”\n"
+        f"- **张量维度**：`({seq_len}, {32 // num_heads})`\n"
+        f"- **生成方式**：$Q = X \\cdot W_Q$\n"
+        f"- **作用**：主动发起检索请求，与所有 Key 进行相似度点积。"
+    )
+with col_k, st.container(border=True):
+    st.markdown(
+        f"#### [KEY // 索引标签]\n"
+        f"- **物理意义**：“我包含什么特征来响应查询？”\n"
+        f"- **张量维度**：`({seq_len}, {32 // num_heads})`\n"
+        f"- **生成方式**：$K = X \\cdot W_K$\n"
+        f"- **作用**：被动接受匹配，$Q \\cdot K^T$ 产生 $N \\times N$ 相似度分数。"
+    )
+with col_v, st.container(border=True):
+    st.markdown(
+        f"#### [VALUE // 信息载荷]\n"
+        f"- **计算意义**：被注意力权重加权求和的特征向量；是否编码语义取决于训练\n"
+        f"- **张量维度**：`({seq_len}, {32 // num_heads})`\n"
+        f"- **生成方式**：$V = X \\cdot W_V$\n"
+        f"- **作用**：按照 Softmax 归一化权重 $\\alpha$ 进行加权求和输出。"
+    )
 
 # ---------------------------------------------------------------------------
 # 主视图区 2：核心注意力矩阵热力图 & 缩放效应对比
@@ -332,7 +331,11 @@ render_live_param_status_bar(
         {"label": "Scale Factor 1/√d_k", "value": f"{1.0 / np.sqrt(d_k):.3f}", "color": "blue"},
         {"label": "Entropy H", "value": f"{entropy:.2f} nats", "color": "emerald"},
         {"label": "Max Peak α", "value": f"{max_attn_val * 100:.1f}%", "color": "purple"},
-        {"label": "Mask Type", "value": "Causal" if use_causal_mask else "Full Bidirectional", "color": "amber"},
+        {
+            "label": "Mask Type",
+            "value": "Causal" if use_causal_mask else "Full Bidirectional",
+            "color": "amber",
+        },
     ],
     metrics=[
         ("多头数量 h", f"{num_heads}"),
@@ -359,7 +362,7 @@ with col_main_heat:
             * **纵轴 (Query)**：“发出查询的当前词”；**横轴 (Key)**：“被查询关注的历史词”。
             * **颜色深浅**：方格越亮（亮黄/亮绿），代表当前词对该历史词的**注意力权重占比越高**（每一行的概率总和严格等于 $1.0$）。
             * **右上角全灰**：因果下三角掩码生效，防止当前词穿越时空偷看未来词。
-            * **[OPTIMAL // 观察要点]**：观察代词（如 `it`）是否跨距离高亮连接回它所指代的主语名词。
+            * **[观察要点]**：你可以查看某行权重分布，但本页权重未经语言任务训练；高亮连接不能解读为代词指代的证据。
             """
         )
 
@@ -382,7 +385,7 @@ with col_cmp_heat:
         st.markdown(
             """
             * **上方 [SCALED]**：除了最相关的词高亮外，其余词保留适当注意力过渡（软性 Softmax），梯度反向传播顺畅。
-            * **下方 [UNSCALED]**：Softmax 发生极化死锁，单点达到 100% 其余全为 0（退化为硬性 Hardmax），梯度近乎完全消失。
+            * **下方 [UNSCALED]**：对照 logits 和权重的分布。未缩放点积在较大 $d_k$ 或较大输入范数下更可能饱和，具体程度取决于输入和权重。
             """
         )
 
@@ -474,43 +477,42 @@ with col_rope:
                 """
             )
 
-with col_gqa:
-    with st.container(border=True):
-        st.markdown("#### [GQA // 分组查询注意力] 显存瓶颈破局者")
-        st.caption("多个 Query 头共享同一组 Key/Value 头，大幅缩减推理时 KV-Cache 显存开销。")
+with col_gqa, st.container(border=True):
+    st.markdown("#### [GQA // 分组查询注意力] 显存瓶颈破局者")
+    st.caption("多个 Query 头共享同一组 Key/Value 头，大幅缩减推理时 KV-Cache 显存开销。")
 
-        kv_heads_choice = st.radio(
-            "选择 KV 头配置架构",
-            options=[
-                "MHA (8 Q / 8 KV) - 1.0× 无压缩",
-                "GQA (8 Q / 2 KV) - 4.0× 压缩 [推荐]",
-                "MQA (8 Q / 1 KV) - 8.0× 极速",
-            ],
-            index=1,
-            horizontal=True,
-        )
+    kv_heads_choice = st.radio(
+        "选择 KV 头配置架构",
+        options=[
+            "MHA (8 Q / 8 KV) - 1.0× 无压缩",
+            "GQA (8 Q / 2 KV) - 4.0× 压缩 [推荐]",
+            "MQA (8 Q / 1 KV) - 8.0× 极速",
+        ],
+        index=1,
+        horizontal=True,
+    )
 
-        n_kv = 8 if "MHA" in kv_heads_choice else (2 if "GQA" in kv_heads_choice else 1)
-        from nn_core.gqa import GroupedQueryAttention
+    n_kv = 8 if "MHA" in kv_heads_choice else (2 if "GQA" in kv_heads_choice else 1)
+    from nn_core.gqa import GroupedQueryAttention
 
-        gqa_engine = GroupedQueryAttention(d_model=32, num_heads=8, num_kv_heads=n_kv)
-        gqa_stats = gqa_engine.get_kv_cache_savings()
+    gqa_engine = GroupedQueryAttention(d_model=32, num_heads=8, num_kv_heads=n_kv)
+    gqa_stats = gqa_engine.get_kv_cache_savings()
 
-        st.metric(
-            label="KV-Cache 显存吞吐压缩比",
-            value=f"{gqa_stats['compression_ratio']:.1f}× 压缩",
-            delta=f"为每步自回归推理节省 {gqa_stats['memory_saved_percent']:.1f}% 显存带宽",
-            delta_color="normal",
-        )
+    st.metric(
+        label="KV-Cache 显存吞吐压缩比",
+        value=f"{gqa_stats['compression_ratio']:.1f}× 压缩",
+        delta=f"为每步自回归推理节省 {gqa_stats['memory_saved_percent']:.1f}% 显存带宽",
+        delta_color="normal",
+    )
 
-        # 显示路由矩阵关系
-        st.markdown(
-            f"""
+    # 显示路由矩阵关系
+    st.markdown(
+        f"""
             - **Query 头数**：`8 个` (负责保持全量多角度表征能力)
             - **Key/Value 头数**：`{n_kv} 个` (负责紧凑缓存)
             - **广播倍数**：每组由 `{8 // n_kv} 个 Query 头` 共享 1 个 KV 键值对
             """
-        )
+    )
 
 # ---------------------------------------------------------------------------
 # 零基础进阶：注意力机制核心公式拆解与通俗速查
@@ -522,7 +524,7 @@ with st.expander(
         """
         ### 0. 核心公式逐字拆解：缩放点积注意力 (Scaled Dot-Product Attention)
         $$\\text{Attention}(Q, K, V) = \\text{Softmax}\\left(\\frac{Q K^T}{\\sqrt{d_k}} + M\\right) V$$
-        
+
         | 符号 | 中文名称 | 矩阵形状 (Shape) | 通俗大白话解释（它是什么？起什么作用？） |
         |:---:|:---:|:---:|:---|
         | **$Q$** | **查询矩阵 (Query)** | $N \\times d_k$ | **“当前词发出的搜索需求”**。比如主语“猫咪”发出 Query：“我的谓语动词在哪里？” |
@@ -531,15 +533,12 @@ with st.expander(
         | **$\\sqrt{d_k}$** | **维度缩放因子 (Scale Factor)** | 标量 (如 $\\sqrt{16}=4$) | **防爆炸调节阀**。向量维度高时，点积结果容易变得巨大，除以 $\\sqrt{d_k}$ 可以把方差拉回 1.0，防止 Softmax 梯度饱和进入死区。 |
         | **$M$** | **因果掩码 (Causal Mask)** | $N \\times N$ | **防剧透挡板**。上三角全为 $-\\infty$（负无穷），禁止当前词偷看后文。 |
         | **$\\text{Softmax}$** | **归一化概率转换** | $N \\times N$ | 把打分转为百分比概率，**确保每一行加起来严格等于 100% (1.0)**。 |
-        | **$V$** | **值矩阵 (Value)** | $N \\times d_v$ | **“每个词携带的真正语义内容”**。最终按照 Softmax 算出的百分比权重把所有 Value 打包加权输出！ |
-        
+        | **$V$** | **值矩阵 (Value)** | $N \\times d_v$ | 被 Softmax 权重加权求和的特征。数学上它不自动等于“真正语义”。 |
+
         ---
-        
+
         ### 1. 什么是【多头注意力 (Multi-Head Attention)】？—— “戴多副不同度数的眼镜”
-        * **生活比喻**：看同一句话“小明在草地上踢足球”：
-          * **Head 1（语法眼）**：抓取“小明”与“踢”的主谓关系；
-          * **Head 2（地点眼）**：抓取“踢”与“草地上”的状语关系；
-          * **Head 3（物体眼）**：抓取“踢”与“足球”的动宾关系。
-        * **多头合力**：每个头独立观察一个维度的语义，最后拼接在一起，形成全方位的立体理解！
+        * **结构**：不同头有独立的 Q/K/V 投影参数，各自计算特征混合，再拼接并线性投影。多头提供多个子空间，但不预先指定每个头的语言学角色。
+        * **结论边界**：只有在经训练模型上做系统探针、干预和多方法验证，才可谨慎讨论头的专门化；注意力权重本身不是因果解释。
         """
     )

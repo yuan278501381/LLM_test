@@ -9,6 +9,7 @@ dashboard.styles.theme - 统一的现代亮色视觉系统 (Light Mode Design Sy
 - 针对零基础初学者定制的保姆级新手教学指引系统 (Zero-Barrier Beginner Pedagogy)
 """
 
+import contextlib
 import importlib
 import json
 import sys
@@ -16,6 +17,7 @@ from functools import wraps
 from typing import Any
 
 import streamlit as st
+
 from dashboard.styles.icons import svg_icon
 
 
@@ -25,10 +27,8 @@ def reload_nn_core_modules() -> None:
         if mod_name.startswith("nn_core."):
             mod = sys.modules.get(mod_name)
             if mod is not None:
-                try:
+                with contextlib.suppress(Exception):
                     importlib.reload(mod)
-                except Exception:
-                    pass
 
 
 def _install_plotly_playback() -> None:
@@ -773,6 +773,7 @@ def render_page_guide(
     telemetry_desc: str,
     experiments: list[str],
     blueprint_sections: list[dict] | None = None,
+    guide_region_id: str = "region-b",
 ) -> None:
     """
     渲染全站统一的高对比度零基础教学指引卡片。
@@ -782,7 +783,7 @@ def render_page_guide(
     3. [PARAMETERS VS TELEMETRY] 输入超参数与输出指标的精确色彩映射
     4. [LAB EXPERIMENTS] 结构化探索任务清单
     """
-    icon_compass = svg_icon("compass", size=15, color="#1d4ed8")
+    svg_icon("compass", size=15, color="#1d4ed8")
     icon_bulb = svg_icon("lightbulb", size=15, color="#1d4ed8")
     icon_sliders = svg_icon("sliders", size=14, color="#b45309")
     icon_target = svg_icon("target", size=14, color="#047857")
@@ -790,7 +791,7 @@ def render_page_guide(
 
     with st.expander(f"[GROWTH GUIDE // 教学指引] {title}", expanded=True):
         render_interactive_region_header(
-            "region-b",
+            guide_region_id,
             "TEACHING GUIDE // 教学指引与实验路径",
             "B",
             "blue",
@@ -973,20 +974,20 @@ def render_live_param_status_bar(
     if metrics:
         for k, v in metrics:
             metrics_html.append(
-                f"<span style=\"color:#64748b;font-family:'JetBrains Mono', monospace;\">| {k}: <b style=\"color:#0f172a;\">{v}</b></span>"
+                f'<span style="color:#64748b;font-family:\'JetBrains Mono\', monospace;">| {k}: <b style="color:#0f172a;">{v}</b></span>'
             )
 
     tag_html = ""
     if tag:
         t_bg, t_border, t_text = color_map.get(tag_color, color_map["emerald"])
         tag_html = (
-            f'<div style="color:{t_text};font-weight:700;background:{t_bg};border:1px solid {t_border};padding:0.12rem 0.45rem;border-radius:4px;font-family:\'JetBrains Mono\', monospace;font-size:0.72rem;letter-spacing:0.02em;">'
+            f"<div style=\"color:{t_text};font-weight:700;background:{t_bg};border:1px solid {t_border};padding:0.12rem 0.45rem;border-radius:4px;font-family:'JetBrains Mono', monospace;font-size:0.72rem;letter-spacing:0.02em;\">"
             f"{tag}"
             f"</div>"
         )
 
     html = (
-        f'<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:0.5rem 0.8rem;margin-bottom:0.75rem;font-family:\'JetBrains Mono\', -apple-system, sans-serif;font-size:0.76rem;color:#1e293b;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.4rem;box-shadow:0 1px 3px rgba(15,23,42,0.02);">'
+        f"<div style=\"background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:0.5rem 0.8rem;margin-bottom:0.75rem;font-family:'JetBrains Mono', -apple-system, sans-serif;font-size:0.76rem;color:#1e293b;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.4rem;box-shadow:0 1px 3px rgba(15,23,42,0.02);\">"
         f'<div style="display:flex;align-items:center;flex-wrap:wrap;gap:0.45rem;">'
         f'<span style="color:#1e40af;font-weight:800;letter-spacing:0.02em;">[{title}]</span>'
         f"{''.join(badges_html)}"
@@ -1070,13 +1071,15 @@ def render_page_blueprint(sections: list[dict]) -> None:
         sec_color = sec.get("color", "blue")
         target_id = sec.get("target_id") or f"region-{sec_id.lower()}"
         bg_c, border_c, text_c = color_border_map.get(sec_color, color_border_map["blue"])
-        normalized_sections.append({
-            "id": sec_id,
-            "name": sec_name,
-            "desc": sec_desc,
-            "color": sec_color,
-            "target_id": target_id,
-        })
+        normalized_sections.append(
+            {
+                "id": sec_id,
+                "name": sec_name,
+                "desc": sec_desc,
+                "color": sec_color,
+                "target_id": target_id,
+            }
+        )
 
         block = (
             f'<a href="#{target_id}" style="text-decoration:none;color:inherit;flex:1 1 180px;min-width:150px;">'
@@ -1117,13 +1120,15 @@ def render_floating_hud_navigator(sections: list[dict]) -> None:
         s_desc = s.get("desc") or s.get("role") or ""
         s_color = s.get("color", "blue")
         s_target = s.get("target_id") or f"region-{s_id.lower()}"
-        normalized.append({
-            "id": s_id,
-            "name": s_name,
-            "desc": s_desc,
-            "color": s_color,
-            "target_id": s_target,
-        })
+        normalized.append(
+            {
+                "id": s_id,
+                "name": s_name,
+                "desc": s_desc,
+                "color": s_color,
+                "target_id": s_target,
+            }
+        )
     sec_json = json.dumps(normalized, ensure_ascii=False)
     js = f"""<!doctype html><html><head><meta charset="utf-8"></head><body>
     <script>
@@ -1241,7 +1246,7 @@ def render_floating_hud_navigator(sections: list[dict]) -> None:
                 item.setAttribute('data-target', targetId);
                 item.style.cssText = 'display:flex;align-items:center;gap:0.4rem;padding:0.3rem 0.45rem;border-radius:6px;text-decoration:none;color:#334155;font-weight:600;transition:all 0.15s ease;cursor:pointer;';
                 item.innerHTML = '<span style="font-family:monospace;font-size:0.72rem;font-weight:800;color:#2563eb;background:#eff6ff;border:1px solid #bfdbfe;padding:0.05rem 0.3rem;border-radius:4px;">[' + secId + ']</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:115px;">' + secName + '</span>';
-                
+
                 item.addEventListener('mouseenter', function() {{
                     if (!this.classList.contains('active')) {{
                         this.style.background = '#f8fafc';
@@ -1334,7 +1339,7 @@ def render_floating_hud_navigator(sections: list[dict]) -> None:
             doc.__nnScrollListener = updateActiveSection;
             doc.__nnScrollContainer = scrollContainer;
             scrollContainer.addEventListener('scroll', updateActiveSection, {{ passive: true }});
-            
+
             setTimeout(updateActiveSection, 300);
             setTimeout(updateActiveSection, 800);
 
@@ -1353,12 +1358,14 @@ def render_formula_breakdown_card(
     params_breakdown: list[dict],
 ) -> None:
     """渲染公式拆解卡片，展示 LaTeX 公式、数学原理与参数拆解表格。"""
-    rows_html = "".join([
-        f'<tr><td style="padding:6px 10px;font-family:monospace;font-weight:700;color:#1e40af;border-bottom:1px solid #e2e8f0;">{p.get("param", "")}</td>'
-        f'<td style="padding:6px 10px;font-family:monospace;color:#64748b;border-bottom:1px solid #e2e8f0;">{p.get("shape", "")}</td>'
-        f'<td style="padding:6px 10px;color:#334155;border-bottom:1px solid #e2e8f0;">{p.get("role", "")}</td></tr>'
-        for p in params_breakdown
-    ])
+    rows_html = "".join(
+        [
+            f'<tr><td style="padding:6px 10px;font-family:monospace;font-weight:700;color:#1e40af;border-bottom:1px solid #e2e8f0;">{p.get("param", "")}</td>'
+            f'<td style="padding:6px 10px;font-family:monospace;color:#64748b;border-bottom:1px solid #e2e8f0;">{p.get("shape", "")}</td>'
+            f'<td style="padding:6px 10px;color:#334155;border-bottom:1px solid #e2e8f0;">{p.get("role", "")}</td></tr>'
+            for p in params_breakdown
+        ]
+    )
 
     card_html = (
         f'<div style="background:#ffffff;border:1px solid #cbd5e1;border-radius:10px;padding:0.9rem 1.1rem;margin:0.8rem 0;box-shadow:0 2px 6px rgba(0,0,0,0.03);">'
@@ -1370,9 +1377,9 @@ def render_formula_breakdown_card(
         f'<th style="padding:6px 10px;border-bottom:2px solid #cbd5e1;">参数符号</th>'
         f'<th style="padding:6px 10px;border-bottom:2px solid #cbd5e1;">张量形状 (Shape)</th>'
         f'<th style="padding:6px 10px;border-bottom:2px solid #cbd5e1;">物理角色与维度意义</th>'
-        f'</tr></thead>'
-        f'<tbody>{rows_html}</tbody>'
-        f'</table>'
-        f'</div>'
+        f"</tr></thead>"
+        f"<tbody>{rows_html}</tbody>"
+        f"</table>"
+        f"</div>"
     )
     st.markdown(card_html, unsafe_allow_html=True)

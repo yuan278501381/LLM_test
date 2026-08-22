@@ -22,7 +22,11 @@ def get_all_python_files() -> list[Path]:
     """获取项目内所有 Python 源码文件 (排除 .venv, .git, .pytest_cache)"""
     py_files = []
     for root, dirs, files in os.walk(_PROJECT_ROOT):
-        dirs[:] = [d for d in dirs if not d.startswith(".") and d not in {".venv", "venv", "__pycache__", "build", "dist"}]
+        dirs[:] = [
+            d
+            for d in dirs
+            if not d.startswith(".") and d not in {".venv", "venv", "__pycache__", "build", "dist"}
+        ]
         for file in files:
             if file.endswith(".py"):
                 py_files.append(Path(root) / file)
@@ -55,12 +59,14 @@ def test_cross_module_import_integrity():
                     try:
                         mod = importlib.import_module(module_name)
                     except Exception as exc:
-                        broken_imports.append((
-                            str(file_path.relative_to(_PROJECT_ROOT)),
-                            node.lineno,
-                            f"from {module_name} import ...",
-                            f"模块导入失败: {exc}",
-                        ))
+                        broken_imports.append(
+                            (
+                                str(file_path.relative_to(_PROJECT_ROOT)),
+                                node.lineno,
+                                f"from {module_name} import ...",
+                                f"模块导入失败: {exc}",
+                            )
+                        )
                         continue
 
                     for alias in node.names:
@@ -68,12 +74,14 @@ def test_cross_module_import_integrity():
                         if sym_name == "*":
                             continue
                         if not hasattr(mod, sym_name):
-                            broken_imports.append((
-                                str(file_path.relative_to(_PROJECT_ROOT)),
-                                node.lineno,
-                                f"from {module_name} import {sym_name}",
-                                f"符号 '{sym_name}' 在模块 '{module_name}' 中不存在！",
-                            ))
+                            broken_imports.append(
+                                (
+                                    str(file_path.relative_to(_PROJECT_ROOT)),
+                                    node.lineno,
+                                    f"from {module_name} import {sym_name}",
+                                    f"符号 '{sym_name}' 在模块 '{module_name}' 中不存在！",
+                                )
+                            )
 
     error_msg = ""
     if broken_imports:

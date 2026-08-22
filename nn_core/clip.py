@@ -5,7 +5,7 @@ nn_core.clip - 对比语言-图像预训练 (CLIP) 双塔架构与对比学习�
 包含：
 - `CLIPDualEncoder`: 图文跨模态对齐双塔网络
 - `contrastive_loss`: InfoNCE 对称对比学习损失函数
-- `get_pretrained_clip_data`: 预置教学级图文对齐语义嵌入数据集
+- `get_synthetic_clip_demo_data`: 手工构造的图文相似度演示数据
 """
 
 import logging
@@ -28,6 +28,16 @@ def contrastive_loss(similarity_matrix: np.ndarray, temperature: float = 0.07) -
         $$L_{txt} = -\\frac{1}{N} \\sum_{i=1}^N \\log \\frac{e^{S_{i,i}/\\tau}}{\\sum_j e^{S_{j,i}/\\tau}}$$
         $$L_{total} = \\frac{1}{2} (L_{img} + L_{txt})$$
     """
+    similarity_matrix = np.asarray(similarity_matrix, dtype=np.float64)
+    if similarity_matrix.ndim != 2 or similarity_matrix.shape[0] == 0:
+        raise ValueError("similarity_matrix 必须是非空二维方阵")
+    if similarity_matrix.shape[0] != similarity_matrix.shape[1]:
+        raise ValueError("教学版对比损失要求图像与文本一一配对，矩阵必须为方阵")
+    if not np.all(np.isfinite(similarity_matrix)):
+        raise ValueError("similarity_matrix 必须全部为有限值")
+    if not np.isfinite(temperature) or temperature <= 0:
+        raise ValueError("temperature 必须是有限正数")
+
     N = similarity_matrix.shape[0]
     logits = similarity_matrix / temperature
     labels = np.arange(N)
@@ -102,9 +112,14 @@ class CLIPDualEncoder:
         return np.dot(img_embeds, txt_embeds.T)
 
 
-def get_pretrained_clip_data() -> tuple[list[str], list[str], np.ndarray]:
+def get_synthetic_clip_demo_data(
+    seed: int = 42,
+) -> tuple[list[str], list[str], np.ndarray]:
     """
-    返回预置的 8 组图文概念、文本描述与对齐的余弦相似度矩阵（用于教学与可视化演示）。
+    返回手工构造的 8 组图文概念与相似度矩阵。
+
+    数据由正交基底、人工相关项和高斯噪声组成，不来自 CLIP 训练或预训练权重，
+    只能用于解释对角配对与对比损失的矩阵结构。
     """
     labels = [
         "Cat (猫咪)",
@@ -130,7 +145,7 @@ def get_pretrained_clip_data() -> tuple[list[str], list[str], np.ndarray]:
     # 构建每个类别的正交基础嵌入向量
     N = 8
     dim = 16
-    np.random.seed(42)
+    rng = np.random.default_rng(seed)
 
     # 主导基底 (每个类别占领一个主要坐标轴，辅以少量语义关联)
     base_matrix = np.eye(N, dim) * 2.0
@@ -144,8 +159,8 @@ def get_pretrained_clip_data() -> tuple[list[str], list[str], np.ndarray]:
     txt_vecs = []
 
     for i in range(N):
-        iv = base_matrix[i] + np.random.randn(dim) * 0.05
-        tv = base_matrix[i] + np.random.randn(dim) * 0.05
+        iv = base_matrix[i] + rng.normal(size=dim) * 0.05
+        tv = base_matrix[i] + rng.normal(size=dim) * 0.05
         img_vecs.append(iv / np.linalg.norm(iv))
         txt_vecs.append(tv / np.linalg.norm(tv))
 
@@ -153,3 +168,16 @@ def get_pretrained_clip_data() -> tuple[list[str], list[str], np.ndarray]:
     txt_mat = np.array(txt_vecs)
     similarity = np.dot(img_mat, txt_mat.T)
     return labels, texts, similarity
+
+
+def get_pretrained_clip_data() -> tuple[list[str], list[str], np.ndarray]:
+    """兼容旧 API；返回的是合成演示数据，不是预训练 CLIP 输出。"""
+
+    import warnings
+
+    warnings.warn(
+        "get_pretrained_clip_data 名称不准确；请改用 get_synthetic_clip_demo_data",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return get_synthetic_clip_demo_data()

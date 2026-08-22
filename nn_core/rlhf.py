@@ -81,19 +81,21 @@ class PPOClipObjective:
 
     @staticmethod
     def simulate_rlhf_trajectory(n_steps: int = 20, seed: int = 42) -> dict[str, list[float]]:
-        """模拟 RLHF 训练全过程中的 Reward 上升与 KL 散度约束轨迹"""
-        np.random.seed(seed)
+        """生成预设规则曲线；不是 RLHF 训练或日志。"""
+        if n_steps <= 0:
+            raise ValueError("n_steps 必须为正数")
+        rng = np.random.default_rng(seed)
         steps = [float(step) for step in range(n_steps)]
 
         # 奖励逐步上升并平稳收敛
         t = np.linspace(0, 1, n_steps)
-        rewards = (1.2 / (1.0 + np.exp(-6 * (t - 0.3))) + np.random.randn(n_steps) * 0.03).tolist()
+        rewards = (1.2 / (1.0 + np.exp(-6 * (t - 0.3))) + rng.normal(0.0, 0.03, n_steps)).tolist()
 
         # KL 散度被 KL 控制器约束在适度范围
-        kl_divs = (0.05 + 0.3 * (1.0 - np.exp(-3 * t)) + np.random.randn(n_steps) * 0.015).tolist()
+        kl_divs = (0.05 + 0.3 * (1.0 - np.exp(-3 * t)) + rng.normal(0.0, 0.015, n_steps)).tolist()
 
         # 策略截断触发比例 (维持在 10%~20%)
-        clip_fracs = (0.12 + 0.08 * np.sin(np.pi * t) + np.random.randn(n_steps) * 0.01).tolist()
+        clip_fracs = (0.12 + 0.08 * np.sin(np.pi * t) + rng.normal(0.0, 0.01, n_steps)).tolist()
 
         return {
             "step": steps,

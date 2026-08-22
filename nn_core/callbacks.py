@@ -76,13 +76,23 @@ class EarlyStopping:
         min_delta: 最小改善阈值，默认 1e-4
     """
 
-    def __init__(self, patience: int = 10, min_delta: float = 1e-4) -> None:
+    def __init__(
+        self,
+        patience: int = 10,
+        min_delta: float = 1e-4,
+        *,
+        monitor: str = "loss",
+        restore_best_weights: bool = True,
+    ) -> None:
         if patience < 1:
             raise ValueError(f"patience 必须 >= 1，收到: {patience}")
         self.patience = patience
         self.min_delta = min_delta
+        self.monitor = monitor
+        self.restore_best_weights = restore_best_weights
         self.best_loss: float = float("inf")
         self.counter: int = 0
+        self._best_parameters: list[dict[str, np.ndarray]] | None = None
         logger.debug(
             "EarlyStopping: patience=%d, min_delta=%.6f",
             patience,
@@ -101,17 +111,20 @@ class EarlyStopping:
         Returns:
             True = 应该停止训练，False = 继续
         """
-        current_loss = logs.get("loss", float("inf"))
+        current_loss = logs.get(self.monitor, float("inf"))
 
         if current_loss < self.best_loss - self.min_delta:
             # 损失有显著改善，重置计数器
             self.best_loss = current_loss
             self.counter = 0
+            self._best_parameters = self._capture_parameters(model)
             return False
 
         # 损失没有改善，递增计数器
         self.counter += 1
         if self.counter >= self.patience:
+            if self.restore_best_weights:
+                self._restore_parameters(model)
             logger.info(
                 "EarlyStopping 触发: 连续 %d 个 epoch 无改善 (best_loss=%.6f, current=%.6f)",
                 self.patience,
@@ -125,6 +138,32 @@ class EarlyStopping:
         """重置早停状态（用于重新训练）"""
         self.best_loss = float("inf")
         self.counter = 0
+        self._best_parameters = None
+
+    @staticmethod
+    def _capture_parameters(model: Any) -> list[dict[str, np.ndarray]] | None:
+        """复制 Sequential-like 层参数；无参数模型返回 None。"""
+        layers = getattr(model, "_layers", None)
+        if layers is None:
+            return None
+        captured: list[dict[str, np.ndarray]] = []
+        for layer in layers:
+            params: dict[str, np.ndarray] = {}
+            for name in ("weights", "biases"):
+                value = getattr(layer, name, None)
+                if isinstance(value, np.ndarray):
+                    params[name] = value.copy()
+            captured.append(params)
+        return captured
+
+    def _restore_parameters(self, model: Any) -> None:
+        """在触发早停时恢复最佳 epoch 的权重和偏置。"""
+        layers = getattr(model, "_layers", None)
+        if layers is None or self._best_parameters is None:
+            return
+        for layer, params in zip(layers, self._best_parameters, strict=True):
+            for name, value in params.items():
+                setattr(layer, name, value.copy())
 
     def __repr__(self) -> str:
         return (

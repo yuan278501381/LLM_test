@@ -55,6 +55,13 @@ class TestGridWorldEnv:
         assert done
         assert info["event"] == "fell_in_trap"
 
+    def test_invalid_environment_and_action_are_rejected(self):
+        with pytest.raises(ValueError, match="grid_type"):
+            GridWorldEnv(grid_type="typo")
+        env = GridWorldEnv(grid_type="simple")
+        with pytest.raises(ValueError, match="action"):
+            env.step(4)
+
 
 class TestBellmanSolver:
     """测试贝尔曼值迭代求解器"""
@@ -69,6 +76,7 @@ class TestBellmanSolver:
         assert policy.shape == (4, 6)
         # 靠近终点的格子价值必然高于起点的价值
         assert V[2, 5] > V[3, 0]
+        assert solver.bellman_residual(V) < 1e-4
 
 
 class TestQLearningAgent:
@@ -91,6 +99,42 @@ class TestQLearningAgent:
         assert len(history["returns"]) == 50
         assert len(history["steps"]) == 50
         assert len(history["td_errors"]) == 50
+
+    def test_greedy_rollout_reports_failure_instead_of_calling_it_optimal(self):
+        env = GridWorldEnv(grid_type="simple")
+        agent = QLearningAgent(height=env.height, width=env.width, epsilon=0.0)
+        rollout = agent.greedy_rollout(env, max_steps=10)
+        assert not rollout["reached_goal"]
+        assert rollout["looped"]
+        assert rollout["event"] == "loop_detected"
+
+    def test_q_learning_reaches_goal_across_most_fixed_seeds(self):
+        successes = 0
+        gaps = []
+        env_reference = GridWorldEnv(grid_type="simple")
+        solver = BellmanSolver(env_reference, gamma=0.95, theta=1e-8)
+        optimal_values, _, _ = solver.solve()
+        optimal_start_value = optimal_values[env_reference.start_pos]
+
+        for seed in range(8):
+            env = GridWorldEnv(grid_type="simple")
+            agent = QLearningAgent(
+                height=env.height,
+                width=env.width,
+                lr=0.3,
+                gamma=0.95,
+                epsilon=1.0,
+                epsilon_decay=0.98,
+                min_epsilon=0.05,
+                seed=seed,
+            )
+            agent.train_episodes(env, n_episodes=400, max_steps=60)
+            rollout = agent.greedy_rollout(env, max_steps=30)
+            successes += int(rollout["reached_goal"])
+            gaps.append(abs(agent.q_table[env.start_pos].max() - optimal_start_value))
+
+        assert successes >= 7
+        assert float(np.median(gaps)) < 0.1
 
 
 class TestPolicyGradientAgent:
@@ -133,3 +177,10 @@ class TestGRPORunner:
         assert len(res["cases"]) == 3
         # 思考链 Token 长度应显著随轮次增长
         assert res["cot_lengths"][-1] > res["cot_lengths"][0]
+        assert GRPORunner.simulate_r1_reasoning_evolution(10, seed=7) == (
+            GRPORunner.simulate_r1_reasoning_evolution(10, seed=7)
+        )
+
+    def test_r1_simulation_rejects_nonpositive_length(self):
+        with pytest.raises(ValueError):
+            GRPORunner.simulate_r1_reasoning_evolution(0)

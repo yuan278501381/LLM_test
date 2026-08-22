@@ -444,7 +444,7 @@ def get_mini_safety() -> BenchmarkTask:
         ),
     ]
     return BenchmarkTask(
-        name="Mini-Safety (安全合规)",
-        description="红线诱导、越狱防御与道德伦理检测",
+        name="Safety-style 教学题 (安全场景)",
+        description="自建场景题；仅演示评分流程，非安全认证或正式基准",
         questions=questions,
     )

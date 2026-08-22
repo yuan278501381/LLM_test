@@ -17,20 +17,19 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from dashboard.components.charts import _apply_light_theme
-from dashboard.components.pedagogy import render_lesson_evidence
+from dashboard.components.pedagogy import render_core_result_evidence, render_lesson_evidence
 from dashboard.styles.theme import (
     anchor_badge,
     apply_custom_theme,
+    render_floating_hud_navigator,
     render_hero_header,
     render_live_param_status_bar,
     render_metric_card,
-    render_floating_hud_navigator,
     render_page_guide,
     render_section_heading,
 )
 from nn_core.evaluation import (
     EvaluationHarness,
-    compute_perplexity,
     get_mini_gsm8k,
     get_mini_hellaswag,
     get_mini_mmlu,
@@ -44,6 +43,7 @@ st.set_page_config(
 
 apply_custom_theme()
 render_lesson_evidence("M15", show_contract=True)
+render_core_result_evidence("M15")
 
 render_hero_header(
     title="大模型评估基准框架 (Harness)",
@@ -135,13 +135,13 @@ render_page_guide(
         },
     ],
     plain_intro=(
-        f"<b>大模型训练完了，怎么客观证明它比别的模型更聪明？</b><br>"
-        f"可靠评估需要公开任务、数据、提示模板、评分规则和不确定性，而不能只看主观样例。<br>"
-        f"• <b>困惑度 (Perplexity / PPL)</b>：在固定 tokenizer、数据和协议下度量平均负对数似然；跨协议数值通常不可直接比较；<br>"
-        f"• <b>Mini-MMLU (通识学科)</b>：覆盖数理化、文史哲的大综合单选题；<br>"
-        f"• <b>Mini-HellaSwag (常识推理)</b>：考察模型能否识破荒谬的常识陷阱；<br>"
-        f"• <b>Mini-GSM8K (小学数学)</b>：考验多步思维链推理能力；<br>"
-        f"• <b>Mini-Safety (安全合规)</b>：严防越狱与危险红线诱导！"
+        "<b>大模型训练完了，怎么客观证明它比别的模型更聪明？</b><br>"
+        "可靠评估需要公开任务、数据、提示模板、评分规则和不确定性，而不能只看主观样例。<br>"
+        "• <b>困惑度 (Perplexity / PPL)</b>：在固定 tokenizer、数据和协议下度量平均负对数似然；跨协议数值通常不可直接比较；<br>"
+        "• <b>MMLU-style 自建教学题</b>：多学科单选练习，非 MMLU 子集或翻译；<br>"
+        "• <b>HellaSwag-style 自建教学题</b>：常识续写形式练习，未使用原数据；<br>"
+        "• <b>GSM8K-style 自建教学题</b>：多步算术练习，未使用原数据；<br>"
+        "• <b>Safety-style 自建教学题</b>：仅用于演示评分流程，不构成安全评测。"
     ),
     hyperparams_desc=(
         f"• <b>在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 调节</b>：<br>"
@@ -156,7 +156,7 @@ render_page_guide(
     experiments=[
         f"<b>第 1 步【体验全自动考试】</b>：在 {anchor_badge('[D. 客观考场]', 'purple', target_id='region-d')} 展开具体的试卷题目，观察模型是如何选出答案并与标准答案比对判分的！",
         f"<b>第 2 步【观察雷达能力画像】</b>：在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 切换【模拟模型等级】为'强模型 (Expert)'，观察 {anchor_badge('[E. 能力雷达]', 'blue', target_id='region-e')} 雷达图面积如何全面膨胀！",
-        f"<b>第 3 步【观察采样方差】</b>：比较预设能力概率与有限题量实测分数，理解小题集成绩会随随机样本波动。",
+        "<b>第 3 步【观察采样方差】</b>：比较预设能力概率与有限题量实测分数，理解小题集成绩会随随机样本波动。",
     ],
 )
 
@@ -183,12 +183,8 @@ model_tier = st.sidebar.radio(
     index=2,
 )
 
-all_tasks_dict = {
-    "Mini-MMLU (学科通识)": get_mini_mmlu(),
-    "Mini-HellaSwag (常识推理)": get_mini_hellaswag(),
-    "Mini-GSM8K (数学推理)": get_mini_gsm8k(),
-    "Mini-Safety (安全合规)": get_mini_safety(),
-}
+all_tasks = (get_mini_mmlu(), get_mini_hellaswag(), get_mini_gsm8k(), get_mini_safety())
+all_tasks_dict = {task.name: task for task in all_tasks}
 
 selected_task_names = st.sidebar.multiselect(
     "参加评测的基准考卷",
@@ -202,22 +198,22 @@ selected_task_names = st.sidebar.multiselect(
 accuracy_prob = 0.90 if "强模型" in model_tier else (0.65 if "中等模型" in model_tier else 0.30)
 sim_ppl = 12.4 if "强模型" in model_tier else (38.6 if "中等模型" in model_tier else 145.2)
 
-np.random.seed(42)
+evaluation_rng = np.random.default_rng(42)
+simulated_predictions: dict[str, int] = {}
+for task in all_tasks:
+    for question in task.questions:
+        if evaluation_rng.random() < accuracy_prob:
+            simulated_predictions[question.question] = question.answer_idx
+        else:
+            wrong_choices = [i for i in range(len(question.choices)) if i != question.answer_idx]
+            simulated_predictions[question.question] = int(evaluation_rng.choice(wrong_choices))
 
 
 def mock_predict_fn(question: str, choices: list[str]) -> int:
-    # 模拟真实能力水平的答题预测
-    # 查找此题的真实答案
-    for t in all_tasks_dict.values():
-        for q in t.questions:
-            if q.question == question:
-                if np.random.rand() < accuracy_prob:
-                    return q.answer_idx
-                else:
-                    # 随机选择一个错误选项
-                    wrong_choices = [i for i in range(len(choices)) if i != q.answer_idx]
-                    return int(np.random.choice(wrong_choices))
-    return 0
+    del choices
+    if question not in simulated_predictions:
+        raise KeyError(f"未注册的教学题: {question}")
+    return simulated_predictions[question]
 
 
 harness = EvaluationHarness(tasks=[all_tasks_dict[name] for name in selected_task_names])
@@ -335,7 +331,8 @@ with col_ppl_gauge:
 with col_ppl_curve:
     # 模拟训练过程中 PPL 从 200 指数衰减至 10 的曲线
     steps_x = np.arange(1, 51)
-    ppl_curve = 10.0 + 190.0 * np.exp(-0.08 * steps_x) + np.random.randn(50) * 1.5
+    ppl_rng = np.random.default_rng(42)
+    ppl_curve = 10.0 + 190.0 * np.exp(-0.08 * steps_x) + ppl_rng.normal(0.0, 1.5, 50)
     fig_ppl = go.Figure()
     fig_ppl.add_trace(
         go.Scatter(
@@ -419,7 +416,7 @@ with col_radar_plot:
     r_cur = [scores_dict[k] for k in selected_task_names]
     if len(r_cur) > 0:
         r_cur.append(r_cur[0])
-        theta_labels = task_keys + [task_keys[0]]
+        theta_labels = [*task_keys, task_keys[0]]
 
         radar_fig.add_trace(
             go.Scatterpolar(
@@ -447,17 +444,16 @@ with col_radar_plot:
             """
         )
 
-with col_radar_desc:
-    with st.container(border=True):
-        st.markdown(
-            f"""
+with col_radar_desc, st.container(border=True):
+    st.markdown(
+        """
             #### [EVALUATION METRICS // 工业评测标准]
             - **MMLU**：综合通识考场，检验模型是否具备大学本科级别的跨学科知识储备；
             - **HellaSwag**：常识推理大考，杜绝模型在显而易见的物理常识面前'产生幻觉'；
             - **GSM8K**：小学多步数学应用题，衡量模型链式思考 (CoT) 与精确计算能力；
             - **Safety**：用有限测试样例探测部分安全风险；通过题集不能保证模型在所有输入下安全。
             """
-        )
+    )
 
 # ---------------------------------------------------------------------------
 # Section 4: 预设概率与有限样本得分
@@ -495,15 +491,15 @@ with st.expander(
         r"""
         ### 0. 核心公式逐字拆解：语言模型困惑度 (Perplexity / PPL)
         $$\\text{PPL} = \\exp\\left(-\\frac{1}{N} \\sum_{i=1}^N \\log P(w_i | w_{<i})\\right) = \\exp(\\text{Cross-Entropy Loss})$$
-        
+
         | 符号 | 中文名称 | 数值范围 | 通俗大白话解释（它是什么？起什么作用？） |
         |:---:|:---:|:---:|:---|
         | **$P(w_i \| w_{<i})$** | **模型猜对真实单词的置信概率** | $0.0 \\sim 1.0$ | 模型每走一步接龙时，给人类真实标准答案打出的预测概率。 |
         | **$-\\log P$** | **单步交叉熵罚分** | $\\ge 0$ | 猜得越准罚分越少；猜得越离谱罚分越大。 |
         | **$\\text{PPL}$** | **困惑度数值 (Perplexity)** | $1.0 \\sim +\\infty$ | 在固定 tokenizer、语料和计算协议下，PPL 是平均负对数似然的指数。较低通常表示对该数据分布赋予更高概率，但不直接衡量事实正确性、推理、安全或综合智能。 |
-        
+
         ---
-        
+
         ### 1. 为什么评测不能只看 MMLU 单项分？
         * **数据污染 (Data Contamination)**：很多模型在预训练时偷偷“背过了”MMLU 题库（泄题作弊）；
         * **人类偏好盲测**：可以补充静态题集，但会受到参与者、提示分布、位置偏差和统计方法影响，也不是单一“权威真值”。

@@ -25,8 +25,8 @@ from dashboard.components.param_panel import (
     render_deep_dive_card,
     render_network_params,
 )
+from dashboard.components.pedagogy import render_core_result_evidence, render_lesson_evidence
 from dashboard.constants.knowledge import OPTIMIZERS
-from dashboard.components.pedagogy import render_lesson_evidence
 from dashboard.styles.theme import (
     anchor_badge,
     apply_custom_theme,
@@ -34,7 +34,6 @@ from dashboard.styles.theme import (
     render_live_param_status_bar,
     render_metric_card,
     render_page_guide,
-    render_section_heading,
 )
 from dashboard.utils.state import (
     get_dataset,
@@ -52,7 +51,8 @@ st.set_page_config(
 )
 
 apply_custom_theme()
-render_lesson_evidence("M03")
+render_lesson_evidence("M03", show_contract=True)
+render_core_result_evidence("M03")
 
 render_hero_header(
     title="优化器多轨竞速对比",
@@ -104,12 +104,12 @@ render_page_guide(
         },
     ],
     plain_intro=(
-        f"<b>优化器（Optimizer）就是模型下山寻宝的「导航算法」！</b><br>"
-        f"模型的目标是从高山（Loss 损失很大）一路滑到谷底（Loss 为 0）。<br>"
-        f"• <b>SGD（普通梯度下降）</b>：像近视眼，只看脚下哪边陡就走哪边，容易在峡谷里来回撞墙。<br>"
-        f"• <b>Momentum（动量加速）</b>：给机器人加了滑雪惯性，能在平缓处加速冲刺，冲过小土坡。<br>"
-        f"• <b>RMSProp（自适应步长）</b>：经常大跳的参数自动减速，平缓的参数自动加速。<br>"
-        f"• <b>Adam</b>：结合一阶动量与二阶矩缩放，是常用起点；实际训练也常用 AdamW、SGD 等，结果依赖任务与超参数。"
+        "<b>优化器（Optimizer）就是模型下山寻宝的「导航算法」！</b><br>"
+        "模型的目标是从高山（Loss 损失很大）一路滑到谷底（Loss 为 0）。<br>"
+        "• <b>SGD（普通梯度下降）</b>：像近视眼，只看脚下哪边陡就走哪边，容易在峡谷里来回撞墙。<br>"
+        "• <b>Momentum（动量加速）</b>：给机器人加了滑雪惯性，能在平缓处加速冲刺，冲过小土坡。<br>"
+        "• <b>RMSProp（自适应步长）</b>：经常大跳的参数自动减速，平缓的参数自动加速。<br>"
+        "• <b>Adam</b>：结合一阶动量与二阶矩缩放，是常用起点；实际训练也常用 AdamW、SGD 等，结果依赖任务与超参数。"
     ),
     hyperparams_desc=(
         f"• <b>在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 调节</b>：<br>"
@@ -370,15 +370,15 @@ with st.expander("[GROWTH GUIDE // 成长指南] 优化器核心机制通俗全�
         ### 1. 什么是【动量 (Momentum)】？—— “下山推滚铁球”
         * **生活比喻**：普通 SGD 像一只没有记忆的青蛙，每跳一步都要重新看一眼脚下；而 Momentum 像一个顺着山坡滚下的大铁球，**积攒了前面的惯性速度**。遇到平地它能靠惯性冲过去，遇到小坑小洼不会被卡住！
         * **本质机理**：一阶指数移动平均 $v_t = \\beta v_{t-1} + (1-\\beta) g_t$，保留历史梯度的方向与动能。
-        
+
         ---
-        
+
         ### 2. 什么是【自适应学习率 (Adaptive LR / RMSProp)】？—— “自适应油门”
         * **生活比喻**：汽车开在平坦高速公路上就猛踩油门加速，开在九曲十八弯的盘山险道就轻踩刹车减速。
         * **本质机理**：记录历史梯度的平方和（二阶矩）。频繁剧烈振荡的维度自动减小步长，平缓稀疏的维度自动放大步长。
-        
+
         ---
-        
+
         ### 3. 为什么【Adam】是深度学习工业界最常用的“万金油”？
         * **生活比喻**：**Adam = 动量惯性 (Momentum) + 自适应油门 (RMSProp) + 初始冷启动偏差修正**。
         * **一句话总结**：既有冲过鞍点平原的冲劲，又有在狭窄峡谷里不翻车的自适应平衡感！

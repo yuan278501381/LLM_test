@@ -43,6 +43,8 @@ class SwiGLU:
     """
 
     def __init__(self, d_model: int, d_ff: int | None = None) -> None:
+        if d_model <= 0 or (d_ff is not None and d_ff <= 0):
+            raise ValueError("d_model 与 d_ff 必须为正整数")
         self.d_model = d_model
         # 现代大模型通常将 SwiGLU 的 d_ff 设定为约 (8/3) * d_model，以保持参数量与标准 4x FFN 相当
         if d_ff is None:
@@ -64,6 +66,13 @@ class SwiGLU:
         self.W_down = np.random.randn(d_ff, d_model) * scale_out
         self.b_down = np.zeros(d_model)
 
+        self.grad_W_gate = np.zeros_like(self.W_gate)
+        self.grad_b_gate = np.zeros_like(self.b_gate)
+        self.grad_W_up = np.zeros_like(self.W_up)
+        self.grad_b_up = np.zeros_like(self.b_up)
+        self.grad_W_down = np.zeros_like(self.W_down)
+        self.grad_b_down = np.zeros_like(self.b_down)
+
         self.cache: dict[str, np.ndarray] = {}
 
         tid = uuid.uuid4().hex[:8]
@@ -76,6 +85,9 @@ class SwiGLU:
         Args:
             x: 形状 (batch_size, seq_len, d_model) 或 (batch_size, d_model)
         """
+        x = np.asarray(x, dtype=float)
+        if x.ndim < 2 or x.shape[-1] != self.d_model or not np.all(np.isfinite(x)):
+            raise ValueError(f"x 必须是最后一维为 {self.d_model} 的有限浮点张量")
         gate_proj = x @ self.W_gate + self.b_gate
         up_proj = x @ self.W_up + self.b_up
 
@@ -93,19 +105,44 @@ class SwiGLU:
         }
         return out
 
+    def backward(self, dout: np.ndarray) -> np.ndarray:
+        """反向传播并返回输入梯度；梯度在所有批次/序列维求和。"""
+        if not self.cache:
+            raise RuntimeError("SwiGLU.backward() 必须在 forward() 之后调用")
+        x = self.cache["x"]
+        dout = np.asarray(dout, dtype=float)
+        expected_shape = (*x.shape[:-1], self.d_model)
+        if dout.shape != expected_shape or not np.all(np.isfinite(dout)):
+            raise ValueError(f"dout 必须是 shape={expected_shape} 的有限张量")
+
+        gate_proj = self.cache["gate_proj"]
+        gate_act = self.cache["gate_act"]
+        up_proj = self.cache["up_proj"]
+        gated_hidden = self.cache["gated_hidden"]
+        reduce_axes = tuple(range(x.ndim - 1))
+
+        self.grad_W_down = gated_hidden.reshape(-1, self.d_ff).T @ dout.reshape(-1, self.d_model)
+        self.grad_b_down = np.sum(dout, axis=reduce_axes)
+        d_hidden = dout @ self.W_down.T
+        d_up = d_hidden * gate_act
+        sigmoid = 1.0 / (1.0 + safe_exp(-gate_proj))
+        d_silu = sigmoid + gate_proj * sigmoid * (1.0 - sigmoid)
+        d_gate = d_hidden * up_proj * d_silu
+
+        x_flat = x.reshape(-1, self.d_model)
+        self.grad_W_gate = x_flat.T @ d_gate.reshape(-1, self.d_ff)
+        self.grad_b_gate = np.sum(d_gate, axis=reduce_axes)
+        self.grad_W_up = x_flat.T @ d_up.reshape(-1, self.d_ff)
+        self.grad_b_up = np.sum(d_up, axis=reduce_axes)
+        return d_gate @ self.W_gate.T + d_up @ self.W_up.T
+
     def get_params_and_grads(self) -> list[tuple[np.ndarray, np.ndarray]]:
         """返回所有参数及其梯度"""
-        grad_W_gate = np.zeros_like(self.W_gate)
-        grad_b_gate = np.zeros_like(self.b_gate)
-        grad_W_up = np.zeros_like(self.W_up)
-        grad_b_up = np.zeros_like(self.b_up)
-        grad_W_down = np.zeros_like(self.W_down)
-        grad_b_down = np.zeros_like(self.b_down)
         return [
-            (self.W_gate, grad_W_gate),
-            (self.b_gate, grad_b_gate),
-            (self.W_up, grad_W_up),
-            (self.b_up, grad_b_up),
-            (self.W_down, grad_W_down),
-            (self.b_down, grad_b_down),
+            (self.W_gate, self.grad_W_gate),
+            (self.b_gate, self.grad_b_gate),
+            (self.W_up, self.grad_W_up),
+            (self.b_up, self.grad_b_up),
+            (self.W_down, self.grad_W_down),
+            (self.b_down, self.grad_b_down),
         ]

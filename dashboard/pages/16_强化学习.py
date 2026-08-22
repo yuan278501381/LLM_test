@@ -6,7 +6,7 @@ NN Playground - M16: 强化学习与自主智能体实验室 (Reinforcement Lear
 1. 马尔可夫决策过程 (MDP) 与贝尔曼最优方程 (Bellman Equation) 解析求解
 2. 时序差分 Q-Learning 试错演进、ε-greedy 探索与悬崖避障
 3. 状态价值热力面 V(s) 逆向反推与策略箭头场收敛
-4. 2026 前沿：DeepSeek-R1 式 GRPO 纯强化学习推理涌现与“顿悟 (Aha Moment)”长思维链进化
+4. 2025 DeepSeek-R1/R1-Zero 案例边界与 GRPO 规则曲线教学仿真
 """
 
 import os
@@ -20,14 +20,12 @@ import numpy as np
 import plotly.graph_objects as go
 import streamlit as st
 
-from dashboard.components.pedagogy import render_lesson_evidence
-from dashboard.styles.icons import svg_icon
+from dashboard.components.pedagogy import render_core_result_evidence, render_lesson_evidence
 from dashboard.styles.theme import (
     anchor_badge,
     apply_custom_theme,
     render_floating_hud_navigator,
     render_hero_header,
-    render_interactive_region_header,
     render_live_param_status_bar,
     render_metric_card,
     render_page_guide,
@@ -58,27 +56,28 @@ render_floating_hud_navigator(
         {"id": "D", "name": "网格世界寻路演播", "desc": "智能体避障寻路并抵达宝藏终点"},
         {"id": "E", "name": "贝尔曼价值曲面", "desc": "2D/3D 状态价值流形热力分布"},
         {"id": "F", "name": "策略决策箭头场", "desc": "各网格最优动作流向矢量图"},
-        {"id": "G", "name": "R1 推理涌现演化", "desc": "DeepSeek-R1 GRPO 组相对优化与长思维链顿悟"},
+        {"id": "G", "name": "R1/GRPO 边界案例", "desc": "手工规则曲线，非模型训练日志"},
     ]
 )
 
 # Hero 标题
 render_hero_header(
     title="M16: 强化学习与自主智能体",
-    subtitle="从 MDP 贝尔曼方程、Q-Learning 试错寻路，到 2026 前沿 DeepSeek-R1 GRPO 纯强化学习推理涌现",
+    subtitle="从 MDP 贝尔曼方程、Q-Learning 试错寻路，到 2025 DeepSeek-R1/R1-Zero 与 GRPO 概念边界",
     badge_text="PURE NUMPY CORE · REINFORCEMENT LEARNING · BELLMAN & GRPO",
     badge_type="rose",
 )
 
 # 核心教学论据
-render_lesson_evidence("M16")
+render_lesson_evidence("M16", show_contract=True)
+render_core_result_evidence("M16")
 
 # ---------------------------------------------------------------------------
 # [A] 侧边栏参数控制台
 # ---------------------------------------------------------------------------
 st.sidebar.markdown(
     f'<div id="region-a" class="interactive-region" style="margin-bottom:0.6rem;padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">'
-    f'{anchor_badge("A", "amber")} <b>RL CONTROLS // 强化学习控制台</b>'
+    f"{anchor_badge('A', 'amber')} <b>RL CONTROLS // 强化学习控制台</b>"
     f"</div>",
     unsafe_allow_html=True,
 )
@@ -138,28 +137,20 @@ env = GridWorldEnv(grid_type=env_key)
 solver = BellmanSolver(env=env, gamma=gamma_val, theta=1e-4)
 opt_V, opt_policy, bellman_iters = solver.solve()
 
-# Q-Learning 训练仿真
-np.random.seed(42)
+# Q-Learning 训练（局部随机源）
 agent = QLearningAgent(
     height=env.height,
     width=env.width,
     lr=lr_val,
     gamma=gamma_val,
     epsilon=epsilon_val,
+    seed=42,
 )
 train_history = agent.train_episodes(env, n_episodes=episodes_val)
 
-# 提取最终贪心路径
-agent_path = []
-curr_s = env.reset()
-agent_path.append(curr_s)
-for _ in range(30):
-    best_a = int(np.argmax(agent.q_table[curr_s[0], curr_s[1]]))
-    next_s, _, done, _ = env.step(best_a)
-    agent_path.append(next_s)
-    curr_s = next_s
-    if done:
-        break
+# 提取有明确成功/循环/截断状态的已学习贪心路径
+rollout = agent.greedy_rollout(env, max_steps=30)
+agent_path = rollout["path"]
 
 # ---------------------------------------------------------------------------
 # [B] 教学指引与蓝图导航
@@ -209,8 +200,8 @@ blueprint_sections = [
     },
     {
         "id": "G",
-        "name": "R1 推理涌现演化",
-        "desc": "2026 DeepSeek-R1 GRPO 组相对优化与长思考链顿悟模拟",
+        "name": "R1/GRPO 案例边界",
+        "desc": "2025 论文背景与手工规则曲线模拟",
         "color": "rose",
         "target_id": "region-g",
     },
@@ -218,14 +209,14 @@ blueprint_sections = [
 
 render_page_guide(
     title="强化学习 (RL) 与智能体演进全景指南",
-    plain_intro="强化学习是 AI 实现自主决策与推理的终极武器。智能体在一个未知环境中，通过不断尝试动作、观察状态转移并接受环境给出的即时奖惩（Reward），自主探索并学会最大化长期累积回报的最优策略。",
+    plain_intro="强化学习建模智能体、状态、动作、奖励和长期回报。本页在有限 GridWorld 中对照动态规划与 Q-Learning；它不能外推为一般自主智能或语言模型推理能力。",
     hyperparams_desc="• 学习率 α：时序差分单步更新权重；\n• 折扣因子 γ：未来奖励的时间折现比率；\n• 探索率 ε：探索未知与利用已知经验的权衡；\n• 训练轮数：智能体在环境中的试错总 Episode 数。",
     telemetry_desc="• 累积回报 (Return)：单轮获得的所有即时奖励总和；\n• TD-Error：贝尔曼目标与当前 Q 值的预测误差；\n• 贝尔曼收敛轮数：动态规划值迭代达到自洽的步数。",
     experiments=[
         "尝试调大探索率 ε 到 0.8，观察智能体早期频繁跌落悬崖，但最终能否探索出更稳妥的路径？",
         "观察贝尔曼价值曲面：为什么离终点越近的格子颜色越亮、数值越高？",
         "切换到【5x5 迷宫障碍】，观察策略箭头场如何自动绕过实体墙壁直达终点！",
-        "在 Section G 拖动【GRPO 训练轮数】，见证思考链 Token 长度如何从几十暴涨到上千，并自发产生 Aha Moment！",
+        "在 Section G 拖动【仿真步数】，识别预设 sigmoid/幂函数曲线与真实训练日志的区别。",
     ],
     blueprint_sections=blueprint_sections,
 )
@@ -243,6 +234,7 @@ st.markdown(
 final_return = train_history["returns"][-1]
 avg_td = float(np.mean(train_history["td_errors"][-10:]))
 path_len = len(agent_path) - 1
+bellman_residual = solver.bellman_residual(opt_V)
 
 metric_grid_html = (
     '<div class="metric-grid">'
@@ -268,10 +260,10 @@ metric_grid_html = (
         icon_name="activity",
     )
     + render_metric_card(
-        "OPTIMAL PATH // 最优寻路步数",
+        "LEARNED GREEDY PATH // 已学贪心路径",
         f"{path_len} STEPS",
-        delta="避障直达终点",
-        delta_type="positive",
+        delta="已到达终点" if rollout["reached_goal"] else f"未成功: {rollout['event']}",
+        delta_type="positive" if rollout["reached_goal"] else "negative",
         icon_name="compass",
     )
     + "</div>"
@@ -292,7 +284,7 @@ render_live_param_status_bar(
     metrics=[
         ("状态空间 |S|", f"{env.height * env.width} states"),
         ("动作空间 |A|", "4 (↑ → ↓ ←)"),
-        ("最终探索衰减", f"{agent.epsilon:.3f}"),
+        ("贝尔曼残差", f"{bellman_residual:.2e}"),
     ],
     tag=f"BELLMAN OPTIMAL: {bellman_iters} ITERS",
     tag_color="emerald",
@@ -304,7 +296,7 @@ render_live_param_status_bar(
 render_section_heading(
     "GRIDWORLD ARENA // 网格世界环境与智能体避障寻路轨迹",
     icon_name="grid",
-    subtext="智能体从起点出发，在试错中学会避开悬崖/陷阱与墙壁，以最短路径直达目标宝藏",
+    subtext="展示有限轮 Q-Learning 后的贪心路径，并显式报告到达、循环、陷阱或截断",
 )
 
 st.markdown(
@@ -329,11 +321,11 @@ with col_grid:
         go.Heatmap(
             z=grid_display,
             colorscale=[
-                [0.0, "#f8fafc"],    # 通路
-                [0.2, "#e2e8f0"],    # 墙壁
-                [0.5, "#bfdbfe"],    # 路径痕迹
-                [0.7, "#fecdd3"],    # 悬崖/陷阱
-                [1.0, "#bbf7d0"],    # 宝藏终点
+                [0.0, "#f8fafc"],  # 通路
+                [0.2, "#e2e8f0"],  # 墙壁
+                [0.5, "#bfdbfe"],  # 路径痕迹
+                [0.7, "#fecdd3"],  # 悬崖/陷阱
+                [1.0, "#bbf7d0"],  # 宝藏终点
             ],
             showscale=False,
         )
@@ -374,7 +366,7 @@ with col_grid:
             )
 
     fig_grid.update_layout(
-        title="智能体最终贪心策略路线 (Agent Optimal Trajectory)",
+        title=f"已学习贪心路径 (event={rollout['event']})",
         annotations=annotations,
         yaxis=dict(autorange="reversed", showticklabels=False),
         xaxis=dict(showticklabels=False),
@@ -428,7 +420,7 @@ with col_curves:
 render_section_heading(
     "BELLMAN VALUE SURFACE // 贝尔曼最优状态价值分布 V*(s)",
     icon_name="activity",
-    subtext="展示动态规划求解的绝对真值：越靠近终点价值越高，负向惩罚像波纹一样向后反向递减",
+    subtext="当前有限、确定性、已知转移 GridWorld MDP 的动态规划数值参考解",
 )
 
 st.markdown(
@@ -493,9 +485,9 @@ with col_val3d:
 # [F] 核心可视化 3: 策略箭头场与 Q 值矩阵
 # ---------------------------------------------------------------------------
 render_section_heading(
-    "POLICY QUIVER & Q-TABLE // 最优策略决策箭头场与动作流向",
+    "DYNAMIC-PROGRAMMING POLICY // 当前 GridWorld 参考策略箭头场",
     icon_name="compass",
-    subtext="每个格子的箭头代表当前状态下 Q 值最大的最优动作，直观展现决策流向",
+    subtext="箭头来自动态规划 opt_policy，不是有限轮 Q-table；平局时的单一 argmax 仅是一种选择",
 )
 
 st.markdown(
@@ -558,24 +550,24 @@ st.plotly_chart(fig_quiver, use_container_width=True)
 # [G] 核心可视化 4: 2026 DeepSeek-R1 GRPO 推理涌现演化
 # ---------------------------------------------------------------------------
 render_section_heading(
-    "2026 DEEPSEEK-R1 GRPO REASONING // 组相对策略优化与长思维链顿悟涌现",
+    "2025 DEEPSEEK-R1 / R1-ZERO // GRPO 概念与规则曲线仿真",
     icon_name="cpu",
-    subtext="无需训练复杂的 Critic 模型，纯基于规则验证奖励即可自发涌现长思考链与‘Aha Moment’自我反思纠错",
+    subtext="本图不含语言模型、策略比率、裁剪目标、KL 项或参数更新；不能证明能力涌现",
 )
 
 st.markdown(
     f'<div id="region-g" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;">'
-    f'{anchor_badge("G", "rose")} <span style="font-weight:800;color:#9f1239;font-size:0.86rem;">GRPO REASONING EVOLUTION // 纯强化学习推理演进仿真</span>'
+    f'{anchor_badge("G", "rose")} <span style="font-weight:800;color:#9f1239;font-size:0.86rem;">SIMULATION ONLY // 手工规则曲线，非 GRPO 训练</span>'
     f"</div>",
     unsafe_allow_html=True,
 )
 
 r1_iters = st.slider(
-    "GRPO 纯强化学习训练轮次 (Training Steps)",
+    "规则曲线仿真步数 (Simulation Steps)",
     min_value=1,
     max_value=15,
     value=15,
-    help="拖动滑块观察思考链 Token 长度如何自发爆发，模型如何学会‘等等，让我重新验证一下...’",
+    help="拖动仅改变预设数学曲线的显示范围；没有模型在此训练或自发学习。",
 )
 
 r1_data = GRPORunner.simulate_r1_reasoning_evolution(n_iterations=r1_iters)
@@ -606,8 +598,8 @@ with col_r1_left:
         )
     )
     fig_r1.update_layout(
-        title="GRPO 训练轮数与思维链长度 / 准确率爆发曲线",
-        xaxis_title="GRPO 优化轮次",
+        title="预设仿真曲线（非训练、非实测）",
+        xaxis_title="仿真步数",
         yaxis=dict(title=dict(text="思考 Token 数", font=dict(color="#be123c"))),
         yaxis2=dict(
             title=dict(text="准确率 (%)", font=dict(color="#047857")),
@@ -625,16 +617,20 @@ with col_r1_left:
 
 with col_r1_right:
     st.markdown("##### [REASONING TRACE // 推理轨迹]  演化阶段输出对比 (Reasoning Traces)")
-    active_case = r1_data["cases"][-1] if r1_iters >= 10 else (r1_data["cases"][1] if r1_iters >= 5 else r1_data["cases"][0])
-    
+    active_case = (
+        r1_data["cases"][-1]
+        if r1_iters >= 10
+        else (r1_data["cases"][1] if r1_iters >= 5 else r1_data["cases"][0])
+    )
+
     st.markdown(
         f'<div style="background:#ffffff;border:1px solid #e2e8f0;border-left:4px solid #be123c;padding:0.8rem 1rem;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.04);">'
         f'<div style="font-weight:700;color:#9f1239;font-size:0.85rem;margin-bottom:0.3rem;">{active_case["step"]} · {active_case["type"]}</div>'
         f'<div style="font-family:JetBrains Mono;font-size:0.82rem;background:#f8fafc;padding:0.6rem;border-radius:6px;color:#0f172a;line-height:1.6;white-space:pre-wrap;">{active_case["cot"]}</div>'
         f'<div style="display:flex;justify-content:space-between;margin-top:0.5rem;font-size:0.8rem;color:#64748b;">'
-        f'<span>Tokens: <b>{active_case["length"]}</b></span>'
+        f"<span>Tokens: <b>{active_case['length']}</b></span>"
         f'<span>Accuracy: <b style="color:#047857;">{active_case["accuracy"]}</b></span>'
-        f'</div>'
+        f"</div>"
         f"</div>",
         unsafe_allow_html=True,
     )

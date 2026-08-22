@@ -34,8 +34,8 @@ from dashboard.components.param_panel import (
     render_probe_point_selector,
     render_training_params,
 )
+from dashboard.components.pedagogy import render_core_result_evidence, render_lesson_evidence
 from dashboard.constants.knowledge import ACTIVATIONS, INITIALIZERS, OPTIMIZERS
-from dashboard.components.pedagogy import render_lesson_evidence
 from dashboard.styles.theme import (
     anchor_badge,
     apply_custom_theme,
@@ -62,7 +62,8 @@ st.set_page_config(
 )
 
 apply_custom_theme()
-render_lesson_evidence("M02")
+render_lesson_evidence("M02", show_contract=True)
+render_core_result_evidence("M02")
 
 render_hero_header(
     title="多层网络与动态活性探针",
@@ -134,7 +135,7 @@ render_page_guide(
     experiments=[
         f"<b>第 1 步【一键破解 XOR 难题】</b>：在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')}【经典实验预设】中选择 <code>XOR 历史困境与破解</code>，观察 2 层网络如何用弯曲的曲线完美切开对角分布的异或数据！",
         f"<b>第 2 步【体验探针听诊】</b>：在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 拖动【探针坐标 x₁、x₂】滑动条，观察 {anchor_badge('[D. 拓扑图]', 'purple', target_id='region-d')} 中，哪些神经元被染成了深蓝色（被强力激活）！",
-        f"<b>第 3 步【挑战双螺旋极限】</b>：选择预设 <code>双螺旋奇点挑战</code>，见证 3 层深度网络如何像拉花一样把极其复杂的双螺旋流形完全解开！",
+        "<b>第 3 步【挑战双螺旋极限】</b>：选择预设 <code>双螺旋奇点挑战</code>，见证 3 层深度网络如何像拉花一样把极其复杂的双螺旋流形完全解开！",
     ],
 )
 
@@ -338,8 +339,16 @@ total_neurons = sum(layer.weights.shape[1] for layer in dense_layers)
 render_live_param_status_bar(
     title="DEEP TOPOLOGY & PROBE // 多层微观状态与探针响应",
     badges=[
-        {"label": "Probe (x₁,x₂)", "value": f"({probe_pt[0]:.2f}, {probe_pt[1]:.2f})", "color": "amber"},
-        {"label": "P(y=1|x)", "value": f"{probe_prob:.1%}", "color": "blue" if probe_pred_class == 0 else "rose"},
+        {
+            "label": "Probe (x₁,x₂)",
+            "value": f"({probe_pt[0]:.2f}, {probe_pt[1]:.2f})",
+            "color": "amber",
+        },
+        {
+            "label": "P(y=1|x)",
+            "value": f"{probe_prob:.1%}",
+            "color": "blue" if probe_pred_class == 0 else "rose",
+        },
         {"label": "Pred Class", "value": f"{probe_pred_class}", "color": "purple"},
     ],
     metrics=[
@@ -449,15 +458,15 @@ with st.expander("[GROWTH GUIDE // 成长指南] 多层深度网络核心名词�
         ### 1. 什么是【隐藏层 (Hidden Layer)】？—— “特征加工车间”
         * **生活比喻**：做菜时，输入是生肉和蔬菜，输出是美味佳肴。中间的隐藏层就是“洗菜、切菜、调味、煎炒”一道道加工工序。
         * **本质机理**：第一层把点连成线，第二层把线拼成拐角和多边形，第三层拼成复杂的闭合环。网络越深，能抽取的特征越抽象！
-        
+
         ---
-        
+
         ### 2. 什么是【非线性激活函数】？—— “给笔装上拐弯功能”
         * **生活比喻**：如果没有激活函数，无论你叠 100 层网络，数学上 $W_3(W_2(W_1 x + b_1) + b_2) + b_3$ 依然只是一根笔直的直线（线性组合合并）。
         * **本质机理**：`ReLU`、`Sigmoid` 等激活函数给直线加入了“折叠和弯曲能力”，让网络能够画出任意复杂的曲线！
-        
+
         ---
-        
+
         ### 3. 什么是【梯度消失 (Vanishing Gradient)】？—— “话筒声音传丢了”
         * **生活比喻**：大队长给中队长讲话，中队长给小队长转达，小队长给队员传达。如果每次传达声音都衰减一半，传到第 10 个人时已经完全听不清在说什么了。
         * **本质机理**：反向传播链式求导时，多个小导数连乘导致浅层梯度趋近于 0，靠近输入的权重完全停止更新。

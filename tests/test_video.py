@@ -4,6 +4,7 @@ tests/test_video.py - 视频感知与世界模型单元测试
 """
 
 import numpy as np
+import pytest
 
 from nn_core.video import (
     SpatioTemporalPatchEmbed,
@@ -56,6 +57,18 @@ def test_video_frame_sampler():
     assert sampled_k.shape == (4, 1, 32, 32)
     assert len(idx_k) == 4
 
+    all_frames, all_indices = sampler_u.sample(video, n_sample=20)
+    assert all_frames is video
+    assert all_indices == list(range(10))
+
+
+@pytest.mark.parametrize("motion", ["circular", "slide", "grow", "arc"])
+def test_all_synthetic_video_motion_branches_are_finite_and_dynamic(motion):
+    video = generate_synthetic_video(n_frames=6, size=24, motion=motion)
+    assert video.shape == (6, 1, 24, 24)
+    assert np.all(np.isfinite(video))
+    assert np.any(compute_frame_difference(video) > 0)
+
 
 def test_spatio_temporal_patch_embed():
     """测试 3D 时空图块嵌入维度"""
@@ -88,16 +101,60 @@ def test_diffusion_scheduler():
     assert alphas_cumprod[0] > 0.95
     assert alphas_cumprod[-1] < 0.90
 
-    # 验证时间步加噪
+    # 验证时间步加噪与边界契约
     x_0 = np.ones((1, 32, 32), dtype=np.float32)
-    x_clean = scheduler.add_noise(x_0, t=-1)
-    np.testing.assert_allclose(x_clean, x_0)
+    with pytest.raises(IndexError):
+        scheduler.add_noise(x_0, t=-1)
+    with pytest.raises(IndexError):
+        scheduler.add_noise(x_0, t=num_steps)
+    with pytest.raises(ValueError, match="同形"):
+        scheduler.add_noise(x_0, t=0, noise=np.ones((2, 2)))
 
     # 验证扩散序列生成
     snapshots = visualize_diffusion_process(x_0, scheduler, steps_to_show=5)
     assert len(snapshots) == 5
     assert snapshots[0][0] == 0
     assert snapshots[-1][0] == num_steps - 1
+
+
+def test_diffusion_schedule_invariants_and_closed_form_statistics():
+    scheduler = DiffusionScheduler(num_steps=50, schedule_type="linear")
+    assert np.all((scheduler.betas > 0) & (scheduler.betas < 1))
+    np.testing.assert_allclose(scheduler.alphas, 1.0 - scheduler.betas)
+    np.testing.assert_allclose(scheduler.alphas_cumprod, np.cumprod(scheduler.alphas))
+
+    rng = np.random.default_rng(5)
+    x0 = np.full(200_000, 0.75)
+    noise = rng.normal(size=x0.shape)
+    t = 20
+    xt = scheduler.add_noise(x0, t=t, noise=noise)
+    alpha_bar = scheduler.alphas_cumprod[t]
+    assert float(np.mean(xt)) == pytest.approx(np.sqrt(alpha_bar) * 0.75, abs=5e-3)
+    assert float(np.var(xt)) == pytest.approx(1.0 - alpha_bar, rel=0.03)
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"num_steps": 0},
+        {"beta_start": 0.2, "beta_end": 0.1},
+        {"schedule_type": "unknown"},
+    ],
+)
+def test_diffusion_scheduler_rejects_invalid_configuration(kwargs):
+    with pytest.raises(ValueError):
+        DiffusionScheduler(**kwargs)
+
+
+def test_world_model_rng_and_snapshot_contracts():
+    x0 = np.ones((2, 3), dtype=float)
+    first = DiffusionScheduler(num_steps=5, seed=7).add_noise(x0, 2)
+    second = DiffusionScheduler(num_steps=5, seed=7).add_noise(x0, 2)
+    np.testing.assert_array_equal(first, second)
+    with pytest.raises(ValueError, match="steps_to_show"):
+        visualize_diffusion_process(x0, DiffusionScheduler(5), steps_to_show=0)
+    with pytest.raises(ValueError):
+        NextFramePredictor(d_model=0)
 
 
 def test_next_frame_predictor():

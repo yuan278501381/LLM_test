@@ -9,6 +9,7 @@ dashboard.components.param_panel - 世界级参数控制中枢 (Zero Hardcoding 
 from typing import Any
 
 import streamlit as st
+
 from dashboard.constants.knowledge import (
     ACTIVATIONS,
     DATASETS,
@@ -17,7 +18,6 @@ from dashboard.constants.knowledge import (
     PRESETS_REGISTRY,
     REGULARIZERS,
 )
-from dashboard.styles.icons import svg_icon
 
 # 导出兼容别名
 PRESETS = PRESETS_REGISTRY
@@ -259,7 +259,11 @@ def render_training_params(
     batch_size = st.sidebar.radio(
         "批大小 (Batch)",
         options=[16, 32, 64, 128, 256, 0],
-        format_func=lambda x: "**Full (全量)**\n\n↳ *全数据梯度精确计算*" if x == 0 else f"**Mini-Batch ({x})**\n\n↳ *兼顾速度与逃逸鞍点*",
+        format_func=lambda x: (
+            "**Full (全量)**\n\n↳ *全数据梯度精确计算*"
+            if x == 0
+            else f"**Mini-Batch ({x})**\n\n↳ *兼顾速度与逃逸鞍点*"
+        ),
         index=1,
         help="每次参数更新所使用的样本数量。Mini-batch 兼具计算效率与适度随机扰动（利于逃逸鞍点）。",
         key=f"{key_prefix}batch_size",

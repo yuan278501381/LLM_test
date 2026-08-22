@@ -7,7 +7,7 @@ nn_core.reinforcement - 纯 NumPy 经典与现代强化学习核心算法引擎
 2. BellmanSolver: 贝尔曼最优方程与值迭代解析求解器 (Value Iteration)
 3. QLearningAgent: 时序差分 Q-Learning 智能体 (TD Learning & ε-Greedy)
 4. PolicyGradientAgent: REINFORCE 策略梯度网络 (Policy Gradients)
-5. GRPORunner: DeepSeek-R1 式组相对策略优化算法引擎 (Group Relative Policy Optimization)
+5. GRPORunner: 组内优势计算与规则曲线教学模拟（不是语言模型 GRPO 训练器）
 """
 
 from typing import Any
@@ -39,6 +39,8 @@ class GridWorldEnv:
         goal_reward: float = 1.0,
         trap_reward: float = -1.0,
     ) -> None:
+        if grid_type not in {"cliff", "maze", "simple"}:
+            raise ValueError("grid_type 必须是 cliff、maze 或 simple")
         self.step_cost = step_cost
         self.goal_reward = goal_reward
         self.trap_reward = trap_reward
@@ -48,9 +50,7 @@ class GridWorldEnv:
         self.agent_pos = list(self.start_pos)
         self.done = False
 
-    def _build_grid(
-        self, grid_type: str
-    ) -> tuple[np.ndarray, tuple[int, int], tuple[int, int]]:
+    def _build_grid(self, grid_type: str) -> tuple[np.ndarray, tuple[int, int], tuple[int, int]]:
         """构建预设网格布局"""
         if grid_type == "cliff":
             # 4x6 悬崖漫步环境 (Cliff Walking)
@@ -67,7 +67,7 @@ class GridWorldEnv:
             grid[3, 3] = 2  # 陷阱
             grid[4, 4] = 3  # 宝藏
             return grid, (0, 0), (4, 4)
-        else:
+        else:  # simple
             # 4x4 极简网格世界
             grid = np.zeros((4, 4), dtype=int)
             grid[1, 1] = 1  # 障碍
@@ -79,25 +79,22 @@ class GridWorldEnv:
         """重置环境到初始起点"""
         self.agent_pos = list(self.start_pos)
         self.done = False
-        return tuple(self.agent_pos)
+        return (int(self.agent_pos[0]), int(self.agent_pos[1]))
 
     def step(self, action: int) -> tuple[tuple[int, int], float, bool, dict[str, Any]]:
         """执行一个动作并转移状态"""
+        if not 0 <= action < len(self.ACTIONS):
+            raise ValueError(f"action 必须位于 [0, {len(self.ACTIONS) - 1}]")
         if self.done:
-            return tuple(self.agent_pos), 0.0, True, {"status": "already_done"}
+            state = (int(self.agent_pos[0]), int(self.agent_pos[1]))
+            return state, 0.0, True, {"status": "already_done"}
 
         dr, dc = self.ACTIONS[action]
         nr = self.agent_pos[0] + dr
         nc = self.agent_pos[1] + dc
 
         # 越界或撞墙保护
-        if (
-            nr < 0
-            or nr >= self.height
-            or nc < 0
-            or nc >= self.width
-            or self.grid[nr, nc] == 1
-        ):
+        if nr < 0 or nr >= self.height or nc < 0 or nc >= self.width or self.grid[nr, nc] == 1:
             # 撞墙停留在原地
             nr, nc = self.agent_pos[0], self.agent_pos[1]
 
@@ -119,7 +116,8 @@ class GridWorldEnv:
             reward = self.step_cost
             info = {"event": "step"}
 
-        return tuple(self.agent_pos), reward, self.done, info
+        state = (int(self.agent_pos[0]), int(self.agent_pos[1]))
+        return state, reward, self.done, info
 
 
 class BellmanSolver:
@@ -130,9 +128,7 @@ class BellmanSolver:
     V*(s) = max_a [ R(s, a) + γ * Σ P(s'|s, a) V*(s') ]
     """
 
-    def __init__(
-        self, env: GridWorldEnv, gamma: float = 0.95, theta: float = 1e-4
-    ) -> None:
+    def __init__(self, env: GridWorldEnv, gamma: float = 0.95, theta: float = 1e-4) -> None:
         self.env = env
         self.gamma = gamma
         self.theta = theta
@@ -190,6 +186,38 @@ class BellmanSolver:
 
         return self.V, self.policy, max_iterations
 
+    def bellman_residual(self, values: np.ndarray | None = None) -> float:
+        """返回当前价值函数相对贝尔曼最优算子的最大绝对残差。"""
+
+        source = self.V if values is None else np.asarray(values, dtype=float)
+        if source.shape != (self.H, self.W):
+            raise ValueError("values 形状必须与环境网格一致")
+        residual = 0.0
+        for r in range(self.H):
+            for c in range(self.W):
+                if self.env.grid[r, c] in {1, 2, 3}:
+                    continue
+                q_values = []
+                for dr, dc in self.env.ACTIONS:
+                    nr, nc = r + dr, c + dc
+                    if (
+                        nr < 0
+                        or nr >= self.H
+                        or nc < 0
+                        or nc >= self.W
+                        or self.env.grid[nr, nc] == 1
+                    ):
+                        nr, nc = r, c
+                    dest_type = self.env.grid[nr, nc]
+                    if dest_type == 3:
+                        q_values.append(self.env.goal_reward)
+                    elif dest_type == 2:
+                        q_values.append(self.env.trap_reward)
+                    else:
+                        q_values.append(self.env.step_cost + self.gamma * source[nr, nc])
+                residual = max(residual, abs(source[r, c] - max(q_values)))
+        return float(residual)
+
 
 class QLearningAgent:
     """
@@ -209,7 +237,15 @@ class QLearningAgent:
         epsilon: float = 1.0,
         epsilon_decay: float = 0.995,
         min_epsilon: float = 0.05,
+        seed: int | None = 42,
+        rng: np.random.Generator | None = None,
     ) -> None:
+        if height <= 0 or width <= 0 or n_actions <= 0:
+            raise ValueError("状态与动作维度必须为正整数")
+        if not 0 < lr <= 1 or not 0 <= gamma <= 1:
+            raise ValueError("lr 必须位于 (0,1]，gamma 必须位于 [0,1]")
+        if not 0 <= epsilon <= 1 or not 0 <= min_epsilon <= 1 or not 0 < epsilon_decay <= 1:
+            raise ValueError("epsilon、min_epsilon 或 epsilon_decay 配置无效")
         self.H = height
         self.W = width
         self.n_actions = n_actions
@@ -218,6 +254,7 @@ class QLearningAgent:
         self.epsilon = epsilon
         self.epsilon_decay = epsilon_decay
         self.min_epsilon = min_epsilon
+        self.rng = rng if rng is not None else np.random.default_rng(seed)
 
         # Q-Table 形状: (Height, Width, Actions)
         self.q_table = np.zeros((height, width, n_actions), dtype=float)
@@ -225,8 +262,8 @@ class QLearningAgent:
     def select_action(self, state: tuple[int, int]) -> int:
         """ε-greedy 探索与利用动作选择"""
         r, c = state
-        if np.random.rand() < self.epsilon:
-            return int(np.random.randint(self.n_actions))
+        if self.rng.random() < self.epsilon:
+            return int(self.rng.integers(self.n_actions))
         return int(np.argmax(self.q_table[r, c]))
 
     def update(
@@ -248,7 +285,8 @@ class QLearningAgent:
 
     def decay_epsilon(self) -> None:
         """衰减探索率 ε"""
-        self.epsilon = max(self.min_epsilon, self.epsilon * self.epsilon_decay)
+        if self.epsilon > self.min_epsilon:
+            self.epsilon = max(self.min_epsilon, self.epsilon * self.epsilon_decay)
 
     def train_episodes(
         self, env: GridWorldEnv, n_episodes: int = 200, max_steps: int = 100
@@ -286,6 +324,39 @@ class QLearningAgent:
             "td_errors": td_errors,
         }
 
+    def greedy_rollout(self, env: GridWorldEnv, max_steps: int = 100) -> dict[str, Any]:
+        """执行当前 Q 表的贪心策略，并显式报告成功、陷阱、循环或截断。"""
+
+        if max_steps <= 0:
+            raise ValueError("max_steps 必须为正整数")
+        state = env.reset()
+        path = [state]
+        seen = {state}
+        total_return = 0.0
+        looped = False
+        event = "truncated"
+        for _ in range(max_steps):
+            action = int(np.argmax(self.q_table[state[0], state[1]]))
+            next_state, reward, done, info = env.step(action)
+            path.append(next_state)
+            total_return += reward
+            event = str(info.get("event", info.get("status", "unknown")))
+            if done:
+                break
+            if next_state in seen:
+                looped = True
+                event = "loop_detected"
+                break
+            seen.add(next_state)
+            state = next_state
+        return {
+            "path": path,
+            "return": float(total_return),
+            "reached_goal": event == "goal_reached",
+            "looped": looped,
+            "event": event,
+        }
+
 
 class PolicyGradientAgent:
     """
@@ -301,6 +372,8 @@ class PolicyGradientAgent:
         action_dim: int = 4,
         lr: float = 0.05,
         gamma: float = 0.95,
+        seed: int | None = 42,
+        rng: np.random.Generator | None = None,
     ) -> None:
         self.state_dim = state_dim
         self.action_dim = action_dim
@@ -308,8 +381,8 @@ class PolicyGradientAgent:
         self.gamma = gamma
 
         # 线性策略参数 θ: (state_dim, action_dim)
-        np.random.seed(42)
-        self.weights = np.random.randn(state_dim, action_dim) * 0.1
+        self.rng = rng if rng is not None else np.random.default_rng(seed)
+        self.weights = self.rng.normal(size=(state_dim, action_dim)) * 0.1
 
     def get_action_probs(self, state_vec: np.ndarray) -> np.ndarray:
         """计算 Softmax 动作概率分布"""
@@ -321,7 +394,7 @@ class PolicyGradientAgent:
     def select_action(self, state_vec: np.ndarray) -> int:
         """根据概率分布采样动作"""
         probs = self.get_action_probs(state_vec)
-        return int(np.random.choice(self.action_dim, p=probs))
+        return int(self.rng.choice(self.action_dim, p=probs))
 
     def compute_discounted_returns(self, rewards: list[float]) -> np.ndarray:
         """计算折扣累积回报 G_t"""
@@ -362,7 +435,10 @@ class PolicyGradientAgent:
 
 class GRPORunner:
     """
-    2026 前沿：DeepSeek-R1 式组相对策略优化算法引擎 (Group Relative Policy Optimization)。
+    组内相对优势计算与 DeepSeek-R1 相关现象的规则曲线教学模拟。
+
+    本类没有语言模型、策略比率、裁剪目标、KL 项或参数更新，因此不是完整
+    GRPO 优化器。`simulate_r1_reasoning_evolution` 的输出是合成情景，不是训练日志。
 
     核心机制：
     1. 对同一提示词 Prompt 采样一组回答 {y_1, y_2, ..., y_G}。
@@ -382,16 +458,19 @@ class GRPORunner:
         return (r_arr - mean_r) / (std_r + eps)
 
     @staticmethod
-    def simulate_r1_reasoning_evolution(n_iterations: int = 15) -> dict[str, Any]:
+    def simulate_r1_reasoning_evolution(
+        n_iterations: int = 15, seed: int | None = 42
+    ) -> dict[str, Any]:
         """
-        模拟在纯强化学习 (GRPO) 驱动下，大模型在复杂数学/逻辑题上的自我进化轨迹：
-        - 随着训练轮数演进，模型从“直接蒙答案”自发演进到“长链反思纠错 (Aha Moment)”。
+        生成用于讲解的规则曲线与模板案例；不是 GRPO 训练，也不能证明能力涌现。
         """
-        np.random.seed(42)
+        if n_iterations <= 0:
+            raise ValueError("n_iterations 必须为正整数")
+        rng = np.random.default_rng(seed)
         iters = list(range(1, n_iterations + 1))
 
         # 思考链 Token 长度自发暴涨曲线 (从 80 tokens 到 1200 tokens)
-        cot_lengths = [int(75 + 70 * (i**1.1) + np.random.randint(-15, 20)) for i in iters]
+        cot_lengths = [int(75 + 70 * (i**1.1) + rng.integers(-15, 20)) for i in iters]
 
         # 任务准确率突破曲线 (从 20% 到 94%)
         accuracies = [
@@ -418,7 +497,7 @@ class GRPORunner:
             },
             {
                 "step": "Late RL (Step 12-15 · DeepSeek-R1 Aha Moment)",
-                "cot": "<think>\nLet\'s analyze the problem carefully. Suppose x is negative... Wait! That violates x > 0. Let me restart.\nLet me try contradiction: if x=5, 3(5)+7=22 holds. What about boundary conditions? None. Aha! The solution is strictly unique.\n</think>\nFinal Answer: 5",
+                "cot": "<think>\nLet's analyze the problem carefully. Suppose x is negative... Wait! That violates x > 0. Let me restart.\nLet me try contradiction: if x=5, 3(5)+7=22 holds. What about boundary conditions? None. Aha! The solution is strictly unique.\n</think>\nFinal Answer: 5",
                 "type": "Emergent Self-Correction // 自发长思维链与顿悟纠错",
                 "length": 1150,
                 "accuracy": "94%",

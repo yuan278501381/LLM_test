@@ -25,10 +25,8 @@ if _PROJECT_ROOT not in sys.path:
 
 from dashboard.constants.knowledge import (
     ACTIVATIONS,
-    DATASETS,
     INITIALIZERS,
     OPTIMIZERS,
-    REGULARIZERS,
 )
 from nn_core.activations import LeakyReLU, ReLU, Sigmoid, Softmax, Tanh
 from nn_core.layers import Dense, Dropout
@@ -52,7 +50,7 @@ def reset_state() -> None:
     """清除所有训练相关的 session state"""
     keys_to_remove = [
         k
-        for k in st.session_state.keys()
+        for k in st.session_state
         if k.startswith(("model_", "history_", "snapshot_", "training_", "m4_"))
     ]
     for k in keys_to_remove:

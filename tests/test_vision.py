@@ -4,8 +4,9 @@ tests/test_vision.py - 视觉感知模块单元测试与梯度检验
 """
 
 import numpy as np
+import pytest
 
-from nn_core.clip import contrastive_loss, get_pretrained_clip_data
+from nn_core.clip import contrastive_loss, get_synthetic_clip_demo_data
 from nn_core.conv2d import Conv2D, MaxPool2D
 from nn_core.vit import PatchEmbedding, VisionTransformer
 
@@ -97,8 +98,8 @@ def test_vit_forward():
 
 
 def test_clip_similarity_and_loss():
-    """测试 CLIP 对比学习语义对齐与 InfoNCE 损失"""
-    _labels, _texts, sim = get_pretrained_clip_data()
+    """测试合成配对矩阵与 InfoNCE 损失；不将其解释为训练后 CLIP 能力。"""
+    _labels, _texts, sim = get_synthetic_clip_demo_data()
     assert sim.shape == (8, 8)
     # 验证对角线上的同类相似度显著高于非对角线
     for i in range(8):
@@ -106,3 +107,35 @@ def test_clip_similarity_and_loss():
 
     loss = contrastive_loss(sim, temperature=0.07)
     assert loss >= 0.0
+
+
+def test_contrastive_loss_known_values_and_contract():
+    assert contrastive_loss(np.zeros((2, 2)), temperature=1.0) == pytest.approx(np.log(2.0))
+    assert contrastive_loss(np.eye(2), temperature=0.1) < 1e-3
+    with pytest.raises(ValueError, match="方阵"):
+        contrastive_loss(np.ones((2, 3)))
+    with pytest.raises(ValueError, match="正数"):
+        contrastive_loss(np.eye(2), temperature=0.0)
+
+
+def test_clip_dual_encoder_forward_outputs_unit_vectors_and_similarity():
+    from nn_core.clip import CLIPDualEncoder
+
+    encoder = CLIPDualEncoder(vocab_size=12, img_size=8, patch_size=4, d_model=8, embed_dim=4)
+    text = encoder.encode_text(np.array([[1, 2, 3], [3, 2, 1]]))
+    image = encoder.encode_image(np.ones((2, 1, 8, 8)))
+    assert text.shape == image.shape == (2, 4)
+    np.testing.assert_allclose(np.linalg.norm(text, axis=1), 1.0, atol=1e-7)
+    np.testing.assert_allclose(np.linalg.norm(image, axis=1), 1.0, atol=1e-7)
+    np.testing.assert_allclose(encoder.compute_similarity(image, text), image @ text.T)
+
+
+def test_legacy_clip_demo_name_warns_and_seed_is_reproducible():
+    from nn_core.clip import get_pretrained_clip_data
+
+    first = get_synthetic_clip_demo_data(seed=3)[2]
+    second = get_synthetic_clip_demo_data(seed=3)[2]
+    np.testing.assert_array_equal(first, second)
+    with pytest.warns(DeprecationWarning):
+        legacy = get_pretrained_clip_data()[2]
+    assert legacy.shape == (8, 8)

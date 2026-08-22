@@ -17,14 +17,14 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from dashboard.components.charts import _apply_light_theme
-from dashboard.components.pedagogy import render_lesson_evidence
+from dashboard.components.pedagogy import render_core_result_evidence, render_lesson_evidence
 from dashboard.styles.theme import (
     anchor_badge,
     apply_custom_theme,
+    render_floating_hud_navigator,
     render_hero_header,
     render_live_param_status_bar,
     render_metric_card,
-    render_floating_hud_navigator,
     render_page_guide,
     render_section_heading,
 )
@@ -46,11 +46,12 @@ st.set_page_config(
 )
 
 apply_custom_theme()
-render_lesson_evidence("M13")
+render_lesson_evidence("M13", show_contract=True)
+render_core_result_evidence("M13")
 
 render_hero_header(
     title="预训练范式全景与大模型扩展定律",
-    subtitle="从海量无标注数据汲取通用世界知识：解剖四大自监督目标、Chinchilla 算力扩展定律 (Scaling Laws)、BPE 分词演化与工业级语料配比",
+    subtitle="对比自监督目标、BPE 与 Chinchilla 经验扩展关系；分清小型计算、模拟与工业训练",
     badge_text="MILESTONE 13 // PRE-TRAINING PARADIGMS & SCALING LAWS",
     badge_type="blue",
 )
@@ -141,7 +142,7 @@ render_page_guide(
         f"<b>大模型的底座智能究竟是从哪里来的？</b><br>"
         f"在没有任何人工标注的情况下，我们如何让模型自学成才？答案是<b>自监督预训练 (Self-Supervised Pre-training)</b> 与 <b>大模型扩展定律 (Scaling Laws)</b>！<br>"
         f"• <b>四大目标基因</b>：BERT (MLM) 完形填空擅长理解；GPT (CLM) 因果接龙擅长创作推理；CLIP 擅长跨模态对齐；MAE 擅长全局视觉补全。<br>"
-        f"• <b>扩展定律经济学</b>：在 {anchor_badge('[E. Scaling Laws 实验室]', 'blue', target_id='region-e')} 体验 DeepMind Chinchilla 严格证明的黄金配比 $D \\approx 20N$ 与算力公式 $C \\approx 6ND$。<br>"
+        f"• <b>扩展定律经济学</b>：在 {anchor_badge('[E. Scaling Laws 实验室]', 'blue', target_id='region-e')} 使用 Chinchilla 论文在特定模型族、数据与算力范围内拟合的经验近似 $D \\approx 20N$、$C \\approx 6ND$；不是任意范围的定理。<br>"
         f"• <b>分词与数据工程</b>：BPE 自底向上合并高频子词；高质量语料清洗决定智能上限！"
     ),
     hyperparams_desc=(
@@ -159,8 +160,8 @@ render_page_guide(
     experiments=[
         f"<b>第 1 步【对比完形填空与接龙】</b>：在 {anchor_badge('[D. 真实训练]', 'purple', target_id='region-d')} 观察同一句话在 MLM 与 CLM 下的真实梯度训练收敛！",
         f"<b>第 2 步【探索 Chinchilla 扩展定律】</b>：在 {anchor_badge('[E. Scaling Laws]', 'blue', target_id='region-e')} 拖动算力预算滑块，观察为什么 70B 模型需要喂 1.4T Token，以及 GPT-3 175B 为何欠训练！",
-        f"<b>第 3 步【动手训练 BPE 分词器】</b>：在 Section 6 输入自定义句子并点击【训练 BPE 分词规则】，亲眼见证常见词是如何一步步被合并诞生的！",
-        f"<b>第 4 步【拆解工业级数据流水线】</b>：在 Section 7 观察 LLaMA-3 与 DeepSeek-V3 的真实语料配比与 4 阶段清洗过滤规则！",
+        "<b>第 3 步【动手训练 BPE 分词器】</b>：在 Section 6 输入自定义句子并点击【训练 BPE 分词规则】，亲眼见证常见词是如何一步步被合并诞生的！",
+        "<b>第 4 步【拆解工业级数据流水线】</b>：在 Section 7 观察 LLaMA-3 与 DeepSeek-V3 的真实语料配比与 4 阶段清洗过滤规则！",
     ],
 )
 
@@ -251,15 +252,15 @@ if start_train_btn or "train_loss_hist" not in st.session_state:
             l = clm_model.train_step(sample_tensor, lr=0.05)
         elif "Contrastive" in paradigm_choice:
             # 真实 NT-Xent 对比损失计算
-            np.random.seed(42 + ep)
-            dummy_embeds = np.random.randn(8, 32)
+            epoch_rng = np.random.default_rng(42 + ep)
+            dummy_embeds = epoch_rng.normal(size=(8, 32))
             z_i, z_j = contrastive_model.create_positive_pairs(
                 dummy_embeds, noise_std=max(0.01, 0.2 - 0.02 * ep)
             )
             l = contrastive_model.nt_xent_loss(z_i, z_j, temperature=0.5)
         else:  # MAE
-            np.random.seed(42 + ep)
-            dummy_patches = np.random.randn(1, 16, 64)
+            epoch_rng = np.random.default_rng(42 + ep)
+            dummy_patches = epoch_rng.normal(size=(1, 16, 64))
             m_p, m_idx, _ = mae_train_engine.create_mae_batch(dummy_patches)
             r_p = mae_train_engine.reconstruct(m_p)
             l = mae_train_engine.reconstruction_loss(r_p, dummy_patches, m_idx)
@@ -322,10 +323,9 @@ render_section_heading("CORE PARADIGMS MATRIX // 四大预训练范式核心思�
 
 col_p1, col_p2, col_p3, col_p4 = st.columns(4)
 
-with col_p1:
-    with st.container(border=True):
-        st.markdown(
-            """
+with col_p1, st.container(border=True):
+    st.markdown(
+        """
             #### [MLM // 完形填空]
             - **代表模型**：BERT / RoBERTa
             - **核心公式**：
@@ -333,12 +333,11 @@ with col_p1:
             - **注意力机制**：全向双向注意力
             - **能力基因**：深层句法/语义理解
             """
-        )
+    )
 
-with col_p2:
-    with st.container(border=True):
-        st.markdown(
-            """
+with col_p2, st.container(border=True):
+    st.markdown(
+        """
             #### [CLM // 因果接龙]
             - **代表模型**：GPT / LLaMA / Qwen
             - **核心公式**：
@@ -346,7 +345,7 @@ with col_p2:
             - **注意力机制**：单向下三角因果掩码
             - **能力基因**：自回归文本创作与逻辑链
             """
-        )
+    )
 
 with col_p3:
     with st.container(border=True):
@@ -361,10 +360,9 @@ with col_p3:
             """
         )
 
-with col_p4:
-    with st.container(border=True):
-        st.markdown(
-            """
+with col_p4, st.container(border=True):
+    st.markdown(
+        """
             #### [MAE // 视觉掩码]
             - **代表模型**：MAE (He et al.)
             - **核心公式**：
@@ -372,7 +370,7 @@ with col_p4:
             - **注意力机制**：仅可见 Patch 参与自注意力
             - **能力基因**：全局视觉空间拓扑补全
             """
-        )
+    )
 
 # ---------------------------------------------------------------------------
 # Section 2: MLM 完形填空 vs CLM 因果接龙互动对比与真实训练
@@ -410,11 +408,11 @@ with col_mlm_view:
         masked_ids, labels, mask_pos = mlm_model.create_mlm_batch(sample_tensor)
         masked_words = [
             inv_vocab.get(i, "[?]") if m else inv_vocab.get(i, "")
-            for i, m in zip(sample_tokens, mask_pos)
+            for i, m in zip(sample_tokens, mask_pos, strict=False)
         ]
         st.markdown(f"**原始文本**：`{' '.join([inv_vocab.get(i, '') for i in sample_tokens])}`")
         st.markdown(
-            f"**掩码输入**：`{' '.join(['**[MASK]**' if m else w for w, m in zip(masked_words, mask_pos)])}`"
+            f"**掩码输入**：`{' '.join(['**[MASK]**' if m else w for w, m in zip(masked_words, mask_pos, strict=False)])}`"
         )
 
         logits_mlm = mlm_model.forward(masked_ids)
@@ -428,19 +426,18 @@ with col_mlm_view:
         pred_top3_html += "</ul>"
         st.markdown(pred_top3_html, unsafe_allow_html=True)
 
-with col_clm_view:
-    with st.container(border=True):
-        st.markdown("#### [GPT 式 CLM 自回归接龙演示]")
-        x_clm, y_clm = clm_model.create_clm_batch(sample_tensor)
-        st.markdown(f"**上下文 Prefix**：`{' '.join([inv_vocab.get(i, '') for i in x_clm[0]])}`")
-        st.markdown(f"**自回归 Targets**：`{' '.join([inv_vocab.get(i, '') for i in y_clm[0]])}`")
+with col_clm_view, st.container(border=True):
+    st.markdown("#### [GPT 式 CLM 自回归接龙演示]")
+    x_clm, y_clm = clm_model.create_clm_batch(sample_tensor)
+    st.markdown(f"**上下文 Prefix**：`{' '.join([inv_vocab.get(i, '') for i in x_clm[0]])}`")
+    st.markdown(f"**自回归 Targets**：`{' '.join([inv_vocab.get(i, '') for i in y_clm[0]])}`")
 
-        logits_clm = clm_model.forward(x_clm)
-        last_logits = logits_clm[0, -1]
-        top_clm_ids = np.argsort(last_logits)[::-1][:3]
-        top_clm_words = [inv_vocab.get(tid, "") for tid in top_clm_ids]
-        st.markdown(f"- **下一个词候选 Top-3**：`{', '.join(top_clm_words)}`")
-        st.markdown(f"- **因果限制**：严格通过下三角掩码禁止注意力看到后文。")
+    logits_clm = clm_model.forward(x_clm)
+    last_logits = logits_clm[0, -1]
+    top_clm_ids = np.argsort(last_logits)[::-1][:3]
+    top_clm_words = [inv_vocab.get(tid, "") for tid in top_clm_ids]
+    st.markdown(f"- **下一个词候选 Top-3**：`{', '.join(top_clm_words)}`")
+    st.markdown("- **因果限制**：严格通过下三角掩码禁止注意力看到后文。")
 
 # 实时损失收敛曲线
 fig_loss = go.Figure()
@@ -466,7 +463,7 @@ with st.expander("[HOW TO READ // 读图指南] 预训练损失单调收敛曲�
     st.markdown(
         """
         * **横轴【优化迭代步数】** 与 **纵轴【交叉熵损失 (Loss)】**。
-        * **[OPTIMAL // 真实梯度特征]**：在真实解析梯度驱动下，损失单调下滑，表明模型成功在预训练目标上学到了语言统计规律。
+        * **[计算结果]**：损失来自小型合成任务上的解析梯度更新。下降表示当前优化器在这个目标上找到了更低损失，不证明学到通用语言规律，也不保证每步单调。
         """
     )
 
@@ -529,7 +526,7 @@ with st.expander("[HOW TO READ // 读图指南] MAE 高比例遮蔽重建三联�
     st.markdown(
         """
         * **中图【75% 极高遮蔽】**：大部分像素消失，仅留 25% 可见图块；
-        * **右图【模型脑补重建】**：模型依靠 Transformer 空间自注意力，从仅有的少量线索中还原出被遮挡的完整物理几何轮廓！
+        * **右图【重建示意】**：这是为讲解 MAE 目标而构造的展示，不是已训练 Transformer 的推理输出。
         """
     )
 
@@ -587,8 +584,8 @@ st.markdown(
 
 st.markdown(
     """
-    **DeepMind Chinchilla 定律 (Hoffmann et al., 2022)** 颠覆了早期 Kaplan 的“大模型优先”假说，严格证明：
-    在固定总算力预算 $C \\approx 6ND$ 下，**模型参数量 $N$ 与训练 Token 数 $D$ 应当等比例缩放**（黄金配比 $D \\approx 20N$）！
+    **Chinchilla (Hoffmann et al., 2022)** 在论文所研究的模型、数据和计算范围内拟合经验损失曲线，并得出参数与数据应大致同比增长的 compute-optimal 建议。
+    $C \\approx 6ND$ 和 $D \\approx 20N$ 是该设定下的简化近似，不是对任意架构、数据质量、tokenizer 或超出研究范围的严格定理。
     """
 )
 
@@ -688,7 +685,7 @@ with col_s_res:
             st.markdown(
                 """
                 * **双对数坐标轴**：横轴【参数量 N (十亿 / B)】，纵轴【训练数据量 D (万亿 / T)】。
-                * **蓝色虚线 (理论最优线)**：严格满足 $D \\approx 20N$ 的最佳算力投资分配线。
+                * **蓝色虚线 (论文经验近似)**：显示 $D \\approx 20N$ 的简化参考线，不是对其他模型的最优性证明。
                 * **GPT-3 (偏右下)**：参数巨大但数据少（严重欠训练）；
                 * **LLaMA-3 (偏左上)**：8B 小模型狂喂 15T 数据（超训练，换取极致推理轻量化）。
                 """
@@ -708,20 +705,19 @@ st.markdown(
 
 col_bpe_in, col_bpe_out = st.columns([1, 2])
 
-with col_bpe_in:
-    with st.container(border=True):
-        st.markdown("#### [分词器语料与配置]")
-        default_bpe_corpus = (
-            "the king and the queen sleep on the big mat\n"
-            "the queen and the king sleep together\n"
-            "the king has a big crown on the head\n"
-            "the queen loves the small cat"
-        )
-        bpe_corpus_input = st.text_area("训练语料库", value=default_bpe_corpus, height=120)
-        target_vocab_k = st.slider(
-            "目标词表容量 (Vocab Size)", min_value=15, max_value=50, value=30, step=1
-        )
-        test_sentence_bpe = st.text_input("待切分测试文本", value="the queen sleep on the cat")
+with col_bpe_in, st.container(border=True):
+    st.markdown("#### [分词器语料与配置]")
+    default_bpe_corpus = (
+        "the king and the queen sleep on the big mat\n"
+        "the queen and the king sleep together\n"
+        "the king has a big crown on the head\n"
+        "the queen loves the small cat"
+    )
+    bpe_corpus_input = st.text_area("训练语料库", value=default_bpe_corpus, height=120)
+    target_vocab_k = st.slider(
+        "目标词表容量 (Vocab Size)", min_value=15, max_value=50, value=30, step=1
+    )
+    test_sentence_bpe = st.text_input("待切分测试文本", value="the queen sleep on the cat")
 
 with col_bpe_out:
     with st.container(border=True):
@@ -780,8 +776,14 @@ with col_d_mix:
         st.markdown("#### [前沿大模型语料配比全景 (Data Mixture)]")
         mixtures_dict = DataMixtureEngine.get_mixtures()
         mix_card_options = [
-            ("LLaMA-3 (Meta 2024, 15T)", "通用高质量网页 50% + 源码 25% + 学术 10% + 多语言 10% + 数学 5%"),
-            ("DeepSeek-V3 (2024/2025, 14.8T)", "通用网页 45% + 代码 25% + 中文高质量 15% + 数学推理 10%"),
+            (
+                "LLaMA-3 (Meta 2024, 15T)",
+                "通用高质量网页 50% + 源码 25% + 学术 10% + 多语言 10% + 数学 5%",
+            ),
+            (
+                "DeepSeek-V3 (2024/2025, 14.8T)",
+                "通用网页 45% + 代码 25% + 中文高质量 15% + 数学推理 10%",
+            ),
             ("FineWeb-Edu (HuggingFace 2024)", "高教育价值网页 60% + STEM 理工 20% + 人文学科 15%"),
         ]
         selected_mix_card = st.radio(
@@ -834,7 +836,7 @@ with st.expander(
         """
         ### 0. 核心公式逐字拆解：DeepMind Chinchilla 大模型扩展定律
         $$L(N, D) = E + \\frac{A}{N^\\alpha} + \\frac{B}{D^\\beta}$$
-        
+
         | 符号 | 中文名称 | 权威拟合数值 | 通俗大白话解释（它是什么？起什么作用？） |
         |:---:|:---:|:---:|:---|
         | **$L(N, D)$** | **预测预训练交叉熵损失 (Loss)** | 连续实数 | 评估一个模型预训练完后到底有多聪明（损失越低，模型越强）。 |
@@ -843,11 +845,11 @@ with st.expander(
         | **$D$** | **训练 Token 总数 (Data Tokens)** | 比如 $2\\text{T} = 2 \\times 10^{12}$ | **给大脑喂的书本知识量**。书读得越多，见识越广。 |
         | **$A, B$** | **参数与数据规模常数** | $A=406.4, B=410.7$ | 衡量增加参数与增加数据对降低 Loss 的相对贡献系数。 |
         | **$\\alpha, \\beta$** | **幂律缩放指数 (Scaling Exponents)** | $\\alpha=0.34, \\beta=0.28$ | 揭示“边际效应递减”规律：参数翻倍，损失并不会减半，而是按幂律微弱平滑下降。 |
-        
+
         ---
-        
+
         ### 1. 为什么 Chinchilla 黄金法则是 $D \\approx 20N$？
         * 早期 OpenAI Kaplan 论文误以为“模型参数最重要”，导致 GPT-3 175B 只读了 300B Tokens（严重欠训练）；
-        * DeepMind 严格证明：在固定总算力下，**每增加 1 个参数，应当对应增加 20 个训练 Token**！这也是 LLaMA (7B 训 2T Tokens) 性能跨代吊打上一代旧模型的数学底层秘密！
+        * 论文的经验拟合在当时实验范围内对应约 20 token/参数的参考比例。后续模型的数据重复、质量、架构、推理成本和多 epoch 等会改变最优取舍。
         """
     )

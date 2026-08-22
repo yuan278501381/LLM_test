@@ -12,6 +12,7 @@ if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
 import streamlit as st
+
 from dashboard.styles.icons import svg_icon
 from dashboard.styles.theme import (
     apply_custom_theme,
@@ -255,9 +256,9 @@ with col_a3:
 # 板块 3: 2026 前沿强化学习与自主智能体
 # ---------------------------------------------------------------------------
 render_section_heading(
-    "REINFORCEMENT LEARNING & REASONING AGENTS // 强化学习与自主智能体 (DeepSeek-R1 式纯 RL 涌现)",
+    "REINFORCEMENT LEARNING & REASONING AGENTS // 强化学习与推理训练边界（含规则模拟）",
     icon_name="compass",
-    subtext="从经典网格马尔可夫决策过程 (MDP) 到 2026 年前沿的 GRPO 纯强化学习推理演进与长思维链顿悟 (Aha Moment)",
+    subtext="从经典 GridWorld MDP 到 2025 DeepSeek-R1/R1-Zero 案例；GRPO 区域仅为规则曲线仿真",
 )
 
 with st.container(border=True):
@@ -269,7 +270,7 @@ with st.container(border=True):
         '<span class="pill-badge pill-rose">M16</span>'
         "</div>"
         '<div style="color:#475569;font-size:0.92rem;margin-bottom:0.8rem;line-height:1.6;">'
-        '体验智能体如何在未知迷宫中试错寻路、避开悬崖并收敛最优策略；见证 2026 前沿 DeepSeek-R1 式 GRPO 算法如何仅靠确定性规则奖励，自发涌现上千 Token 的深度慢思考与自我纠错反思！'
+        "对照当前有限已知 GridWorld 的动态规划参考解与 Q-Learning 贪心路径；识别 DeepSeek-R1、R1-Zero 的训练差异，以及页内规则曲线与真实 GRPO 训练的边界。"
         "</div>",
         unsafe_allow_html=True,
     )
@@ -294,7 +295,7 @@ with col_arch:
             """
             - **纯 NumPy 教学核心**: 基础层与关键模型组件不依赖 PyTorch/TensorFlow；高级主题可能是缩小实现或架构示意
             - **证据边界可见**: 每页明确区分真实计算、教学缩小版、合成数据、概率模拟与架构示意
-            - **数学严谨性**: 核心算子梯度通过双侧中心差分法严格检验，相对误差 < 1e-4
+            - **数学核对**: 部分核心算子在受控输入上用双侧中心差分与解析梯度比较；通过只表示当前点、步长、精度和容差下一致
             - **工程验证**: CI 配置覆盖跨平台测试、静态检查、构建与 Docker 验证
             """
         )

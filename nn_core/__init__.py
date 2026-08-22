@@ -29,7 +29,12 @@ from nn_core.audio import (
 # 现代 LLM 基础算子
 from nn_core.bpe import BytePairEncoder
 from nn_core.callbacks import EarlyStopping, ExperimentLogger, TrainingHistory
-from nn_core.clip import CLIPDualEncoder, contrastive_loss, get_pretrained_clip_data
+from nn_core.clip import (
+    CLIPDualEncoder,
+    contrastive_loss,
+    get_pretrained_clip_data,
+    get_synthetic_clip_demo_data,
+)
 
 # 进阶多模态感知与世界模型
 from nn_core.conv2d import Conv2D, MaxPool2D, col2im, im2col
@@ -38,6 +43,7 @@ from nn_core.embeddings import (
     PositionalEncoding,
     get_mini_vocab,
     get_pretrained_embeddings,
+    get_synthetic_demo_embeddings,
 )
 from nn_core.evaluation import (
     BenchmarkQuestion,
@@ -189,6 +195,8 @@ __all__ = [
     "get_mini_vocab",
     "get_pretrained_clip_data",
     "get_pretrained_embeddings",
+    "get_synthetic_clip_demo_data",
+    "get_synthetic_demo_embeddings",
     "he_init",
     "hz_to_mel",
     "im2col",

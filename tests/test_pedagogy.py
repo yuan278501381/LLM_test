@@ -6,20 +6,28 @@ from pathlib import Path
 
 import pytest
 
-from dashboard.components.pedagogy import evidence_badge
-from dashboard.constants.course import EVIDENCE_DESCRIPTIONS, LESSONS, EvidenceLevel
+from dashboard.components.pedagogy import evidence_badge, get_result_claim
+from dashboard.constants.course import (
+    CLAIMS,
+    CURRICULUM_DAG,
+    EVIDENCE_DESCRIPTIONS,
+    LEARNING_LOOPS,
+    LESSONS,
+    ClaimKind,
+    EvidenceLevel,
+)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 PAGES_DIR = PROJECT_ROOT / "dashboard" / "pages"
 
 
-def _declared_lesson_ids(page: Path) -> list[str]:
+def _declared_string_args(page: Path, function_name: str) -> list[str]:
     tree = ast.parse(page.read_text(encoding="utf-8"))
     declared = []
     for node in ast.walk(tree):
         if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Name):
             continue
-        if node.func.id != "render_lesson_evidence" or not node.args:
+        if node.func.id != function_name or not node.args:
             continue
         first_arg = node.args[0]
         if isinstance(first_arg, ast.Constant) and isinstance(first_arg.value, str):
@@ -34,6 +42,52 @@ def test_evidence_registry_is_complete_and_not_self_claimed_reproduction():
         assert lesson.evidence
         assert EvidenceLevel.PAPER_REPRODUCTION not in lesson.evidence
         assert lesson.references
+        for ref in lesson.references:
+            assert ref.author_or_organization
+            assert ref.year > 0
+            assert ref.stable_identifier.startswith("https://")
+            assert ref.supports
+
+
+def test_every_lesson_has_four_traceable_result_claims():
+    assert len(CLAIMS) == 17 * 4
+    assert len({claim.result_id for claim in CLAIMS.values()}) == len(CLAIMS)
+    for lesson_id in LESSONS:
+        lesson_claims = [claim for claim in CLAIMS.values() if claim.lesson_id == lesson_id]
+        assert {claim.kind for claim in lesson_claims} == set(ClaimKind)
+        for claim in lesson_claims:
+            assert claim.statement and claim.conditions and claim.limitations and claim.sources
+            assert claim.last_verified == "2026-08-22"
+            assert get_result_claim(lesson_id, claim.result_id) is claim
+            assert claim.evidence_level is not EvidenceLevel.PAPER_REPRODUCTION
+
+
+def test_curriculum_dag_and_learning_loops_cover_every_lesson_without_cycles():
+    expected = set(LESSONS)
+    assert set(CURRICULUM_DAG) == expected
+    assert set(LEARNING_LOOPS) == expected
+
+    def ancestors(lesson_id: str, path: tuple[str, ...] = ()) -> set[str]:
+        assert lesson_id not in path
+        result: set[str] = set()
+        for prerequisite in CURRICULUM_DAG[lesson_id]:
+            assert prerequisite in expected
+            result.add(prerequisite)
+            result.update(ancestors(prerequisite, (*path, lesson_id)))
+        return result
+
+    for lesson_id, loop in LEARNING_LOOPS.items():
+        ancestors(lesson_id)
+        assert loop.diagnostic_question
+        assert loop.minimum_experiment
+        assert loop.counterexample_experiment
+        assert loop.formative_assessment
+        assert "适用条件" in loop.pass_criteria
+
+
+def test_unknown_result_claim_is_rejected():
+    with pytest.raises(ValueError, match="未注册"):
+        get_result_claim("M00", "missing")
 
 
 def test_evidence_badges_are_machine_readable():
@@ -54,7 +108,8 @@ def test_every_page_declares_exactly_one_matching_lesson():
     for page in pages:
         lesson_number = int(page.name.split("_", maxsplit=1)[0])
         expected = f"M{lesson_number:02d}"
-        assert _declared_lesson_ids(page) == [expected], page.name
+        assert _declared_string_args(page, "render_lesson_evidence") == [expected], page.name
+        assert _declared_string_args(page, "render_core_result_evidence") == [expected], page.name
 
 
 def test_known_misleading_claims_do_not_return():

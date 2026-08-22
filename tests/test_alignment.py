@@ -92,6 +92,37 @@ def test_lora_layer_forward_backward_merge():
     assert stats["saved_percent"] > 98.0
 
 
+def test_lora_gradients_match_centered_difference():
+    rng = np.random.default_rng(17)
+    layer = LoRALayer(rng.normal(size=(3, 2)), rank=2, alpha=3.0)
+    layer.A = rng.normal(size=layer.A.shape)
+    layer.B = rng.normal(size=layer.B.shape)
+    x = rng.normal(size=(4, 3))
+    upstream = rng.normal(size=(4, 2))
+    layer.forward(x)
+    analytic_dx = layer.backward(upstream)
+
+    def objective() -> float:
+        return float(np.sum(layer.forward(x) * upstream))
+
+    def centered(param: np.ndarray) -> np.ndarray:
+        numerical = np.zeros_like(param)
+        epsilon = 1e-6
+        for index in np.ndindex(param.shape):
+            original = param[index]
+            param[index] = original + epsilon
+            plus = objective()
+            param[index] = original - epsilon
+            minus = objective()
+            param[index] = original
+            numerical[index] = (plus - minus) / (2 * epsilon)
+        return numerical
+
+    np.testing.assert_allclose(layer.grad_A, centered(layer.A), atol=1e-6, rtol=1e-5)
+    np.testing.assert_allclose(layer.grad_B, centered(layer.B), atol=1e-6, rtol=1e-5)
+    np.testing.assert_allclose(analytic_dx, centered(x), atol=1e-6, rtol=1e-5)
+
+
 def test_posttraining_alignment_pipeline():
     """测试能力画像与对比示例库"""
     stages = AlignmentPipeline.get_all_stages()

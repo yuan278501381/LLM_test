@@ -505,4 +505,3 @@ class TestStreamlitAppE2E:
         )
         at = AppTest.from_file(page_path, default_timeout=25).run()
         assert not at.exception, f"Page 16 runtime error: {at.exception}"
-

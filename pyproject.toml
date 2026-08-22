@@ -75,8 +75,7 @@ markers = [
 [tool.ruff]
 target-version = "py311"
 line-length = 100
-# Dashboard 页面有 sys.path 动态修改，不适合标准 lint 检查
-exclude = ["dashboard/"]
+exclude = [".venv/"]
 
 [tool.ruff.lint]
 select = [
@@ -107,6 +106,14 @@ ignore = [
 [tool.ruff.lint.isort]
 known-first-party = ["nn_core", "datasets", "dashboard"]
 
+[tool.ruff.lint.per-file-ignores]
+# Streamlit 页面需先设置项目路径再导入本地模块；仅忽略该布局导致的 E402。
+# TODO(P2-LINT-2026-09-30): 把页面转为 main() 后移除 SIM117/N816 的布局例外。
+"dashboard/pages/*.py" = ["E402", "SIM117", "N816"]
+# app/state 也在 import 本地模块前安装项目路径。
+"dashboard/app.py" = ["E402", "SIM117"]
+"dashboard/utils/state.py" = ["E402"]
+
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
@@ -118,8 +125,8 @@ docstring-code-format = true
 [tool.pyright]
 pythonVersion = "3.11"
 pythonPlatform = "All"
-include = ["nn_core", "datasets"]
-exclude = ["dashboard", "tests", ".venv", "scripts"]
+include = ["nn_core", "datasets", "dashboard/components", "dashboard/constants"]
+exclude = ["dashboard/pages", "tests", ".venv", "scripts"]
 typeCheckingMode = "basic"
 reportMissingImports = true
 reportMissingTypeStubs = false

@@ -12,25 +12,24 @@ _PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".
 if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
-import numpy as np
 import plotly.graph_objects as go
 import streamlit as st
 
 from dashboard.components.charts import _apply_light_theme
-from dashboard.components.pedagogy import render_lesson_evidence
+from dashboard.components.pedagogy import render_core_result_evidence, render_lesson_evidence
 from dashboard.styles.theme import (
     anchor_badge,
     apply_custom_theme,
+    render_floating_hud_navigator,
     render_hero_header,
     render_live_param_status_bar,
     render_metric_card,
-    render_floating_hud_navigator,
     render_page_guide,
     render_section_heading,
 )
 from nn_core.lora import compute_param_savings
 from nn_core.posttraining import AlignmentPipeline, generate_before_after_examples
-from nn_core.rlhf import DPOLoss, PPOClipObjective, RewardModel
+from nn_core.rlhf import PPOClipObjective
 
 st.set_page_config(
     page_title="Post-training Alignment · NN Playground",
@@ -38,11 +37,12 @@ st.set_page_config(
 )
 
 apply_custom_theme()
-render_lesson_evidence("M14")
+render_lesson_evidence("M14", show_contract=True)
+render_core_result_evidence("M14")
 
 render_hero_header(
     title="后训练对齐与轻量微调架构",
-    subtitle="从'胡言乱语的接龙机器'蜕变为'温文尔雅的超级助手'：解剖 SFT 指令微调、RLHF 强化学习、DPO 偏好优化与 LoRA 低秩矩阵分解",
+    subtitle="区分 SFT、RLHF/PPO、DPO 与 LoRA 的目标函数片段、完整训练协议和页内模拟",
     badge_text="MILESTONE 14 // POST-TRAINING ALIGNMENT",
     badge_type="amber",
 )
@@ -73,7 +73,7 @@ render_floating_hud_navigator(
         {
             "id": "D",
             "name": "三阶段回答实录",
-            "desc": "同一提示词在 Pre-training、SFT 与 RLHF 三代下的回答质量质变",
+            "desc": "对比人工编写的三阶段模板回答（非模型输出）",
             "color": "purple",
             "target_id": "region-d",
         },
@@ -117,7 +117,7 @@ render_page_guide(
         {
             "id": "D",
             "name": "三阶段回答实录",
-            "desc": "同一提示词在 Pre-training、SFT 与 RLHF 三代下的回答质量质变",
+            "desc": "用预置模板对比三个训练阶段可能造成的回答形式差异",
             "color": "purple",
             "target_id": "region-d",
         },
@@ -130,12 +130,12 @@ render_page_guide(
         },
     ],
     plain_intro=(
-        f"<b>为什么预训练完的 GPT 还不能直接当 ChatGPT 用？</b><br>"
-        f"基座模型读完了互联网全部文章，但他只会'接着你的话往下猜'，既不懂礼貌、也不会听指令、甚至会教人做坏事；<br>"
-        f"<b>后训练 (Post-training)</b> 是赋予大模型'灵魂与教养'的蜕变工程：<br>"
-        f"1. <b>SFT (监督指令微调)</b>：用高质量问答对教模型学会'像助手一样说话'；<br>"
-        f"2. <b>RLHF / DPO (偏好对齐)</b>：通过奖励惩罚机制，让模型变得<b>有用 (Helpful)、诚实 (Honest)、无害 (Harmless)</b>；<br>"
-        f"3. <b>LoRA (低秩微调)</b>：只修改不到 1% 的旁路参数，在消费级显卡上就能让大模型掌握全新专业领域的知识！"
+        "<b>为什么预训练完的 GPT 还不能直接当 ChatGPT 用？</b><br>"
+        "基座模型读完了互联网全部文章，但他只会'接着你的话往下猜'，既不懂礼貌、也不会听指令、甚至会教人做坏事；<br>"
+        "<b>后训练 (Post-training)</b> 是赋予大模型'灵魂与教养'的蜕变工程：<br>"
+        "1. <b>SFT (监督指令微调)</b>：用高质量问答对教模型学会'像助手一样说话'；<br>"
+        "2. <b>RLHF / DPO (偏好优化)</b>：利用人类/规则偏好数据改变行为分布；不保证真实、安全或无偏。<br>"
+        "3. <b>LoRA (低秩微调)</b>：冻结基座权重并学习低秩更新；参数节省比例取决于目标层、尺寸和 rank，不保证新知识或任务成功。"
     ),
     hyperparams_desc=(
         f"• <b>在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 调节</b>：<br>"
@@ -147,10 +147,10 @@ render_page_guide(
     telemetry_desc=(
         f"• <b>在 {anchor_badge('[C. 对齐遥测]', 'emerald', target_id='region-c')} 评估</b>：LoRA 显存压缩比与参数量节约倍数。<br>"
         f"• <b>在 {anchor_badge('[E. 六维雷达]', 'blue', target_id='region-e')} 观测</b>：模型在有用性、无害性、安全性等维度的综合雷达得分。<br>"
-        f"• <b>在 {anchor_badge('[D. 案例实录]', 'purple', target_id='region-d')} 对比</b>：三阶段回答质变实况。"
+        f"• <b>在 {anchor_badge('[D. 模板案例]', 'purple', target_id='region-d')} 对比</b>：预置文本的形式差异；它不是模型训练日志。"
     ),
     experiments=[
-        f"<b>第 1 步【对比同一问题三阶段回答】</b>：在 {anchor_badge('[D. 案例实录]', 'purple', target_id='region-d')} 查看 5 个真实问题，观察同一个模型在 Pretrain -> SFT -> RLHF 下回答质量的巨大跃迁！",
+        f"<b>第 1 步【识别模板案例】</b>：在 {anchor_badge('[D. 案例实录]', 'purple', target_id='region-d')} 对比人工编写的阶段模板；它们用于讲解期望行为，不是同一模型的实测输出。",
         f"<b>第 2 步【观察六维能力雷达演进】</b>：在 {anchor_badge('[E. 六维雷达]', 'blue', target_id='region-e')} 勾选不同的训练阶段，观察大模型如何从偏科的'野蛮天才'进化为'全能专家'！",
         f"<b>第 3 步【体验 LoRA 暴跌的参数量】</b>：在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 调整 LoRA Rank，观察参数量如何直接缩减 98% 以上！",
     ],
@@ -214,6 +214,12 @@ selected_stages = st.sidebar.multiselect(
 lora_stats = compute_param_savings(d_model=lora_dmodel, rank=lora_rank_val)
 rlhf_traj = PPOClipObjective.simulate_rlhf_trajectory(n_steps=20)
 
+st.warning(
+    "本页只计算 PPO clip、DPO loss 和 LoRA 参数量片段，并显示规则曲线/模板回答。"
+    "完整 RLHF/PPO 还需要 rollout、reward model、reference policy、KL 约束、优势估计和优化循环；"
+    "完整 DPO/LoRA 还需要偏好/任务数据、训练循环、验证集与基线评估。"
+)
+
 # ---------------------------------------------------------------------------
 # 遥测指标卡
 # ---------------------------------------------------------------------------
@@ -264,60 +270,56 @@ render_section_heading("TRAINING LIFECYCLE // 大语言模型四阶段全生命�
 
 col_s1, col_s2, col_s3, col_s4 = st.columns(4)
 
-with col_s1:
-    with st.container(border=True):
-        st.markdown(
-            """
+with col_s1, st.container(border=True):
+    st.markdown(
+        """
             #### [1. 预训练 // PRE-TRAIN]
             - **数据**：万亿无标注互联网语料
             - **目标**：下一词预测 (CLM)
             - **状态**：**野蛮天才**
             - **缺点**：不听指令、答非所问
             """
-        )
+    )
 
-with col_s2:
-    with st.container(border=True):
-        st.markdown(
-            """
+with col_s2, st.container(border=True):
+    st.markdown(
+        """
             #### [2. 监督微调 // SFT]
             - **数据**：数十万精标指令问答对
             - **目标**：标准交叉熵微调
             - **状态**：**听话学徒**
             - **缺点**：易被诱导越狱、格式呆板
             """
-        )
+    )
 
-with col_s3:
-    with st.container(border=True):
-        st.markdown(
-            """
+with col_s3, st.container(border=True):
+    st.markdown(
+        """
             #### [3. 偏好对齐 // RLHF]
             - **数据**：人类偏好打分排序对
             - **目标**：PPO 策略梯度优化
             - **状态**：**得体助手**
             - **亮点**：有用、诚实、主动拒绝有害
             """
-        )
+    )
 
-with col_s4:
-    with st.container(border=True):
-        st.markdown(
-            """
+with col_s4, st.container(border=True):
+    st.markdown(
+        """
             #### [4. 直接优化 // DPO]
             - **数据**：同源 Chosen/Rejected 对
             - **目标**：隐式奖励对数比率损失
             - **状态**：**极速对齐**
             - **亮点**：无须训练奖励模型，极度稳健
             """
-        )
+    )
 
 # ---------------------------------------------------------------------------
-# Section 2: 真实案例演进对比 (同一问题的三阶段质变)
+# Section 2: 预置案例对比（不是同一模型的真实训练轨迹）
 # ---------------------------------------------------------------------------
 st.markdown(
     f'<div id="region-d" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;margin-top:1rem;">'
-    f'{anchor_badge("D", "purple")} <span style="font-weight:800;color:#5b21b6;font-size:0.86rem;">BEFORE VS AFTER CASE STUDY // 同一指令在不同阶段下的回答质变实录</span>'
+    f'{anchor_badge("D", "purple")} <span style="font-weight:800;color:#5b21b6;font-size:0.86rem;">TEMPLATE COMPARISON // 同一指令的预置阶段示例（概率模拟）</span>'
     f"</div>",
     unsafe_allow_html=True,
 )
@@ -330,21 +332,18 @@ for case_idx, case_data in enumerate(cases):
         expanded=(case_idx == 0),
     ):
         c_pre, c_sft, c_rlhf = st.columns(3)
-        with c_pre:
-            with st.container(border=True):
-                st.markdown("##### [FAILED] 预训练基座回答 (Pre-training)")
-                st.caption("只会胡乱接龙，缺乏指令遵循意识：")
-                st.info(case_data["pretrain"])
-        with c_sft:
-            with st.container(border=True):
-                st.markdown("##### [SFT] SFT 指令微调回答 (Supervised FT)")
-                st.caption("能听懂意图并回答，但深度与安全性欠佳：")
-                st.warning(case_data["sft"])
-        with c_rlhf:
-            with st.container(border=True):
-                st.markdown("##### [PASSED] RLHF / DPO 对齐回答 (Aligned)")
-                st.caption("结构严谨、通俗深刻、安全合规：")
-                st.success(case_data["rlhf"])
+        with c_pre, st.container(border=True):
+            st.markdown("##### [FAILED] 预训练基座回答 (Pre-training)")
+            st.caption("只会胡乱接龙，缺乏指令遵循意识：")
+            st.info(case_data["pretrain"])
+        with c_sft, st.container(border=True):
+            st.markdown("##### [SFT] SFT 指令微调回答 (Supervised FT)")
+            st.caption("能听懂意图并回答，但深度与安全性欠佳：")
+            st.warning(case_data["sft"])
+        with c_rlhf, st.container(border=True):
+            st.markdown("##### [PASSED] RLHF / DPO 对齐回答 (Aligned)")
+            st.caption("结构严谨、通俗深刻、安全合规：")
+            st.success(case_data["rlhf"])
 
 # ---------------------------------------------------------------------------
 # Section 3: 六维能力雷达图演进
@@ -386,7 +385,7 @@ fig_radar = go.Figure()
 for stg_name in selected_stages:
     scores = AlignmentPipeline.get_stage_scores(stg_name)
     r_vals = [scores[c] for c in categories] + [scores[categories[0]]]
-    theta_vals = categories + [categories[0]]
+    theta_vals = [*categories, categories[0]]
     line_c, fill_c = colors_map.get(stg_name, ("#000000", "rgba(0,0,0,0.1)"))
 
     fig_radar.add_trace(
@@ -414,7 +413,7 @@ with st.expander("[HOW TO READ // 读图指南] 六维对齐能力雷达图", ex
     st.markdown(
         """
         * **6 个顶点维度**：有用性、无害性、诚实性、指令跟随、创造力、安全性。
-        * **[OPTIMAL // 演进趋势]**：从原始基座（只有创造力高，其余极低）$\\to$ SFT (指令跟随暴涨) $\\to$ RLHF/DPO (安全与诚实性全面拉满成六边形战士)。
+        * **[SIMULATION // 模拟边界]**：雷达图数值是预设分数，不是评测数据。实际 SFT/RLHF/DPO 可改变多种行为，也会存在能力回归、偏好偏差、reward hacking 和安全权衡。
         """
     )
 
@@ -464,11 +463,11 @@ with col_ppo_plot:
 with col_dpo_card:
     with st.container(border=True):
         st.markdown(
-            f"""
-            #### [DPO 突破性革新 // 告别复杂 RL]
+            """
+            #### [DPO // 直接偏好目标]
             - **传统 RLHF**：需要同时维护 4 个模型（Actor, Critic, Ref, Reward），显存消耗巨大，训练极其脆弱；
             - **DPO 巧思**：直接推导出隐式奖励封闭解：
-            $$r^*(x, y) = \\beta \\log \\frac{{\\pi_\\theta(y|x)}}{{\\pi_{{ref}}(y|x)}}$$
+            $$r^*(x, y) = \\beta \\log \\frac{\\pi_\\theta(y|x)}{\\pi_{ref}(y|x)}$$
             - **单步二元交叉熵**：直接计算偏好对损失，训练稳定如 SFT，显存立减 $50\\%$！
             """
         )
@@ -513,7 +512,7 @@ st.plotly_chart(fig_lora, width="stretch")
 with st.expander("[HOW TO READ // 读图指南] LoRA 参数量削减对比柱状图", expanded=False):
     st.markdown(
         """
-        * **红色虚线**：全量微调需更新的全部权重；**蓝色柱子**：不同 Rank 下 LoRA 仅需训练的微量参数（削减 90%~99% 显存）。
+        * **红色虚线**：全量微调的可训练权重数；**蓝色柱子**：当前简化层中 LoRA 的可训练参数。参数减少不等于同比例显存节省；优化器状态、激活、量化和目标层都会影响实际显存。
         """
     )
 
@@ -527,7 +526,7 @@ with st.expander(
         """
         ### 0. 核心公式逐字拆解：LoRA 低秩矩阵分解
         $$h = x W_0 + \\frac{\\alpha}{r} (x A) B$$
-        
+
         | 符号 | 中文名称 | 矩阵形状 (Shape) | 通俗大白话解释（它是什么？起什么作用？） |
         |:---:|:---:|:---:|:---|
         | **$W_0$** | **预训练原始冻结权重** | $d \\times d$ (如 $4096 \\times 4096$) | **被冰冻的大脑底座**。包含大模型千亿知识，训练时 100% 保持只读，不消耗反向梯度显存！ |
@@ -535,21 +534,21 @@ with st.expander(
         | **$B$** | **升维重构旁路矩阵** | $r \\times d$ (如 $8 \\times 4096$) | **特征放大镜**。初始化为纯全零，把 $r=8$ 维特征重新放大回 4096 维。因为初始为 0，所以初始状态整个旁路输出为 0，完全不扰动原始模型！ |
         | **$r$** | **LoRA 秩 (Rank)** | 整数 (如 $4, 8, 16$) | **窄桥的宽度**。$r$ 越小（如 4 或 8），参数量越少（省 99% 显存）；$r$ 越大，微调拟合能力越强。 |
         | **$\\alpha / r$** | **缩放缩放因子 (Alpha)** | 标量常数 | **微调补丁的音量旋钮**。决定让新增的 LoRA 补丁在最终输出中占多大话语权。 |
-        
+
         ---
-        
+
         ### 1. 核心公式逐字拆解：DPO (Direct Preference Optimization) 偏好对齐损失
         $$L_{\\text{DPO}} = -\\log \\sigma\\left(\\beta \\log \\frac{\\pi_\\theta(y_w | x)}{\\pi_{\\text{ref}}(y_w | x)} - \\beta \\log \\frac{\\pi_\\theta(y_l | x)}{\\pi_{\\text{ref}}(y_l | x)}\\right)$$
-        
+
         * **$y_w$ (Winner / 优秀回答)** vs **$y_l$ (Loser / 差劲回答)**：人类标注或 AI 评审出的胜出回答与败北回答；
         * **$\\pi_\\theta / \\pi_{\\text{ref}}$ (当前策略 vs 原始底座)**：评估模型在给出某个回答时，比原始模型更有信心还是更没信心；
         * **$\\beta$ (KL 惩罚系数)**：防止模型为了讨好人类而彻底胡言乱语（防止偏离原始底座知识太远）。
-        
+
         ---
-        
+
         ### 2. 核心公式逐字拆解：PPO-Clip 目标函数 (RLHF 策略更新)
         $$L_{\\text{CLIP}}(\\theta) = \\mathbb{E}_t \\left[ \\min\\left( r_t(\\theta) \\hat{A}_t, \\; \\text{clip}(r_t(\\theta), 1-\\epsilon, 1+\\epsilon) \\hat{A}_t \\right) \\right]$$
-        
+
         | 符号 | 中文名称 | 通俗大白话解释 |
         |:---:|:---:|:---|
         | **$r_t(\\theta) = \\frac{\\pi_\\theta(a_t \\| s_t)}{\\pi_{\\theta_{\\text{old}}}(a_t \\| s_t)}$** | **概率比率 (Probability Ratio)** | 新策略在该步给出同样回答的概率 / 旧策略的概率。$r_t > 1$ 说明新策略更倾向该回答，$r_t < 1$ 说明新策略不太想给这个回答了。 |

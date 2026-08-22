@@ -7,13 +7,13 @@
 
 import os
 import sys
-import time
 
 _PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
 import importlib
+
 import numpy as np
 import streamlit as st
 
@@ -22,7 +22,7 @@ import dashboard.components.charts
 importlib.reload(dashboard.components.charts)
 
 from dashboard.components.charts import plot_attention_heatmap_nlp, plot_token_probabilities
-from dashboard.components.pedagogy import render_lesson_evidence
+from dashboard.components.pedagogy import render_core_result_evidence, render_lesson_evidence
 from dashboard.styles.theme import (
     anchor_badge,
     apply_custom_theme,
@@ -33,7 +33,7 @@ from dashboard.styles.theme import (
     render_section_heading,
     render_text_stream_box,
 )
-from nn_core.embeddings import get_mini_vocab, get_pretrained_embeddings
+from nn_core.embeddings import get_mini_vocab, get_synthetic_demo_embeddings
 from nn_core.gpt import TinyGPT
 
 st.set_page_config(
@@ -42,11 +42,12 @@ st.set_page_config(
 )
 
 apply_custom_theme()
-render_lesson_evidence("M09")
+render_lesson_evidence("M09", show_contract=True)
+render_core_result_evidence("M09")
 
 render_hero_header(
     title="Mini-GPT 文本生成与自回归采样",
-    subtitle="将所有积木拼成完全体：自回归逐 Token 采样、Next-Token 概率分布、Temperature 创造力调控与实时注意力追踪",
+    subtitle="未训练 TinyGPT 结构演示：自回归逐 Token 采样、概率分布、Temperature 锐度与注意力数值",
     badge_text="MILESTONE 09 // AUTO-REGRESSIVE GPT",
     badge_type="blue",
 )
@@ -74,7 +75,7 @@ render_page_guide(
         {
             "id": "C",
             "name": "实时生成遥测",
-            "desc": "显示当前置信度最高的下一词预测、创造力系数与序列长度",
+            "desc": "显示未训练模型的最高概率 token、温度与序列长度",
             "color": "emerald",
             "target_id": "region-c",
         },
@@ -94,18 +95,18 @@ render_page_guide(
         },
     ],
     plain_intro=(
-        f"<b>终于到了见证奇迹的时刻——我们把前面的所有技术拼成了一个微型 ChatGPT！</b><br>"
+        f"<b>这是一个未经语料训练的 TinyGPT 计算和采样演示，不是微型 ChatGPT，输出不代表语言能力。</b><br>"
         f"GPT 的本质其实非常纯粹：<b>它永远只做一件事——猜下一个词 (Next-Token Prediction)</b>。<br>"
         f"它给词表中每一个词打一个概率分（如'女王': 45%, '国王': 20%, '桌子': 0.1%）；<br>"
         f"然后根据你在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 设定的<b>温度 (Temperature)</b> 进行概率轮盘赌，抽中一个词拼到 {anchor_badge('[D. 文本流]', 'purple', target_id='region-d')}，再重复这个过程！<br><br>"
         f"<b>【2026 前沿拓展】：KV-Cache 推理加速</b><br>"
         f"每次生成新词时，模型不需要把前面的所有词都重新计算一遍，而是将历史词汇的 Key/Value 缓存起来。<br>"
-        f"这使得 Transformer 的推理复杂度从 $O(N^2)$ 骤降为 $O(1)$，是实现流式实时响应的核心关键！"
+        f"对单个新 token，缓存避免重算历史 K/V；但它仍需与历史缓存做注意力，计算和内存会随上下文长度增长，不是整体 $O(1)$。"
     ),
     hyperparams_desc=(
         f"• <b>在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 调节</b>：<br>"
         f"• <b>提示词 (Prompt)</b>：给 GPT 的开头引导语（如 <code>the king and</code>）。<br>"
-        f"• <b>采样温度 (Temperature)</b>：控制创造力。T=0.1 确定保守，T=0.8 均衡灵动。<br>"
+        f"• <b>采样温度 (Temperature)</b>：对 logits 缩放并改变分布锐度/随机性；不直接保证创造力、正确性或质量。<br>"
         f"• <b>Top-k 过滤</b>：只在概率最高的前 K 个词中采样，过滤长尾词。<br>"
         f"• <b>生成长度 (Max Tokens)</b>：让模型接续生成的词数。"
     ),
@@ -116,8 +117,8 @@ render_page_guide(
     ),
     experiments=[
         f"<b>第 1 步【体验确定性生成】</b>：在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 把【Temperature】设为 <code>0.1</code>，点击生成，观察 {anchor_badge('[E. 概率图]', 'blue', target_id='region-e')} 顶端出现尖锐的绝对优势词！",
-        f"<b>第 2 步【体验高创造力】</b>：在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 把【Temperature】调到 <code>1.5</code>，观察概率柱状图变得平坦，模型给出随机出人意料的词汇组合！",
-        f"<b>第 3 步【观测显存暴涨】</b>：滚动到底部实验室，点击生成后，观察 KV-Cache Size 随着生成步数的增加呈现线性甚至几何级膨胀的现象！",
+        "<b>第 2 步【提高随机性】</b>：把 Temperature 调到 <code>1.5</code>，观察同一 logits 分布变平。这只说明采样不确定性增加，不是创造力评估。",
+        "<b>第 3 步【观测显存暴涨】</b>：滚动到底部实验室，点击生成后，观察 KV-Cache Size 随着生成步数的增加呈现线性甚至几何级膨胀的现象！",
     ],
 )
 
@@ -149,7 +150,7 @@ def load_tiny_gpt():
         num_layers=2,
     )
     # 注入具有语义特征的预训练嵌入
-    pretrained_w = get_pretrained_embeddings(vocab_size, d_model=32)
+    pretrained_w = get_synthetic_demo_embeddings(vocab_size, d_model=32)
     gpt_model.wte = pretrained_w
     return gpt_model
 
@@ -189,7 +190,7 @@ temperature = st.sidebar.slider(
     max_value=2.0,
     value=0.7,
     step=0.1,
-    help="调节 Softmax 概率平滑度。越小越趋近贪婪选择（确定/保守），越大越随机平权（高创造力/不稳定）。",
+    help="调节 Softmax 分布锐度。越小越集中于高 logit token，越大越平坦；不直接表示创造力或质量。",
 )
 
 top_k = st.sidebar.slider(
@@ -197,7 +198,7 @@ top_k = st.sidebar.slider(
     min_value=1,
     max_value=min(20, vocab_size),
     value=8,
-    help="仅保留预测概率最高的前 k 个 Token 并重新归一化采样，彻底剔除低概率无关词汇。",
+    help="仅保留当前分布中概率最高的前 k 个 Token 并重新归一化。被截断 token 不一定无关。",
 )
 
 gen_tokens_count = st.sidebar.slider(
@@ -227,6 +228,10 @@ if (
     st.session_state.current_generated_tokens = init_tokens
     st.session_state.last_prompt = current_prompt_text
     st.session_state.step_counter = 0
+    st.session_state.gpt_rng = np.random.default_rng(42)
+
+if "gpt_rng" not in st.session_state:
+    st.session_state.gpt_rng = np.random.default_rng(42)
 
 
 # ---------------------------------------------------------------------------
@@ -265,7 +270,7 @@ if btn_generate_all:
     ]
     for _ in range(gen_tokens_count):
         probs, _ = compute_next_token_distribution(tokens_so_far, temperature, top_k)
-        sampled_id = np.random.choice(vocab_size, p=probs)
+        sampled_id = st.session_state.gpt_rng.choice(vocab_size, p=probs)
         sampled_word = inv_vocab.get(sampled_id, "the")
         tokens_so_far.append(sampled_word)
     st.session_state.current_generated_tokens = tokens_so_far
@@ -274,7 +279,7 @@ if btn_generate_all:
 elif btn_step_one:
     tokens_so_far = list(st.session_state.current_generated_tokens)
     probs, _ = compute_next_token_distribution(tokens_so_far, temperature, top_k)
-    sampled_id = np.random.choice(vocab_size, p=probs)
+    sampled_id = st.session_state.gpt_rng.choice(vocab_size, p=probs)
     sampled_word = inv_vocab.get(sampled_id, "the")
     tokens_so_far.append(sampled_word)
     st.session_state.current_generated_tokens = tokens_so_far
@@ -309,11 +314,9 @@ metric_grid_html = (
         icon_name="target",
     )
     + render_metric_card(
-        "TEMPERATURE // 创造力系数",
+        "TEMPERATURE // 分布锐度系数",
         f"T = {temperature:.1f}",
-        delta="确定模式"
-        if temperature < 0.4
-        else ("均衡创作" if temperature <= 1.0 else "发散混乱"),
+        delta="高度集中" if temperature < 0.4 else ("中等锐度" if temperature <= 1.0 else "较平坦"),
         delta_type="positive" if 0.4 <= temperature <= 1.0 else "neutral",
         icon_name="zap",
     )
@@ -438,32 +441,29 @@ def toy_softmax(l_arr, t_val):
     return exps / np.sum(exps)
 
 
-with col_t1:
-    with st.container(border=True):
-        st.markdown("#### [GREEDY // 绝对确定] T = 0.1")
-        st.caption("最高分被无限放大，其余概率归零。每次点击生成的词绝对确定。")
-        fig_t1 = plot_token_probabilities(
-            toy_softmax(toy_logits, 0.1), toy_words, top_k=5, title="T=0.1 极度尖锐 (Greedy)"
-        )
-        st.plotly_chart(fig_t1, width="stretch")
+with col_t1, st.container(border=True):
+    st.markdown("#### [LOW TEMPERATURE // 分布较尖锐] T = 0.1")
+    st.caption("高分 token 的相对概率通常会增大；只要仍在采样，就不保证每次结果相同。")
+    fig_t1 = plot_token_probabilities(
+        toy_softmax(toy_logits, 0.1), toy_words, top_k=5, title="T=0.1 极度尖锐 (Greedy)"
+    )
+    st.plotly_chart(fig_t1, width="stretch")
 
-with col_t2:
-    with st.container(border=True):
-        st.markdown("#### [CREATIVE // 均衡创作] T = 0.7")
-        st.caption("高分词依然占优，但赋予次高分词适度机会，展现生动多样的表达。")
-        fig_t2 = plot_token_probabilities(
-            toy_softmax(toy_logits, 0.7), toy_words, top_k=5, title="T=0.7 经典推荐 (Balanced)"
-        )
-        st.plotly_chart(fig_t2, width="stretch")
+with col_t2, st.container(border=True):
+    st.markdown("#### [MID TEMPERATURE // 中等锐度] T = 0.7")
+    st.caption("高分词依然占优，但赋予次高分词适度机会，展现生动多样的表达。")
+    fig_t2 = plot_token_probabilities(
+        toy_softmax(toy_logits, 0.7), toy_words, top_k=5, title="T=0.7 经典推荐 (Balanced)"
+    )
+    st.plotly_chart(fig_t2, width="stretch")
 
-with col_t3:
-    with st.container(border=True):
-        st.markdown("#### [CHAOTIC // 随机发散] T = 2.0")
-        st.caption("差异被强行抹平，所有词概率趋同，模型极易产生乱码和幻觉。")
-        fig_t3 = plot_token_probabilities(
-            toy_softmax(toy_logits, 2.0), toy_words, top_k=5, title="T=2.0 极度平坦 (Uniform)"
-        )
-        st.plotly_chart(fig_t3, width="stretch")
+with col_t3, st.container(border=True):
+    st.markdown("#### [HIGH TEMPERATURE // 分布较平坦] T = 2.0")
+    st.caption("差异被强行抹平，所有词概率趋同，模型极易产生乱码和幻觉。")
+    fig_t3 = plot_token_probabilities(
+        toy_softmax(toy_logits, 2.0), toy_words, top_k=5, title="T=2.0 极度平坦 (Uniform)"
+    )
+    st.plotly_chart(fig_t3, width="stretch")
 
 with st.expander("[HOW TO READ // 读图指南] 采样温度 Temperature 概率塑形对比", expanded=False):
     st.markdown(
@@ -537,17 +537,17 @@ with st.expander(
         """
         ### 0. 核心公式逐字拆解：带温度调节的自回归概率分布
         $$P(w_i | w_{<t}) = \\frac{\\exp(z_i / T)}{\\sum_{j \\in \\text{Top-}K} \\exp(z_j / T)}$$
-        
+
         | 符号 | 中文名称 | 通俗大白话解释（它是什么？起什么作用？） |
         |:---:|:---:|:---|
         | **$w_{<t}$** | **历史上下文 (Context)** | 截至目前已经生成的所有上文词汇。 |
         | **$z_i$** | **第 $i$ 个词的原始得分 (Logit)** | 分类头未归一化的原始打分。打分越高，代表模型越倾向于选这个词。 |
-        | **$T$** | **采样温度系数 (Temperature)** | **创造力调音旋钮**：<br>• $T \\to 0$：严谨保守（永远选得分最高的第 1 名，无任何废话与错别字）；<br>• $T = 0.7$：最佳平衡（既讲逻辑，又有生动的文学修辞）；<br>• $T > 1.5$：发散发癫（所有词机会均等，开始胡言乱语）。 |
-        | **$\\text{Top-}K$** | **截断候选词池** | **长尾毒草过滤器**。只允许在概率最高的前 $K$ 个词里抽签，概率排在第 $K+1$ 名开外的冷门词直接被一刀切掉，防止生成生僻乱码。 |
+        | **$T$** | **采样温度系数 (Temperature)** | 用 $z/T$ 缩放 logits：$0<T<1$ 通常使分布更尖，$T>1$ 更平。它不保证逻辑、事实性、创造力或质量。 |
+        | **$\\text{Top-}K$** | **截断候选词池** | 保留 logit/概率最高的 $K$ 项，其余设为零后重新归一化。它不保证被删除项无关，也不保证保留项正确。 |
         | **$P(w_i)$** | **最终轮盘赌抽签概率** | 掷骰子选出下一个词的依据。 |
-        
+
         ---
-        
+
         ### 1. 什么是【KV-Cache】？—— “大脑里的工作记忆草稿纸”
         * **生活比喻**：你写作文写到第 100 个字时，不需要把前 99 个字从头到尾重新在脑子里造一遍句，只需要顺着脑海里已经想好的上文线索，直接往后蹦出第 100 个字！
         * **本质机理**：把前面所有 Token 的 Key 和 Value 矩阵保存在显存缓存中，推理速度直接从龟速的 $O(N^2)$ 飙升到极速的 $O(1)$。

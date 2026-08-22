@@ -17,19 +17,22 @@ logger = logging.getLogger("nn_core.world_model")
 
 class NextFramePredictor:
     """
-    纯 NumPy 教学级自回归下一帧世界模型预测器。
-    通过输入历史帧的 Transformer 上下文表征，推演下一帧的物理画面像素分布。
+    未训练的两层 MLP 输出头。它只演示从上下文特征到帧像素的形状映射，
+    不代表已学会下一帧预测或物理规律。
     """
 
-    def __init__(self, d_model: int = 32, frame_pixels: int = 1024) -> None:
+    def __init__(self, d_model: int = 32, frame_pixels: int = 1024, *, seed: int = 42) -> None:
+        if d_model <= 0 or frame_pixels <= 0:
+            raise ValueError("d_model 与 frame_pixels 必须为正数")
         self.d_model = d_model
         self.frame_pixels = frame_pixels
 
         # 两层解码投影 MLP
         hidden_dim = 128
-        self.W1 = np.random.randn(d_model, hidden_dim) * np.sqrt(2.0 / d_model)
+        rng = np.random.default_rng(seed)
+        self.W1 = rng.normal(size=(d_model, hidden_dim)) * np.sqrt(2.0 / d_model)
         self.b1 = np.zeros(hidden_dim)
-        self.W2 = np.random.randn(hidden_dim, frame_pixels) * np.sqrt(2.0 / hidden_dim)
+        self.W2 = rng.normal(size=(hidden_dim, frame_pixels)) * np.sqrt(2.0 / hidden_dim)
         self.b2 = np.zeros(frame_pixels)
 
     def forward(self, context_embeds: np.ndarray) -> np.ndarray:
@@ -57,7 +60,7 @@ class DiffusionScheduler:
         $$x_t = \\sqrt{\\bar{\\alpha}_t} x_0 + \\sqrt{1 - \\bar{\\alpha}_t} \\epsilon, \\quad \\epsilon \\sim \\mathcal{N}(0, \\mathbf{I})$$
 
     支持：
-        - `cosine`: 余弦调度 (Nichol & Dhariwal, 2021)，在小时间步 (T=20) 亦可保证末端信号完全衰减为纯高斯噪声
+        - `cosine`: 余弦调度 (Nichol & Dhariwal, 2021)；末端仍保留由 alpha_bar 决定的有限信号
         - `linear`: 线性调度 (Ho et al., 2020)，适用于大时间步 (T=1000) 训练
     """
 
@@ -67,11 +70,19 @@ class DiffusionScheduler:
         beta_start: float = 1e-4,
         beta_end: float = 0.02,
         schedule_type: str = "cosine",
+        seed: int | None = None,
     ) -> None:
+        if num_steps <= 0:
+            raise ValueError("num_steps 必须为正整数")
+        if schedule_type not in {"cosine", "余弦", "linear", "线性"}:
+            raise ValueError("schedule_type 必须是 cosine/余弦 或 linear/线性")
+        if not 0 < beta_start < beta_end < 1:
+            raise ValueError("beta 必须满足 0 < beta_start < beta_end < 1")
         self.num_steps = num_steps
         self.beta_start = beta_start
         self.beta_end = beta_end
         self.schedule_type = schedule_type
+        self.rng = np.random.default_rng(seed)
 
         if schedule_type == "cosine" or "余弦" in schedule_type:
             # Nichol & Dhariwal (2021) Cosine Schedule
@@ -98,13 +109,19 @@ class DiffusionScheduler:
         在时间步 t 对清晰图像 x_0 进行单步闭式加噪。
         t ∈ [0, num_steps - 1]
         """
-        if t < 0:
-            return x_0
-        t_idx = min(t, self.num_steps - 1)
-        alpha_bar = self.alphas_cumprod[t_idx]
+        if not 0 <= t < self.num_steps:
+            raise IndexError(f"t 必须位于 [0, {self.num_steps - 1}]")
+        x_0 = np.asarray(x_0)
+        if x_0.size == 0 or not np.all(np.isfinite(x_0)):
+            raise ValueError("x_0 必须是非空有限数值张量")
+        alpha_bar = self.alphas_cumprod[t]
 
         if noise is None:
-            noise = np.random.randn(*x_0.shape)
+            noise = self.rng.normal(size=x_0.shape)
+        else:
+            noise = np.asarray(noise)
+            if noise.shape != x_0.shape or not np.all(np.isfinite(noise)):
+                raise ValueError("noise 必须与 x_0 同形且全部有限")
 
         # 闭式采样公式: sqrt(alpha_bar) * x_0 + sqrt(1 - alpha_bar) * epsilon
         sqrt_alpha_bar = np.sqrt(alpha_bar)
@@ -125,13 +142,14 @@ class DiffusionScheduler:
 
 
 def visualize_diffusion_process(
-    x_0: np.ndarray, scheduler: DiffusionScheduler, steps_to_show: int = 5
+    x_0: np.ndarray, scheduler: DiffusionScheduler, steps_to_show: int = 5, *, seed: int = 42
 ) -> list[tuple[int, np.ndarray]]:
     """
-    生成从清晰原图到纯高斯白噪声的等间隔扩散演化快照。
+    生成前向加噪的等间隔快照；末帧是否接近纯噪声取决于 schedule。
     """
-    np.random.seed(42)
-    fixed_noise = np.random.randn(*x_0.shape)
+    if steps_to_show <= 0:
+        raise ValueError("steps_to_show 必须为正数")
+    fixed_noise = np.random.default_rng(seed).normal(size=x_0.shape)
     indices = np.linspace(0, scheduler.num_steps - 1, steps_to_show, dtype=int)
     snapshots = []
 

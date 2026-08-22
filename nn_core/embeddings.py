@@ -191,20 +191,25 @@ def get_mini_vocab() -> dict[str, int]:
     return vocab
 
 
-def get_pretrained_embeddings(vocab_size: int, d_model: int = 32) -> np.ndarray:
-    """
-    生成具有一定特定语义关系的预训练词向量。
+def get_synthetic_demo_embeddings(
+    vocab_size: int, d_model: int = 32, *, seed: int = 42
+) -> np.ndarray:
+    """构造用于讲解向量几何的合成词向量。
 
-    保证 `king - man + woman ≈ queen` 等基本语义相似性。
+    关系轴由代码人工注入，不是从语料训练得到，也不能用来证明
+    语义、偏见或类比推理能力。随机数由局部 Generator 产生，不修改
+    NumPy 全局随机状态。
     """
-    np.random.seed(42)
-    embeddings = np.random.randn(vocab_size, d_model) * 0.1
+    if vocab_size <= 0 or d_model < 3:
+        raise ValueError("vocab_size 必须为正数，d_model 至少为 3")
+    rng = np.random.default_rng(seed)
+    embeddings = rng.normal(0.0, 0.1, size=(vocab_size, d_model))
     vocab = get_mini_vocab()
 
     def set_vec(w1: str, w2: str, dim: int, val1: float, val2: float):
-        if w1 in vocab:
+        if w1 in vocab and vocab[w1] < vocab_size:
             embeddings[vocab[w1], dim] = val1
-        if w2 in vocab:
+        if w2 in vocab and vocab[w2] < vocab_size:
             embeddings[vocab[w2], dim] = val2
 
     # 手动设定一些主成分轴 (模拟语义空间)
@@ -226,3 +231,15 @@ def get_pretrained_embeddings(vocab_size: int, d_model: int = 32) -> np.ndarray:
     set_vec("france", "paris", 2, 1.0, -1.0)
 
     return embeddings
+
+
+def get_pretrained_embeddings(vocab_size: int, d_model: int = 32) -> np.ndarray:
+    """兼容旧 API；返回的是合成演示向量，而非预训练权重。"""
+    import warnings
+
+    warnings.warn(
+        "get_pretrained_embeddings 命名不准确；请改用 get_synthetic_demo_embeddings",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return get_synthetic_demo_embeddings(vocab_size, d_model)

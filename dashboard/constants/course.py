@@ -1,11 +1,12 @@
 # Copyright (c) 2026 Yy1 (yuan278501381) | MIT License
 """课程教学元数据、证据等级与权威参考资料的单一数据源。"""
 
+import re
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 
 
-class EvidenceLevel(str, Enum):
+class EvidenceLevel(StrEnum):
     """页面结果的证据性质；它描述证据，不评价内容难度。"""
 
     EXACT_COMPUTATION = "真实计算"
@@ -16,6 +17,15 @@ class EvidenceLevel(str, Enum):
     PAPER_REPRODUCTION = "论文复现"
 
 
+class SourceType(StrEnum):
+    """教学主张的来源类型。"""
+
+    PRIMARY_PAPER = "原始论文"
+    OFFICIAL_DOCUMENTATION = "官方文档"
+    TEXTBOOK = "教材"
+    REVIEW = "综述"
+
+
 @dataclass(frozen=True)
 class Reference:
     """直接支持课程结论的原始论文或权威资料。"""
@@ -23,6 +33,34 @@ class Reference:
     title: str
     url: str
     note: str
+    source_type: SourceType
+    author_or_organization: str
+    year: int
+    stable_identifier: str
+    supports: str
+
+
+class ClaimKind(StrEnum):
+    CORE_FORMULA = "核心公式"
+    CORE_RESULT = "核心图表/结果"
+    HISTORY = "历史结论"
+    FAILURE_MODE = "失败模式"
+
+
+@dataclass(frozen=True)
+class Claim:
+    """可审计的页内教学主张。"""
+
+    claim_id: str
+    lesson_id: str
+    kind: ClaimKind
+    statement: str
+    conditions: str
+    evidence_level: EvidenceLevel
+    sources: tuple[Reference, ...]
+    result_id: str
+    limitations: str
+    last_verified: str
 
 
 @dataclass(frozen=True)
@@ -43,6 +81,17 @@ class LessonMeta:
     references: tuple[Reference, ...]
 
 
+@dataclass(frozen=True)
+class LearningLoop:
+    """每课从诊断、实验到形成性评价的最小闭环。"""
+
+    diagnostic_question: str
+    minimum_experiment: str
+    counterexample_experiment: str
+    formative_assessment: str
+    pass_criteria: str
+
+
 EVIDENCE_DESCRIPTIONS: dict[EvidenceLevel, str] = {
     EvidenceLevel.EXACT_COMPUTATION: "页面结果由当前代码按照展示公式实际计算。",
     EvidenceLevel.TEACHING_SCALE: "机制保真，但模型、数据或训练规模为便于观察而缩小。",
@@ -53,8 +102,126 @@ EVIDENCE_DESCRIPTIONS: dict[EvidenceLevel, str] = {
 }
 
 
-def _ref(title: str, url: str, note: str) -> Reference:
-    return Reference(title=title, url=url, note=note)
+_REFERENCE_METADATA: dict[str, tuple[str, int, SourceType]] = {
+    "The Matrix Calculus You Need For Deep Learning": (
+        "Terence Parr; Jeremy Howard",
+        2018,
+        SourceType.REVIEW,
+    ),
+    "Numerical Optimization": ("Jorge Nocedal; Stephen J. Wright", 2006, SourceType.TEXTBOOK),
+    "The Perceptron": ("Frank Rosenblatt", 1958, SourceType.PRIMARY_PAPER),
+    "Learning representations by back-propagating errors": (
+        "David Rumelhart; Geoffrey Hinton; Ronald Williams",
+        1986,
+        SourceType.PRIMARY_PAPER,
+    ),
+    "Adam: A Method for Stochastic Optimization": (
+        "Diederik Kingma; Jimmy Ba",
+        2014,
+        SourceType.PRIMARY_PAPER,
+    ),
+    "Deep Learning": ("Ian Goodfellow; Yoshua Bengio; Aaron Courville", 2016, SourceType.TEXTBOOK),
+    "Efficient Estimation of Word Representations": (
+        "Tomas Mikolov et al.",
+        2013,
+        SourceType.PRIMARY_PAPER,
+    ),
+    "Long Short-Term Memory": (
+        "Sepp Hochreiter; Jürgen Schmidhuber",
+        1997,
+        SourceType.PRIMARY_PAPER,
+    ),
+    "Neural Machine Translation by Jointly Learning to Align and Translate": (
+        "Dzmitry Bahdanau; Kyunghyun Cho; Yoshua Bengio",
+        2014,
+        SourceType.PRIMARY_PAPER,
+    ),
+    "Attention Is All You Need": ("Ashish Vaswani et al.", 2017, SourceType.PRIMARY_PAPER),
+    "Language Models are Unsupervised Multitask Learners": (
+        "Alec Radford et al.; OpenAI",
+        2019,
+        SourceType.PRIMARY_PAPER,
+    ),
+    "An Image is Worth 16x16 Words": ("Alexey Dosovitskiy et al.", 2020, SourceType.PRIMARY_PAPER),
+    "Learning Transferable Visual Models From Natural Language Supervision": (
+        "Alec Radford et al.; OpenAI",
+        2021,
+        SourceType.PRIMARY_PAPER,
+    ),
+    "Robust Speech Recognition via Large-Scale Weak Supervision": (
+        "Alec Radford et al.; OpenAI",
+        2022,
+        SourceType.PRIMARY_PAPER,
+    ),
+    "Denoising Diffusion Probabilistic Models": (
+        "Jonathan Ho; Ajay Jain; Pieter Abbeel",
+        2020,
+        SourceType.PRIMARY_PAPER,
+    ),
+    "Scalable Diffusion Models with Transformers": (
+        "William Peebles; Saining Xie",
+        2022,
+        SourceType.PRIMARY_PAPER,
+    ),
+    "Training Compute-Optimal Large Language Models": (
+        "Jordan Hoffmann et al.; DeepMind",
+        2022,
+        SourceType.PRIMARY_PAPER,
+    ),
+    "Training language models to follow instructions with human feedback": (
+        "Long Ouyang et al.; OpenAI",
+        2022,
+        SourceType.PRIMARY_PAPER,
+    ),
+    "Direct Preference Optimization": ("Rafael Rafailov et al.", 2023, SourceType.PRIMARY_PAPER),
+    "Holistic Evaluation of Language Models": (
+        "Percy Liang et al.; Stanford CRFM",
+        2022,
+        SourceType.PRIMARY_PAPER,
+    ),
+    "Reinforcement Learning: An Introduction": (
+        "Richard Sutton; Andrew Barto",
+        2018,
+        SourceType.TEXTBOOK,
+    ),
+    "DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning": (
+        "DeepSeek-AI",
+        2025,
+        SourceType.PRIMARY_PAPER,
+    ),
+}
+
+
+def _ref(
+    title: str,
+    url: str,
+    note: str,
+    *,
+    source_type: SourceType | None = None,
+    author_or_organization: str | None = None,
+    year: int | None = None,
+    supports: str | None = None,
+) -> Reference:
+    """创建结构化引用；stable identifier 保留 DOI/arXiv/官方 URL。"""
+    metadata = _REFERENCE_METADATA.get(title)
+    if metadata:
+        default_author, default_year, default_type = metadata
+        author_or_organization = author_or_organization or default_author
+        year = year or default_year
+        source_type = source_type or default_type
+    if year is None:
+        match = re.search(r"(?:19|20)\d{2}", f"{title} {note} {url}")
+        year = int(match.group()) if match else 0
+    return Reference(
+        title=title,
+        url=url,
+        note=note,
+        source_type=source_type or SourceType.PRIMARY_PAPER,
+        author_or_organization=author_or_organization or "未标注",
+        year=year,
+        stable_identifier=url,
+        supports=supports or note,
+    )
 
 
 LESSONS: dict[str, LessonMeta] = {
@@ -154,7 +321,11 @@ LESSONS: dict[str, LessonMeta] = {
     "M05": LessonMeta(
         "M05",
         "词嵌入空间",
-        (EvidenceLevel.EXACT_COMPUTATION, EvidenceLevel.TEACHING_SCALE),
+        (
+            EvidenceLevel.EXACT_COMPUTATION,
+            EvidenceLevel.TEACHING_SCALE,
+            EvidenceLevel.SYNTHETIC_DATA,
+        ),
         ("向量与余弦相似度",),
         ("理解离散 token 的连续表示", "区分展示用嵌入与语料训练嵌入"),
         "one-hot 向量不能直接表达词之间的相似关系。",
@@ -189,6 +360,20 @@ LESSONS: dict[str, LessonMeta] = {
                 "https://doi.org/10.1162/neco.1997.9.8.1735",
                 "LSTM 原始论文",
             ),
+            _ref(
+                "Learning long-term dependencies with gradient descent is difficult",
+                "https://doi.org/10.1109/72.279181",
+                "Vanilla RNN 长程梯度困难",
+                author_or_organization="Yoshua Bengio; Patrice Simard; Paolo Frasconi",
+                year=1994,
+            ),
+            _ref(
+                "Learning Phrase Representations using RNN Encoder-Decoder",
+                "https://arxiv.org/abs/1406.1078",
+                "GRU 原始论文",
+                author_or_organization="Kyunghyun Cho et al.",
+                year=2014,
+            ),
         ),
     ),
     "M07": LessonMeta(
@@ -208,6 +393,20 @@ LESSONS: dict[str, LessonMeta] = {
                 "Neural Machine Translation by Jointly Learning to Align and Translate",
                 "https://arxiv.org/abs/1409.0473",
                 "神经注意力早期代表论文",
+            ),
+            _ref(
+                "Attention Is All You Need",
+                "https://arxiv.org/abs/1706.03762",
+                "缩放点积注意力与多头注意力",
+                author_or_organization="Ashish Vaswani et al.",
+                year=2017,
+            ),
+            _ref(
+                "Attention is not Explanation",
+                "https://arxiv.org/abs/1902.10186",
+                "注意力权重的解释局限",
+                author_or_organization="Sofia Serrano; Noah A. Smith",
+                year=2019,
             ),
         ),
     ),
@@ -229,12 +428,38 @@ LESSONS: dict[str, LessonMeta] = {
                 "https://arxiv.org/abs/1706.03762",
                 "Transformer 原始论文",
             ),
+            _ref(
+                "Layer Normalization",
+                "https://arxiv.org/abs/1607.06450",
+                "LayerNorm 原始论文",
+                author_or_organization="Jimmy Lei Ba; Jamie Ryan Kiros; Geoffrey Hinton",
+                year=2016,
+            ),
+            _ref(
+                "Deep Residual Learning for Image Recognition",
+                "https://arxiv.org/abs/1512.03385",
+                "残差连接原始论文",
+                author_or_organization="Kaiming He et al.",
+                year=2015,
+            ),
+            _ref(
+                "On Layer Normalization in the Transformer Architecture",
+                "https://arxiv.org/abs/2002.04745",
+                "Pre-LN/Post-LN 训练动力学分析",
+                author_or_organization="Ruibin Xiong et al.",
+                year=2020,
+            ),
         ),
     ),
     "M09": LessonMeta(
         "M09",
         "Mini-GPT",
-        (EvidenceLevel.EXACT_COMPUTATION, EvidenceLevel.TEACHING_SCALE),
+        (
+            EvidenceLevel.EXACT_COMPUTATION,
+            EvidenceLevel.TEACHING_SCALE,
+            EvidenceLevel.SYNTHETIC_DATA,
+            EvidenceLevel.ARCHITECTURE_ONLY,
+        ),
         ("M08", "自回归概率"),
         ("理解因果生成循环", "比较 temperature 与 top-k"),
         "固定输出规则无法根据上下文形成下一个 token 分布。",
@@ -269,6 +494,13 @@ LESSONS: dict[str, LessonMeta] = {
         "CNN、ViT 与对比学习先后扩展了视觉和图文表示能力。",
         (
             _ref(
+                "Gradient-Based Learning Applied to Document Recognition",
+                "https://doi.org/10.1109/5.726791",
+                "LeNet/CNN 经典原始资料",
+                author_or_organization="Yann LeCun et al.",
+                year=1998,
+            ),
+            _ref(
                 "An Image is Worth 16x16 Words", "https://arxiv.org/abs/2010.11929", "ViT 原始论文"
             ),
             _ref(
@@ -295,6 +527,20 @@ LESSONS: dict[str, LessonMeta] = {
         "当前实现不包含 Whisper 的卷积前端、Encoder-Decoder、文本 tokenizer 或训练权重。",
         "时频表示与 Transformer 让大规模弱监督语音识别成为可能。",
         (
+            _ref(
+                "A Tutorial on Short-Time Spectrum Analysis",
+                "https://doi.org/10.1109/PROC.1977.10770",
+                "STFT 窗函数与时频分析",
+                author_or_organization="J. B. Allen; L. R. Rabiner",
+                year=1977,
+            ),
+            _ref(
+                "A Scale for the Measurement of the Psychological Magnitude Pitch",
+                "https://doi.org/10.1121/1.1915893",
+                "Mel 频率标度的心理声学来源",
+                author_or_organization="Stanley Smith Stevens; John Volkmann; Edwin Newman",
+                year=1937,
+            ),
             _ref(
                 "Robust Speech Recognition via Large-Scale Weak Supervision",
                 "https://arxiv.org/abs/2212.04356",
@@ -345,6 +591,41 @@ LESSONS: dict[str, LessonMeta] = {
         "自监督预训练把统一底座迁移到大量下游任务。",
         (
             _ref(
+                "BERT: Pre-training of Deep Bidirectional Transformers",
+                "https://arxiv.org/abs/1810.04805",
+                "MLM 与 BERT 预训练",
+                author_or_organization="Jacob Devlin et al.",
+                year=2018,
+            ),
+            _ref(
+                "Language Models are Unsupervised Multitask Learners",
+                "https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf",
+                "GPT-2 因果语言建模",
+                author_or_organization="Alec Radford et al.; OpenAI",
+                year=2019,
+            ),
+            _ref(
+                "Learning Transferable Visual Models From Natural Language Supervision",
+                "https://arxiv.org/abs/2103.00020",
+                "CLIP 对比预训练",
+                author_or_organization="Alec Radford et al.; OpenAI",
+                year=2021,
+            ),
+            _ref(
+                "Masked Autoencoders Are Scalable Vision Learners",
+                "https://arxiv.org/abs/2111.06377",
+                "MAE 原始论文",
+                author_or_organization="Kaiming He et al.",
+                year=2021,
+            ),
+            _ref(
+                "Neural Machine Translation of Rare Words with Subword Units",
+                "https://arxiv.org/abs/1508.07909",
+                "NMT 中 BPE subword 方法",
+                author_or_organization="Rico Sennrich; Barry Haddow; Alexandra Birch",
+                year=2015,
+            ),
+            _ref(
                 "Training Compute-Optimal Large Language Models",
                 "https://arxiv.org/abs/2203.15556",
                 "Chinchilla 规模定律论文",
@@ -365,12 +646,26 @@ LESSONS: dict[str, LessonMeta] = {
         "指令微调和偏好优化显著改变了基础模型的人机交互行为。",
         (
             _ref(
+                "Proximal Policy Optimization Algorithms",
+                "https://arxiv.org/abs/1707.06347",
+                "PPO 原始论文",
+                author_or_organization="John Schulman et al.; OpenAI",
+                year=2017,
+            ),
+            _ref(
                 "Training language models to follow instructions with human feedback",
                 "https://arxiv.org/abs/2203.02155",
                 "InstructGPT 论文",
             ),
             _ref(
                 "Direct Preference Optimization", "https://arxiv.org/abs/2305.18290", "DPO 原始论文"
+            ),
+            _ref(
+                "LoRA: Low-Rank Adaptation of Large Language Models",
+                "https://arxiv.org/abs/2106.09685",
+                "LoRA 原始论文",
+                author_or_organization="Edward Hu et al.; Microsoft",
+                year=2021,
             ),
         ),
     ),
@@ -388,6 +683,35 @@ LESSONS: dict[str, LessonMeta] = {
         "标准化评估促进模型比较，也暴露了覆盖度、污染与可复现性问题。",
         (
             _ref(
+                "Speech and Language Processing",
+                "https://web.stanford.edu/~jurafsky/slp3/",
+                "语言模型交叉熵与困惑度",
+                source_type=SourceType.TEXTBOOK,
+                author_or_organization="Dan Jurafsky; James H. Martin",
+                year=2026,
+            ),
+            _ref(
+                "Measuring Massive Multitask Language Understanding",
+                "https://arxiv.org/abs/2009.03300",
+                "MMLU 原始论文与任务定义",
+                author_or_organization="Dan Hendrycks et al.",
+                year=2020,
+            ),
+            _ref(
+                "HellaSwag: Can a Machine Really Finish Your Sentence?",
+                "https://arxiv.org/abs/1905.07830",
+                "HellaSwag 原始论文与任务定义",
+                author_or_organization="Rowan Zellers et al.",
+                year=2019,
+            ),
+            _ref(
+                "Training Verifiers to Solve Math Word Problems",
+                "https://arxiv.org/abs/2110.14168",
+                "GSM8K 数据集与协议",
+                author_or_organization="Karl Cobbe et al.; OpenAI",
+                year=2021,
+            ),
+            _ref(
                 "Holistic Evaluation of Language Models",
                 "https://arxiv.org/abs/2211.09110",
                 "HELM 评估框架论文",
@@ -399,13 +723,21 @@ LESSONS: dict[str, LessonMeta] = {
         "强化学习与自主智能体",
         (EvidenceLevel.EXACT_COMPUTATION, EvidenceLevel.TEACHING_SCALE, EvidenceLevel.SIMULATION),
         ("马尔可夫决策过程", "贝尔曼最优方程", "时序差分 Q-Learning"),
-        ("求解离散网格 MDP 最优价值函数", "观察时序差分探索与利用平衡", "理解 DeepSeek-R1 式 GRPO 组相对优化"),
-        "传统监督学习与预训练只能拟合固定数据分布，缺乏在环境中试错交互并自我反思纠错的能力。",
+        (
+            "求解离散网格 MDP 最优价值函数",
+            "观察时序差分探索与利用平衡",
+            "理解 DeepSeek-R1 式 GRPO 组相对优化",
+        ),
+        "监督学习通常从固定数据集学习；强化学习则显式建模动作、环境反馈与长期回报。",
         ("学习率 alpha", "折扣因子 gamma", "探索率 epsilon", "GRPO 训练轮数"),
         ("累积回报", "TD-Error", "贝尔曼价值曲面", "策略箭头分布", "思考链 Token 长度"),
-        ("把单次试错失败当作无法收敛", "忽略探索率衰减导致无法收敛到最优策略", "混淆离散网格 Q-Learning 与大模型 GRPO 的适用边界"),
-        "当前网格寻路使用离散 Q-Table 与动态规划精确求解；GRPO 演化展示为基于公开论文规律的教学级动力学仿真。",
-        "从经典 MDP 贝尔曼方程到 DeepSeek-R1 纯强化学习，RL 构成了 AI 实现自主规划与慢思考推理的核心基石。",
+        (
+            "把单次试错失败当作无法收敛",
+            "忽略探索率衰减导致无法收敛到最优策略",
+            "混淆离散网格 Q-Learning 与大模型 GRPO 的适用边界",
+        ),
+        "当前网格寻路使用离散 Q-Table；动态规划仅是当前有限、确定性、已知转移 MDP 的数值参考。GRPO 曲线是手工规则仿真，不是语言模型训练日志。",
+        "贝尔曼方程、时序差分学习和策略梯度建立了强化学习的主要方法族；2025 年 DeepSeek-R1 报告展示了这类方法在推理后训练中的一种应用。",
         (
             _ref(
                 "Reinforcement Learning: An Introduction",
@@ -413,13 +745,151 @@ LESSONS: dict[str, LessonMeta] = {
                 "Sutton & Barto 强化学习圣经经典教材",
             ),
             _ref(
+                "Q-learning",
+                "https://doi.org/10.1007/BF00992698",
+                "Q-Learning 收敛性原始论文",
+                author_or_organization="Christopher Watkins; Peter Dayan",
+                year=1992,
+            ),
+            _ref(
+                "Simple statistical gradient-following algorithms for connectionist reinforcement learning",
+                "https://doi.org/10.1007/BF00992696",
+                "REINFORCE 原始论文",
+                author_or_organization="Ronald Williams",
+                year=1992,
+            ),
+            _ref(
+                "DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models",
+                "https://arxiv.org/abs/2402.03300",
+                "GRPO 算法来源",
+                author_or_organization="DeepSeek-AI",
+                year=2024,
+            ),
+            _ref(
                 "DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning",
                 "https://arxiv.org/abs/2501.12948",
-                "DeepSeek-R1 纯强化学习推理论文",
+                "DeepSeek-R1/R1-Zero 的不同训练流程与推理案例",
             ),
         ),
     ),
 }
+
+
+def _claim_evidence(lesson: LessonMeta, kind: ClaimKind) -> EvidenceLevel:
+    """为默认主张选择最窄的证据类型。"""
+    if kind is ClaimKind.HISTORY:
+        return EvidenceLevel.TEACHING_SCALE
+    if kind is ClaimKind.CORE_RESULT:
+        for level in (
+            EvidenceLevel.SIMULATION,
+            EvidenceLevel.ARCHITECTURE_ONLY,
+            EvidenceLevel.SYNTHETIC_DATA,
+            EvidenceLevel.EXACT_COMPUTATION,
+        ):
+            if level in lesson.evidence:
+                return level
+    if EvidenceLevel.EXACT_COMPUTATION in lesson.evidence:
+        return EvidenceLevel.EXACT_COMPUTATION
+    return lesson.evidence[0]
+
+
+def _build_claims() -> dict[str, Claim]:
+    """为每页建立公式、结果、历史和失败模式四类最小可追溯集。"""
+    claims: dict[str, Claim] = {}
+    for lesson_id, lesson in LESSONS.items():
+        rows = (
+            (
+                ClaimKind.CORE_FORMULA,
+                f"本页核心计算用于{lesson.objectives[0]}。",
+                "formula",
+                lesson.conclusion_boundary,
+            ),
+            (
+                ClaimKind.CORE_RESULT,
+                f"页内图表与指标用于观察：{'、'.join(lesson.observations)}。",
+                "result",
+                lesson.conclusion_boundary,
+            ),
+            (
+                ClaimKind.HISTORY,
+                lesson.historical_impact,
+                "history",
+                "历史影响不表示后续方法在所有任务上更优。",
+            ),
+            (
+                ClaimKind.FAILURE_MODE,
+                f"本页必须检查的失败模式：{lesson.failure_cases[0]}。",
+                "failure",
+                lesson.conclusion_boundary,
+            ),
+        )
+        for kind, statement, suffix, limitations in rows:
+            claim_id = f"{lesson_id.lower()}-{suffix}"
+            source = lesson.references[-1] if kind in {ClaimKind.HISTORY, ClaimKind.FAILURE_MODE} else lesson.references[0]
+            claims[claim_id] = Claim(
+                claim_id=claim_id,
+                lesson_id=lesson_id,
+                kind=kind,
+                statement=statement,
+                conditions=f"适用于 {lesson.title} 页面所公开的实现、参数和证据等级。",
+                evidence_level=_claim_evidence(lesson, kind),
+                sources=(source,),
+                result_id=f"{lesson_id.lower()}-{suffix}",
+                limitations=limitations,
+                last_verified="2026-08-22",
+            )
+    return claims
+
+
+CLAIMS: dict[str, Claim] = _build_claims()
+
+
+CURRICULUM_DAG: dict[str, tuple[str, ...]] = {
+    "M00": (),
+    "M01": ("M00",),
+    "M02": ("M01",),
+    "M03": ("M02",),
+    "M04": ("M01", "M02", "M03"),
+    "M05": ("M00",),
+    "M06": ("M02", "M05"),
+    "M07": ("M00", "M06"),
+    "M08": ("M07",),
+    "M09": ("M08",),
+    "M10": ("M02", "M07"),
+    "M11": ("M00",),
+    "M12": ("M08", "M10"),
+    "M13": ("M09", "M10", "M11", "M12"),
+    "M14": ("M13",),
+    "M15": ("M00", "M09"),
+    "M16": ("M00", "M02"),
+}
+
+
+def _build_learning_loops() -> dict[str, LearningLoop]:
+    """从教学契约生成可执行、可判定且包含反例的 17 课学习闭环。"""
+    loops: dict[str, LearningLoop] = {}
+    for lesson_id, lesson in LESSONS.items():
+        loops[lesson_id] = LearningLoop(
+            diagnostic_question=f"在实验前说明：为什么“{lesson.predecessor_problem}”会限制当前方法？",
+            minimum_experiment=(
+                f"只改变“{lesson.controllable_parameters[0]}”，保持其他条件不变，"
+                f"记录“{lesson.observations[0]}”。"
+            ),
+            counterexample_experiment=(
+                f"主动构造或选择“{lesson.failure_cases[0]}”，比较它与正常设置下的结果。"
+            ),
+            formative_assessment=(
+                f"用自己的话解释观察结果，并明确为何不能超出这条边界：{lesson.conclusion_boundary}"
+            ),
+            pass_criteria=(
+                "能够给出参数、控制变量、观测量和失败案例；结论包含适用条件，"
+                "且不把合成数据、模拟或架构示意误称为真实能力。"
+            ),
+        )
+    return loops
+
+
+LEARNING_LOOPS: dict[str, LearningLoop] = _build_learning_loops()
 
 
 def validate_course_registry() -> None:
@@ -431,6 +901,38 @@ def validate_course_registry() -> None:
         extra = sorted(set(LESSONS) - expected)
         raise ValueError(f"课程注册表不完整: missing={missing}, extra={extra}")
 
+    if set(CURRICULUM_DAG) != expected or set(LEARNING_LOOPS) != expected:
+        raise ValueError("课程依赖图或学习闭环未覆盖 M00-M16")
+    visited: set[str] = set()
+    visiting: set[str] = set()
+
+    def visit(lesson_id: str) -> None:
+        if lesson_id in visiting:
+            raise ValueError(f"课程依赖图存在环: {lesson_id}")
+        if lesson_id in visited:
+            return
+        visiting.add(lesson_id)
+        for prerequisite in CURRICULUM_DAG[lesson_id]:
+            if prerequisite not in expected:
+                raise ValueError(f"{lesson_id} 存在未知依赖: {prerequisite}")
+            visit(prerequisite)
+        visiting.remove(lesson_id)
+        visited.add(lesson_id)
+
+    for lesson_id in expected:
+        visit(lesson_id)
+        loop = LEARNING_LOOPS[lesson_id]
+        if not all(
+            (
+                loop.diagnostic_question,
+                loop.minimum_experiment,
+                loop.counterexample_experiment,
+                loop.formative_assessment,
+                loop.pass_criteria,
+            )
+        ):
+            raise ValueError(f"{lesson_id} 的学习闭环不完整")
+
     for lesson_id, lesson in LESSONS.items():
         if lesson.lesson_id != lesson_id or not lesson.evidence:
             raise ValueError(f"{lesson_id} 的标识或证据等级无效")
@@ -440,6 +942,35 @@ def validate_course_registry() -> None:
             raise ValueError(f"{lesson_id} 缺少权威参考资料")
         if any(not ref.url.startswith("https://") for ref in lesson.references):
             raise ValueError(f"{lesson_id} 存在非 HTTPS 参考链接")
+        for ref in lesson.references:
+            if (
+                not ref.author_or_organization
+                or ref.year <= 0
+                or not ref.stable_identifier
+                or not ref.supports
+            ):
+                raise ValueError(f"{lesson_id} 存在不完整的结构化引用: {ref.title}")
+
+    if len(CLAIMS) != 68:
+        raise ValueError("每个页面必须注册 4 类核心主张")
+    if len(CLAIMS) != len(set(CLAIMS)):
+        raise ValueError("claim ID 必须唯一")
+    result_ids: set[str] = set()
+    for claim_id, claim in CLAIMS.items():
+        if claim.claim_id != claim_id or claim.lesson_id not in LESSONS:
+            raise ValueError(f"无效 claim: {claim_id}")
+        if (
+            not claim.statement
+            or not claim.conditions
+            or not claim.limitations
+            or not claim.sources
+        ):
+            raise ValueError(f"{claim_id} 缺少主张边界或来源")
+        if not claim.result_id or claim.result_id in result_ids:
+            raise ValueError(f"{claim_id} 的 result ID 缺失或重复")
+        result_ids.add(claim.result_id)
+        if claim.evidence_level is EvidenceLevel.PAPER_REPRODUCTION:
+            raise ValueError(f"{claim_id} 尚无论文复现证据")
 
 
 validate_course_registry()

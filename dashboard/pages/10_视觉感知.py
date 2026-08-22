@@ -17,7 +17,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from dashboard.components.charts import _apply_light_theme
-from dashboard.components.pedagogy import render_lesson_evidence
+from dashboard.components.pedagogy import render_core_result_evidence, render_lesson_evidence
 from dashboard.styles.theme import (
     anchor_badge,
     apply_custom_theme,
@@ -27,8 +27,8 @@ from dashboard.styles.theme import (
     render_page_guide,
     render_section_heading,
 )
-from nn_core.conv2d import Conv2D, im2col
-from nn_core.clip import get_pretrained_clip_data, contrastive_loss
+from nn_core.clip import contrastive_loss, get_synthetic_clip_demo_data
+from nn_core.conv2d import Conv2D
 from nn_core.vit import PatchEmbedding
 
 st.set_page_config(
@@ -37,7 +37,8 @@ st.set_page_config(
 )
 
 apply_custom_theme()
-render_lesson_evidence("M10")
+render_lesson_evidence("M10", show_contract=True)
+render_core_result_evidence("M10")
 
 render_hero_header(
     title="卷积与视觉感知架构",
@@ -108,8 +109,8 @@ render_page_guide(
     ),
     experiments=[
         f"<b>第 1 步【体验卷积滤波】</b>：在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 切换【卷积核类型】，观察 Sobel-X 如何精准提取<b>左右垂直轮廓</b>（水平梯度 ∂I/∂x），Sobel-Y 如何提取<b>上下水平轮廓</b>（垂直梯度 ∂I/∂y）！",
-        f"<b>第 2 步【体验 ViT 切片】</b>：将【Patch Size】从 8 改为 4，观察图像被细分为 64 个 Token，直观理解图像如何转化为语言模型的输入序列！",
-        f"<b>第 3 步【观测 CLIP 图文对齐】</b>：滚动至 Section 4，观察对角线上明亮的黄色高分点，验证图文双塔如何将'猫咪文字'与'猫咪图片'自动拉近！",
+        "<b>第 2 步【体验 ViT 切片】</b>：将【Patch Size】从 8 改为 4，观察图像被细分为 64 个 Token，直观理解图像如何转化为语言模型的输入序列！",
+        "<b>第 3 步【观察合成对齐矩阵】</b>：滚动至 Section 4，观察人工构造的正样本对在对角线上得分较高；这用于解释对比损失输入，不是随机双塔学会了图文对齐。",
     ],
 )
 
@@ -225,7 +226,7 @@ metric_grid_html = (
     + render_metric_card(
         "FEATURE MAP // 卷积输出尺寸",
         f"{feature_map.shape[0]} × {feature_map.shape[1]}",
-        delta=f"Stride=1, Pad=1 (保持原分辨率)",
+        delta="Stride=1, Pad=1 (保持原分辨率)",
         delta_type="positive",
         icon_name="target",
     )
@@ -268,7 +269,11 @@ render_live_param_status_bar(
     badges=[
         {"label": "Filter", "value": f"{kernel_choice}", "color": "blue"},
         {"label": "Kernel Size", "value": "3x3", "color": "amber"},
-        {"label": "Feature Shape", "value": f"{feature_map.shape[0]}x{feature_map.shape[1]}", "color": "emerald"},
+        {
+            "label": "Feature Shape",
+            "value": f"{feature_map.shape[0]}x{feature_map.shape[1]}",
+            "color": "emerald",
+        },
     ],
     metrics=[
         ("步长 Stride", "1"),
@@ -298,12 +303,11 @@ with col_img_in:
     fig_in = _apply_light_theme(fig_in, f"输入原图 ({img_choice})")
     st.plotly_chart(fig_in, width="stretch")
 
-with col_kernel:
-    with st.container(border=True):
-        st.markdown(f"#### [FILTER // 当前卷积核]\n**{kernel_choice}**")
-        st.caption("3×3 感受野离散差分矩阵：")
-        st.code(str(cur_kernel), language="text")
-        st.markdown("$$Y_{i,j} = \\sum_{m=-1}^1 \\sum_{n=-1}^1 X_{i+m, j+n} \\cdot W_{m,n}$$")
+with col_kernel, st.container(border=True):
+    st.markdown(f"#### [FILTER // 当前卷积核]\n**{kernel_choice}**")
+    st.caption("3×3 感受野离散差分矩阵：")
+    st.code(str(cur_kernel), language="text")
+    st.markdown("$$Y_{i,j} = \\sum_{m=-1}^1 \\sum_{n=-1}^1 X_{i+m, j+n} \\cdot W_{m,n}$$")
 
 with col_img_out:
     fig_out = go.Figure(
@@ -460,7 +464,7 @@ with col_vit_info:
 # ---------------------------------------------------------------------------
 render_section_heading("CLIP MULTI-MODAL ALIGNMENT // 跨模态图文对齐空间", icon_name="activity")
 
-labels_clip, texts_clip, sim_matrix = get_pretrained_clip_data()
+labels_clip, texts_clip, sim_matrix = get_synthetic_clip_demo_data()
 loss_val = contrastive_loss(sim_matrix, temperature=0.07)
 
 col_clip_mat, col_clip_desc = st.columns([1.3, 1])
@@ -488,7 +492,7 @@ with col_clip_mat:
         st.markdown(
             """
             * **纵轴【图像概念类别】** 与 **横轴【文本提示描述】**。
-            * **主对角线高亮 (黄色亮色)**：图像与其自身真实文本描述之间的余弦相似度极高（约 $0.85 \\sim 0.95$）。
+            * **主对角线高亮**：相似度矩阵由人工正交基底加噪构造，令配对项较高。它不是图片/文本 encoder 的前向结果，更不是预训练 CLIP 成绩。
             * **非对角线区域 (紫色暗色)**：不匹配的图文负样本对相似度被压低到 0 附近。
             * **[OPTIMAL // 对齐标杆]**：对角线如金线般发亮，非对角线一片漆黑，说明多模态模型完全具备了跨模态零样本分类能力。
             """
@@ -517,31 +521,31 @@ with st.expander(
         """
         ### 0. 核心公式逐字拆解：2D 空间卷积滤波
         $$(I * K)(i, j) = \\sum_{m=-1}^1 \\sum_{n=-1}^1 I(i+m, j+n) \\cdot K(m, n)$$
-        
+
         | 符号 | 中文名称 | 矩阵形状 (Shape) | 通俗大白话解释（它是什么？起什么作用？） |
         |:---:|:---:|:---:|:---|
         | **$I$** | **输入图像像素矩阵 (Image)** | $H \\times W$ (如 $32 \\times 32$) | 原始图片的灰度或彩色数值矩阵。 |
         | **$K$** | **卷积核滤镜 (Kernel / Filter)** | $3 \\times 3$ (小滑块) | **特征探针**。比如 Sobel-X 算子左负右正，专门在图片上寻找“从左到右剧烈明暗变化”的垂直边缘。 |
         | **$* (星号)$** | **2D 卷积滑动内积** | 运算符号 | 卷积核在整张图片上从左往右、从上往下像扫描仪一样滑动，对应位置相乘并累加。 |
         | **$(I * K)$** | **输出特征图 (Feature Map)** | $H \\times W$ | 经过滤镜扫描提取后的特征地图（边缘变亮，平坦区域变黑）。 |
-        
+
         ---
-        
+
         ### 1. 什么是【ViT (Vision Transformer)】？—— “把图片剪成九宫格喂给语言模型”
         * **生活比喻**：以前的 CNN 像一个手持放大镜逐行扫描的侦探；而 ViT 像一个剪刀手，直接把整张照片剪成 $4 \\times 4$ 共 16 个小纸片（Patch），给每个小纸片贴上编号（位置编码），然后当成一句话里的 16 个单词直接喂给标准的 Transformer！
         * **[CLS] Token 的妙用**：在所有图块前面额外插入一个特殊的“班长代表 [CLS]”，它在自注意力中跟所有小纸片交谈，最后单代表整张图片汇报分类结果！
-        
+
         ---
-        
+
         ### 2. 什么是【CLIP 图文对齐】？—— “连连看游戏”
         * **双塔架构**：一个视觉塔（处理图片）和一个文本塔（处理文字），分别把图片和文字映射到同一个高维向量空间。
         * **目标**：“猫咪的照片”和“写着'一只猫'的文字”，在空间里的距离被拉得极近；而“猫咪照片”和“写着'汽车'的文字”被推得极远！
-        
+
         ---
-        
+
         ### 3. 核心公式逐字拆解：InfoNCE 对比学习损失 (CLIP / SimCLR)
         $$L_{\\text{InfoNCE}} = -\\frac{1}{2N} \\sum_{i=1}^N \\left( \\log \\frac{e^{S_{ii}/\\tau}}{\\sum_j e^{S_{ij}/\\tau}} + \\log \\frac{e^{S_{ii}/\\tau}}{\\sum_j e^{S_{ji}/\\tau}} \\right)$$
-        
+
         | 符号 | 中文名称 | 通俗大白话解释 |
         |:---:|:---:|:---|
         | **$S_{ij}$** | **图-文余弦相似度矩阵** | 第 $i$ 张图片与第 $j$ 条文本的余弦相似度得分。对角线 $S_{ii}$ 是正确的图文匹配对。 |

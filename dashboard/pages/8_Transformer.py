@@ -13,6 +13,7 @@ if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
 import importlib
+
 import numpy as np
 import plotly.graph_objects as go
 import streamlit as st
@@ -22,7 +23,7 @@ import dashboard.components.charts
 importlib.reload(dashboard.components.charts)
 
 from dashboard.components.charts import _apply_light_theme, plot_attention_heatmap_nlp
-from dashboard.components.pedagogy import render_lesson_evidence
+from dashboard.components.pedagogy import render_core_result_evidence, render_lesson_evidence
 from dashboard.styles.theme import (
     anchor_badge,
     apply_custom_theme,
@@ -33,7 +34,7 @@ from dashboard.styles.theme import (
     render_page_guide,
     render_section_heading,
 )
-from nn_core.embeddings import Embedding, get_mini_vocab, get_pretrained_embeddings
+from nn_core.embeddings import Embedding, get_mini_vocab, get_synthetic_demo_embeddings
 from nn_core.transformer import TransformerBlock
 
 st.set_page_config(
@@ -43,6 +44,7 @@ st.set_page_config(
 
 apply_custom_theme()
 render_lesson_evidence("M08", show_contract=True)
+render_core_result_evidence("M08")
 
 render_hero_header(
     title="Transformer 结构块与残差流",
@@ -94,13 +96,13 @@ render_page_guide(
         },
     ],
     plain_intro=(
-        f"<b>Transformer Block 就是现代大语言模型的标准积木块</b>。<br>"
-        f"它把<b>自注意力机制 (MHA)</b>、<b>前馈全连接网络 (FFN)</b> 和<b>残差高速公路 (Residual Stream)</b> 封装在同一个盒子里。<br>"
-        f"主干道上的残差流像一块中央黑板，数据在流动过程中，MHA 负责在不同词之间搬运信息，FFN 负责非线性思考与知识提取。<br>"
-        f"每一层向残差流写入一个增量；只有经过合适数据与目标训练后，这些增量才可能形成有用表示。<br><br>"
-        f"<b>【2026 前沿拓展】：SwiGLU 门控前馈网络</b><br>"
-        f"现代 LLM 使用 SwiGLU 替代了传统的 GELU FFN，它引入了与输入相关的门控（Gate）机制："
-        f"不仅决定激活强度，还直接调控信息流转通道，极大提升了同等参数量下的知识容量！"
+        "<b>Transformer Block 就是现代大语言模型的标准积木块</b>。<br>"
+        "它把<b>自注意力机制 (MHA)</b>、<b>前馈全连接网络 (FFN)</b> 和<b>残差高速公路 (Residual Stream)</b> 封装在同一个盒子里。<br>"
+        "主干道上的残差流像一块中央黑板，数据在流动过程中，MHA 负责在不同词之间搬运信息，FFN 负责非线性思考与知识提取。<br>"
+        "每一层向残差流写入一个增量；只有经过合适数据与目标训练后，这些增量才可能形成有用表示。<br><br>"
+        "<b>【2026 前沿拓展】：SwiGLU 门控前馈网络</b><br>"
+        "现代 LLM 使用 SwiGLU 替代了传统的 GELU FFN，它引入了与输入相关的门控（Gate）机制："
+        "不仅决定激活强度，还直接调控信息流转通道，极大提升了同等参数量下的知识容量！"
     ),
     hyperparams_desc=(
         f"• <b>在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 调节</b>：<br>"
@@ -116,8 +118,8 @@ render_page_guide(
     ),
     experiments=[
         f"<b>第 1 步【核对随机初始化】</b>：把【堆叠层数】调到 3 或 4，检查 {anchor_badge('[E. 逐层热力图]', 'blue', target_id='region-e')} 每行是否归一化；不要把随机图案解释成语义分工。",
-        f"<b>第 2 步【观察残差流范数】</b>：查看向量模长变化，理解恒等分支为何有利于信息与梯度传播，同时记录它并不保证任意深度下都稳定。",
-        f"<b>第 3 步【对比前沿门控机制】</b>：滚动至底部实验室，体验 SwiGLU 的乘法门控机制如何通过 $x \\otimes \\text{{Swish}}(Wx)$ 实现对特征的高级非线性调制！",
+        "<b>第 2 步【观察残差流范数】</b>：查看向量模长变化，理解恒等分支为何有利于信息与梯度传播，同时记录它并不保证任意深度下都稳定。",
+        "<b>第 3 步【对比前沿门控机制】</b>：滚动至底部实验室，体验 SwiGLU 的乘法门控机制如何通过 $x \\otimes \\text{Swish}(Wx)$ 实现对特征的高级非线性调制！",
     ],
 )
 
@@ -134,7 +136,7 @@ st.sidebar.markdown(
 # ---------------------------------------------------------------------------
 raw_vocab = get_mini_vocab()
 vocab_words = list(raw_vocab.keys())
-embed_weights = get_pretrained_embeddings(len(vocab_words), d_model=32)
+embed_weights = get_synthetic_demo_embeddings(len(vocab_words), d_model=32)
 
 embedding_layer = Embedding(vocab_size=len(vocab_words), d_model=32)
 embedding_layer.weights = embed_weights
@@ -210,7 +212,7 @@ blocks = [TransformerBlock(d_model=32, num_heads=num_heads, d_ff=128) for _ in r
 
 layer_attn_weights = []
 
-for block_idx, block in enumerate(blocks):
+for _block_idx, block in enumerate(blocks):
     x_stream, attn_w = block.forward(x_stream)
     layer_attn_weights.append(attn_w[0, 0])  # 取 Head 0
     # 记录经过本层后的残差流范数
@@ -318,9 +320,8 @@ with st.expander("[HOW TO READ // 读图指南] 逐层注意力演进热力图",
     st.markdown(
         """
         * **纵轴 (当前词)** 与 **横轴 (历史关注词)**：展示每个 Transformer 层的自注意力分布。
-        * **[BOUNDARY // 结论边界]**：这些 Block 没有经过语料训练；热力图只用于检查计算与信息混合，不能证明逐层语义抽象。
-          * **第 1 层 (浅层)**：注意力主要集中在邻近词（提取局部短语、标点等浅层语法特征）。
-          * **深层 (第 2/3 层)**：注意力亮点开始跳跃式分布在远距离的关键核心词（完成深层语义理解与长程代词绑定）。
+        * **[BOUNDARY // 结论边界]**：这些 Block 没有经过语料训练；热力图只用于检查每行归一化、mask 和逐层数值混合。
+        * **不可从本图推出**：局部或远程亮点都是未训练参数下的数值图案，不证明浅层语法、深层语义、代词绑定或因果影响。
         """
     )
 
@@ -388,29 +389,27 @@ render_section_heading(
 
 col_gelu_box, col_swiglu_box = st.columns(2)
 
-with col_gelu_box:
-    with st.container(border=True):
-        st.markdown("#### [CLASSIC FFN // 经典两层 MLP (GPT-2/3)]")
-        st.code("h = GELU(x @ W1 + b1) @ W2 + b2", language="python")
-        st.markdown(
-            """
+with col_gelu_box, st.container(border=True):
+    st.markdown("#### [CLASSIC FFN // 经典两层 MLP (GPT-2/3)]")
+    st.code("h = GELU(x @ W1 + b1) @ W2 + b2", language="python")
+    st.markdown(
+        """
             - **计算路径**：升维 (4×)  GELU 激活  降维；
             - **参数量**：$2 \\times d_{model} \\times d_{ff}$；
             - **缺点**：缺少特征通道间的动态门控过滤。
             """
-        )
+    )
 
-with col_swiglu_box:
-    with st.container(border=True):
-        st.markdown("#### [MODERN SWIGLU // 现代门控 FFN (LLaMA-3/Gemma-2)]")
-        st.code("out = (SiLU(x @ W_gate) * (x @ W_up)) @ W_down", language="python")
-        st.markdown(
-            """
+with col_swiglu_box, st.container(border=True):
+    st.markdown("#### [MODERN SWIGLU // 现代门控 FFN (LLaMA-3/Gemma-2)]")
+    st.code("out = (SiLU(x @ W_gate) * (x @ W_up)) @ W_down", language="python")
+    st.markdown(
+        """
             - **计算路径**：双重升维 (Gate & Up)  SiLU 门控相乘  降维；
             - **参数量**：$3 \\times d_{model} \\times \\frac{8}{3}d_{model}$ (等效总参数量)；
             - **核心特点**：元素级门控提供乘法交互；是否优于 GELU 取决于参数预算、数据和训练配置。
             """
-        )
+    )
 
 # ---------------------------------------------------------------------------
 # 零基础进阶：Transformer Block 核心公式逐字拆解与名词通俗速查
@@ -423,7 +422,7 @@ with st.expander(
         ### 0. 核心公式逐字拆解：Pre-LN Transformer Block 标准计算流
         $$x^{(1)} = x + \\text{MHA}(\\text{LN}(x))$$
         $$x^{(2)} = x^{(1)} + \\text{FFN}(\\text{LN}(x^{(1)}))$$
-        
+
         | 符号 | 中文名称 | 矩阵形状 (Shape) | 通俗大白话解释（它是什么？起什么作用？） |
         |:---:|:---:|:---:|:---|
         | **$x$** | **输入残差主干信号 (Residual Stream)** | $N \\times d_{\\text{model}}$ | **中央高速公路上的原始行李箱**。装载着当前词汇的所有历史特征。 |
@@ -432,9 +431,9 @@ with st.expander(
         | **$+$ (加法)** | **残差连接分支 (Residual Skip-Connection)** | 矩阵直接相加 | 提供恒等信息与梯度路径，通常缓解深层优化困难，但不是稳定性的无条件保证。 |
         | **$\\text{FFN}$** | **前馈感知网络 (Feed-Forward Network)** | $N \\times d_{\\text{model}}$ | **知识百科全书**。如果说 MHA 负责在词与词之间传纸条，FFN 则负责从记忆里检索这个词本身的百科知识。 |
         | **$x^{(2)}$** | **当前 Block 最终输出特征** | $N \\times d_{\\text{model}}$ | 经过本层注意力社交与知识补充后的新特征，直接送入下一层 Transformer Block。 |
-        
+
         ---
-        
+
         ### 1. Pre-LN 与 Post-LN 有什么取舍？
         * **Post-LN（原始 Transformer/BERT 常见做法）**：$x_{l+1} = \\text{LN}(x_l + f(x_l))$。深层训练通常更依赖 warm-up 和初始化，但并非不可训练。
         * **Pre-LN（许多现代 LLM 的做法）**：$x_{l+1} = x_l + f(\\text{LN}(x_l))$。主干保留加法路径，通常更易优化，但仍需合适的初始化、尺度控制和训练配置。

@@ -13,6 +13,7 @@ if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
 import importlib
+
 import numpy as np
 import streamlit as st
 
@@ -21,7 +22,7 @@ import dashboard.components.charts
 importlib.reload(dashboard.components.charts)
 
 from dashboard.components.charts import plot_memory_decay_heatmap
-from dashboard.components.pedagogy import render_lesson_evidence
+from dashboard.components.pedagogy import render_core_result_evidence, render_lesson_evidence
 from dashboard.styles.theme import (
     anchor_badge,
     apply_custom_theme,
@@ -32,7 +33,7 @@ from dashboard.styles.theme import (
     render_section_heading,
     render_sequence_flow,
 )
-from nn_core.embeddings import Embedding, get_mini_vocab, get_pretrained_embeddings
+from nn_core.embeddings import Embedding, get_mini_vocab, get_synthetic_demo_embeddings
 from nn_core.rnn import RNNCell
 
 st.set_page_config(
@@ -41,7 +42,8 @@ st.set_page_config(
 )
 
 apply_custom_theme()
-render_lesson_evidence("M06")
+render_lesson_evidence("M06", show_contract=True)
+render_core_result_evidence("M06")
 
 render_hero_header(
     title="序列记忆与遗忘瓶颈",
@@ -96,7 +98,7 @@ render_page_guide(
         f"<b>RNN 就像一个记性有限的听书人</b>。<br>"
         f"当听到一句话时，它用一个固定大小的<b>隐藏状态向量 $h_t$（相当于短期大脑记忆）</b>顺次吸收每个词。<br>"
         f"每读一个新词，旧的记忆就会被压缩、覆盖一部分。<br>"
-        f"[WARNING] <b>致命缺陷</b>：在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 换上长句时，最开头的关键信息（如主语是谁）在 {anchor_badge('[E. 记忆衰减热力图]', 'blue', target_id='region-e')} 就会被彻底稀释忘光！"
+        f"[LIMIT] 在某些参数、任务和长序列上，Vanilla RNN 的状态与梯度可能难以保留早期信息。{anchor_badge('[E. 记忆衰减热力图]', 'blue', target_id='region-e')} 显示本次未训练小型 RNN 隐状态的余弦相似度，不是“记忆量”或通用遗忘定律。"
     ),
     hyperparams_desc=(
         f"• <b>在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 调节</b>：<br>"
@@ -111,8 +113,8 @@ render_page_guide(
     ),
     experiments=[
         f"<b>第 1 步【体验短句记忆】</b>：在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 选择 <code>短句测试 (5 词)</code>，观察下方热力图每个词之间都有深蓝色的连接，记忆留存率高达 80% 以上！",
-        f"<b>第 2 步【目睹长句遗忘灾难】</b>：在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 切换为 <code>超长叙事句 (16 词)</code>，观察 {anchor_badge('[E. 记忆热力图]', 'blue', target_id='region-e')} 右上角大面积变白！读到最后几个词时，对句首'king'的记忆几乎彻底归零！",
-        f"<b>第 3 步【尝试增大容量】</b>：把【隐藏层维度】调到 32，观察虽然略微改善，但根本无法解决固定容量压缩的瓶颈——从而理解<b>为什么 2017 年 Attention 机制颠覆了 RNN</b>！",
+        "<b>第 2 步【比较长句】</b>：切换到 <code>16 词</code>，比较本次随机未训练 RNN 的首尾状态相似度；不要把低相似度直接解读为语义“忘光”。",
+        "<b>第 3 步【对照架构】</b>：改变隐状态维度，记录现象；容量增大不保证长程学习。LSTM/GRU 通过门控路径改变状态更新，注意力则提供内容寻址；它们不是对所有任务的单向替代关系。",
     ],
 )
 
@@ -129,7 +131,7 @@ st.sidebar.markdown(
 # ---------------------------------------------------------------------------
 raw_vocab = get_mini_vocab()
 vocab_words = list(raw_vocab.keys())
-embed_weights = get_pretrained_embeddings(len(vocab_words), d_model=32)
+embed_weights = get_synthetic_demo_embeddings(len(vocab_words), d_model=32)
 
 embedding_layer = Embedding(vocab_size=len(vocab_words), d_model=32)
 embedding_layer.weights = embed_weights
@@ -288,7 +290,11 @@ render_live_param_status_bar(
     badges=[
         {"label": "Seq Len T", "value": f"{seq_len} steps", "color": "blue"},
         {"label": "Hidden Dim d_h", "value": f"{hidden_dim}", "color": "amber"},
-        {"label": "首尾词保留度", "value": f"{first_last_sim * 100:.1f}%", "color": "purple" if first_last_sim > 0.4 else "rose"},
+        {
+            "label": "首尾词保留度",
+            "value": f"{first_last_sim * 100:.1f}%",
+            "color": "purple" if first_last_sim > 0.4 else "rose",
+        },
     ],
     metrics=[
         ("激活函数", "Tanh"),
@@ -313,29 +319,27 @@ with st.expander("[HOW TO READ // 读图指南] 时间步传递与长程遗忘�
         * **对角线（亮黄色）**：自己与自己的相似度恒为 1.0。
         * [WARNING] **【读图重点：右上角褪色】**：
           * 观察矩阵的右上角区域：距离当前词越远的早期词汇，颜色越**暗淡变冷**（接近 0）；
-          * 这直观证明了**RNN 具有严重的物理遗忘性**——随着时间推移，最早输入的词（如句首的“国王”）被后来输入的词冲淡冲没了！
+          * 颜色只表示本次前向计算中隐状态的余弦相似度。低相似度可以来自状态更新，不能单独证明语义信息丢失；需用受控任务、训练模型和梯度/探针实验验证。
         """
     )
 
 # ---------------------------------------------------------------------------
 # 底部理论对比卡片：RNN 遗忘瓶颈 vs Attention 动态路由
 # ---------------------------------------------------------------------------
-render_section_heading(
-    "ARCHITECTURAL EVOLUTION // 为什么必须从 RNN 进化到 Attention？", icon_name="zap"
-)
+render_section_heading("ARCHITECTURAL EVOLUTION // RNN 与 Attention 的不同路径", icon_name="zap")
 
 col_rnn, col_attn = st.columns(2)
 with col_rnn:
     with st.container(border=True):
         st.markdown(
             """
-            #### [BOTTLENECK // 遗忘瓶颈] 循环神经网络 (RNN) 的物理极限
+            #### [BOTTLENECK // 长程困难] Vanilla RNN 的常见局限
             - **固定容量漏斗 (Information Bottleneck)**：
-              无论句子是 5 个词还是 1000 个词，所有历史信息都被强制压缩到同一个固定大小的 $h_t$ 向量中；
+              历史通过固定大小的 $h_t$ 递推传递；能否保留任务所需信息取决于参数、训练和任务。
             - **长程梯度消失 (Vanishing Gradients)**：
-              反向传播需要跨越数十个时间步长做连乘（BPTT），前端梯度呈指数级衰减为零；
-            - **无法并行计算**：
-              第 $t$ 步的计算必须等待第 $t-1$ 步完成，完全无法利用现代 GPU 的数千个核心做矩阵并行加速。
+              BPTT 含跨时间步的 Jacobian 连乘，其范数可能衰减或增长，导致梯度消失或爆炸，但并非每个序列必然如此。
+            - **序列内并行受限**：
+              第 $t$ 步依赖第 $t-1$ 步，限制了时间维的并行；但 batch、层、矩阵运算和部分实现仍能使用 GPU 并行。
             """
         )
 
@@ -344,8 +348,8 @@ with col_attn:
         st.markdown(
             """
             #### [PARADIGM SHIFT // 范式跃迁] 注意力机制 (Attention) 全局路由
-            - **$O(1)$ 任意距离直达路由**：
-              取消递归传递链，每一个词都能以光速直接“回头看”整个句子的所有词汇；
+            - **常数长度的信息交互路径**：
+              在一层全局 self-attention 内，任意两个未被 mask 的 token 可直接交互；代价是标准实现对序列长度通常有二次计算/内存开销。
             - **全局矩阵并行共振**：
               所有 Token 的 Query/Key/Value 矩阵一次性送入 GPU，单步完成 $N \times N$ 全对全关联计算；
             - **动态聚光灯 (Dynamic Spotlight)**：
@@ -363,7 +367,7 @@ with st.expander(
         """
         ### 0. 核心公式逐字拆解：RNN 单步隐状态递归传递
         $$h_t = \\tanh(x_t W_{ih} + h_{t-1} W_{hh} + b_h)$$
-        
+
         | 符号 | 中文名称 | 矩阵形状 (Shape) | 通俗大白话解释（它是什么？起什么作用？） |
         |:---:|:---:|:---:|:---|
         | **$x_t$** | **当前时间步输入词向量 (Current Input)** | $(1, d_{\\text{in}})$，如 $(1, 32)$ | 当前时刻读到的新单词（例如"猫咪"的嵌入向量）。 |
@@ -373,11 +377,16 @@ with st.expander(
         | **$b_h$** | **循环偏置常数 (Bias)** | $(1, d_h)$，如 $(1, 64)$ | 记忆状态的基础偏移。 |
         | **$\\tanh$** | **双曲正切激活函数** | 逐元素 | 把加权后的总记忆平滑压缩到 $[-1, 1]$ 之间，防止记忆数值越滚越大发生数值爆炸。 |
         | **$h_t$** | **当前时刻综合新记忆 (New Memory)** | $(1, d_h)$，如 $(1, 64)$ | 融合了"新词 $x_t$"与"旧记忆 $h_{t-1}$"后的最新大脑状态，准备传给下一个时间步 $t+1$。 |
-        
+
         ---
-        
+
         ### 1. 什么是【BPTT (沿时间反向传播)】？—— “顺着时光隧道找原因”
         * **生活比喻**：期末考试做错了一道大题，倒推回去发现是上周讲的第 5 个公式用错了。
         * **本质机理**：把时间步像手风琴一样拉开，误差梯度顺着时间链条 $t \\to t-1 \\to t-2$ 一路倒推求导。链条越长，梯度越容易衰减为 0（长程遗忘）。
+
+        ### 2. 门控 RNN 的核心思路（本页未实现）
+        LSTM 使用输入门、遗忘门和输出门，例如
+        $c_t=f_t\\odot c_{t-1}+i_t\\odot\\tilde c_t$；GRU 使用更新门组合旧状态与候选状态，
+        $h_t=(1-z_t)\\odot h_{t-1}+z_t\\odot\\tilde h_t$。这些加性/门控路径可改善部分长程学习，但不保证不遗忘。
         """
     )

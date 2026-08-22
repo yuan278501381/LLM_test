@@ -134,6 +134,8 @@ class Sequential:
         X_val: np.ndarray | None = None,
         y_val: np.ndarray | None = None,
         verbose: bool = False,
+        seed: int | None = None,
+        rng: np.random.Generator | None = None,
         **kwargs: Any,
     ) -> dict[str, list[float]]:
         """
@@ -168,6 +170,27 @@ class Sequential:
                 'val_accuracy': [...]
             }
         """
+        X = np.asarray(X)
+        y = np.asarray(y)
+        if X.ndim < 2 or y.ndim != 2 or X.shape[0] != y.shape[0] or X.shape[0] == 0:
+            raise ValueError("X/y 必须是样本数一致且非空的二维训练张量")
+        if epochs <= 0:
+            raise ValueError("epochs 必须为正整数")
+        if loss_fn is None or optimizer is None:
+            raise ValueError("loss_fn 与 optimizer 不能为空")
+        if (X_val is None) != (y_val is None):
+            raise ValueError("X_val 与 y_val 必须同时提供")
+        if X_val is not None and y_val is not None:
+            X_val = np.asarray(X_val)
+            y_val = np.asarray(y_val)
+            if X_val.ndim < 2 or y_val.ndim != 2 or X_val.shape[0] != y_val.shape[0]:
+                raise ValueError("X_val/y_val 必须是样本数一致的二维验证张量")
+            if X_val.shape[0] == 0:
+                raise ValueError("验证集不能为空")
+        if seed is not None and rng is not None:
+            raise ValueError("seed 与 rng 只能提供一个")
+        local_rng = rng if rng is not None else np.random.default_rng(seed)
+
         tid = uuid.uuid4().hex[:8]
         n_samples = X.shape[0]
         actual_batch_size = (
@@ -196,7 +219,7 @@ class Sequential:
 
         for epoch in range(epochs):
             # ---- 1. 打乱数据 ----
-            indices = np.random.permutation(n_samples)
+            indices = local_rng.permutation(n_samples)
             X_shuffled = X[indices]
             y_shuffled = y[indices]
 

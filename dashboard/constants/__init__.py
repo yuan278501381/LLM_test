@@ -3,6 +3,7 @@
 dashboard.constants - 神经网络知识库与全局元数据导出
 """
 
+from dashboard.constants.course import LESSONS, EvidenceLevel, LessonMeta, Reference
 from dashboard.constants.knowledge import (
     ACTIVATIONS,
     DATASETS,
@@ -16,22 +17,21 @@ from dashboard.constants.knowledge import (
     OptimizerMeta,
     RegularizerMeta,
 )
-from dashboard.constants.course import EvidenceLevel, LessonMeta, Reference, LESSONS
 
 __all__ = [
     "ACTIVATIONS",
     "DATASETS",
     "INITIALIZERS",
+    "LESSONS",
     "OPTIMIZERS",
-    "REGULARIZERS",
     "PRESETS_REGISTRY",
+    "REGULARIZERS",
     "ActivationMeta",
     "DatasetMeta",
-    "InitializerMeta",
-    "OptimizerMeta",
-    "RegularizerMeta",
     "EvidenceLevel",
+    "InitializerMeta",
     "LessonMeta",
+    "OptimizerMeta",
     "Reference",
-    "LESSONS",
+    "RegularizerMeta",
 ]

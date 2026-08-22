@@ -5,8 +5,15 @@ from html import escape
 
 import streamlit as st
 
-from dashboard.constants.course import EVIDENCE_DESCRIPTIONS, LESSONS, EvidenceLevel
-
+from dashboard.constants.course import (
+    CLAIMS,
+    CURRICULUM_DAG,
+    EVIDENCE_DESCRIPTIONS,
+    LEARNING_LOOPS,
+    LESSONS,
+    Claim,
+    EvidenceLevel,
+)
 
 _EVIDENCE_COLORS: dict[EvidenceLevel, tuple[str, str, str]] = {
     EvidenceLevel.EXACT_COMPUTATION: ("#ecfdf5", "#047857", "#a7f3d0"),
@@ -57,6 +64,51 @@ def render_lesson_evidence(lesson_id: str, *, show_contract: bool = False) -> No
     if show_contract:
         render_lesson_contract(lesson_id)
 
+    lesson_claims = [claim for claim in CLAIMS.values() if claim.lesson_id == lesson_id]
+    with st.expander("本页主张索引 // CLAIMS & RESULT IDS"):
+        for claim in lesson_claims:
+            st.markdown(
+                f"{evidence_badge(claim.evidence_level)} "
+                f"<code>{escape(claim.result_id)}</code> <strong>{escape(claim.kind.value)}</strong>："
+                f"{escape(claim.statement)}<br><small><strong>边界：</strong>"
+                f"{escape(claim.limitations)}｜<strong>核验：</strong>{escape(claim.last_verified)}</small>",
+                unsafe_allow_html=True,
+            )
+
+
+def get_result_claim(lesson_id: str, result_id: str) -> Claim:
+    """返回页内结果主张；未注册 ID 立即报错。"""
+    for claim in CLAIMS.values():
+        if claim.lesson_id == lesson_id and claim.result_id == result_id:
+            return claim
+    raise ValueError(f"未注册的页内结果: {lesson_id}/{result_id}")
+
+
+def render_result_evidence(lesson_id: str, result_id: str) -> None:
+    """在公式、图表或模拟结果附近呈现局部证据与解释边界。"""
+    claim = get_result_claim(lesson_id, result_id)
+    reference = claim.sources[0]
+    st.markdown(
+        f'<aside data-result-id="{escape(result_id, quote=True)}" '
+        'style="border:1px solid #dbeafe;background:#f8fafc;border-radius:8px;padding:0.55rem 0.75rem;margin:0.4rem 0;">'
+        f"{evidence_badge(claim.evidence_level)} <strong>{escape(claim.statement)}</strong>"
+        f'<details><summary>为什么能这样解释</summary><div style="font-size:0.84rem;line-height:1.6;margin-top:0.35rem;">'
+        f"<strong>适用条件：</strong>{escape(claim.conditions)}<br>"
+        f"<strong>反例/局限：</strong>{escape(claim.limitations)}<br>"
+        f'<strong>直接来源：</strong><a href="{escape(reference.url, quote=True)}" target="_blank" rel="noopener noreferrer">'
+        f"{escape(reference.title)}</a></div></details></aside>",
+        unsafe_allow_html=True,
+    )
+
+
+def render_core_result_evidence(lesson_id: str) -> None:
+    """呈现本页四类核心结果的常显证据卡，避免证据只藏在页面总说明中。"""
+    if lesson_id not in LESSONS:
+        raise ValueError(f"未知课程编号: {lesson_id}")
+    st.markdown("#### RESULT EVIDENCE // 本页四类核心结论的证据与边界")
+    for suffix in ("formula", "result", "history", "failure"):
+        render_result_evidence(lesson_id, f"{lesson_id.lower()}-{suffix}")
+
 
 def render_lesson_contract(lesson_id: str) -> None:
     """呈现统一教学结构；重点页面可直接复用。"""
@@ -64,6 +116,7 @@ def render_lesson_contract(lesson_id: str) -> None:
     if lesson_id not in LESSONS:
         raise ValueError(f"未知课程编号: {lesson_id}")
     lesson = LESSONS[lesson_id]
+    loop = LEARNING_LOOPS[lesson_id]
     with st.expander("LEARNING CONTRACT // 学习目标、失败案例与参考资料"):
         col_left, col_right = st.columns(2)
         with col_left:
@@ -85,3 +138,11 @@ def render_lesson_contract(lesson_id: str) -> None:
         st.markdown("**权威参考资料**")
         for ref in lesson.references:
             st.markdown(f"- [{ref.title}]({ref.url}) — {ref.note}")
+        prerequisites = "、".join(CURRICULUM_DAG[lesson_id]) or "无（起点课程）"
+        st.markdown(f"**课程图直接依赖**：{prerequisites}")
+        st.markdown("**本课学习闭环**")
+        st.markdown(f"1. 诊断：{loop.diagnostic_question}")
+        st.markdown(f"2. 最小实验：{loop.minimum_experiment}")
+        st.markdown(f"3. 反例实验：{loop.counterexample_experiment}")
+        st.markdown(f"4. 形成性评价：{loop.formative_assessment}")
+        st.markdown(f"5. 通过标准：{loop.pass_criteria}")

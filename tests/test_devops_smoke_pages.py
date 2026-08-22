@@ -35,4 +35,6 @@ def test_page_renders_with_zero_exceptions(page_script: Path):
 
     if at.exception:
         err_details = "\n".join([f"  • {e.message}" for e in at.exception])
-        pytest.fail(f"页面 {page_script.name} 运行时抛出 {len(at.exception)} 项未捕获异常:\n{err_details}")
+        pytest.fail(
+            f"页面 {page_script.name} 运行时抛出 {len(at.exception)} 项未捕获异常:\n{err_details}"
+        )

@@ -22,7 +22,7 @@ from dashboard.components.client_player import (
     render_timeline_controls,
     render_video_timeline,
 )
-from dashboard.components.pedagogy import render_lesson_evidence
+from dashboard.components.pedagogy import render_core_result_evidence, render_lesson_evidence
 from dashboard.styles.theme import (
     anchor_badge,
     apply_custom_theme,
@@ -53,6 +53,7 @@ st.set_page_config(
 
 apply_custom_theme()
 render_lesson_evidence("M12", show_contract=True)
+render_core_result_evidence("M12")
 
 render_hero_header(
     title="视频理解与世界模型架构",
@@ -125,7 +126,7 @@ render_page_guide(
     experiments=[
         f"<b>第 1 步【观察时空采样】</b>：在 {anchor_badge('[D. 采样与能量]', 'purple', target_id='region-d')} 中观察 32x32 视频连续帧及下方的帧间运动能量曲线！",
         f"<b>第 2 步【对比空间与时间注意力】</b>：在 {anchor_badge('[E. 双轨注意力]', 'blue', target_id='region-e')} 中对比两组热力图，体会模型如何将空间特征与时间轨迹解耦！",
-        f"<b>第 3 步【验证前向加噪】</b>：观察清晰帧如何随 t 增大而丢失信号；注意本页没有计算逆向去噪。",
+        "<b>第 3 步【验证前向加噪】</b>：观察清晰帧如何随 t 增大而丢失信号；注意本页没有计算逆向去噪。",
     ],
 )
 
@@ -215,7 +216,7 @@ mha_temporal = MultiHeadAttention(d_model=32, num_heads=2)
 temporal_tokens = st_tokens[0, ::num_spatial_patches]  # 同一位置跨帧
 _, temporal_attn = mha_temporal.forward(temporal_tokens.reshape(1, n_frames_val, 32))
 
-# 世界模型下一帧预测模拟
+# 未训练下一帧输出头结构示意
 predictor = NextFramePredictor(d_model=32, frame_pixels=1024)
 context_feature = np.mean(st_tokens[0, :-num_spatial_patches], axis=0, keepdims=True)
 pred_frame_flat = predictor.forward(context_feature)[0]
@@ -374,7 +375,7 @@ with col_tp_attn:
         )
 
 # ---------------------------------------------------------------------------
-# Section 3: 世界模型自回归下一帧物理预测
+# Section 3: 未训练下一帧输出头与参考帧对照
 # ---------------------------------------------------------------------------
 render_section_heading(
     "WORLD MODEL FUTURE PREDICTION // 世界模型自回归下一帧物理规律推演", icon_name="cpu"
@@ -396,7 +397,7 @@ with col_pred_view:
         yaxis=dict(showticklabels=False, autorange="reversed"),
         margin=dict(l=10, r=10, t=30, b=10),
     )
-    fig_p = _apply_light_theme(fig_p, f"模型推演预测画面 (T={n_frames_val - 1})")
+    fig_p = _apply_light_theme(fig_p, f"未训练随机输出头画面 (T={n_frames_val - 1})")
     st.plotly_chart(fig_p, width="stretch")
 
 with col_true_view:
@@ -422,7 +423,7 @@ with col_world_info:
             f"""
             #### [WORLD MODEL // 想象力引擎]
             - **输入条件**：前 `{n_frames_val - 1}` 帧聚合上下文特征
-            - **推演目标**：预测未来第 `{n_frames_val - 1}` 帧物理像素
+            - **结构目标**：将特征映射为第 `{n_frames_val - 1}` 帧形状的像素输出；未进行任何训练
             - **像素级均方误差 (MSE)**：`{rec_loss:.4f}`
             - **核心理念**：*世界模型不仅记住了画面，更在隐空间学会了重力、惯性与碰撞等隐式物理规律！*
             """
@@ -431,8 +432,8 @@ with col_world_info:
 with st.expander("[HOW TO READ // 读图指南] 物理世界下一帧推演预测对比", expanded=False):
     st.markdown(
         """
-        * **左图 (模型想象)** vs **中图 (真实物理)**：对比小球位置与反弹形变是否严丝合缝一致。
-        * **[OPTIMAL // 成功标志]**：预测误差 MSE 极小，小球位置准确落在反弹轨迹上。
+        * **左图（未训练输出）** vs **中图（合成参考帧）**：MSE 只度量两个数组的差异。
+        * **[结论边界]**：未训练的随机 MLP 不会推演物理规律；即使某次 MSE 较小，也需独立验证集和多序列基线才能评估预测能力。
         """
     )
 
@@ -502,7 +503,7 @@ st.plotly_chart(fig_sched, width="stretch")
 with st.expander("[HOW TO READ // 读图指南] 扩散加噪与方差调度曲线", expanded=False):
     st.markdown(
         """
-        * **上方 5 张快照图**：从 $t=0$ (清晰原图) 随着加噪逐步被雪花点吞没，直到第 20 步变成纯白噪声。
+        * **上方 5 张快照图**：从 $t=0$ 随着加噪变得更难辨认。本实现对 $\\bar\\alpha_t$ 设有数值下限，末步仍有残余信号，不是数学上的纯高斯噪声。
         * **下方折线图**：**红线 (加噪率 $\\beta_t$)** 逐步抬升，**蓝线 (原图残留率 $\\bar{\\alpha}_t$)** 单调骤降至 0。
         """
     )
@@ -531,18 +532,18 @@ with st.expander("[GROWTH GUIDE // 成长指南] DDPM 前向加噪公式与逆�
         """
         ### 0. 核心公式逐字拆解：扩散模型 (DDPM) 前向一步加噪
         $$x_t = \\sqrt{\\bar{\\alpha}_t} \\cdot x_0 + \\sqrt{1 - \\bar{\\alpha}_t} \\cdot \\epsilon, \\quad \\epsilon \\sim \\mathcal{N}(0, \\mathbf{I})$$
-        
+
         | 符号 | 中文名称 | 形状与类型 | 通俗大白话解释（它是什么？起什么作用？） |
         |:---:|:---:|:---:|:---|
         | **$x_0$** | **原始清晰图像/视频帧** | 图像张量 | 真实世界高清无码的初始画面（第 0 步）。 |
-        | **$t$** | **加噪扩散时间步 (Step)** | 整数 $0 \\sim T$ | 当前加噪进度。$t=0$ 是原图，$t=T$（如第 20 步）彻底变成纯高斯噪点。 |
+        | **$t$** | **加噪扩散时间步 (Step)** | 整数 $0 \\le t < T$ | 当前前向加噪进度。信号系数为 $\\sqrt{\\bar\\alpha_t}$，SNR 为 $\\bar\\alpha_t/(1-\\bar\\alpha_t)$；是否接近纯噪声取决于 schedule 和数值截断。 |
         | **$\\bar{\\alpha}_t$** | **累积信号保留率 (Alpha-Bar)** | 标量 $1.0 \\to 0.0$ | **原图残留比例**。随着 $t$ 增大，$\\bar{\\alpha}_t$ 从 0.99 骤降到 0.0001，原图画面逐渐消失。 |
         | **$\\epsilon$** | **纯高斯随机白噪声** | 与图像同形状 | 从标准正态分布中随机抽取的“雪花点杂波”。 |
         | **$\\sqrt{1 - \\bar{\\alpha}_t}$** | **噪声强度系数** | 标量 $0.0 \\to 1.0$ | **雪花点混合浓度**。与 $\\sqrt{\\bar{\\alpha}_t}$ 满足平方和等于 1 的守恒律，确保图像总能量恒定。 |
         | **$x_t$** | **第 $t$ 步带噪混合图像** | 图像张量 | 带有不同程度毛刺雪花点的中间画面。 |
-        
+
         ---
-        
+
         ### 1. 完整逆向去噪还缺少什么？
         * **训练阶段**：需要可学习的噪声或速度预测网络、时间步条件、真实视频数据和反向传播训练。
         * **生成阶段**：需要选择采样器并反复调用训练后的网络。本页没有这些组件，因此不能从噪声生成视频，也不能据此评价物理一致性。

@@ -47,6 +47,8 @@ def test_all_pages_blueprint_sections_contract():
         if "blueprint_sections" in content and '"letter":' in content:
             # 确保没有残留的纯 letter 键定义而无 id
             # 匹配字典中是否出现 "letter":
-            errors.append(f"{page.name}: blueprint_sections 仍在使用旧的 'letter' 键名，请统一为 'id'")
+            errors.append(
+                f"{page.name}: blueprint_sections 仍在使用旧的 'letter' 键名，请统一为 'id'"
+            )
 
     assert not errors, "发现 HUD 蓝图配置不符合契约规范:\n" + "\n".join(errors)

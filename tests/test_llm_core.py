@@ -25,6 +25,7 @@ from nn_core.embeddings import (
     PositionalEncoding,
     get_mini_vocab,
     get_pretrained_embeddings,
+    get_synthetic_demo_embeddings,
 )
 from nn_core.gelu import GELU
 from nn_core.gpt import TinyGPT
@@ -516,6 +517,22 @@ class TestTinyGPT:
         for t in result:
             assert 0 <= t < 10
 
+    def test_采样随机源可注入且参数校验(self):
+        gpt = TinyGPT(vocab_size=10, max_seq_len=8, d_model=8, num_heads=2, num_layers=1)
+        assert gpt.generate([0], 5, seed=7) == gpt.generate([0], 5, seed=7)
+        with pytest.raises(ValueError):
+            gpt.generate([], 1)
+        with pytest.raises(ValueError):
+            gpt.generate([10], 1)
+        with pytest.raises(ValueError):
+            gpt.generate([0], -1)
+        with pytest.raises(ValueError):
+            gpt.generate([0], 1, temperature=-0.1)
+        with pytest.raises(ValueError):
+            gpt.generate([0], 1, top_k=11)
+        with pytest.raises(ValueError):
+            gpt.generate([0], 1, seed=1, rng=np.random.default_rng(1))
+
     def test_序列截断(self):
         """超过 max_seq_len 的输入应被截断而非报错"""
         gpt = TinyGPT(vocab_size=10, max_seq_len=4, d_model=8, num_heads=2, num_layers=1)
@@ -543,10 +560,22 @@ class TestMiniVocab:
             assert word in vocab, f"词表应包含 {word}"
 
     def test_预训练嵌入维度(self):
-        """get_pretrained_embeddings 返回正确形状"""
+        """旧 API 明确告警，并返回兼容形状。"""
         vocab = get_mini_vocab()
-        emb = get_pretrained_embeddings(len(vocab), d_model=32)
+        with pytest.warns(DeprecationWarning):
+            emb = get_pretrained_embeddings(len(vocab), d_model=32)
         assert emb.shape == (len(vocab), 32)
+
+    def test_合成嵌入使用局部随机源(self):
+        before = np.random.get_state()
+        first = get_synthetic_demo_embeddings(12, d_model=8, seed=7)
+        second = get_synthetic_demo_embeddings(12, d_model=8, seed=7)
+        after = np.random.get_state()
+        assert np.array_equal(first, second)
+        assert before[0] == after[0]
+        assert np.array_equal(before[1], after[1])
+        with pytest.raises(ValueError):
+            get_synthetic_demo_embeddings(0, d_model=8)
 
 
 # ========================== L1 正则化测试 (补充) ==========================
