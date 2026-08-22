@@ -137,6 +137,18 @@ header {background-color: transparent !important;}
     color: var(--text-primary) !important;
 }
 
+/* 展开完整侧边栏并彻底隐藏 View more / View less 按钮，杜绝页面跳转时按钮闪烁挤压布局 */
+[data-testid="stSidebarNavItems"] {
+    max-height: none !important;
+    overflow-y: visible !important;
+}
+
+[data-testid="stSidebarNav"] button,
+[data-testid="stSidebarNav"] [data-testid="stSidebarNavShowMore"],
+[data-testid="stSidebarNavSeparator"] {
+    display: none !important;
+}
+
 [data-testid="stSidebarNav"] a,
 [data-testid="stSidebarNavLink"] {
     min-height: 38px !important;
@@ -762,6 +774,58 @@ g.updatemenu-button {
                 '17_工程陷阱与Harness': 'M17 · 工程陷阱与Harness',
                 '17_工程陷阱与harness': 'M17 · 工程陷阱与Harness'
             };
+
+            // 注入持久化 Head 样式表，保证即使在 Streamlit 页面重载空白期，侧边栏样式也 100% 永久保持，绝不发生样式丢失/回退到默认
+            var headStyle = doc.getElementById('nn-persistent-sidebar-style');
+            if (!headStyle) {
+                headStyle = doc.createElement('style');
+                headStyle.id = 'nn-persistent-sidebar-style';
+                headStyle.textContent = `
+                    [data-testid="stSidebar"] {
+                        background-color: #f1f5f9 !important;
+                    }
+                    [data-testid="stSidebarNavItems"] {
+                        max-height: none !important;
+                        overflow-y: visible !important;
+                    }
+                    [data-testid="stSidebarNav"] button,
+                    [data-testid="stSidebarNav"] [data-testid="stSidebarNavShowMore"],
+                    [data-testid="stSidebarNavSeparator"] {
+                        display: none !important;
+                    }
+                    [data-testid="stSidebarNav"] a,
+                    [data-testid="stSidebarNavLink"] {
+                        min-height: 38px !important;
+                        display: flex !important;
+                        align-items: center !important;
+                        border-radius: 8px !important;
+                        padding: 0.35rem 0.65rem !important;
+                        transition: background-color 0.15s ease, border-color 0.15s ease !important;
+                        contain: layout style !important;
+                        text-decoration: none !important;
+                    }
+                    [data-testid="stSidebarNav"] span,
+                    [data-testid="stSidebarNavLink"] span {
+                        font-weight: 600 !important;
+                        color: #334155 !important;
+                        font-size: 0.88rem !important;
+                        transition: color 0.15s ease !important;
+                        white-space: nowrap !important;
+                        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif !important;
+                    }
+                    [data-testid="stSidebarNav"] a[aria-current="page"],
+                    [data-testid="stSidebarNavLink"][aria-current="page"] {
+                        background-color: rgba(37, 99, 235, 0.08) !important;
+                        border-left: 3px solid #2563eb !important;
+                    }
+                    [data-testid="stSidebarNav"] a[aria-current="page"] span,
+                    [data-testid="stSidebarNavLink"][aria-current="page"] span {
+                        color: #1d4ed8 !important;
+                        font-weight: 600 !important;
+                    }
+                `;
+                doc.head.appendChild(headStyle);
+            }
 
             function formatSidebarNav() {
                 var links = doc.querySelectorAll('[data-testid="stSidebarNav"] a, [data-testid="stSidebarNavLink"]');
