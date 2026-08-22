@@ -23,7 +23,7 @@ jobs:
     name: 🔍 发布前验证
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: 安装 uv
         uses: astral-sh/setup-uv@v4
@@ -50,7 +50,7 @@ jobs:
     needs: [verify]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: 安装 uv
         uses: astral-sh/setup-uv@v4
@@ -97,7 +97,7 @@ jobs:
     needs: [build]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: 提取版本号
         id: version
@@ -135,7 +135,7 @@ jobs:
     needs: [publish-pypi, publish-docker]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0  # 获取完整历史用于生成变更日志
 
