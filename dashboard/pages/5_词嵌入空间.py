@@ -28,6 +28,7 @@ from dashboard.styles.theme import (
     anchor_badge,
     apply_custom_theme,
     render_hero_header,
+    render_interactive_region_header,
     render_live_param_status_bar,
     render_metric_card,
     render_page_guide,
@@ -313,6 +314,14 @@ for idx in sorted_indices:
 # ---------------------------------------------------------------------------
 # 遥测指标卡
 # ---------------------------------------------------------------------------
+render_interactive_region_header(
+    "region-c",
+    "REALTIME ARITHMETIC TELEMETRY // 实时算术遥测",
+    "C",
+    "emerald",
+    "显示最优预测词、余弦相似度与几何对齐状态",
+)
+
 metric_grid_html = (
     '<div class="metric-grid">'
     + render_metric_card(
@@ -350,8 +359,12 @@ st.markdown(metric_grid_html, unsafe_allow_html=True)
 # ---------------------------------------------------------------------------
 # 主视图区：3D / 2D 散点图与算术平行四边形
 # ---------------------------------------------------------------------------
-render_section_heading(
-    "SEMANTIC MANIFOLD & VECTOR ARITHMETIC // 语义流形与向量算术空间", icon_name="activity"
+render_interactive_region_header(
+    "region-d",
+    "SEMANTIC MANIFOLD & VECTOR ARITHMETIC // 3D 语义几何流形",
+    "D",
+    "purple",
+    "3D 空间直观旋转观测词汇聚类与向量加减位移虚线",
 )
 
 render_live_param_status_bar(
@@ -485,10 +498,13 @@ with st.expander("[GROWTH GUIDE // 成长指南] 词嵌入与余弦相似度核�
     )
 
 
-# ---------------------------------------------------------------------------
-# 2026 前沿拓展：BPE 字节对分词工程实验室 (Byte-Pair Encoding Lab)
-# ---------------------------------------------------------------------------
-render_section_heading("2026 TOKENIZATION LAB // BPE 字节对分词工程与数据流水线", icon_name="cpu")
+render_interactive_region_header(
+    "region-e",
+    "2026 TOKENIZATION LAB // 前沿 BPE 分词实验室",
+    "E",
+    "blue",
+    "探索教学级 BPE 分词的切片与合并过程",
+)
 
 st.markdown(
     """

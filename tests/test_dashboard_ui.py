@@ -131,7 +131,7 @@ class TestThemeHtmlIntegrity:
                 assert region in source, f"{filename} is missing {region}"
 
     def test_all_18_pages_region_ids_are_unique_and_not_duplicated(self):
-        """测试全站 18 个子页面的所有锚点区域 ID 均全局唯一且无重复定义"""
+        """测试全站 18 个子页面的所有锚点区域 ID 均全局唯一，且蓝图声明的目标均存在"""
         import re
 
         pages_dir = os.path.abspath(
@@ -144,7 +144,10 @@ class TestThemeHtmlIntegrity:
             with open(page_path, encoding="utf-8") as page_file:
                 source = page_file.read()
 
-            # 提取显式 HTML 标签属性 id="region-x"
+            # 1. 提取 blueprint 中声明的所有 target_id
+            bp_targets = re.findall(r'"target_id":\s*"(region-[a-z0-9_-]+)"', source)
+
+            # 2. 提取显式 HTML 标签属性 id="region-x"
             explicit_regions = re.findall(
                 r'<[a-zA-Z0-9_-]+\s+[^>]*\bid=["\'](region-[a-z0-9_-]+)["\']', source
             )
@@ -163,6 +166,15 @@ class TestThemeHtmlIntegrity:
                 guide_regions = ["region-b"]
 
             all_anchors = explicit_regions + header_regions + guide_regions
+
+            # 断言 1：蓝图声明的所有 target_id 在页面中必须存在实际锚点
+            actual_ids = set(all_anchors)
+            missing_targets = [t for t in bp_targets if t not in actual_ids]
+            assert not missing_targets, (
+                f"{filename} 声明了蓝图导航但缺失对应页面锚点: {missing_targets}"
+            )
+
+            # 断言 2：页面内不得有重复的区域 ID
             counts = {}
             for r in all_anchors:
                 counts[r] = counts.get(r, 0) + 1

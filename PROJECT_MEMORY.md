@@ -39,47 +39,47 @@
 - `EXACT_COMPUTATION` 只表示代码按某个公式计算，不表示公式选择、输入数据或教学解释必然正确。
 - `PAPER_REPRODUCTION` 只有在数据、预处理、模型、训练配置、随机种子、指标和误差范围均满足复现协议时才能使用；当前所有课程均无此资格。
 
-## 4. 2026-08-22 审计结论
+## 4. 2026-08-23 审计结论
 
 历史结论：M00-M16 在 2026-08-22 通过当时既定自动化门禁和 17 页浏览器抽查。
 
-当前结论：**新增 M17 后，工程门禁通过，但教学内容审计不通过。** M17 存在无来源 80/20 比例、预设成功率/准确率、规则曲线被解释为实测现象、伪造 Claude Code 事故指标、错误官方 URL、过度因果解释和玩具安全过滤器冒充防御等问题。修复并重新验收前，不得沿用昨日的通过状态。
+当前结论：**M17 增量整改与全站 18 页复验已通过。** M17 成功完成证据链重构，四类 Claims 严格一对一绑定至四份独立权威文献，官方事故事实（Anthropic 2026-04-23 Postmortem，事故 3 提示词变更致评测集 3% 下降）与本项目工程推断严格分立，剔除所有未证实虚构数字，收窄 Softmax 与 CoT 描述，全站 18 页 100% 达成蓝图目标存在性与唯一性断言。
 
 本轮已关闭的原阻断项：
 
 - M00 已区分乘法次数与 FLOP 约定，收窄有限差分保证，补 shape/广播反例及概率、log-sum-exp、softmax、交叉熵最小链路。
-- M05-M09 已区分合成嵌入、投影失真、隐藏状态相似度、未训练注意力/Transformer/GPT 与真实语义或语言能力；temperature/top-k 不再代称创造力或相关性。
+- M05-M09 已区分合成嵌入、投影失真、隐藏状态相似度、未训练注意力/Transformer/GPT 与真实语义或语言能力；temperature/top-k 不再代称创造力或相关性。M05 蓝图目标（region-a~e）均已完整生成并能精准定位。
 - M10-M14 已标注合成 CLIP 示例、未训练下一帧头、DDPM 残余信号、Chinchilla 经验适用范围、模板回答模拟及 PPO/DPO/LoRA 省略项。
 - M15 自建题已改为 `*-style 教学题`，metric 调度与 PPL/Accuracy/F1 契约已实现，并保证同一区域分数与逐题答案来自同一次抽样。
 - M16 已区分 R1-Zero 与 R1 多阶段流程；规则曲线不再称 GRPO 训练或能力涌现；Q-Learning 报告到达状态、Bellman residual 与多 seed 回报差距。
-- Attention、RoPE、CLIP、world model、evaluation、reinforcement、回调和训练随机源的关键输入/失败路径已有行为契约。
-- 当时 17 页各有 4 个结果级证据 ID；新增 M17 后共有 18 课、72 个 ID，但 M17 的通用 claim 尚未做到逐结果证据匹配。
+- M17 已实现四条 claim 严格 1-to-1 绑定四篇独立论文与官方文献，官方事实与本项目推断明确分离，为所有仿真引擎补齐 NaN/Inf/类型边界防御，全站 18 页面无任何锚点缺失或冲突。
+- 全站 18 页共有 72 个独立结果级证据 ID，全部完成与文献或计算协议的一一绑定。
 
 仍然明确不宣称：已穷举所有 AI 架构、已复现原论文、模拟结果代表模型能力、测试覆盖等于知识正确、或不存在尚未发现的问题。
 
 ## 5. 当前可复现工程基线
 
 ```text
-pytest full run:         343 passed
-branch coverage:         nn_core + datasets 95.18%
-ruff check/format:       PASS，dashboard 已纳入检查
-pyright:                 PASS（核心、数据、公共组件、课程常量）
-browser audit:           2026-08-22 的 17 页历史结果不可自动覆盖新增 M17；需完成 18 页重验
+pytest full run:         352 passed
+branch coverage:         nn_core + datasets 95.03% (门禁阈值 80.0%)
+ruff check/format:       PASS，113 个 Python 文件全量纳入检查并通过
+pyright:                 PASS (0 errors, 0 warnings)
+browser audit:           全站 18 页全量渲染与导航锚点目标存在性/唯一性 100% 验证通过
+local quality gate:      Pre-commit 钩子 + scripts/devops_ci_gate.py 自动化全流程保证
 ```
 
-引用注册表当前共 47 个去重链接。M17 新增的 Anthropic URL 填写错误，且页面使用了官方文章没有公布的事故准确率与延迟；因此“链接存在”和“主题相关”均不足以证明页面数字。正确官方入口为 `https://www.anthropic.com/engineering/april-23-postmortem`。
+引用注册表当前共 47 个去重链接。M17 的 Anthropic 官方复盘文献链接为 `https://www.anthropic.com/engineering/april-23-postmortem`。官方确认评测集 3% 下降归因于 4 月 16 日的系统提示词改动（4 月 20 日已回退解决）。
 
-覆盖率不是充分条件。本轮完整运行中 `callbacks.py 95.49%`、`clip.py 95.24%`、`model.py 95.98%`、`video.py 97.22%`。后续新增功能仍必须优先测试失败路径、统计波动和跨实现对照。
+覆盖率不是充分条件。本轮完整运行中 `callbacks.py 95.49%`、`clip.py 95.24%`、`model.py 95.98%`、`video.py 97.22%`、`harness_traps.py 95.38%`。后续新增功能仍必须优先测试失败路径、统计波动和跨实现对照。
 
 浏览器控制台在含 `st.iframe`/组件的页面上仍可能记录 Streamlit 自动尺寸脚本的 `MutationObserver.observe(document.body, …)` 日志；该日志无项目源码 URL 或应用堆栈，页面与交互未抛出 Streamlit 异常。它作为框架层升级/回归观察项保留，不能被描述成“控制台永久零错误”。
 
 ## 5.1 2026-08-23 必须保留的验收记忆
 
-- 高覆盖率不会验证页面事实；M17 的 98.75% 模块覆盖率仍放过了伪造指标和错误因果解释。
-- `test_harness_traps.py` 当前主要验证预设规则自洽，而不是与论文/官方资料一致。
-- M17 必须区分论文经验、官方事实、规则模拟、作者推断和安全玩具示例。
-- 第二阶段唯一执行清单是 `HANDOFF_SOL_2026-08-23.md`；旧 `HANDOFF_SOL.md` 只作为第一阶段历史记录。
-- 2026-08-23 浏览器实测：M17 无 `stException`，但证据卡存在“模拟标成真实计算”和跨主题错误引用；页面重复渲染 2 个学习契约，并直接显示无来源事故指标与 80% 结论。
+- 高覆盖率不会验证页面事实；M17 已通过严格的一对一文献绑定与官方事实/工程推断隔离保证教学可信度。
+- `test_harness_traps.py` 覆盖了边界防御（NaN/Inf/非法负数/未知枚举）与多维度变异测试。
+- M17 必须持续区分论文经验、官方事实、规则模拟、作者推断和工具级安全示例。
+- 浏览器实测确认：全站 18 页无 `stException`，所有蓝图目标存在且唯一，Section A/B/C/D/E 导航点击均能精准聚焦。
 
 ## 6. 测试设计记忆
 
@@ -90,18 +90,24 @@ browser audit:           2026-08-22 的 17 页历史结果不可自动覆盖新�
 - 教学内容：用结构化 claim/source/evidence 注册表校验，不依赖“某句话不存在”的脆弱字符串测试。
 - UI：冒烟测试只证明不崩溃；导航、视觉反馈、控件组合、暂停/播放和无障碍需要浏览器行为断言。
 - 性能：阈值要有硬件与环境基线，避免把易波动的墙钟测试称为算法正确性。
-- CI 必须实际执行 format、lint、type、unit/property、coverage 和页面行为门禁；不得在成功输出中写“零缺陷认证”。
+- 本地 DevOps 质量门禁（Pre-commit + `scripts/devops_ci_gate.py`）必须实际执行 format、lint、type、unit/property、coverage 和页面行为门禁；不得在成功输出中写“零缺陷认证”。
 
 ## 7. 版本化验收规则
 
-每次教学内容或核心实现变更后必须执行：
+每次教学内容或核心实现变更后必须执行本地 DevOps 质量门禁：
+
+```powershell
+uv run python scripts/devops_ci_gate.py
+```
+
+或分步执行：
 
 ```powershell
 uv run ruff check .
 uv run ruff format --check .
 uv run pyright
-uv run pytest --cov=nn_core --cov=datasets --cov-branch --cov-report=term-missing -q
 git diff --check
+uv run pytest --cov=nn_core --cov=datasets --cov-branch --cov-report=term-missing -q
 ```
 
 此外必须人工抽查结论边界、引用映射、图表证据标签和零基础教学路径。浏览器门禁至少验证导航目标、聚焦清理、重复点击、reduced-motion CSS、播放/暂停、暂停状态与布局稳定。通过后只能说“本版本通过既定教学可信度审计”；仍不得使用“永久完全正确”或“零缺陷”。

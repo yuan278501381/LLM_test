@@ -7,7 +7,7 @@ nn_core.harness_traps - AI 真实工程陷阱、物理盲区与 Harness 控制�
 2. LostInTheMiddleSimulator: 长上下文位置敏感性与 U 型衰减模拟 (基于 Liu et al., TACL 2024)
 3. ReversalCurseEngine: 自回归单向条件概率下的逆向推理断裂模拟 (基于 Berglund et al., 2023)
 4. TokenizerTrapInspector: BPE 切分、字符计数与前导空格表示分析
-5. AgentHarnessGuard: 工具调用死循环熔断器 (Circuit Breaker) 与玩具级关键词过滤对比生产纵深防御
+5. AgentHarnessGuard: 工具调用死循环熔断器 (Circuit Breaker) 与工具级关键词过滤对比生产纵深防御
 6. ClaudeCode2026PostmortemRunner: 2026 年 Anthropic Claude Code 官方技术复盘与工程状态推演
 7. LoopEngineeringEngine: 智能体循环工程 (Loop Engineering) 演进轨迹与确定性验证门禁推演
 """
@@ -394,15 +394,15 @@ class TokenizerTrapInspector:
 
 
 # ---------------------------------------------------------------------------
-# 5. Agent Harness 纵深防御与玩具过滤器对比 (Agent Harness Guard)
+# 5. Agent Harness 纵深防御与工具过滤器对比 (Agent Harness Guard)
 # ---------------------------------------------------------------------------
 class AgentHarnessGuard:
     """
-    智能体运行控制架: 死循环熔断器与玩具级关键词过滤对比生产级纵深防御。
+    智能体运行控制架: 死循环熔断器与工具级关键词过滤对比生产级纵深防御。
 
     教学与证据说明:
         - 证据等级: TEACHING_SCALE (教学原型)
-        - 机制解析: 正则表达式黑名单仅能作为最基础的玩具级字符串检查 (Toy String Filter)，
+        - 机制解析: 正则表达式黑名单仅能作为最基础的工具级字符串检查 (Toy String Filter)，
           极易被大小写变换、Unicode 混淆、编码拆分或 Base64 绕过，绝不能单独作为安全授权的依据。
         - 生产级纵深防御标准:
           1. Strict JSON Schema 结构化参数强校验
@@ -430,7 +430,7 @@ class AgentHarnessGuard:
         max_repeats: int = 3,
     ) -> dict[str, Any]:
         """
-        检查新工具调用是否触发重复死循环或匹配到玩具关键词规则。
+        检查新工具调用是否触发重复死循环或匹配到工具关键词规则。
 
         参数:
             call_history: 历史工具调用记录
@@ -445,13 +445,13 @@ class AgentHarnessGuard:
         recent_calls = [c for c in call_history[-max_repeats:] if c.get("tool") == new_tool]
         is_ping_pong = len(recent_calls) >= max_repeats
 
-        # 2. 玩具关键词过滤检查 (仅用于教学演示脆弱性)
+        # 2. 工具关键词过滤检查 (仅用于教学演示脆弱性)
         arg_str = str(new_args).lower()
         injection_found = any(re.search(pat, arg_str) for pat in cls.TOY_INJECTION_PATTERNS)
 
         if injection_found:
             status = "TOY_FILTER_MATCHED [SUSPICIOUS_KEYWORD_FLAGGED]"
-            action = "玩具关键词过滤器命中已知黑名单模式（注：黑名单极易被绕过，需结合上下文隔离与沙箱执行）。"
+            action = "工具关键词过滤器命中已知黑名单模式（注：黑名单极易被绕过，需结合上下文隔离与沙箱执行）。"
             color = "rose"
             is_blocked = True
         elif is_ping_pong:
@@ -462,7 +462,7 @@ class AgentHarnessGuard:
         else:
             status = "TOY_FILTER_NO_MATCH [INCOMPLETE_CHECK_ONLY]"
             action = (
-                "玩具关键词过滤器未命中已知模式。（警告：此过滤器极易被大小写/编码绕过，"
+                "工具关键词过滤器未命中已知模式。（警告：此过滤器极易被大小写/编码绕过，"
                 "严禁单独作为生产安全准入依据！生产环境必须依赖参数 Schema 强校验、权限隔离与沙箱）。"
             )
             color = "emerald"
@@ -509,27 +509,27 @@ class ClaudeCode2026PostmortemRunner:
     OFFICIAL_INCIDENTS: ClassVar[dict[str, dict[str, Any]]] = {
         "reasoning_downgrade": {
             "title": "事故 1: 思考预算默认值调整 (3月4日 ~ 4月7日)",
-            "official_timeline": "3 月 4 日调整默认 reasoning effort；4 月 7 日回退为允许用户显式指定配置。",
-            "root_cause": "为降低终端响应延迟调整了默认思考力度，导致复杂长逻辑架构重构场景下模型推理深度受限。",
-            "official_finding": "长复杂编码与架构重构任务因思考预算受限出现推理深度不足与逻辑不完备。",
-            "resolution": "4 月 7 日全面回退默认设置，并在客户端增加 reasoning-effort 显式控制参数与回归测试。",
-            "engineering_lesson": "Prompt 与推理参数调整必须在涵盖真实复杂工程任务的长周期评测集上进行严格验证与灰度发布。",
+            "official_timeline": "3 月 4 日调整默认 reasoning effort；4 月 7 日全面回退为允许用户显式指定配置。",
+            "root_cause": "官方确认根因：为降低终端响应延迟调整了默认的思考预算（reasoning effort）配置。",
+            "official_finding": "官方确认事实：导致部分长复杂编码任务因思考预算受限出现推理深度不足。",
+            "resolution": "官方确认修复：4 月 7 日全面回退默认设置，保持用户在客户端的显式控制权。",
+            "course_inferred_recommendation": "本项目推断与工程建议：推理预算调整属于关键超参变更，需在长周期真实任务评测集上进行充分验证与灰度发布。",
         },
         "session_cache_wipe": {
             "title": "事故 2: 闲置会话缓存清理逻辑缺陷 (3月26日 ~ 4月10日)",
-            "official_timeline": "3 月 26 日引入优化；4 月 10 日发布 v2.1.101 修复会话状态机与 KV 缓存生命周期绑定。",
-            "root_cause": "为优化闲置会话内存实现的清理逻辑，在每轮交互中误清除了历史 thinking block，破坏了多轮推理连贯性。",
-            "official_finding": "跨轮长任务中模型因缺少历史思考上下文出现重复探索或逻辑断裂。",
-            "resolution": "4 月 10 日发布 v2.1.101 修复，将闲置清理与活跃会话生命周期解耦，增加会话状态机持久化集成测试。",
-            "engineering_lesson": "上下文管理与缓存淘汰策略必须具备端到端的多轮一致性测试，防止内存优化破坏任务上下文。",
+            "official_timeline": "3 月 26 日引入闲置会话清理优化；4 月 10 日发布 v2.1.101 修复。",
+            "root_cause": "官方确认根因：为优化闲置会话内存引入的清理逻辑，在每轮执行中误清除了历史 thinking 记录。",
+            "official_finding": "官方确认事实：跨轮长任务中模型因缺少历史思考记录出现逻辑不连贯或重复探索。",
+            "resolution": "官方确认修复：4 月 10 日发布 v2.1.101 修复该会话清理逻辑。",
+            "course_inferred_recommendation": "本项目推断与工程建议：上下文内存优化与缓存淘汰策略必须具备多轮一致性测试，防止内存清理误删关键推理历史。",
         },
         "verbosity_clamp": {
             "title": "事故 3: 系统提示词过度约束导致代码截断 (4月16日 ~ 4月20日)",
-            "official_timeline": "4 月 16 日上线简短系统提示；4 月 20 日全面回退并解决（4 月 23 日发布系统性复盘）。",
-            "root_cause": "在系统提示词中追加了简洁度控制指令，与复杂长代码生成的完整性需求产生冲突，偶发导致输出截断。",
-            "official_finding": "Anthropic 官方复盘记录：系统提示词简洁度改动在某一内部扩展编码评测集中观察到性能下降约 3%（注：官方未公布全场景总体准确率数字）。",
-            "resolution": "4 月 20 日回退简短控制指令，消除硬性简洁度对复杂代码实现的干扰，建立防截断与语法完整性自动化断言。",
-            "engineering_lesson": "系统级提示词修改属于高风险全局干预，需设立防截断门禁与自动化语法/完整性断言。",
+            "official_timeline": "4 月 16 日上线简短系统提示；4 月 20 日全面回退并解决（4 月 23 日发布官方技术复盘文章）。",
+            "root_cause": "官方确认根因：在系统提示词中追加了简洁度（verbosity）控制指令，与复杂长代码生成的完整性需求产生冲突。",
+            "official_finding": "官方确认事实：Anthropic 官方复盘明确记录，在某一内部扩展编码评测集中观察到性能下降约 3%（官方未公布全场景总体准确率绝对数值）。",
+            "resolution": "官方确认修复：4 月 20 日全面回退简短控制指令，消除硬性简洁度对长代码生成的干扰。",
+            "course_inferred_recommendation": "本项目推断与工程建议：全局提示词改动属于高风险干预，需设立防截断门禁与自动化语法/完整性断言。",
         },
     }
 
