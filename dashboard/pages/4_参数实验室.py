@@ -262,7 +262,7 @@ with grid_c2:
     )
     st.plotly_chart(fig_g_hist, use_container_width=True)
 
-with st.expander("[HOW TO READ // 读图指南] 权重分布、梯度流与收敛健康度权重分布、梯度流与收敛健康度", expanded=False):
+with st.expander("[HOW TO READ // 读图指南] 权重分布、梯度流与收敛健康度", expanded=False):
     st.markdown(
         """
         * **1. 左上【空间决策流形】**：黑色实线是模型画出的分界线，观察它是否随着训练逐步弯曲包裹住月牙形或圆形数据。

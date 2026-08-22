@@ -307,7 +307,7 @@ fig_space = plot_embedding_space(
 )
 st.plotly_chart(fig_space, use_container_width=True)
 
-with st.expander("[HOW TO READ // 读图指南] 空间距离与向量语义算术空间距离与向量语义算术", expanded=False):
+with st.expander("[HOW TO READ // 读图指南] 空间距离与向量语义算术", expanded=False):
     st.markdown(
         """
         * **1. 点的相对位置**：空间中靠得越近的词，**语义越相似**（如 `cat` 和 `dog` 会自动聚成一团，`king` 和 `queen` 靠得很近）。

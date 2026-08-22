@@ -196,7 +196,7 @@ st.markdown(grid_html, unsafe_allow_html=True)
 fig_multi_loss = plot_multi_loss_curves(histories, title="OPTIMIZER BENCHMARK // 优化器多轨收敛对比")
 st.plotly_chart(fig_multi_loss, use_container_width=True)
 
-with st.expander("[HOW TO READ // 读图指南] 判断优化器速度与稳定性判断优化器速度与稳定性", expanded=False):
+with st.expander("[HOW TO READ // 读图指南] 判断优化器速度与稳定性", expanded=False):
     st.markdown(
         """
         * **横轴**：训练轮数 (Epochs)；**纵轴**：损失 (Loss)。
@@ -229,7 +229,7 @@ for idx, opt_meta in enumerate(optimizer_items):
         )
         st.plotly_chart(fig_b, use_container_width=True)
 
-with st.expander("[HOW TO READ // 读图指南] 直观验证最终划分能力直观验证最终划分能力", expanded=False):
+with st.expander("[HOW TO READ // 读图指南] 直观验证最终划分能力", expanded=False):
     st.markdown(
         """
         * **对比重点**：在相同轮数下，哪一个优化器画出的黑色决策线最平滑、最准确地把两类点包裹切分。

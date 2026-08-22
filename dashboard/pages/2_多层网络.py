@@ -240,7 +240,7 @@ with col_bound:
     )
     st.plotly_chart(fig_bound, use_container_width=True)
 
-with st.expander("[HOW TO READ // 读图指南] 网络拓扑、神经元点亮与决策分界线网络拓扑、神经元点亮与决策分界线", expanded=False):
+with st.expander("[HOW TO READ // 读图指南] 网络拓扑、神经元点亮与决策分界线", expanded=False):
     st.markdown(
         """
         * **左图【网络拓扑图】**：
@@ -268,7 +268,7 @@ with col_grad:
         fig_grad = plot_gradient_histograms(dense_grads, layer_names, title="GRADIENT FLOW // 反向传播梯度流分布")
         st.plotly_chart(fig_grad, use_container_width=True)
 
-with st.expander("[HOW TO READ // 读图指南] 神经元失活、梯度消失与梯度爆炸诊断神经元失活、梯度消失与梯度爆炸诊断", expanded=False):
+with st.expander("[HOW TO READ // 读图指南] 神经元失活、梯度消失与梯度爆炸诊断", expanded=False):
     st.markdown(
         """
         * **左图【逐层神经元激活热力图】**：
