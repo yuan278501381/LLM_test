@@ -104,6 +104,22 @@ class TestRoPE:
         norm_q_rot = np.linalg.norm(q_rot, axis=-1)
         np.testing.assert_allclose(norm_q_orig, norm_q_rot, atol=1e-6)
 
+    def test_显式支持两种四维布局(self):
+        rope = RotaryPositionalEmbedding(dim=8, max_seq_len=16)
+        rng = np.random.default_rng(11)
+        bshd = rng.normal(size=(2, 5, 3, 8))
+        bhsd = bshd.transpose(0, 2, 1, 3)
+        out_bshd, _ = rope.forward(bshd, bshd, seq_axis=1)
+        out_bhsd, _ = rope.forward(bhsd, bhsd, seq_axis=2)
+        np.testing.assert_allclose(out_bshd.transpose(0, 2, 1, 3), out_bhsd)
+
+    def test_布局与长度契约错误被拒绝(self):
+        cos, sin = precompute_freqs_cis(dim=8, max_seq_len=4)
+        with pytest.raises(ValueError, match="超过"):
+            apply_rope(np.ones((1, 5, 8)), cos, sin, seq_axis=1)
+        with pytest.raises(ValueError, match="seq_axis"):
+            apply_rope(np.ones((1, 4, 8)), cos, sin, seq_axis=2)
+
     def test_相对位置衰减矩阵计算(self):
         """相对衰减矩阵主对角线应为 1.0 (自身内积最大)"""
         rope = RotaryPositionalEmbedding(dim=8, max_seq_len=10)

@@ -208,15 +208,40 @@ class TestScaledDotProductAttention:
         assert weights[0, 0, 3] < 1e-6
 
     def test_缩放因子效果(self):
-        """缩放 1/sqrt(d_k) 应防止 softmax 极化"""
+        """在固定高维输入上，1/sqrt(d_k) 相比未缩放 logits 提高分布熵。"""
+        rng = np.random.default_rng(7)
         d_k = 64
-        q = np.random.randn(1, 4, d_k) * 2.0  # 中等方差
-        k = np.random.randn(1, 4, d_k) * 2.0
-        v = np.random.randn(1, 4, d_k)
-        _, weights = scaled_dot_product_attention(q, k, v)
-        # 缩放后注意力分布应相对均匀 (非完全集中)
-        min_entropy = -np.sum(weights * np.log(weights + 1e-10), axis=-1).min()
-        assert min_entropy > 0.01, "缩放后注意力应保持一定熵值"
+        q = rng.normal(size=(1, 8, d_k))
+        k = rng.normal(size=(1, 8, d_k))
+        v = rng.normal(size=(1, 8, d_k))
+        _, scaled_weights = scaled_dot_product_attention(q, k, v)
+        raw_scores = q @ k.swapaxes(-2, -1)
+        raw_exp = np.exp(raw_scores - raw_scores.max(axis=-1, keepdims=True))
+        unscaled_weights = raw_exp / raw_exp.sum(axis=-1, keepdims=True)
+
+        def mean_entropy(weights):
+            return float(np.mean(-np.sum(weights * np.log(weights + 1e-12), axis=-1)))
+
+        assert mean_entropy(scaled_weights) > mean_entropy(unscaled_weights)
+
+    def test_完全遮蔽行与不兼容形状被拒绝(self):
+        q = np.ones((1, 2, 4))
+        k = np.ones((1, 2, 4))
+        v = np.ones((1, 2, 3))
+        with pytest.raises(ValueError, match="完全被遮蔽"):
+            scaled_dot_product_attention(q, k, v, np.array([[1, 1], [0, 0]]))
+        with pytest.raises(ValueError, match="特征维"):
+            scaled_dot_product_attention(q, np.ones((1, 2, 5)), v)
+
+    def test_因果掩码使前缀输出不受未来值影响(self):
+        q = np.array([[[1.0, 0.0], [0.0, 1.0], [1.0, 1.0]]])
+        k = q.copy()
+        v1 = np.array([[[1.0], [2.0], [3.0]]])
+        v2 = np.array([[[1.0], [2.0], [999.0]]])
+        mask = causal_mask(3)
+        out1, _ = scaled_dot_product_attention(q, k, v1, mask)
+        out2, _ = scaled_dot_product_attention(q, k, v2, mask)
+        np.testing.assert_allclose(out1[:, :2], out2[:, :2])
 
 
 class TestMultiHeadAttention:

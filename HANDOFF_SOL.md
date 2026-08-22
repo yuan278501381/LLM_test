@@ -1,310 +1,279 @@
-# NN Playground 教学质量与工程收敛交接文档（交付 Sol 执行）
+# NN Playground 教学可信度整改交接清单（Sol-中执行）
 
-> 交接日期：2026-08-22  
-> 项目路径：`C:\repo\LLM_test`  
-> 执行角色：Sol 负责实施；Codex 在实施完成后负责独立验收。  
-> 本轮目标：优先完成 P0 教学可信度与工程质量收敛，再完成 P1 课程骨架；不要进行无边界重写。
+> 交接日期：2026-08-22
+>
+> 工作目录：`C:\repo\LLM_test`
+>
+> 执行者：Sol-中；完成后由 Codex 独立验收。
+>
+> 目标：把当前交互式教学原型收敛为“本版本可审计、可追溯、无已知误导”的教学项目。不要声称永久完全正确或零缺陷。
 
-## 1. 项目目标
+## 0. 执行边界
 
-本项目要建设一套从零基础通向深入理解的神经网络理论与实践课程。学习者不仅要会运行模型，还应能解释：
+1. 先阅读 `README.md`、`PROJECT_MEMORY.md`、`CURRICULUM_MAP.md`、`dashboard/constants/course.py`。
+2. 保留用户现有交互、播放/暂停、导航和视觉修改；不得通过回退功能换取测试通过。
+3. 不引入 PyTorch/TensorFlow 作为运行时核心；可以在测试依赖中用 scikit-learn 或独立公式作交叉核对，但必须说明用途。
+4. 不把未完成主题包装成已实现；课程地图必须区分 `已实现 / 部分实现 / 仅规划`。
+5. 每完成一个任务，补测试、权威来源和结论边界；不要先批量改文案、最后再猜测试。
+6. 不删除失败测试、不放宽正确性阈值、不扩大 lint/type 排除范围、不输出“ZERO-DEFECT CERTIFIED”。
 
-- 模型为什么有效；
-- 架构解决了前代方案的什么问题；
-- 每个关键参数如何影响收敛、泛化、稳定性、效率和输出；
-- 一次历史性创新带来了什么能力，又付出了什么代价；
-- 页面展示的是严格计算、教学缩小版、合成数据、概率模拟，还是论文复现。
-
-完整使命和教学原则已经写入 `README.md`，实施过程中必须保留并遵循，不能恢复为夸张宣传表述。
-
-## 2. 当前基线
-
-### 2.1 已有能力
-
-- `nn_core/`：纯 NumPy 白盒实现，包含基础层、优化器、Transformer/LLM 算子、多模态、预训练、后训练与评估教学组件。
-- `dashboard/pages/`：15 个 Streamlit 交互实验页面。
-- `tests/`：当前收集并通过 201 项测试。
-- `.github/workflows/`：已有 Ruff、Pyright、跨平台 pytest、构建、Docker 和安全检查工作流。
-
-### 2.2 已验证状态
+## 1. 当前审计基线
 
 ```text
-uv run pytest -q
-201 passed
-
-uv run ruff check . --statistics
-246 errors（其中 181 项可安全自动修复）
-
-uv run ruff format --check .
-29 files would be reformatted
+pytest + branch coverage: 271 passed, total 90.28%
+ruff check:              PASS，但 dashboard/ 被排除
+ruff format --check:     FAIL，8 files would be reformatted
+pyright:                 FAIL，nn_core/reinforcement.py 有 3 个返回类型错误
 ```
 
-Ruff 问题以空白、导入顺序、未使用导入和旧式类型标注为主。测试通过不等于质量门禁通过。
+低覆盖模块：`callbacks.py 22.47%`、`clip.py 73.02%`、`model.py 75.36%`、`video.py 76.85%`。
 
-### 2.3 工作区保护
+当前测试的主要局限：
 
-- 当前 `README.md` 有已确认的使命、教学原则和范围边界修改，属于本轮需求的一部分，必须保留。
-- 修改前先运行 `git status --short` 和 `git diff`。
-- 不得使用 `git reset --hard`、`git checkout --` 或其他会覆盖用户修改的命令。
-- 不要发布 PyPI、Docker 镜像或 GitHub Release；不要推送远端。
+- AppTest 冒烟测试只断言页面不抛异常，不能证明教学解释、图表含义和交互正确。
+- 所谓“控件全组合模糊遍历”实际上只测试首/末一个 slider 的极值和第一个 number input 的原值，没有覆盖 radio、selectbox、multiselect、按钮或组合状态。
+- 教学回归多为“禁用字符串不存在”，可以被改写同义句绕过，也无法证明正确主张已经出现。
+- API 契约测试只验证 `hasattr/callable`，不验证签名、返回值和行为。
+- 性能测试是单机墙钟阈值，没有预热、重复统计或硬件基线，不应被称为算法正确性门禁。
+- 覆盖率高不代表断言充分；部分测试只验证 shape、长度或单次趋势。
 
-## 3. 核心问题
+## 2. P0：发布阻断项（全部完成后才允许申请验收）
 
-### 3.1 教学证据等级没有统一呈现
+### P0-1 建立“教学主张—证据—来源”注册表
 
-高级页面同时混合了真实数学计算、随机初始化输出、合成数据、概率模拟和架构示意，但缺乏统一、紧邻结果的证据标签。
+目标：让每个关键教学结论可追溯，而不是页面只挂一篇相关论文。
 
-### 3.2 部分文案把教学演示解释成真实模型能力
+任务：
 
-已发现的代表性风险：
+- 扩展 `dashboard/constants/course.py`，新增结构化 `Claim`：唯一 ID、主张正文、适用条件、证据等级、直接来源、页内结果 ID、反例/局限、最后核验日期。
+- 将证据等级从“整页标签”细化到图表、指标、动画和案例；同页混合真实计算与模拟时必须分别标注。
+- `Reference` 增加来源类型（原始论文、官方文档、教材、综述）、作者/组织、年份、稳定标识（DOI/arXiv/官方 URL）和具体支持内容。
+- 页面顶部仍可显示摘要，但每个结果附近必须显示本地证据标签和可展开的“为什么能这样解释”。
+- 所有 17 页至少登记核心公式、核心图表、历史结论、失败模式各一条主张。
+- 当前 `PAPER_REPRODUCTION` 继续禁止使用。
 
-- `dashboard/pages/8_Transformer.py` 实例化随机权重 Block，却把逐层注意力图解释为已经学到的语义分工。
-- 同页存在“残差连接能让深层网络绝不发生梯度消失”等绝对化结论。
-- `nn_core/audio.py` 的 `AudioTokenizer` 实际是 log-Mel 连续帧切片，不是 Whisper 的 tokenizer 或完整音频前端复刻。
-- `nn_core/world_model.py` 只有教学级两层预测头和扩散前向加噪调度，不是 Sora/DiT 模型，也没有实现反向去噪网络。
-- `dashboard/pages/15_评估基准.py` 使用概率控制的 mock predictor、迷你自建题集和模拟 PPL，不是正式 MMLU、GSM8K、Open LLM Leaderboard 或真实模型成绩。
-- `dashboard/constants/knowledge.py` 存在“彻底解决”“绝不”“所有现代模型默认”等缺少适用条件的表述。
+验收断言：
 
-### 3.3 课程覆盖广，但历史主线和“从零”基础不足
+- 所有 claim ID 唯一，来源非空，适用条件和结论边界非空；
+- 页面引用的 claim/result ID 必须真实存在；
+- `SIMULATION`/`ARCHITECTURE_ONLY` 结果不得使用“训练证明、真实能力、论文复现”等结论；
+- 链接检查区分 `通过 / 重定向 / 站点拒绝自动访问 / 确认失效`，不得把 403 自动判为文献不存在。
 
-当前从感知器直接进入网络实验，缺少独立的数学先修入口；CNN、序列模型、生成模型等关键历史链路被压缩在少数页面中。
+### P0-2 修正 M00 数学基础
 
-## 4. 本轮必须完成：P0
+文件重点：`dashboard/pages/0_数学基础.py`、数学与损失相关测试。
 
-### P0-1：建立统一的教学证据标签系统
+必须修正：
 
-建立单一数据源，推荐放在 `dashboard/constants/`，至少支持以下等级：
+- `N * Din * Dout` 不是完整 FLOPs；明确 MAC 与 FLOP 计数约定，并计入加法/偏置或改名为“乘法次数”。
+- 有限差分只能提高发现导数错误的概率，不能“100% 验证无数学 Bug”；补充不可导点、步长、精度、随机性和局部检查限制。
+- “相对误差 < 1e-5 说明理论导数完全正确”改为“在当前输入、精度和容差下与数值近似一致”；同时使用绝对误差与相对误差，处理近零梯度。
+- 修复 M00 A 区导航目标缺失和 HUD A-D 与页面 A-E 不一致。
+- 补齐 README 已承诺但页面缺失的最小概率基础：概率分布、log/exp、log-sum-exp、softmax、二元/多类交叉熵，并用可操作实验串到 M01/M07/M09。
+- 增加 shape 错误示例、广播错误示例和一个需要学习者预测结果再揭示答案的小测。
 
-| 标识 | 中文显示 | 定义 |
-|---|---|---|
-| `EXACT_COMPUTATION` | 真实计算 | 页面结果由当前实现按公式实际计算得到 |
-| `TEACHING_SCALE` | 教学缩小版 | 算法机制真实，但模型、数据或训练规模被缩小 |
-| `SYNTHETIC_DATA` | 合成数据 | 输入或标签由程序构造，不是真实数据集 |
-| `SIMULATION` | 概率模拟 | 结果由预设规则或随机概率产生，不代表模型推理 |
-| `ARCHITECTURE_ONLY` | 架构示意 | 只展示结构/数据流，未实现或训练完整模型 |
-| `PAPER_REPRODUCTION` | 论文复现 | 只有满足复现协议、数据和指标要求时才能使用 |
+权威核验参考：PyTorch `gradcheck` 官方文档明确说明精度、不可导点、重叠内存和非确定性限制；不能把一次通过视为证明。
 
-实现要求：
+### P0-3 修正表示学习、RNN、注意力和 GPT 的语义过度解释
 
-1. 提供可复用的 metadata 类型和 Streamlit 渲染组件，禁止每页复制一套 HTML。
-2. 15 个实验页都要声明自身涉及的证据等级。
-3. 标签必须显示在相关结果附近，不能只藏在 README 或帮助文字中。
-4. 模拟指标、模拟排行榜、随机权重图表必须在图表标题或相邻位置再次明确标注。
-5. `PAPER_REPRODUCTION` 默认不得使用，除非确有完整证据。
+#### M05 词嵌入
 
-验收标准：
+- 将手工预置向量明确标成 `SYNTHETIC_DATA`，禁止称为模型训练所得。
+- 将“距离直接代表语义”“+1 是同义、0 毫无关联、-1 是反义”的绝对解释改为上下文、训练目标和各向异性相关的有限解释。
+- `king - man + woman ≈ queen` 只能作为某些词向量中的经典现象；不能据此声称“真正逻辑类比能力”。
+- 3D 投影与原空间距离分开标注，解释降维失真。
 
-- 15 个页面启动无异常；
-- 页面可见标签与实际计算方式一致；
-- 新增测试验证所有页面均声明证据等级，且未知等级会失败；
-- 不允许通过搜索替换把所有页面机械标成同一等级。
+#### M06 序列记忆
 
-### P0-2：完成第一轮内容准确性审校
+- 核实热力图究竟来自 RNN 状态/梯度还是人为衰减公式；若为后者标成 `SIMULATION`。
+- 把“RNN 必然彻底忘光”“完全无法利用 GPU”改为有条件结论：序列时间步依赖限制序列内并行，但 batch、矩阵运算和层级仍可并行。
+- 补 LSTM/GRU 的核心门控公式或明确列为未实现，不要只引用 LSTM 论文来支撑 Vanilla RNN 的全部结论。
 
-至少修复第 3.2 节列出的全部问题，并对 `dashboard/`、`nn_core/`、`README.md` 搜索以下高风险措辞：
+#### M07/M08 注意力与 Transformer
 
-```text
-彻底、绝不、全部、所有、工业级、世界级、复刻、对标、真实成绩、全球排行榜、语义分工
-```
+- 删除随机/未训练头“各自关注语法、语义、指代”和“深层完成语义理解”的解释。
+- 关闭 `1/sqrt(d_k)` 会增加 logits 方差和饱和风险，但不会在任意输入下必然变成 0/1 或使梯度彻底消失；做维度和输入尺度控制实验。
+- 明确注意力权重是计算中的混合权重，不自动等于因果解释；引用相关反例研究。
+- 保留因果掩码的定义，但补充 fully-masked row 的数值策略。
+- M08 当前“结论边界”和下方“深层语义理解”互相矛盾，必须消除。
 
-修改原则：
+#### M09 Mini-GPT
 
-- 不简单删除知识点，而是补上前提、适用范围和局限。
-- 随机初始化注意力只能解释张量形状、归一化和信息混合机制，不能解释为学到语义。
-- PPL 只衡量给定 tokenization、数据分布和评测协议下的平均负对数似然；不能直接等同于知识、事实正确性或综合智能。
-- 残差连接有利于优化和梯度传播，但不能保证任何深度、初始化和训练设置下都不会梯度消失或不稳定。
-- LeakyReLU 可缓解传统 ReLU 的零负半轴问题，但不能保证神经元永不失效。
-- Adam 很常用，但并非所有任务和现代模型的无条件最优选择。
+- 审计所谓“预训练嵌入”：若为人工注入或固定规则，重命名并标证据等级。
+- Temperature 只改变分布锐度/随机性，不直接等同创造力、事实性或质量。
+- Top-k 是截断并重归一化，不保证被删除 token 都“无关”。
+- 明确模型是否真正训练、训练数据、损失、验证集和生成循环；未训练输出不得作为语言能力案例。
 
-#### 音频命名兼容要求
+### P0-4 修正多模态、预训练、评估与强化学习边界
 
-优先将概念重命名为 `SpectrogramFramePatcher` 或同等准确名称。若修改公开 API：
+#### M10-M12
 
-- 保留 `AudioTokenizer` 兼容别名；
-- 在 docstring 明确该别名的历史原因和真实行为；
-- 更新页面、测试、`nn_core/__init__.py` 与 README；
-- 不得声称它实现了 Whisper tokenizer。
+- `get_pretrained_clip_data` 实际为手工正交基底加噪，重命名为 synthetic demo；保留兼容别名时给弃用说明。
+- CLIP 双塔随机权重前向不等于图文对齐；相似度演示与真实模型计算分开展示。
+- `NextFramePredictor` 是未训练随机 MLP，不能称为会推演未来帧；只可作为输出头结构示意，或补真实小型训练与独立验证。
+- 余弦 schedule 末端 `alpha_bar` 被裁到 `1e-5`，不是信号“完全衰减为纯高斯噪声”；展示残余信号系数和 SNR。
+- 始终区分 DDPM 前向加噪、训练噪声预测器和反向采样三件事。
 
-#### 参考资料要求
+#### M13-M14
 
-- 新建统一参考资料文档或结构化引用注册表。
-- 历史、架构来源优先引用原始论文、作者官方资料或权威教材。
-- 页面至少提供与当前核心主题直接相关的参考入口。
-- 不引用搜索结果页、营销文章或无法追溯的数据。
-- 不大段复制论文原文；用自己的语言概括。
+- Chinchilla 是特定模型族、数据和计算范围内拟合的经验 compute-optimal 关系，不是对任意模型“严格证明 D≈20N”。
+- 为 MLM、CLM、BPE、MAE、对比学习、PPO、DPO、LoRA 分别补直接原始来源；一篇 Chinchilla 或 InstructGPT 不能覆盖整页。
+- 模板回答、预设质量分和公式曲线标为 simulation，不称为模型真实质变。
+- PPO/DPO/LoRA 若只实现目标函数片段，列出相对完整训练省略的采样、reference policy、KL、优化循环和数据协议。
 
-验收标准：
+#### M15 评估
 
-- 已知错误全部修复；
-- 教学缩小版与真实工业实现的边界清楚；
-- 引用链接可定位到具体来源；
-- 增加内容回归测试，防止已知高风险绝对化句子重新出现。测试应使用精确的禁用短语或上下文规则，避免禁止正常的否定/讨论用法。
+- 自建中文题目不得直接命名 `Mini-MMLU`、`Mini-HellaSwag`、`Mini-GSM8K`，除非能给出原数据 item ID、许可证和翻译协议；建议改为 `MMLU-style teaching quiz` 等明确名称。
+- `BenchmarkTask.metric` 当前被 `run_task` 忽略，必须按 `accuracy/f1` 调度，未知 metric 报错。
+- `compute_perplexity` 增加形状、有限值、是否为 log-prob、mask/有效 token 约定；不得静默把正 log-prob 裁为 0 或把极低概率统一裁到 -50 而不声明。
+- accuracy/F1 对长度不一致、空输入、非法类别提供清晰契约；与 sklearn 或手算基准交叉核对。
+- 页面 PPL 曲线是公式+噪声模拟，不是模型 token log-prob；不得和 `compute_perplexity` 的真实计算混在一个结论中。
+- 评估章节补提示模板、tokenizer、few-shot 设置、数据污染、置信区间、多随机种子、校准、公平性与安全多指标。
 
-### P0-3：让现有工程质量门禁真正通过
+#### M16 强化学习
 
-执行顺序建议：
+- DeepSeek-R1 论文发布日期是 2025；区分 R1-Zero 的纯 RL 与 R1 的 cold-start + 多阶段训练，不得把 R1 整体称为纯 RL。
+- `GRPORunner` 目前只计算组内标准化优势并生成预设 sigmoid/幂函数曲线，不是 GRPO 优化器，更不是语言模型训练；重命名为 simulation 或实现真实最小策略更新。
+- “CoT 自动暴涨、准确率到 94%、Aha Moment”是手工公式/模板，必须标 `SIMULATION`，不能说“见证自发涌现”。
+- 删除“RL 是 AI 的终极武器”“核心基石”等宣传性断言。
+- 页面 `OPTIMAL PATH` 来自有限轮 Q-Learning 后的贪心策略，未验证时只能叫 learned greedy path；检测循环、截断、陷阱和是否到达终点。
+- 将 Bellman 解称为“当前有限、确定性、已知转移 GridWorld MDP 下的数值参考解”，不是一般环境“绝对真值”。
+- 增加 Q-Learning 多随机种子成功率、Bellman residual、策略回报与动态规划最优回报差距。
+
+### P0-5 修正核心实现契约
+
+- `nn_core/rope.py`：禁止通过维度大小猜 `(B,S,H,D)` 或 `(B,H,S,D)`；显式指定布局或统一一个布局，并分别测试。保留相对位置内积恒等式；删除“任意向量内积随距离必然单调衰减”的说法。
+- `nn_core/attention.py`：校验 Q/K/V 维度、mask 可广播性、空序列和 fully-masked row；定义并测试数值行为。
+- `nn_core/clip.py`：校验 similarity matrix、temperature > 0、批大小与对角配对；增加已知 logits 的 loss 手算测试；移除函数内部全局 `np.random.seed`。
+- `nn_core/world_model.py`：校验 `num_steps`、beta、t 边界、噪声 shape；不要把越界 t 静默截到末端，除非 API 明确如此。
+- `nn_core/evaluation.py`：修复 metric 调度、输入校验、PPL contract 和数据集命名。
+- `nn_core/reinforcement.py`：修复 Pyright 返回类型错误；使用局部 RNG；校验 action、超参数和环境类型，未知 `grid_type` 不得悄悄回退为 simple。
+- 全项目将全局 `np.random.seed` 迁移为显式 `numpy.random.Generator` 或可注入 seed，避免页面/测试互相污染。
+
+### P0-6 重建引用体系
+
+每页至少满足：核心公式原始来源、历史节点原始来源、局限/反例来源、实现差异说明。重点补充：
+
+- M06：Vanilla RNN/梯度困难与 LSTM/GRU 各自来源；
+- M07：Bahdanau attention、Transformer scaled dot-product、注意力解释局限；
+- M08：LayerNorm、残差网络、Pre-LN 的直接来源；
+- M10：卷积/ViT/CLIP 分开；
+- M11：DSP/STFT/Mel 来源与 Whisper 架构来源分开；
+- M13：BERT、GPT、CLIP、MAE、BPE、Chinchilla 分开；
+- M14：PPO、InstructGPT、DPO、LoRA 分开；
+- M15：PPL 定义、MMLU、HellaSwag、GSM8K、HELM 分开；
+- M16：Sutton & Barto、Q-Learning、REINFORCE、DeepSeekMath/GRPO、DeepSeek-R1 分开。
+
+首选核验锚点：
+
+- Transformer：[NeurIPS 2017 原文](https://proceedings.neurips.cc/paper/2017/file/3f5ee243547dee91fbd053c1c4a845aa-Paper.pdf)
+- RoPE：[RoFormer](https://arxiv.org/abs/2104.09864)
+- GQA：[Grouped-Query Attention](https://arxiv.org/abs/2305.13245)
+- 注意力解释边界：[Attention is not Explanation](https://arxiv.org/abs/1902.10186)
+- Chinchilla：[Training Compute-Optimal Large Language Models](https://arxiv.org/abs/2203.15556)
+- DeepSeek-R1：[arXiv:2501.12948](https://arxiv.org/abs/2501.12948)
+- MMLU：[arXiv:2009.03300](https://arxiv.org/abs/2009.03300)
+- HellaSwag：[arXiv:1905.07830](https://arxiv.org/abs/1905.07830)
+- GSM8K：[arXiv:2110.14168](https://arxiv.org/abs/2110.14168)
+- HELM：[Stanford CRFM](https://crfm.stanford.edu/helm/index.html)
+
+### P0-7 让质量门禁名实相符
+
+- 修复所有 `ruff format --check`、Pyright 错误。
+- 不再整体排除 `dashboard/`；若必须分阶段，引入最小、带原因和到期任务的 per-file ignore。
+- Pyright 至少覆盖 `nn_core/`、`datasets/`、`dashboard/components/`、`dashboard/constants/` 和测试辅助代码；逐步纳入页面。
+- `scripts/devops_ci_gate.py` 加入 `ruff format --check`、`pyright`、`git diff --check`，并与 GitHub Actions 使用同一命令。
+- 删除脚本和测试 docstring 中“世界级、100%、全组合、零缺陷”等不实描述；名称必须准确描述实际覆盖。
+- CI 不应重复运行同一重型页面套件；按 unit/property/content/UI 分层并保留失败定位。
+
+## 3. P1：测试与断言重构
+
+### P1-1 数学与核心算子
+
+- 为 BCE/CCE、LayerNorm、Conv2D、LoRA、attention、RoPE、SwiGLU 增加有限差分或独立公式交叉核对；覆盖近零、极值、非法 shape、空输入、非有限值。
+- 数值梯度同时使用 `atol/rtol`，随机采样多个点，避开或单独处理不可导点。
+- 对 softmax、概率、mask、归一化、旋转正交性、causal invariance 建立性质测试。
+- 对参考实现比较时固定输入和约定，不能只比 shape。
+
+### P1-2 训练与随机算法
+
+- 优化器测试增加二次函数之外的病态曲率、偏置修正已知值、状态隔离和非法超参数。
+- 模型训练测试增加 train/validation 拆分、损失下降不是单调保证、早停恢复最佳权重、batch 尾部、shuffle/seed。
+- Q-Learning 用多个 seed 报告达到目标的比例和回报差距，不要求每条随机曲线单调。
+- 扩散测试验证 beta/alpha/alpha_bar 不变量、闭式均值方差的统计性质和固定噪声可复现性。
+
+### P1-3 评估与数据
+
+- Accuracy/F1 与手算及 sklearn 交叉核对，覆盖类别缺失、长度不一致、空输入、二/多分类。
+- PPL 覆盖 mask、padding、不同 token 数、极低概率、非法正 log-prob、NaN/Inf。
+- 题库测试校验名称、来源、许可证、题目唯一性和答案；自建题只能叫 teaching/style set。
+- 模拟评估使用局部 RNG，页面同一结果区域不得二次抽样造成分数和逐题答案不一致。
+
+### P1-4 UI 与教学行为
+
+- 重写 widget 测试：按页面元数据覆盖每个 radio/selectbox/multiselect/slider/number input/button 的代表值、边界值和关键组合；不能称穷举全部组合。
+- 用真实浏览器验证导航目标存在、主滚动容器变化、聚焦动画开始/结束、重复点击、reduced-motion、播放/暂停和图表不闪烁。
+- AppTest 继续作为 smoke gate，但命名为“启动无异常”，不冒充内容正确性。
+- 为形成性测验验证：未答不泄露答案、答错给诊断反馈、答对解释理由、重试状态正确。
+- 增加可访问性检查：键盘焦点、语义标签、颜色非唯一编码、对比度、动画减弱偏好。
+
+### P1-5 内容测试
+
+- 以结构化 claims 校验高风险主张，不使用大量脆弱的全文字符串快照。
+- 建立限定词规则：遇到“必然、证明、最优、真实、语义、涌现、复现”等词时，必须绑定适用条件或证据。
+- 检查每页先修、目标、公式、参数、观察、失败案例、结论边界、练习、参考均非空且与页面组件对应。
+- 自动检查 README 的页面数、课程编号、测试命令和审计状态不会过期。
+
+### P1-6 覆盖率策略
+
+- 保持总分支覆盖率不低于当前 90.28%，并设置关键模块最低线；优先让 `callbacks/clip/model/video` 达到有意义的 85% 分支覆盖。
+- 覆盖率新增必须来自失败路径和语义断言，禁止为了数字执行代码而不验证结果。
+- 可试行 mutation testing 或手工变异：反转更新符号、移除 mask、交换 label、跳过 bias correction，确认测试必然失败。
+
+## 4. P2：从零到深入的知识架构补齐
+
+P0/P1 完成后再实施，不允许借扩课逃避纠错。
+
+- M00 拆出最小数学链：数与函数 → 向量/矩阵 → 导数/梯度 → 概率/log → softmax/交叉熵 → 数值稳定性。
+- 补数据与实验科学：训练/验证/测试、数据泄漏、偏差—方差、置信区间、随机种子、消融实验。
+- 补经典架构因果链：LeNet → AlexNet → BatchNorm → ResNet；Vanilla RNN → LSTM/GRU → Seq2Seq；Autoencoder → VAE/GAN → U-Net/DDPM。
+- 补训练工程：学习率调度、AdamW、BatchNorm、checkpoint、混合精度概念、数据管线和可复现报告。
+- 补现代 LLM 但不追逐名词：Encoder/Decoder、BERT/GPT、RoPE/GQA/KV cache、MoE、检索、工具使用与智能体边界。
+- 补评估与责任：校准、鲁棒性、公平性、安全、隐私、数据治理、污染与可复现性。
+- 每章设置诊断题、学习目标、最小实验、反例实验、形成性测验和通关标准；课程先后关系写入机器可读 DAG。
+
+## 5. Sol-中交付格式
+
+提交验收前提供：
+
+1. 按 `P0-x / P1-x` 的逐项完成表，未完成项不得隐藏；
+2. 修改文件清单及每个文件的教学/数学理由；
+3. 每条被修正主张的“旧说法 → 新说法 → 来源 → 适用边界”；
+4. 新增/修改测试清单，说明旧测试为什么不足、新断言能杀死什么错误；
+5. 完整命令结果与覆盖率表；
+6. 17 页浏览器人工检查记录和关键截图；
+7. 引用链接检查结果及自动访问受限项的人工复核记录；
+8. `git status --short`、`git diff --stat`、`git diff --check`；
+9. 尚存风险和明确不宣称的能力。
+
+## 6. Codex 最终验收门槛
 
 ```powershell
-uv run ruff check . --fix
-uv run ruff format .
 uv run ruff check .
 uv run ruff format --check .
-uv run pyright nn_core/ datasets/
-uv run pytest tests/ -q
-```
-
-要求：
-
-- 先处理安全自动修复，再人工处理剩余问题。
-- 格式化可以批量执行，但必须检查 diff，避免混入语义变化。
-- 不允许通过在配置中整体关闭 Ruff 规则来制造绿色结果。
-- 不允许删除测试、降低梯度误差阈值或给失败测试加无理由跳过。
-- 若 Pyright 暴露真实类型设计问题，应修正代码或精确标注；不要全局放宽配置。
-
-验收标准：
-
-```text
-ruff check                PASS（0 errors）
-ruff format --check       PASS
-pyright nn_core datasets  PASS
-pytest tests -q           PASS
-git diff --check          PASS
-```
-
-### P0-4：增加教学质量自动化测试
-
-新增测试至少覆盖：
-
-- 证据等级枚举/metadata 的合法性；
-- 15 个页面均具有证据声明；
-- 模拟评估页不会显示为真实 benchmark 成绩；
-- 音频帧切片不会被描述为 Whisper tokenizer；
-- 世界模型页面不会声称实现完整 Sora/DiT 去噪模型；
-- 关键数学函数继续通过数值或性质测试；
-- README 中测试数量不要写死为一个无法自动维护的假状态；如果保留数字，需说明它是某次验证快照及日期。
-
-测试应该验证稳定的语义约束，避免对整个页面 HTML 做脆弱字符串快照。
-
-## 5. 本轮建议完成：P1 课程骨架
-
-P0 全部通过后再进行。若时间不足，停在 P0，并在交付报告中明确，不要留下半成品页面。
-
-### P1-1：增加 M00 数学基础入口
-
-目标不是堆砌公式，而是让零基础学习者具备后续实验必需的最小数学工具：
-
-- 标量、向量、矩阵、shape 与广播；
-- 点积、矩阵乘法和线性变换；
-- 导数、偏导数、梯度与链式法则；
-- 概率、log、softmax、交叉熵；
-- 数值稳定性与有限差分梯度检查。
-
-要求：
-
-- 与现有纯 NumPy 算子连接；
-- 至少有一个可操作的链式法则/梯度检查实验；
-- 提供学习目标、先修要求、常见误区、小测验与参考资料；
-- 更新首页导航、README 路径和 AppTest。
-
-### P1-2：建立版本化课程地图
-
-新增课程地图文档，按“问题 → 创新 → 代价 → 后续”组织关键节点，至少规划：
-
-1. 感知器、MLP、反向传播；
-2. LeNet → AlexNet → BatchNorm → ResNet；
-3. RNN → LSTM/GRU → Seq2Seq → Attention；
-4. Autoencoder → VAE/GAN → U-Net/Diffusion；
-5. Transformer Encoder/Decoder → GPT/BERT → 现代 LLM 组件；
-6. ViT、CLIP、多模态与世界模型；
-7. Scaling、MoE、后训练、评估与安全；
-8. 状态空间模型等后续方向。
-
-课程地图是路线图，不要求本轮假装已经实现所有架构。每项必须标注 `已实现 / 部分实现 / 仅规划`。
-
-### P1-3：统一页面教学结构
-
-建立可复用的页面元数据结构，逐步让页面包含：
-
-```text
-先修知识
-学习目标
-前代瓶颈
-核心公式
-可控参数
-观察指标
-建议实验
-失败案例
-结论边界
-历史影响
-小测验
-参考资料
-```
-
-本轮至少将 M00（若实施）、M08、M11、M12、M15 做成完整示范，其余页面可以只接入 metadata 骨架，后续逐章迁移。
-
-## 6. 暂不实施：P2
-
-以下项目仅记录为后续路线，不在本轮扩张范围内：
-
-- 用户账户、云同步与跨设备进度；
-- 完整 LMS；
-- 大模型在线训练或 GPU 集群；
-- 真正 Whisper、Sora、70B LLM 或正式 Open LLM Leaderboard 复现；
-- 替换 Streamlit 技术栈；
-- 全站视觉重写；
-- PyTorch/TensorFlow 作为运行时核心依赖。
-
-可以预留接口，但不得为了“未来可能需要”提前引入复杂基础设施。
-
-## 7. 实施约束
-
-- 核心运行时继续保持纯 NumPy 教学路线。
-- 优先复用 `dashboard/styles/theme.py`、`dashboard/constants/` 和现有组件，不复制页面级样式。
-- 保留中文主教学语言，英文术语首次出现时给出标准全称。
-- 所有随机实验提供明确种子；不要依赖页面间共享的全局 `np.random.seed` 状态。
-- 不把视觉上漂亮的曲线当作实验真实性证据。
-- 新增依赖前必须说明必要性；能用标准库和现有依赖完成时不加依赖。
-- 避免超大单文件；数据、领域知识、渲染组件和计算逻辑应分离。
-- 不修改许可证、作者信息和发布目标。
-
-## 8. Sol 交付清单
-
-Sol 完成后必须提供：
-
-1. 修改文件清单及每个文件的目的；
-2. P0/P1 每一项的完成或未完成状态；
-3. 所有验证命令与完整结果摘要；
-4. 新增引用资料清单；
-5. 所有兼容性变化与迁移说明；
-6. 尚存风险、已知限制和建议后续工作；
-7. 关键页面的截图或手工检查说明；
-8. `git status --short` 和 `git diff --stat` 输出。
-
-不要只回复“已完成”或只提供测试通过截图。
-
-## 9. Codex 后续验收标准
-
-Codex 将独立执行以下验收：
-
-```powershell
-git status --short
+uv run pyright
+uv run pytest --cov=nn_core --cov=datasets --cov-branch --cov-report=term-missing -q
 git diff --check
-uv run ruff check .
-uv run ruff format --check .
-uv run pyright nn_core/ datasets/
-uv run pytest tests/ -q
 ```
 
-并人工检查：
+人工验收将抽查：
 
-- README 使命和范围边界是否保留；
-- M08、M11、M12、M15 的描述是否与真实代码一致；
-- 15 个页面的证据标签是否准确且可见；
-- 模拟值是否在结果附近明确标识；
-- 引用是否权威、可追溯且直接支持相关结论；
-- 是否出现为了通过检查而关闭规则、删除测试或掩盖失败；
-- M00 和课程地图（若交付）是否真正面向零基础，而非术语堆砌；
-- 交互布局是否出现溢出、遮挡、重复标题或明显性能退化。
+- M00、M05-M09、M12-M16 的已知风险是否真正消失；
+- 代码计算、页面图表、证据标签和解释是否一致；
+- R1/R1-Zero、GRPO、Chinchilla、benchmark 名称是否准确；
+- 引用是否直接支持主张，而非仅“主题相关”；
+- 测试是否能在故意注入典型错误时失败；
+- 初学者能否沿先修—实验—反馈—反例—总结形成闭环；
+- 是否为通过门禁而隐藏问题、扩大排除、降低阈值或删除测试。
 
-只有自动化检查和人工教学审校同时通过，才视为验收完成。
-
+P0 全部关闭、自动化与人工审校同时通过后，只能声明“该版本通过既定教学可信度审计”，不能声明“所有知识永久完全正确”。

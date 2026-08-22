@@ -28,6 +28,14 @@ class BenchmarkQuestion:
     answer_idx: int  # 正确答案索引 (0~3)
     category: str  # 所属子领域标签
 
+    def __post_init__(self) -> None:
+        if not self.question.strip() or not self.category.strip():
+            raise ValueError("题目与类别不能为空")
+        if len(self.choices) < 2:
+            raise ValueError("客观题至少需要两个选项")
+        if not 0 <= self.answer_idx < len(self.choices):
+            raise ValueError("answer_idx 超出选项范围")
+
 
 @dataclass
 class BenchmarkTask:
@@ -39,23 +47,52 @@ class BenchmarkTask:
     metric: str = "accuracy"  # "accuracy" | "f1"
 
 
-def compute_perplexity(log_probs: np.ndarray) -> float:
+def compute_perplexity(log_probs: np.ndarray, mask: np.ndarray | None = None) -> float:
     """
     计算自回归因果语言模型的困惑度 (Perplexity / PPL)。
 
     数学公式：
         $$\\text{PPL} = \\exp\\left(-\\frac{1}{N} \\sum_{i=1}^N \\log p(x_i | x_{<i})\\right)$$
     """
-    # 避免 log(0)
-    safe_log_p = np.clip(log_probs, -50.0, 0.0)
-    nll = -np.mean(safe_log_p)
+    values = np.asarray(log_probs, dtype=np.float64)
+    if values.size == 0:
+        raise ValueError("log_probs 不能为空")
+    if not np.all(np.isfinite(values)):
+        raise ValueError("log_probs 必须全部为有限值")
+    if np.any(values > 1e-12):
+        raise ValueError("log_probs 不能大于 0；请传入目标 token 的自然对数概率")
+
+    if mask is not None:
+        valid = np.asarray(mask, dtype=bool)
+        if valid.shape != values.shape:
+            raise ValueError("mask 必须与 log_probs 具有相同形状")
+        values = values[valid]
+        if values.size == 0:
+            raise ValueError("mask 至少需要保留一个有效 token")
+
+    nll = float(-np.mean(values))
+    if nll > np.log(np.finfo(np.float64).max):
+        return float("inf")
     return float(np.exp(nll))
+
+
+def _validated_label_arrays(
+    predictions: list[int] | np.ndarray, labels: list[int] | np.ndarray
+) -> tuple[np.ndarray, np.ndarray]:
+    """验证离散预测与标签的一维配对契约。"""
+
+    p = np.asarray(predictions)
+    y = np.asarray(labels)
+    if p.ndim != 1 or y.ndim != 1:
+        raise ValueError("predictions 与 labels 必须是一维离散标签序列")
+    if p.shape != y.shape:
+        raise ValueError("predictions 与 labels 长度必须一致")
+    return p, y
 
 
 def compute_accuracy(predictions: list[int] | np.ndarray, labels: list[int] | np.ndarray) -> float:
     """精确匹配准确率 (Exact Match / Accuracy)"""
-    p = np.asarray(predictions)
-    y = np.asarray(labels)
+    p, y = _validated_label_arrays(predictions, labels)
     if len(p) == 0:
         return 0.0
     return float(np.mean(p == y))
@@ -63,8 +100,7 @@ def compute_accuracy(predictions: list[int] | np.ndarray, labels: list[int] | np
 
 def compute_f1(predictions: list[int] | np.ndarray, labels: list[int] | np.ndarray) -> float:
     """宏平均 F1 分数 (Macro-F1)"""
-    p = np.asarray(predictions)
-    y = np.asarray(labels)
+    p, y = _validated_label_arrays(predictions, labels)
     classes = np.unique(np.concatenate([p, y]))
     if len(classes) == 0:
         return 0.0
@@ -101,8 +137,13 @@ class EvaluationHarness:
             preds.append(pred_idx)
             labels.append(q.answer_idx)
 
-        acc = compute_accuracy(preds, labels)
-        return acc * 100.0
+        if task.metric == "accuracy":
+            score = compute_accuracy(preds, labels)
+        elif task.metric == "f1":
+            score = compute_f1(preds, labels)
+        else:
+            raise ValueError(f"未知评估指标: {task.metric}")
+        return score * 100.0
 
     def run_all(self, model_predict_fn: Callable[[str, list[str]], int]) -> dict[str, float]:
         """运行全部注册任务，返回得分字典"""
@@ -128,7 +169,7 @@ class EvaluationHarness:
 # 预置中文大模型基准考题库 (Mini Benchmark Suite)
 # ---------------------------------------------------------------------------
 def get_mini_mmlu() -> BenchmarkTask:
-    """MMLU 中文综合学科知识与通识理解"""
+    """返回自建的 MMLU-style 中文教学题；不是正式 MMLU 子集或翻译。"""
     questions = [
         BenchmarkQuestion(
             "在微积分中，常数函数 f(x) = C 的导数是：", ["0", "1", "C", "x"], 0, "数学"
@@ -171,12 +212,14 @@ def get_mini_mmlu() -> BenchmarkTask:
         ),
     ]
     return BenchmarkTask(
-        name="Mini-MMLU (学科通识)", description="多学科综合客观知识问答", questions=questions
+        name="MMLU-style 教学题 (学科通识)",
+        description="自建多学科客观题；非正式 MMLU 数据",
+        questions=questions,
     )
 
 
 def get_mini_hellaswag() -> BenchmarkTask:
-    """HellaSwag 常识推理与情境延续"""
+    """返回自建的 HellaSwag-style 教学题；未采用原数据集样本。"""
     questions = [
         BenchmarkQuestion(
             "厨师将生面团揉匀后放入高温烤箱中，接下来最可能发生的是：",
@@ -243,14 +286,14 @@ def get_mini_hellaswag() -> BenchmarkTask:
         ),
     ]
     return BenchmarkTask(
-        name="Mini-HellaSwag (常识推理)",
-        description="复杂物理常识与因果逻辑续写",
+        name="HellaSwag-style 教学题 (常识推理)",
+        description="自建情境续写题；非正式 HellaSwag 数据",
         questions=questions,
     )
 
 
 def get_mini_gsm8k() -> BenchmarkTask:
-    """GSM8K 小学多步数学应用题"""
+    """返回自建的 GSM8K-style 教学题；未采用原 GSM8K 样本。"""
     questions = [
         BenchmarkQuestion(
             "小明有 15 个苹果，吃了 3 个，又买了 8 个，现在他有几个？",
@@ -302,8 +345,8 @@ def get_mini_gsm8k() -> BenchmarkTask:
         ),
     ]
     return BenchmarkTask(
-        name="Mini-GSM8K (数学推理)",
-        description="多步逻辑与初等算术推理应用题",
+        name="GSM8K-style 教学题 (数学推理)",
+        description="自建初等算术应用题；非正式 GSM8K 数据",
         questions=questions,
     )
 

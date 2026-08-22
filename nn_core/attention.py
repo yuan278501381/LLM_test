@@ -36,14 +36,36 @@ def scaled_dot_product_attention(
         v: (..., seq_len_v, d_v)
         mask: 掩码矩阵 (..., seq_len_q, seq_len_k)
     """
+    q = np.asarray(q)
+    k = np.asarray(k)
+    v = np.asarray(v)
+    if q.ndim < 2 or k.ndim < 2 or v.ndim < 2:
+        raise ValueError("q、k、v 至少需要序列维和特征维")
+    if q.shape[-1] == 0 or q.shape[-2] == 0 or k.shape[-2] == 0:
+        raise ValueError("注意力不支持空序列或零特征维")
+    if q.shape[-1] != k.shape[-1]:
+        raise ValueError("q 与 k 的特征维必须一致")
+    if k.shape[-2] != v.shape[-2]:
+        raise ValueError("k 与 v 的序列长度必须一致")
+    try:
+        np.broadcast_shapes(q.shape[:-2], k.shape[:-2], v.shape[:-2])
+    except ValueError as exc:
+        raise ValueError("q、k、v 的批次/头维无法广播") from exc
+
     d_k = q.shape[-1]
 
     # scores: (..., seq_len_q, seq_len_k)
     scores = q @ k.swapaxes(-2, -1) / np.sqrt(d_k)
 
     if mask is not None:
-        # np.where 需要保证 mask broadcast 与 scores 形状一致
-        scores = np.where(mask == 0, -1e9, scores)
+        valid_mask = np.asarray(mask, dtype=bool)
+        try:
+            valid_mask = np.broadcast_to(valid_mask, scores.shape)
+        except ValueError as exc:
+            raise ValueError("mask 无法广播到注意力分数形状") from exc
+        if np.any(~np.any(valid_mask, axis=-1)):
+            raise ValueError("mask 不能产生完全被遮蔽的查询行")
+        scores = np.where(valid_mask, scores, -np.inf)
 
     # softmax over the last dimension
     shifted_scores = scores - np.max(scores, axis=-1, keepdims=True)

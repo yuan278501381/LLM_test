@@ -63,7 +63,13 @@ def rotate_half(x: np.ndarray) -> np.ndarray:
     return x_rotated
 
 
-def apply_rope(x: np.ndarray, cos: np.ndarray, sin: np.ndarray) -> np.ndarray:
+def apply_rope(
+    x: np.ndarray,
+    cos: np.ndarray,
+    sin: np.ndarray,
+    *,
+    seq_axis: int = 1,
+) -> np.ndarray:
     r"""
     对输入 Query 或 Key 向量应用旋转位置编码。
 
@@ -71,26 +77,32 @@ def apply_rope(x: np.ndarray, cos: np.ndarray, sin: np.ndarray) -> np.ndarray:
         $R_m x = x \odot \cos(m\theta) + \text{rotate\_half}(x) \odot \sin(m\theta)$
 
     Args:
-        x: 形状 (batch_size, seq_len, num_heads, head_dim) 或 (batch_size, num_heads, seq_len, head_dim)
+        x: 最后一维为 head_dim 的张量
         cos: 形状 (seq_len, head_dim)
         sin: 形状 (seq_len, head_dim)
+        seq_axis: x 中明确的序列轴；不再根据维度大小猜测布局
     """
-    seq_len = x.shape[1] if x.ndim == 4 and x.shape[1] <= cos.shape[0] else x.shape[2]
+    x = np.asarray(x)
+    cos = np.asarray(cos)
+    sin = np.asarray(sin)
+    if x.ndim < 2:
+        raise ValueError("RoPE 输入至少需要序列维与特征维")
+    axis = seq_axis if seq_axis >= 0 else x.ndim + seq_axis
+    if axis < 0 or axis >= x.ndim - 1:
+        raise ValueError("seq_axis 必须指向最后一维之前的序列轴")
+    if x.shape[-1] % 2 != 0:
+        raise ValueError("RoPE 特征维必须为偶数")
+    if cos.ndim != 2 or sin.shape != cos.shape or cos.shape[1] != x.shape[-1]:
+        raise ValueError("cos/sin 必须同形，且最后一维匹配 RoPE 特征维")
+    seq_len = x.shape[axis]
+    if seq_len > cos.shape[0]:
+        raise ValueError("输入序列长度超过预计算 RoPE 长度")
 
-    # 截取对应序列长度并广播维度
-    if x.ndim == 4:
-        if x.shape[1] == seq_len:  # (batch, seq_len, heads, dim)
-            c = cos[:seq_len, np.newaxis, :]  # (seq_len, 1, dim)
-            s = sin[:seq_len, np.newaxis, :]
-        else:  # (batch, heads, seq_len, dim)
-            c = cos[np.newaxis, np.newaxis, :seq_len, :]
-            s = sin[np.newaxis, np.newaxis, :seq_len, :]
-    elif x.ndim == 3:  # (batch, seq_len, dim)
-        c = cos[:seq_len, :]
-        s = sin[:seq_len, :]
-    else:
-        c = cos[: x.shape[0], :]
-        s = sin[: x.shape[0], :]
+    broadcast_shape = [1] * x.ndim
+    broadcast_shape[axis] = seq_len
+    broadcast_shape[-1] = x.shape[-1]
+    c = cos[:seq_len].reshape(broadcast_shape)
+    s = sin[:seq_len].reshape(broadcast_shape)
 
     return (x * c) + (rotate_half(x) * s)
 
@@ -111,18 +123,22 @@ class RotaryPositionalEmbedding:
             "[%s] RoPE 已创建: dim=%d, max_len=%d, theta=%.1f", tid, dim, max_seq_len, theta
         )
 
-    def forward(self, q: np.ndarray, k: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    def forward(
+        self, q: np.ndarray, k: np.ndarray, *, seq_axis: int = 1
+    ) -> tuple[np.ndarray, np.ndarray]:
         """
         同时对 Query 和 Key 应用旋转位置编码。
         """
-        q_rot = apply_rope(q, self.cos, self.sin)
-        k_rot = apply_rope(k, self.cos, self.sin)
+        q_rot = apply_rope(q, self.cos, self.sin, seq_axis=seq_axis)
+        k_rot = apply_rope(k, self.cos, self.sin, seq_axis=seq_axis)
         return q_rot, k_rot
 
     def compute_relative_decay_matrix(self, seq_len: int) -> np.ndarray:
         """
-        计算各位置对之间的相对内积理论衰减权重矩阵 (用于 UI 可视化)。
-        证明距离越远，旋转向量内积自然衰减，天然编码相对距离！
+        计算固定单位探针在各位置旋转后的内积核（用于 UI 可视化）。
+
+        该矩阵展示 RoPE 的相对位置结构与振荡性，不代表任意 Query/Key
+        的注意力值，也不保证随距离严格单调下降。
         """
         decay_matrix = np.zeros((seq_len, seq_len))
         # 构造基准单位向量

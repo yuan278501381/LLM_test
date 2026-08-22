@@ -30,6 +30,26 @@ def test_compute_perplexity():
     perfect_log_p = np.zeros(20)
     assert compute_perplexity(perfect_log_p) == pytest.approx(1.0, rel=1e-5)
 
+    masked = np.array([-np.log(2.0), -np.log(8.0), -np.log(4.0)])
+    assert compute_perplexity(masked, mask=np.array([True, False, True])) == pytest.approx(
+        np.sqrt(8.0)
+    )
+
+
+@pytest.mark.parametrize(
+    "values,mask",
+    [
+        (np.array([]), None),
+        (np.array([np.nan]), None),
+        (np.array([0.1]), None),
+        (np.array([-1.0]), np.array([False])),
+        (np.array([-1.0]), np.array([True, False])),
+    ],
+)
+def test_compute_perplexity_rejects_invalid_contract(values, mask):
+    with pytest.raises(ValueError):
+        compute_perplexity(values, mask=mask)
+
 
 def test_compute_accuracy_and_f1():
     """测试准确率与 F1 指标边界"""
@@ -43,6 +63,11 @@ def test_compute_accuracy_and_f1():
 
     p_half = [0, 1, 0, 0]
     assert compute_accuracy(p_half, y) == 0.5
+
+    with pytest.raises(ValueError):
+        compute_accuracy([0], [0, 1])
+    with pytest.raises(ValueError):
+        compute_f1(np.array([[0, 1]]), np.array([[0, 1]]))
 
 
 def test_benchmark_tasks_structure():
@@ -75,3 +100,32 @@ def test_evaluation_harness_execution():
     radar_data = EvaluationHarness.generate_radar_data(scores)
     assert len(radar_data["theta"]) == 2  # 1 个任务 + 1 个闭环点
     assert radar_data["r"][0] == 100.0
+
+
+def test_evaluation_harness_honors_metric_and_rejects_unknown_metric():
+    from nn_core.evaluation import BenchmarkQuestion, BenchmarkTask
+
+    questions = [
+        BenchmarkQuestion("q0", ["a", "b"], 0, "demo"),
+        BenchmarkQuestion("q1", ["a", "b"], 0, "demo"),
+        BenchmarkQuestion("q2", ["a", "b"], 1, "demo"),
+    ]
+    predictions = {"q0": 0, "q1": 1, "q2": 1}
+
+    def predict(question, _choices):
+        return predictions[question]
+
+    f1_task = BenchmarkTask("f1-demo", "metric dispatch", questions, metric="f1")
+    expected = compute_f1([0, 1, 1], [0, 0, 1]) * 100.0
+    assert EvaluationHarness([f1_task]).run_task(f1_task, predict) == pytest.approx(expected)
+
+    invalid = BenchmarkTask("bad", "invalid metric", questions, metric="auc")
+    with pytest.raises(ValueError, match="未知评估指标"):
+        EvaluationHarness([invalid]).run_task(invalid, predict)
+
+
+def test_teaching_task_names_do_not_claim_canonical_dataset_membership():
+    tasks = [get_mini_mmlu(), get_mini_hellaswag(), get_mini_gsm8k()]
+    for task in tasks:
+        assert "-style 教学题" in task.name
+        assert "非正式" in task.description
