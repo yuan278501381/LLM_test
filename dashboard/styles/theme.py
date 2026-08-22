@@ -157,17 +157,17 @@ header {background-color: transparent !important;}
     flex-shrink: 0 !important;
 }
 
-/* 栏位 2：微观超参数控制台 (有内容时展开 410px 充裕舒展空间) */
+/* 栏位 2：微观超参数控制台 (有内容时展开 480px 充裕舒展空间，彻底杜绝内容截断) */
 [data-testid="stSidebar"] [data-testid="stSidebarUserContent"] {
     display: block !important;
-    flex: 1 1 410px !important;
-    width: 410px !important;
-    min-width: 410px !important;
-    max-width: 410px !important;
+    flex: 1 1 480px !important;
+    width: 480px !important;
+    min-width: 460px !important;
+    max-width: 560px !important;
     height: 100% !important;
     overflow-y: auto !important;
-    overflow-x: auto !important;
-    padding: 2.8rem 1.2rem 1.5rem 1.2rem !important;
+    overflow-x: hidden !important;
+    padding: 2.5rem 0.9rem 1.5rem 0.9rem !important;
     background-color: #ffffff !important;
     box-sizing: border-box !important;
 }
@@ -196,27 +196,71 @@ header {background-color: transparent !important;}
     padding: 0 !important;
 }
 
-/* 当栏位 2 有实际控件时 (M01~M17)，展开为双栏 620px */
+/* 当栏位 2 有实际控件时 (M01~M17)，展开为宽幅双栏 690px */
 @media (min-width: 1260px) {
     [data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] [data-testid="stElementContainer"]),
     [data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] [data-testid="stElementContainer"]) > div {
-        width: 620px !important;
-        min-width: 620px !important;
-        max-width: 620px !important;
+        width: 690px !important;
+        min-width: 680px !important;
+        max-width: 770px !important;
         background-color: #f8fafc !important;
         border-right: 1px solid #e2e8f0 !important;
     }
 }
 
-/* 控制台内部多列与滑块自适应容器 */
+/* 控制台内部多列、按钮与滑块自适应无截断体系 */
 [data-testid="stSidebarUserContent"] [data-testid="stHorizontalBlock"] {
     width: 100% !important;
-    gap: 0.5rem !important;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    gap: 0.45rem !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
 }
 
 [data-testid="stSidebarUserContent"] [data-testid="column"] {
-    min-width: 0 !important;
+    min-width: 120px !important;
     flex: 1 1 calc(50% - 0.25rem) !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* 按钮在侧边栏内部自适应完整换行展示，永不截断 */
+[data-testid="stSidebarUserContent"] .stButton button {
+    width: 100% !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    padding: 0.38rem 0.45rem !important;
+    font-size: 0.78rem !important;
+    line-height: 1.3 !important;
+    min-height: 36px !important;
+    height: auto !important;
+    box-sizing: border-box !important;
+}
+
+/* 分段选择器与单选组自适应换行流式布局 */
+[data-testid="stSidebarUserContent"] [data-testid="stSegmentedControl"],
+[data-testid="stSidebarUserContent"] [data-testid="stSegmentedControl"] > div {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    width: 100% !important;
+    gap: 4px !important;
+}
+
+[data-testid="stSidebarUserContent"] [data-testid="stSegmentedControl"] button {
+    flex: 1 1 auto !important;
+    min-width: fit-content !important;
+    white-space: nowrap !important;
+    font-size: 0.76rem !important;
+    padding: 0.35rem 0.55rem !important;
+    box-sizing: border-box !important;
+}
+
+/* 工具提示 Help 图标自适应对齐 */
+[data-testid="stSidebarUserContent"] [data-testid="stTooltipHoverTarget"] {
+    margin-left: auto !important;
+    flex-shrink: 0 !important;
 }
 
 /* 3. 响应式折叠模式 (屏幕 < 1260px 时弹性回退为垂直单列) */
@@ -994,17 +1038,17 @@ g.updatemenu-button {
                         flex-shrink: 0 !important;
                     }
 
-                    /* 栏位 2：微观超参数控制台 (有内容时展开 410px 充裕舒展空间) */
+                    /* 栏位 2：微观超参数控制台 (有内容时展开 480px 充裕舒展空间，彻底杜绝内容截断) */
                     [data-testid="stSidebar"] [data-testid="stSidebarUserContent"] {
                         display: block !important;
-                        flex: 1 1 410px !important;
-                        width: 410px !important;
-                        min-width: 410px !important;
-                        max-width: 410px !important;
+                        flex: 1 1 480px !important;
+                        width: 480px !important;
+                        min-width: 460px !important;
+                        max-width: 560px !important;
                         height: 100% !important;
                         overflow-y: auto !important;
-                        overflow-x: auto !important;
-                        padding: 2.8rem 1.2rem 1.5rem 1.2rem !important;
+                        overflow-x: hidden !important;
+                        padding: 2.5rem 0.9rem 1.5rem 0.9rem !important;
                         background-color: #ffffff !important;
                         box-sizing: border-box !important;
                     }
@@ -1033,16 +1077,71 @@ g.updatemenu-button {
                         padding: 0 !important;
                     }
 
-                    /* 当栏位 2 有实际控件时 (M01~M17)，展开为双栏 620px */
+                    /* 当栏位 2 有实际控件时 (M01~M17)，展开为宽幅双栏 690px */
                     @media (min-width: 1260px) {
                         [data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] [data-testid="stElementContainer"]),
                         [data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] [data-testid="stElementContainer"]) > div {
-                            width: 620px !important;
-                            min-width: 620px !important;
-                            max-width: 620px !important;
+                            width: 690px !important;
+                            min-width: 680px !important;
+                            max-width: 770px !important;
                             background-color: #f8fafc !important;
                             border-right: 1px solid #e2e8f0 !important;
                         }
+                    }
+
+                    /* 控制台内部多列、按钮与滑块自适应无截断体系 */
+                    [data-testid="stSidebarUserContent"] [data-testid="stHorizontalBlock"] {
+                        width: 100% !important;
+                        display: flex !important;
+                        flex-direction: row !important;
+                        flex-wrap: wrap !important;
+                        gap: 0.45rem !important;
+                        box-sizing: border-box !important;
+                        margin: 0 !important;
+                    }
+
+                    [data-testid="stSidebarUserContent"] [data-testid="column"] {
+                        min-width: 120px !important;
+                        flex: 1 1 calc(50% - 0.25rem) !important;
+                        max-width: 100% !important;
+                        box-sizing: border-box !important;
+                    }
+
+                    /* 按钮在侧边栏内部自适应完整换行展示，永不截断 */
+                    [data-testid="stSidebarUserContent"] .stButton button {
+                        width: 100% !important;
+                        white-space: normal !important;
+                        word-break: break-word !important;
+                        padding: 0.38rem 0.45rem !important;
+                        font-size: 0.78rem !important;
+                        line-height: 1.3 !important;
+                        min-height: 36px !important;
+                        height: auto !important;
+                        box-sizing: border-box !important;
+                    }
+
+                    /* 分段选择器与单选组自适应换行流式布局 */
+                    [data-testid="stSidebarUserContent"] [data-testid="stSegmentedControl"],
+                    [data-testid="stSidebarUserContent"] [data-testid="stSegmentedControl"] > div {
+                        display: flex !important;
+                        flex-wrap: wrap !important;
+                        width: 100% !important;
+                        gap: 4px !important;
+                    }
+
+                    [data-testid="stSidebarUserContent"] [data-testid="stSegmentedControl"] button {
+                        flex: 1 1 auto !important;
+                        min-width: fit-content !important;
+                        white-space: nowrap !important;
+                        font-size: 0.76rem !important;
+                        padding: 0.35rem 0.55rem !important;
+                        box-sizing: border-box !important;
+                    }
+
+                    /* 工具提示 Help 图标自适应对齐 */
+                    [data-testid="stSidebarUserContent"] [data-testid="stTooltipHoverTarget"] {
+                        margin-left: auto !important;
+                        flex-shrink: 0 !important;
                     }
 
                     [data-testid="stSidebarNav"] [data-testid="stSidebarNavShowMore"],
@@ -1127,8 +1226,8 @@ g.updatemenu-button {
                         background: #f8fafc !important;
                         border: 1px solid #e2e8f0 !important;
                         border-radius: 8px !important;
-                        padding: 0.5rem 0.75rem !important;
-                        margin-bottom: 0.6rem !important;
+                        padding: 0.45rem 0.55rem !important;
+                        margin-bottom: 0.45rem !important;
                         box-shadow: 0 1px 3px rgba(15, 23, 42, 0.02) !important;
                         transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
                     }
