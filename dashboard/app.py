@@ -33,7 +33,7 @@ apply_custom_theme()
 render_hero_header(
     title="NN Playground",
     subtitle="从数学、感知器与反向传播出发，用纯 NumPy 教学实现逐步理解 Transformer、多模态、训练、评估与强化学习",
-    badge_text="EVIDENCE-LABELED · PURE NUMPY CORE · M00-M16",
+    badge_text="EVIDENCE-LABELED · PURE NUMPY CORE · M00-M17",
     badge_type="blue",
 )
 
@@ -253,28 +253,55 @@ with col_a3:
         st.page_link("pages/15_评估基准.py", label="进入实验 // LAUNCH →", width="stretch")
 
 # ---------------------------------------------------------------------------
-# 板块 3: 2026 前沿强化学习与自主智能体
+# 板块 3: 2026 前沿强化学习、工程陷阱与 Harness 防御
 # ---------------------------------------------------------------------------
 render_section_heading(
-    "REINFORCEMENT LEARNING & REASONING AGENTS // 强化学习与推理训练边界（含规则模拟）",
+    "REINFORCEMENT LEARNING & HARNESS ARCHITECTURE // 强化学习、真实工程陷阱与智能体控制环",
     icon_name="compass",
-    subtext="从经典 GridWorld MDP 到 2025 DeepSeek-R1/R1-Zero 案例；GRPO 区域仅为规则曲线仿真",
+    subtext="从经典 MDP 到 DeepSeek-R1；从注意力黑洞、迷失在中间到 2026 Claude Code 事故与循环工程熔断",
 )
 
-with st.container(border=True):
-    icon_reinf = svg_icon("compass", size=24, color="#be123c")
-    st.markdown(
-        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;">'
-        f'<div style="display:flex;align-items:center;gap:0.6rem;">{icon_reinf}'
-        '<span style="font-size:1.25rem;font-weight:800;color:#0f172a;">强化学习与自主智能体实验室 (MDP · 贝尔曼曲面 · Q-Learning · GRPO)</span></div>'
-        '<span class="pill-badge pill-rose">M16</span>'
-        "</div>"
-        '<div style="color:#475569;font-size:0.92rem;margin-bottom:0.8rem;line-height:1.6;">'
-        "对照当前有限已知 GridWorld 的动态规划参考解与 Q-Learning 贪心路径；识别 DeepSeek-R1、R1-Zero 的训练差异，以及页内规则曲线与真实 GRPO 训练的边界。"
-        "</div>",
-        unsafe_allow_html=True,
-    )
-    st.page_link("pages/16_强化学习.py", label="进入强化学习实验室 // LAUNCH →", width="stretch")
+col_b1, col_b2 = st.columns(2)
+
+with col_b1:
+    with st.container(border=True):
+        icon_reinf = svg_icon("compass", size=24, color="#be123c")
+        st.markdown(
+            '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;">'
+            f'<div style="display:flex;align-items:center;gap:0.6rem;">{icon_reinf}'
+            '<span style="font-size:1.2rem;font-weight:800;color:#0f172a;">强化学习与自主智能体实验室</span></div>'
+            '<span class="pill-badge pill-rose">M16</span>'
+            "</div>"
+            '<div style="color:#475569;font-size:0.88rem;margin-bottom:0.8rem;line-height:1.6;">'
+            "对照有限已知 GridWorld 动态规划参考解与 Q-Learning 贪心路径；识别 DeepSeek-R1 训练演进与真实 GRPO 边界。"
+            "</div>",
+            unsafe_allow_html=True,
+        )
+        st.page_link(
+            "pages/16_强化学习.py",
+            label="进入强化学习实验室 // LAUNCH →",
+            width="stretch",
+        )
+
+with col_b2:
+    with st.container(border=True):
+        icon_trap = svg_icon("alert", size=24, color="#b45309")
+        st.markdown(
+            '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;">'
+            f'<div style="display:flex;align-items:center;gap:0.6rem;">{icon_trap}'
+            '<span style="font-size:1.2rem;font-weight:800;color:#0f172a;">工程陷阱、物理盲区与 Harness 防御</span></div>'
+            '<span class="pill-badge pill-rose">M17</span>'
+            "</div>"
+            '<div style="color:#475569;font-size:0.88rem;margin-bottom:0.8rem;line-height:1.6;">'
+            "剖析 Attention Sinks、迷失在中间、逆向诅咒、2026 Claude Code 事故与循环工程验证器状态回滚沙盘。"
+            "</div>",
+            unsafe_allow_html=True,
+        )
+        st.page_link(
+            "pages/17_工程陷阱与Harness.py",
+            label="进入工程陷阱与 Harness 实验室 // LAUNCH →",
+            width="stretch",
+        )
 
 # ---------------------------------------------------------------------------
 # 系统技术架构与工程标准
@@ -322,7 +349,7 @@ with col_stats:
                     <div style="font-size:0.72rem;color:#64748b;font-weight:700;text-transform:uppercase;">GRAD ERROR</div>
                 </div>
                 <div style="background:#f8fafc;border:1px solid #e2e8f0;padding:0.8rem;border-radius:8px;text-align:center;">
-                    <div style="font-size:1.45rem;font-weight:800;color:#b45309;font-family:'JetBrains Mono';">M00–M16</div>
+                    <div style="font-size:1.45rem;font-weight:800;color:#b45309;font-family:'JetBrains Mono';">M00–M17</div>
                     <div style="font-size:0.72rem;color:#64748b;font-weight:700;text-transform:uppercase;">MILESTONES</div>
                 </div>
                 <div style="background:#f8fafc;border:1px solid #e2e8f0;padding:0.8rem;border-radius:8px;text-align:center;">

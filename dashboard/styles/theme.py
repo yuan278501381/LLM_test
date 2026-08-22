@@ -366,6 +366,48 @@ body,
     will-change: transform !important;
 }
 
+/* Plotly 读图播放 4 按钮控制器与工具条：仅当鼠标悬浮 (hover) 在图表区域时显示，平时隐藏保持视觉极致干净 */
+.stPlotlyChart .updatemenu-container,
+.stPlotlyChart .updatemenu-button,
+.stPlotlyChart g.updatemenu-container,
+.stPlotlyChart g.updatemenu-button,
+[data-testid="stPlotlyChart"] .updatemenu-container,
+[data-testid="stPlotlyChart"] .updatemenu-button,
+[data-testid="stPlotlyChart"] g.updatemenu-container,
+[data-testid="stPlotlyChart"] g.updatemenu-button,
+.js-plotly-plot .updatemenu-container,
+.js-plotly-plot .updatemenu-button,
+.js-plotly-plot g.updatemenu-container,
+.js-plotly-plot g.updatemenu-button,
+.plot-container .updatemenu-container,
+.svg-container .updatemenu-container,
+g.updatemenu-container,
+g.updatemenu-button {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    pointer-events: none !important;
+}
+
+.stPlotlyChart:hover .updatemenu-container,
+.stPlotlyChart:hover .updatemenu-button,
+.stPlotlyChart:hover g.updatemenu-container,
+.stPlotlyChart:hover g.updatemenu-button,
+[data-testid="stPlotlyChart"]:hover .updatemenu-container,
+[data-testid="stPlotlyChart"]:hover .updatemenu-button,
+[data-testid="stPlotlyChart"]:hover g.updatemenu-container,
+[data-testid="stPlotlyChart"]:hover g.updatemenu-button,
+.js-plotly-plot:hover .updatemenu-container,
+.js-plotly-plot:hover .updatemenu-button,
+.js-plotly-plot:hover g.updatemenu-container,
+.js-plotly-plot:hover g.updatemenu-button,
+.plot-container:hover .updatemenu-container,
+.svg-container:hover .updatemenu-container {
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+}
+
 /* 文本防抖动：等宽数字排版 */
 .tabular-nums, .hero-metric-value, .metric-value, [data-testid="stMetricValue"] {
     font-variant-numeric: tabular-nums !important;
@@ -416,21 +458,22 @@ body,
 }
 
 .nn-focus-chip {
-    position: absolute;
-    right: 0.65rem;
-    top: -0.7rem;
-    z-index: 20;
-    padding: 0.22rem 0.55rem;
-    border: 1px solid #93c5fd;
-    border-radius: 999px;
-    background: rgba(239, 246, 255, 0.96);
-    box-shadow: 0 6px 18px rgba(37, 99, 235, 0.16);
-    color: #1d4ed8;
-    font-size: 0.7rem;
-    font-weight: 800;
-    letter-spacing: 0.02em;
-    pointer-events: none;
-    animation: focus-chip-enter 2.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+    position: absolute !important;
+    left: 0.85rem !important;
+    right: auto !important;
+    top: -0.75rem !important;
+    z-index: 9999 !important;
+    padding: 0.25rem 0.75rem !important;
+    border: 1px solid #2563eb !important;
+    border-radius: 999px !important;
+    background: #0f172a !important;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.32), 0 0 0 2px rgba(37, 99, 235, 0.2) !important;
+    color: #ffffff !important;
+    font-size: 0.72rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.03em !important;
+    pointer-events: none !important;
+    animation: focus-chip-enter 2.8s cubic-bezier(0.16, 1, 0.3, 1) both !important;
 }
 
 @keyframes focus-chip-enter {
@@ -673,7 +716,11 @@ body,
                 '15_评估基准': 'M15 · 评估基准',
                 '强化学习': 'M16 · 强化学习',
                 '16 强化学习': 'M16 · 强化学习',
-                '16_强化学习': 'M16 · 强化学习'
+                '16_强化学习': 'M16 · 强化学习',
+                '工程陷阱与Harness': 'M17 · 工程陷阱与Harness',
+                '17 工程陷阱与Harness': 'M17 · 工程陷阱与Harness',
+                '17_工程陷阱与Harness': 'M17 · 工程陷阱与Harness',
+                '17_工程陷阱与harness': 'M17 · 工程陷阱与Harness'
             };
 
             function formatSidebarNav() {
@@ -1205,6 +1252,7 @@ def render_floating_hud_navigator(sections: list[dict]) -> None:
                 chip.className = 'nn-focus-chip';
                 chip.setAttribute('role', 'status');
                 chip.textContent = '正在查看这里';
+                chip.style.cssText = 'position:absolute !important; left:0.85rem !important; right:auto !important; top:-0.75rem !important; z-index:9999 !important; padding:0.25rem 0.75rem !important; border:1px solid #2563eb !important; border-radius:999px !important; background:#0f172a !important; box-shadow:0 4px 14px rgba(15, 23, 42, 0.32), 0 0 0 2px rgba(37, 99, 235, 0.2) !important; color:#ffffff !important; font-size:0.72rem !important; font-weight:800 !important; letter-spacing:0.03em !important; pointer-events:none !important;';
                 el.appendChild(chip);
                 window.parent.clearTimeout(doc.__nnFocusTimer);
                 doc.__nnFocusTimer = window.parent.setTimeout(
