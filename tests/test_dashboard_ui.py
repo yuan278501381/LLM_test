@@ -497,3 +497,12 @@ class TestStreamlitAppE2E:
         )
         at = AppTest.from_file(page_path, default_timeout=25).run()
         assert not at.exception, f"Page 15 runtime error: {at.exception}"
+
+    def test_page16_reinforcement_learning_e2e(self):
+        """测试 M16: 强化学习与自主智能体实验室页面"""
+        page_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "dashboard", "pages", "16_强化学习.py")
+        )
+        at = AppTest.from_file(page_path, default_timeout=25).run()
+        assert not at.exception, f"Page 16 runtime error: {at.exception}"
+

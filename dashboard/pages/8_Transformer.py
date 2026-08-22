@@ -28,6 +28,7 @@ from dashboard.styles.theme import (
     apply_custom_theme,
     render_architecture_flow_card,
     render_hero_header,
+    render_live_param_status_bar,
     render_metric_card,
     render_page_guide,
     render_section_heading,
@@ -150,11 +151,13 @@ sentence_options = {
     "自定义输入...": "",
 }
 
-selected_sentence_key = st.sidebar.selectbox(
+sent_opts8 = list(sentence_options.keys())
+selected_sentence_key = st.sidebar.segmented_control(
     "测试句子预设",
-    list(sentence_options.keys()),
-    index=0,
+    options=sent_opts8,
+    default=sent_opts8[0],
 )
+selected_sentence_key = selected_sentence_key or sent_opts8[0]
 
 if "自定义" in selected_sentence_key:
     input_text = st.sidebar.text_input(
@@ -171,12 +174,19 @@ num_layers = st.sidebar.select_slider(
     help="堆叠的 Pre-LN Transformer 结构块数量。",
 )
 
-num_heads = st.sidebar.selectbox(
+head_options = [
+    (2, "双头注意力 (2 Heads)", "拆分 2 个独立特征子空间并行交互"),
+    (4, "四头注意力 (4 Heads)", "拆分 4 个更细粒度注意力子空间"),
+]
+
+selected_head_card = st.sidebar.radio(
     "每个 Block 的注意力头数",
-    [2, 4],
+    options=head_options,
+    format_func=lambda o: f"**{o[1]}**\n\n↳ *{o[2]}*",
     index=0,
     help="多头注意力的并行头数。",
 )
+num_heads = selected_head_card[0]
 
 # ---------------------------------------------------------------------------
 # Token 化与多层 Transformer 前向推理
@@ -276,6 +286,23 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+render_live_param_status_bar(
+    title="TRANSFORMER BLOCK TOPOLOGY // 结构块与残差流参数状态",
+    badges=[
+        {"label": "Layers L", "value": f"{num_layers}", "color": "blue"},
+        {"label": "Heads h", "value": f"{num_heads}", "color": "amber"},
+        {"label": "d_model", "value": "32", "color": "purple"},
+        {"label": "d_ffn (4x)", "value": "128", "color": "emerald"},
+    ],
+    metrics=[
+        ("初始残差范数 ‖x₀‖", f"{norms_history[0]:.2f}"),
+        ("深层残差范数 ‖x_L‖", f"{norms_history[-1]:.2f}"),
+        ("范数增长倍率", f"{norms_history[-1] / (norms_history[0] + 1e-12):.2f}x"),
+    ],
+    tag=f"PRE-LN RESIDUAL FLOW · {total_params:,} PARAMS",
+    tag_color="emerald",
+)
+
 cols = st.columns(num_layers)
 for i in range(num_layers):
     with cols[i]:
@@ -367,7 +394,7 @@ with col_gelu_box:
         st.code("h = GELU(x @ W1 + b1) @ W2 + b2", language="python")
         st.markdown(
             """
-            - **计算路径**：升维 (4×) ➔ GELU 激活 ➔ 降维；
+            - **计算路径**：升维 (4×)  GELU 激活  降维；
             - **参数量**：$2 \\times d_{model} \\times d_{ff}$；
             - **缺点**：缺少特征通道间的动态门控过滤。
             """
@@ -379,7 +406,7 @@ with col_swiglu_box:
         st.code("out = (SiLU(x @ W_gate) * (x @ W_up)) @ W_down", language="python")
         st.markdown(
             """
-            - **计算路径**：双重升维 (Gate & Up) ➔ SiLU 门控相乘 ➔ 降维；
+            - **计算路径**：双重升维 (Gate & Up)  SiLU 门控相乘  降维；
             - **参数量**：$3 \\times d_{model} \\times \\frac{8}{3}d_{model}$ (等效总参数量)；
             - **核心特点**：元素级门控提供乘法交互；是否优于 GELU 取决于参数预算、数据和训练配置。
             """

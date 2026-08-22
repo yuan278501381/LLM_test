@@ -22,6 +22,7 @@ from dashboard.styles.theme import (
     anchor_badge,
     apply_custom_theme,
     render_hero_header,
+    render_live_param_status_bar,
     render_metric_card,
     render_floating_hud_navigator,
     render_page_guide,
@@ -176,16 +177,20 @@ st.sidebar.markdown(
 # ---------------------------------------------------------------------------
 st.sidebar.markdown("#### HYPERPARAMETERS // 超参数与配置")
 
-paradigm_choice = st.sidebar.selectbox(
+paradigm_options = [
+    ("MLM 掩码语言模型 (BERT 式)", "80/10/10 动态掩码 · 双向上下文深度语义表示"),
+    ("CLM 因果语言模型 (GPT 式)", "下三角掩码 · 自回归从左至右逐词生成"),
+    ("Contrastive 对比学习 (CLIP 式)", "InfoNCE 对称损失 · 正样本聚集/负样本排斥"),
+    ("MAE 视觉掩码自编码", "75% 高比例掩码 · 像素级隐空间重建"),
+]
+
+selected_paradigm_card = st.sidebar.radio(
     "核心预训练范式",
-    options=[
-        "MLM 掩码语言模型 (BERT 式)",
-        "CLM 因果语言模型 (GPT 式)",
-        "Contrastive 对比学习 (CLIP 式)",
-        "MAE 视觉掩码自编码",
-    ],
+    options=paradigm_options,
+    format_func=lambda o: f"**{o[0]}**\n\n↳ *{o[1]}*",
     index=0,
 )
+paradigm_choice = selected_paradigm_card[0]
 
 mlm_ratio = st.sidebar.slider(
     "MLM 文本掩码率 (Mask Ratio)",
@@ -377,6 +382,24 @@ st.markdown(
     f'{anchor_badge("D", "purple")} <span style="font-weight:800;color:#5b21b6;font-size:0.86rem;">MLM VS CLM TRAINING // 完形填空与接龙对比及真实梯度反向传播收敛</span>'
     f"</div>",
     unsafe_allow_html=True,
+)
+
+cur_loss_val = float(loss_history[-1]) if loss_history else 0.0
+
+render_live_param_status_bar(
+    title="PRE-TRAINING OBJECTIVE & CONVERGENCE // 预训练数学目标与收敛状态",
+    badges=[
+        {"label": "Paradigm", "value": f"{paradigm_choice.split()[0]}", "color": "blue"},
+        {"label": "Mask Ratio", "value": f"{mlm_ratio:.0%}", "color": "amber"},
+        {"label": "Current Loss", "value": f"{cur_loss_val:.4f}", "color": "emerald"},
+    ],
+    metrics=[
+        ("学习率 η", "0.05"),
+        ("训练步数", f"{len(loss_history)} Steps"),
+        ("掩码策略", "80% [MASK], 10% Random, 10% Unchanged"),
+    ],
+    tag=f"LOSS DELTA: {loss_history[0] - cur_loss_val:+.3f}",
+    tag_color="emerald",
 )
 
 col_mlm_view, col_clm_view = st.columns(2)
@@ -756,7 +779,18 @@ with col_d_mix:
     with st.container(border=True):
         st.markdown("#### [前沿大模型语料配比全景 (Data Mixture)]")
         mixtures_dict = DataMixtureEngine.get_mixtures()
-        model_mix_choice = st.selectbox("选择大模型语料分布", list(mixtures_dict.keys()), index=0)
+        mix_card_options = [
+            ("LLaMA-3 (Meta 2024, 15T)", "通用高质量网页 50% + 源码 25% + 学术 10% + 多语言 10% + 数学 5%"),
+            ("DeepSeek-V3 (2024/2025, 14.8T)", "通用网页 45% + 代码 25% + 中文高质量 15% + 数学推理 10%"),
+            ("FineWeb-Edu (HuggingFace 2024)", "高教育价值网页 60% + STEM 理工 20% + 人文学科 15%"),
+        ]
+        selected_mix_card = st.radio(
+            "选择前沿大模型语料分布",
+            options=mix_card_options,
+            format_func=lambda o: f"**{o[0]}**\n\n↳ *{o[1]}*",
+            index=0,
+        )
+        model_mix_choice = selected_mix_card[0]
 
         chosen_mix = mixtures_dict[model_mix_choice]
         labels = list(chosen_mix.keys())

@@ -27,6 +27,7 @@ from dashboard.styles.theme import (
     anchor_badge,
     apply_custom_theme,
     render_hero_header,
+    render_live_param_status_bar,
     render_metric_card,
     render_page_guide,
     render_section_heading,
@@ -141,11 +142,19 @@ st.sidebar.markdown(
 # ---------------------------------------------------------------------------
 st.sidebar.markdown("#### HYPERPARAMETERS // 超参数与配置")
 
-motion_choice = st.sidebar.selectbox(
+motion_options = [
+    ("弹跳运动 (Bounce)", "重力加速度与边界弹性碰撞 · 模拟牛顿力学"),
+    ("匀速平移 (Slide)", "刚体恒定线速度平移 · 模拟线性位移"),
+    ("中心膨胀 (Grow)", "中心径向周期胀缩 · 模拟流体/生物动力学"),
+]
+
+selected_motion_card = st.sidebar.radio(
     "合成动力学运动模式",
-    options=["弹跳运动 (Bounce)", "匀速平移 (Slide)", "中心膨胀 (Grow)"],
+    options=motion_options,
+    format_func=lambda o: f"**{o[0]}**\n\n↳ *{o[1]}*",
     index=0,
 )
+motion_choice = selected_motion_card[0]
 
 n_frames_val = st.sidebar.select_slider(
     "视频总帧数 (Total Frames)",
@@ -265,6 +274,23 @@ st.markdown(
     f'{anchor_badge("D", "purple")} <span style="font-weight:800;color:#5b21b6;font-size:0.86rem;">VIDEO FRAME SEQUENCE // 32×32 视频时序采样与帧间动力学能量</span>'
     f"</div>",
     unsafe_allow_html=True,
+)
+
+render_live_param_status_bar(
+    title="SPATIO-TEMPORAL WORLD MODEL // 3D 时空切片与扩散动力学",
+    badges=[
+        {"label": "Video Shape", "value": f"({n_frames_val}, 1, 32, 32)", "color": "blue"},
+        {"label": "Spatial Patch", "value": f"{patch_size_val}x{patch_size_val}", "color": "amber"},
+        {"label": "Tokens N_3d", "value": f"{total_tokens}", "color": "purple"},
+        {"label": "World MSE", "value": f"{rec_loss:.4f}", "color": "emerald"},
+    ],
+    metrics=[
+        ("时序帧数 T", f"{n_frames_val} frames"),
+        ("物理运动模式", f"{motion_choice}"),
+        ("DDPM 扩散步数", f"{diffusion_steps}"),
+    ],
+    tag=f"WORLD MODEL LATENT: {total_tokens}x32D",
+    tag_color="emerald",
 )
 
 video_payload = build_video_payload(full_video, frame_diffs)

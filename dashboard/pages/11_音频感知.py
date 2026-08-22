@@ -22,6 +22,7 @@ from dashboard.styles.theme import (
     anchor_badge,
     apply_custom_theme,
     render_hero_header,
+    render_live_param_status_bar,
     render_metric_card,
     render_page_guide,
     render_section_heading,
@@ -140,11 +141,19 @@ freq_val = st.sidebar.slider(
     help="440 Hz = 国际标准音 A4",
 )
 
-wave_choice = st.sidebar.selectbox(
+wave_options = [
+    ("正弦波 (Sine Wave)", "单频基波 · 频域呈现单条锐利谱线"),
+    ("方波 (Square Wave)", "包含全部奇次谐波 · 模拟合成管乐"),
+    ("锯齿波 (Sawtooth Wave)", "包含全部整数次谐波 · 富含明亮高频"),
+]
+
+selected_wave_card = st.sidebar.radio(
     "波形类型 (Wave Type)",
-    options=["正弦波 (Sine Wave)", "方波 (Square Wave)", "锯齿波 (Sawtooth Wave)"],
+    options=wave_options,
+    format_func=lambda o: f"**{o[0]}**\n\n↳ *{o[1]}*",
     index=0,
 )
+wave_choice = selected_wave_card[0]
 
 add_harmonics = st.sidebar.checkbox(
     "叠加复合泛音 (Harmonics 2x, 3x)",
@@ -159,11 +168,19 @@ n_mels_val = st.sidebar.select_slider(
     help="Whisper 标准采用 80 个 Mel 频带",
 )
 
-n_fft_val = st.sidebar.selectbox(
+fft_card_options = [
+    (256, "FFT = 256 (高时间分辨率)", "时间定位精准 · 频率分辨率较低"),
+    (512, "FFT = 512 (标准基线 · 默认)", "经典时频分辨率平衡点"),
+    (1024, "FFT = 1024 (高频率分辨率)", "精细解析临近音高基频 · 时间有平滑"),
+]
+
+selected_fft_card = st.sidebar.radio(
     "FFT 窗口大小 (Window Size)",
-    options=[256, 512, 1024],
+    options=fft_card_options,
+    format_func=lambda o: f"**{o[1]}**\n\n↳ *{o[2]}*",
     index=1,
 )
+n_fft_val = selected_fft_card[0]
 
 # ---------------------------------------------------------------------------
 # 音频生成与特征计算
@@ -241,6 +258,23 @@ st.markdown(
     f'{anchor_badge("D", "purple")} <span style="font-weight:800;color:#5b21b6;font-size:0.86rem;">TIME-DOMAIN OSCILLOSCOPE // 时域连续波形与声音播放器</span>'
     f"</div>",
     unsafe_allow_html=True,
+)
+
+render_live_param_status_bar(
+    title="AUDIO SIGNAL & MEL-FREQUENCY DYNAMICS // 音频时频微观分解参数",
+    badges=[
+        {"label": "Sampling Rate fs", "value": f"{sr} Hz", "color": "blue"},
+        {"label": "FFT Bins", "value": f"{n_fft_val // 2 + 1}", "color": "amber"},
+        {"label": "Mel Bands", "value": f"{n_mels_val}", "color": "purple"},
+        {"label": "Hop Size", "value": f"{n_fft_val // 2}", "color": "emerald"},
+    ],
+    metrics=[
+        ("时长 Duration", f"{duration:.1f} s"),
+        ("总音频帧数", f"{audio_tokens.shape[0]} frames"),
+        ("Nyquist 极限", f"{sr // 2} Hz"),
+    ],
+    tag=f"SPECTROGRAM: {n_mels_val}x{audio_tokens.shape[0]} TENSORS",
+    tag_color="emerald",
 )
 
 col_wave_plot, col_audio_play = st.columns([1.5, 0.8])

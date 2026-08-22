@@ -1,5 +1,7 @@
 # Copyright (c) 2026 Yy1 (yuan278501381) | MIT License
-"""里程碑 M00：神经网络必需的数学、shape 与梯度检查基础。"""
+"""
+dashboard/pages/0_数学基础.py - 里程碑 M00：神经网络必需的数学、张量 Shape 契约与梯度检查基础。
+"""
 
 import os
 import sys
@@ -14,85 +16,210 @@ import streamlit as st
 
 from dashboard.components.pedagogy import render_lesson_evidence
 from dashboard.styles.theme import (
+    anchor_badge,
     apply_custom_theme,
+    render_floating_hud_navigator,
+    render_formula_breakdown_card,
     render_hero_header,
+    render_live_param_status_bar,
     render_metric_card,
+    render_page_guide,
     render_section_heading,
 )
 
-st.set_page_config(page_title="M00 数学基础 · NN Playground", layout="wide")
+st.set_page_config(
+    page_title="M00 数学基础 · NN Playground",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
 apply_custom_theme()
-render_lesson_evidence("M00", show_contract=True)
 
+# 页面空间 HUD 悬浮罗盘
+render_floating_hud_navigator(
+    [
+        {"id": "A", "name": "空间地图与教学指引", "desc": "零基础理解张量维度与链式法则导引"},
+        {"id": "B", "name": "张量形状与矩阵乘法", "desc": "拖动滑块直观验证 Z=XW+b 维度消融契约"},
+        {"id": "C", "name": "链式法则与梯度检查", "desc": "对比解析梯度与有限差分，探究浮点截断与舍入误差"},
+        {"id": "D", "name": "形成性小测验", "desc": "自测梯度更新方向与维度匹配"},
+    ]
+)
+
+# Hero 标题
 render_hero_header(
-    title="M00 · 神经网络数学与计算基础",
-    subtitle="从 shape、矩阵乘法到链式法则：亲手用有限差分核对解析梯度，并理解数值误差来自哪里",
-    badge_text="MILESTONE 00 // MATH FOUNDATIONS",
+    title="M00: 神经网络数学与计算基础",
+    subtitle="从 Tensor Shape 矩阵乘法消维到微积分链式法则：亲手用有限差分核对解析梯度，攻克初学者第一道数学难关",
+    badge_text="MILESTONE 00 // MATH FOUNDATIONS & TENSOR CONTRACT",
     badge_type="blue",
 )
 
-st.info("学习顺序：先预测 shape 和梯度方向，再运行计算；看懂误差来源后再进入 M01。")
+# 核心教学论据
+render_lesson_evidence("M00", show_contract=True)
 
-render_section_heading("TENSOR SHAPES // 张量形状与矩阵乘法", icon_name="grid")
+# ---------------------------------------------------------------------------
+# [A] 教学指引与蓝图导航
+# ---------------------------------------------------------------------------
+blueprint_sections = [
+    {
+        "id": "A",
+        "name": "教学指引与蓝图",
+        "desc": "掌握张量形状、矩阵相消与梯度检查核心思想",
+        "color": "blue",
+        "target_id": "region-a",
+    },
+    {
+        "id": "B",
+        "name": "张量形状实验室",
+        "desc": "实机调节 batch, input_features, output_features 见证矩阵乘法与广播",
+        "color": "amber",
+        "target_id": "region-b",
+    },
+    {
+        "id": "C",
+        "name": "链式法则与梯度检查",
+        "desc": "解析梯度 vs 有限差分数值梯度，探究误差 U 型曲线",
+        "color": "emerald",
+        "target_id": "region-c",
+    },
+    {
+        "id": "D",
+        "name": "形成性小测验",
+        "desc": "快速检验反向传播参数更新直觉",
+        "color": "purple",
+        "target_id": "region-d",
+    },
+]
 
-col_shape, col_broadcast = st.columns(2)
+render_page_guide(
+    title="神经网络数学基础与张量契约全景指南",
+    plain_intro="神经网络本质上是高维张量的矩阵乘法与微积分链式法则的流水线组合。在进入感知器与复杂模型前，掌握张量维度匹配（Shape Alignment）与梯度检查（Gradient Check）是避免代码报错与训练 Bug 的必备内功。",
+    hyperparams_desc="• batch size (N)：批次样本数，并行喂给模型的独立数据行数；\n• input features (Din)：输入特征数，每个样本包含的原始指标数量；\n• output features (Dout)：输出特征数，当前层神经元提炼出的新特征维度；\n• 有限差分步长 ε：微小扰动步长，用于数值梯度校验。",
+    telemetry_desc="• 矩阵乘法产物 Z：形状为 (batch, output_features) 的输出张量；\n• 解析梯度 ∂L/∂w：通过微积分公式直接求导得到的精确理论梯度；\n• 有限差分数值梯度：通过微小扰动 [L(w+ε)-L(w-ε)]/(2ε) 近似模拟的斜率；\n• 相对误差：解析与数值梯度的吻合度（小于 1e-5 说明理论导数完全正确）。",
+    experiments=[
+        "在 Section B 拖动 input features 滑块：观察权重矩阵 W 的行数与输入矩阵 X 的列数如何保持同步变化！",
+        "在 Section B 观察广播机制：为什么偏置 b 只有一维 (output_features,)，却能加到全部 batch 个样本上？",
+        "在 Section C 拖动 log10(ε) 从 -1 到 -12：观察相对误差为什么先变小后急剧变大（形成 U 型误差曲线）？",
+        "思考：为什么在工业级 GPU 训练中，我们总是使用 batch 并行计算而不是单样本循环？",
+    ],
+    blueprint_sections=blueprint_sections,
+)
+
+# ---------------------------------------------------------------------------
+# [B] 张量形状与矩阵乘法契约实验室
+# ---------------------------------------------------------------------------
+st.markdown(
+    f'<div id="region-b" class="interactive-region" style="margin-top:1.2rem;margin-bottom:0.6rem;padding:0.45rem 0.75rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">'
+    f'{anchor_badge("B", "amber")} <b>TENSOR SHAPES & MATRIX MULTIPLICATION // 张量形状与矩阵乘法契约</b>'
+    f"</div>",
+    unsafe_allow_html=True,
+)
+
+col_shape, col_broadcast = st.columns([1.1, 1.4])
 with col_shape:
     st.markdown(
         """
-        #### 线性层为什么写作 $Z=XW+b$？
+        ##### 核心概念白话通俗说明 (Beginner Guide)
 
-        - $X$：`(batch, input_features)`
-        - $W$：`(input_features, output_features)`
-        - $XW$：`(batch, output_features)`
-        - $b$：`(output_features,)`，沿 batch 维广播
+        在神经网络中，数据是以二维或高维矩阵（张量）流动的：
 
-        相邻的 `input_features` 必须相同；结果保留外侧两个维度。
+        * **`batch size` (批次大小 / 样本数 $N$)**：
+          * **通俗理解**：**一次打包、同时送给模型计算的数据条数**。
+          * *例子*：一次性批量评估 4 套房产、识别 4 张图片、或翻译 4 句话。
+        * **`input features` (输入特征数 / 输入维度 $D_{in}$)**：
+          * **通俗理解**：**每个样本自身携带的输入指标或属性数量**。
+          * *例子*：每套房产有 3 个指标 `[建筑面积, 房间数, 距离地铁距离]`。
+        * **`output features` (输出特征数 / 神经元个数 $D_{out}$)**：
+          * **通俗理解**：**当前层神经网络提炼出多少个新的高阶表征或最终结论**。
+          * *例子*：模型需要预测 2 个结论 `[预估总价, 租金回报率]`。
         """
     )
+
+    render_formula_breakdown_card(
+        formula_latex=r"Z = X \cdot W + b",
+        math_principle="矩阵乘法要求相邻维度严格对齐相消：(N, Din) × (Din, Dout) = (N, Dout)。偏置向量 b 沿 batch 维度自动广播相加。",
+        params_breakdown=[
+            {"param": "X", "shape": "(batch, input_features)", "role": "输入特征矩阵：每行代表一个独立样本，每列代表一项输入属性"},
+            {"param": "W", "shape": "(input_features, output_features)", "role": "权重矩阵：把 input_features 线性组合映射为 output_features"},
+            {"param": "XW", "shape": "(batch, output_features)", "role": "矩阵点积结果：内部的 input_features 维度被求和相消，保留外侧两维"},
+            {"param": "b", "shape": "(output_features,)", "role": "偏置向量：每个输出神经元的基准偏置，沿第 0 维 (batch) 自动广播复制"},
+            {"param": "Z", "shape": "(batch, output_features)", "role": "最终线性输出张量：供后续激活函数激活或作为下一层网络的输入"},
+        ],
+    )
+
 with col_broadcast:
-    batch_size = st.slider("batch size", 1, 8, 4)
-    input_features = st.slider("input features", 1, 8, 3)
-    output_features = st.slider("output features", 1, 8, 2)
+    st.markdown("##### 交互控制台与实时张量遥测")
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        batch_size = st.slider("batch size (样本数 N)", 1, 8, 4, help="同时并行计算的数据行数")
+    with c2:
+        input_features = st.slider("input features (输入特征 Din)", 1, 8, 3, help="每个样本拥有的输入属性维度")
+    with c3:
+        output_features = st.slider("output features (输出特征 Dout)", 1, 8, 2, help="当前层神经元个数 / 输出特征维度")
+
     x_matrix = np.arange(batch_size * input_features, dtype=float).reshape(
         batch_size, input_features
     )
     weights = np.ones((input_features, output_features))
     bias = np.arange(output_features, dtype=float)
     z_matrix = x_matrix @ weights + bias
-    st.code(
-        f"X{x_matrix.shape} @ W{weights.shape} + b{bias.shape} -> Z{z_matrix.shape}",
-        language="text",
+
+    render_live_param_status_bar(
+        title="TENSOR SHAPE CONTRACT // 矩阵维度契约",
+        badges=[
+            {"label": "X (输入)", "value": f"({batch_size}, {input_features})", "color": "blue"},
+            {"label": "W (权重)", "value": f"({input_features}, {output_features})", "color": "amber"},
+            {"label": "b (偏置)", "value": f"({output_features},)", "color": "purple"},
+            {"label": "Z (输出)", "value": f"({batch_size}, {output_features})", "color": "emerald"},
+        ],
+        metrics=[
+            ("内部相消维", f"{input_features}"),
+            ("外部保留维", f"({batch_size}, {output_features})"),
+            ("总计算浮点数", f"{batch_size * input_features * output_features} FLOPs"),
+        ],
+        tag=f"DIMS: ({batch_size}, {output_features})",
+        tag_color="emerald",
     )
+
+    st.markdown(f"**计算公式与实时形状映射**：`X({batch_size}, {input_features}) @ W({input_features}, {output_features}) + b({output_features},) -> Z({batch_size}, {output_features})`")
+    
+    st.markdown("**实时输出张量数值矩阵 $Z$**：")
     st.dataframe(z_matrix, width="stretch")
 
-render_section_heading("CHAIN RULE LAB // 链式法则与梯度检查", icon_name="activity")
+# ---------------------------------------------------------------------------
+# [C] 链式法则与数值梯度检查实验室
+# ---------------------------------------------------------------------------
+st.markdown(
+    f'<div id="region-c" class="interactive-region" style="margin-top:1.5rem;margin-bottom:0.6rem;padding:0.45rem 0.75rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">'
+    f'{anchor_badge("C", "emerald")} <b>CHAIN RULE LAB // 链式法则与数值梯度检查</b>'
+    f"</div>",
+    unsafe_allow_html=True,
+)
 
 st.markdown(
     r"""
-考虑单样本线性回归：$z=wx+b$，$L=(z-y)^2$。
-
-解析梯度由链式法则得到：
-$\frac{\partial L}{\partial w}=2(z-y)x$，
-$\frac{\partial L}{\partial b}=2(z-y)$。
-有限差分则重新计算两侧损失：
-$\frac{L(\theta+\epsilon)-L(\theta-\epsilon)}{2\epsilon}$。
-"""
+    考虑单样本线性回归：预测值 $z = wx + b$，损失函数 $L = (z - y)^2$。
+    
+    * **解析梯度 (Analytic Gradient)**：通过微积分链式法则直接求导：
+      $$\frac{\partial L}{\partial w} = \frac{\partial L}{\partial z} \cdot \frac{\partial z}{\partial w} = 2(z - y) \cdot x, \quad \frac{\partial L}{\partial b} = 2(z - y)$$
+    * **有限差分数值梯度 (Numeric Gradient / Finite Difference)**：不依赖求导公式，给参数加上极其微小的扰动 $\epsilon$：
+      $$\frac{\partial L}{\partial w} \approx \frac{L(w + \epsilon) - L(w - \epsilon)}{2\epsilon}$$
+    * **为什么需要梯度检查？** 在工业界自研复杂算子（如 FlashAttention、RoPE、MoE）时，通过有限差分双重核对，能 100% 验证反向传播求导代码是否有数学 Bug。
+    """
 )
 
-control_col, result_col = st.columns([1, 1.5])
+control_col, result_col = st.columns([1, 1.4])
 with control_col:
-    x_value = st.slider("输入 x", -3.0, 3.0, 1.5, 0.1)
-    weight_value = st.slider("权重 w", -3.0, 3.0, 0.8, 0.1)
-    bias_value = st.slider("偏置 b", -2.0, 2.0, 0.2, 0.1)
-    target_value = st.slider("目标 y", -3.0, 3.0, 1.0, 0.1)
-    epsilon_exp = st.slider("log10(ε)", -12, -1, -5)
+    st.markdown("##### 样本与步长调节")
+    x_value = st.slider("输入 x", -3.0, 3.0, 1.5, 0.1, help="单样本输入数值")
+    weight_value = st.slider("权重 w", -3.0, 3.0, 0.8, 0.1, help="线性层权重斜率")
+    bias_value = st.slider("偏置 b", -2.0, 2.0, 0.2, 0.1, help="线性层截距偏置")
+    target_value = st.slider("真实目标 y", -3.0, 3.0, 1.0, 0.1, help="样本期望标签")
+    epsilon_exp = st.slider("微扰步长指数 log10(ε)", -12, -1, -5, help="微小扰动步长 ε = 10^k")
 
 epsilon = 10.0**epsilon_exp
 
 
 def scalar_loss(weight: float, bias: float) -> float:
-    """当前交互样本的平方误差。"""
-
+    """当前交互样本的平方误差损失。"""
     prediction = weight * x_value + bias
     return float((prediction - target_value) ** 2)
 
@@ -112,26 +239,41 @@ numeric_db = (
 relative_error = abs(analytic_dw - numeric_dw) / (abs(analytic_dw) + abs(numeric_dw) + 1e-12)
 
 with result_col:
+    render_live_param_status_bar(
+        title="CHAIN RULE & GRADIENT TELEMETRY // 链式法则微观梯度",
+        badges=[
+            {"label": "x", "value": f"{x_value:.2f}", "color": "blue"},
+            {"label": "w", "value": f"{weight_value:.2f}", "color": "amber"},
+            {"label": "b", "value": f"{bias_value:.2f}", "color": "purple"},
+            {"label": "y", "value": f"{target_value:.2f}", "color": "rose"},
+        ],
+        metrics=[
+            ("预测误差 (z-y)", f"{prediction - target_value:+.4f}"),
+            ("解析梯度 ∂L/∂w", f"{analytic_dw:+.4f}"),
+            ("数值梯度 (有限差分)", f"{numeric_dw:+.4f}"),
+            ("相对误差", f"{relative_error:.2e}"),
+        ],
+        tag="EXACT MATCH [PASS]" if relative_error < 1e-5 else "STEP TUNING [WARN]",
+        tag_color="emerald" if relative_error < 1e-5 else "amber",
+    )
+
     st.markdown(
         '<div class="metric-grid">'
-        + render_metric_card("PREDICTION // 预测", f"{prediction:.5f}", icon_name="target")
-        + render_metric_card("LOSS // 损失", f"{loss_value:.6f}", icon_name="activity")
-        + render_metric_card("ANALYTIC dL/dw", f"{analytic_dw:.6f}", icon_name="cpu")
-        + render_metric_card("NUMERIC dL/dw", f"{numeric_dw:.6f}", icon_name="database")
+        + render_metric_card("PREDICTION // 预测值 z", f"{prediction:.5f}", icon_name="target")
+        + render_metric_card("LOSS // 均方误差 L", f"{loss_value:.6f}", icon_name="activity")
+        + render_metric_card("ANALYTIC dL/dw // 解析导数", f"{analytic_dw:.6f}", icon_name="cpu")
+        + render_metric_card("NUMERIC dL/dw // 有限差分", f"{numeric_dw:.6f}", icon_name="database")
         + "</div>",
         unsafe_allow_html=True,
     )
-    st.code(
-        f"dL/dw: analytic={analytic_dw:.10f}, numeric={numeric_dw:.10f}\n"
-        f"dL/db: analytic={analytic_db:.10f}, numeric={numeric_db:.10f}\n"
-        f"relative error={relative_error:.3e}",
-        language="text",
-    )
-    if relative_error < 1e-5:
-        st.success("解析梯度与有限差分在当前步长下吻合。")
-    else:
-        st.warning("误差较大。尝试调节 ε：过大产生截断误差，过小放大浮点舍入误差。")
 
+    if relative_error < 1e-5:
+        st.success(f"[PASS] 梯度的解析值与有限差分值在 ε = 10^{epsilon_exp} 下达到 100% 高精度匹配（相对误差 {relative_error:.2e} < 1e-5）！")
+    else:
+        st.warning(f"[WARN] 相对误差较大 ({relative_error:.2e})。原因：当 ε 过大（>-2）时泰勒展开截断误差显著；当 ε 过小（<-9）时 IEEE 754 浮点数相减导致有效数字丢失（灾难性消去）。")
+
+# 误差 U 型曲线
+st.markdown("##### 误差 U 型曲线：探究截断误差与浮点舍入误差的物理边界")
 epsilon_grid = np.logspace(-12, -1, 80)
 errors = []
 for eps in epsilon_grid:
@@ -140,23 +282,67 @@ for eps in epsilon_grid:
     ) / (2.0 * eps)
     errors.append(abs(analytic_dw - numeric) / (abs(analytic_dw) + abs(numeric) + 1e-12))
 
-fig_error = go.Figure(
-    go.Scatter(x=epsilon_grid, y=np.maximum(errors, 1e-18), mode="lines", name="relative error")
+fig_error = go.Figure()
+fig_error.add_trace(
+    go.Scatter(
+        x=epsilon_grid,
+        y=np.maximum(errors, 1e-18),
+        mode="lines+markers",
+        name="相对误差 (Relative Error)",
+        line=dict(color="#2563eb", width=2.5),
+        marker=dict(size=4),
+    )
 )
-fig_error.update_xaxes(type="log", title="有限差分步长 ε")
-fig_error.update_yaxes(type="log", title="相对误差")
-fig_error.update_layout(height=340, margin=dict(l=30, r=20, t=35, b=35))
+fig_error.add_trace(
+    go.Scatter(
+        x=[epsilon],
+        y=[max(relative_error, 1e-18)],
+        mode="markers",
+        name="当前选中 ε 位置",
+        marker=dict(color="#dc2626", size=11, symbol="diamond"),
+    )
+)
+
+fig_error.update_xaxes(type="log", title="有限差分扰动步长 ε (对数坐标)")
+fig_error.update_yaxes(type="log", title="相对误差 (对数坐标)")
+fig_error.update_layout(
+    height=320,
+    margin=dict(l=30, r=20, t=35, b=35),
+    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+    paper_bgcolor="rgba(0,0,0,0)",
+    plot_bgcolor="rgba(248,250,252,0.8)",
+)
 st.plotly_chart(fig_error, width="stretch")
 
-render_section_heading("CHECK YOUR MODEL // 形成性小测验", icon_name="check-circle")
+# ---------------------------------------------------------------------------
+# [D] 形成性小测验
+# ---------------------------------------------------------------------------
+st.markdown(
+    f'<div id="region-d" class="interactive-region" style="margin-top:1.5rem;margin-bottom:0.6rem;padding:0.45rem 0.75rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">'
+    f'{anchor_badge("D", "purple")} <b>CHECK YOUR MODEL // 形成性小测验</b>'
+    f"</div>",
+    unsafe_allow_html=True,
+)
+
 answer = st.radio(
-    "若解析梯度 dL/dw > 0，普通梯度下降下一步通常怎样更新 w？",
-    ("增大 w", "减小 w", "保持不变", "仅改变 b"),
+    "若解析梯度 dL/dw > 0，在学习率 η > 0 时，标准梯度下降下一步通常怎样更新权重 w？",
+    ("增大 w", "减小 w", "保持不变", "仅改变偏置 b"),
     index=None,
 )
 if answer == "减小 w":
-    st.success("正确：w ← w - η·dL/dw；当梯度为正且 η>0 时，w 会减小。")
+    st.success("[PASS] 回答正确！根据梯度下降更新公式 w ← w - η · (∂L/∂w)，当导数为正时，减去正数使得 w 向左（变小）移动，朝着损失下降的方向前进。")
 elif answer is not None:
-    st.error("再看一次更新式 w ← w - η·dL/dw，注意前面的负号。")
+    st.error("[FAIL] 再看一次更新公式：w ← w - η · (∂L/∂w)。注意前面的负号！负导数方向才是损失下降最快的方向。")
 
-st.caption("完成标准：能解释矩阵 shape、链式法则路径，以及有限差分步长为何不能无限缩小。")
+# ---------------------------------------------------------------------------
+# [E] 先修基础总结与进阶通关要求
+# ---------------------------------------------------------------------------
+st.markdown(
+    f'<div id="region-e" class="interactive-region" style="margin-top:1.5rem;margin-bottom:0.6rem;padding:0.45rem 0.75rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">'
+    f'{anchor_badge("E", "blue")} <b>MILESTONE CRITERIA // 先修基础总结与通关标准</b>'
+    f"</div>",
+    unsafe_allow_html=True,
+)
+
+st.caption("里程碑 M00 完成标准：能通俗解释 batch, input_features, output_features 物理意义，掌握矩阵乘法维度相消法则与有限差分梯度检查。")
+

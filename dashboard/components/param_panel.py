@@ -23,14 +23,46 @@ from dashboard.styles.icons import svg_icon
 PRESETS = PRESETS_REGISTRY
 
 
+DATASET_HINTS = {
+    "双半月弯 (Moons)": "非线性交错流形 · 考验隐藏层非线性拟合能力",
+    "同心圆环 (Circles)": "完全对称嵌套流形 · 线性分类器彻底失效的试金石",
+    "双螺旋线 (Spiral)": "高曲率混沌奇点 · 考验深层网络容量与局部感知",
+    "高斯双簇 (Blobs)": "线性可分基准流形 · 检验单层感知器收敛速度",
+}
+
+ACTIVATION_HINTS = {
+    "ReLU (线性整流函数)": "正向恒等 / 负向截断 · 缓解深层梯度消失的工业界基石",
+    "Sigmoid (S型激活函数)": "二分类概率压缩 (0, 1) · 易发生饱和与梯度消失",
+    "Tanh (双曲正切函数)": "零中心化平滑映射 (-1, 1) · 梯度传播优于 Sigmoid",
+    "LeakyReLU (带泄露线性整流)": "负区间保留微小斜率 (0.01) · 彻底避免神经元坏死",
+    "GELU (高斯误差线性单元)": "概率随机正则化平滑门控 · Transformer 标配",
+    "Linear (纯线性恒等变换)": "无非线性变换 · 多层网络将退化为单层仿射变换",
+}
+
+INITIALIZER_HINTS = {
+    "He (Kaiming 正态分布)": "方差 2/Din · 专为 ReLU / LeakyReLU 设计的抗梯度消失方案",
+    "Xavier (Glorot 均匀分布)": "方差 2/(Din+Dout) · 专为 Sigmoid / Tanh 设计的方差均衡方案",
+    "标准高斯分布 (Random Normal)": "均值 0 方差 1 · 深层网络极易迅速导致梯度爆炸或弥散",
+    "全零初始化 (Zeros)": "所有权重为 0 · 神经元完全对称，反向传播无法学习分化",
+}
+
+OPTIMIZER_HINTS = {
+    "Adam (自适应矩估计)": "一阶动量 + 二阶方差自校准 · 深度学习工业界默认标配",
+    "SGD (标准随机梯度下降)": "纯沿瞬时小批量梯度方向更新 · 容易在鞍点与峡谷震荡",
+    "Momentum (动量梯度下降)": "累积历史速度惯性 · 有效冲出局部平坦区与高频震荡",
+    "RMSprop (均方根传播)": "指数滑动平均调节学习率 · 专为非平稳目标与 RNN 设计",
+}
+
+
 def render_presets_selector(key_prefix: str = "") -> dict[str, Any] | None:
-    """渲染一键实验预设选择器"""
+    """渲染一键实验预设选择器 (Visual Radio Cards)"""
     st.sidebar.markdown("#### PRESET // 经典实验预设")
 
     preset_options = list(PRESETS_REGISTRY.keys())
-    preset_choice = st.sidebar.selectbox(
+    preset_choice = st.sidebar.radio(
         "选择实验预设方案",
-        preset_options,
+        options=preset_options,
+        format_func=lambda o: f"**{o}**\n\n↳ *{PRESETS_REGISTRY[o]['desc']}*",
         help="点击一键载入深度学习历史上的经典实验配置（如明斯基 XOR 困境、双螺旋奇点、梯度消失等）。",
         key=f"{key_prefix}preset_choice",
     )
@@ -45,7 +77,7 @@ def render_presets_selector(key_prefix: str = "") -> dict[str, Any] | None:
 def render_dataset_selector(
     key_prefix: str = "", default_dataset: str = "moons"
 ) -> tuple[str, int, float, int]:
-    """渲染数据集选择与参数卡片 (带详尽数学含义与场景 Tooltip)"""
+    """渲染数据集选择与参数卡片 (Visual Radio Cards)"""
     st.sidebar.markdown("#### DATASET // 数据集拓扑")
 
     dataset_labels = [meta.label for meta in DATASETS.values()]
@@ -57,9 +89,10 @@ def render_dataset_selector(
         0,
     )
 
-    selected_label = st.sidebar.selectbox(
+    selected_label = st.sidebar.radio(
         "分布类型 (Distribution)",
-        dataset_labels,
+        options=dataset_labels,
+        format_func=lambda o: f"**{o}**\n\n↳ *{DATASET_HINTS.get(o, '2D 特征空间流形')}*",
         index=default_idx,
         help="选择 2D 特征空间的数据集流形结构。不同的几何拓扑对网络深度与激活函数非线性有不同的要求。",
         key=f"{key_prefix}dataset",
@@ -110,7 +143,7 @@ def render_network_params(
     default_act: str = "ReLU",
     default_init: str = "he",
 ) -> dict[str, Any]:
-    """渲染网络架构参数中枢 (带丰富公式与影响 Tooltip)"""
+    """渲染网络架构参数中枢 (Visual Radio Cards)"""
     st.sidebar.markdown("#### ARCHITECTURE // 网络架构")
 
     if allow_multi_layer:
@@ -154,23 +187,23 @@ def render_network_params(
         0,
     )
 
-    col1, col2 = st.sidebar.columns(2)
-    with col1:
-        selected_act_label = st.selectbox(
-            "激活函数",
-            act_labels,
-            index=act_default_idx,
-            help="赋予神经网络非线性表达能力的数学变换。没有激活函数的多层网络会退化为单层线性变换。",
-            key=f"{key_prefix}activation",
-        )
-    with col2:
-        selected_init_label = st.selectbox(
-            "权重初始化",
-            init_labels,
-            index=init_default_idx,
-            help="网络初始权重的概率分布。合理的方差缩放初始化（如 He / Xavier）是深层网络避免梯度消失的关键。",
-            key=f"{key_prefix}initializer",
-        )
+    selected_act_label = st.radio(
+        "激活函数",
+        options=act_labels,
+        format_func=lambda o: f"**{o}**\n\n↳ *{ACTIVATION_HINTS.get(o, '非线性变换')}*",
+        index=act_default_idx,
+        help="赋予神经网络非线性表达能力的数学变换。没有激活函数的多层网络会退化为单层线性变换。",
+        key=f"{key_prefix}activation",
+    )
+
+    selected_init_label = st.radio(
+        "权重初始化",
+        options=init_labels,
+        format_func=lambda o: f"**{o}**\n\n↳ *{INITIALIZER_HINTS.get(o, '参数初始分布')}*",
+        index=init_default_idx,
+        help="网络初始权重的概率分布。合理的方差缩放初始化（如 He / Xavier）是深层网络避免梯度消失的关键。",
+        key=f"{key_prefix}initializer",
+    )
 
     act_meta = next(m for m in ACTIVATIONS.values() if m.label == selected_act_label)
     init_meta = next(m for m in INITIALIZERS.values() if m.label == selected_init_label)
@@ -191,7 +224,7 @@ def render_training_params(
     default_lr: float = 0.05,
     default_epochs: int = 150,
 ) -> dict[str, Any]:
-    """渲染训练超参数控制台 (带优化器数学公式与影响 Tooltip)"""
+    """渲染训练超参数控制台 (Visual Radio Cards)"""
     st.sidebar.markdown("#### OPTIMIZER // 优化算法")
 
     opt_labels = [meta.label for meta in OPTIMIZERS.values()]
@@ -201,9 +234,10 @@ def render_training_params(
         0,
     )
 
-    selected_opt_label = st.sidebar.selectbox(
+    selected_opt_label = st.sidebar.radio(
         "算法类型 (Algorithm)",
-        opt_labels,
+        options=opt_labels,
+        format_func=lambda o: f"**{o}**\n\n↳ *{OPTIMIZER_HINTS.get(o, '参数梯度优化算法')}*",
         index=opt_default_idx,
         help="指导参数沿着损失曲面梯度方向寻优的更新策略（动量累积、自适应步长等）。",
         key=f"{key_prefix}optimizer",
@@ -211,27 +245,25 @@ def render_training_params(
 
     opt_meta = next(m for m in OPTIMIZERS.values() if m.label == selected_opt_label)
 
-    col1, col2 = st.sidebar.columns(2)
-    with col1:
-        lr = st.number_input(
-            "学习率 (LR)",
-            min_value=0.0001,
-            max_value=2.0,
-            value=default_lr,
-            step=0.01,
-            format="%.4f",
-            help="参数更新步长 $\\eta$。过大易导致损失震荡发散，过小会导致收敛缓慢陷入局部极小。",
-            key=f"{key_prefix}learning_rate",
-        )
-    with col2:
-        batch_size = st.selectbox(
-            "批大小 (Batch)",
-            [16, 32, 64, 128, 256, 0],
-            format_func=lambda x: "Full (全量)" if x == 0 else str(x),
-            index=1,
-            help="每次参数更新所使用的样本数量。Mini-batch 兼具计算效率与适度随机扰动（利于逃逸鞍点）。",
-            key=f"{key_prefix}batch_size",
-        )
+    lr = st.sidebar.number_input(
+        "学习率 (LR)",
+        min_value=0.0001,
+        max_value=2.0,
+        value=default_lr,
+        step=0.01,
+        format="%.4f",
+        help="参数更新步长 $\\eta$。过大易导致损失震荡发散，过小会导致收敛缓慢陷入局部极小。",
+        key=f"{key_prefix}learning_rate",
+    )
+
+    batch_size = st.sidebar.radio(
+        "批大小 (Batch)",
+        options=[16, 32, 64, 128, 256, 0],
+        format_func=lambda x: "**Full (全量)**\n\n↳ *全数据梯度精确计算*" if x == 0 else f"**Mini-Batch ({x})**\n\n↳ *兼顾速度与逃逸鞍点*",
+        index=1,
+        help="每次参数更新所使用的样本数量。Mini-batch 兼具计算效率与适度随机扰动（利于逃逸鞍点）。",
+        key=f"{key_prefix}batch_size",
+    )
 
     epochs = st.sidebar.slider(
         "训练轮数 (Epochs)",
@@ -296,3 +328,45 @@ def render_deep_dive_card(
                 f"- **[IMPACT // 动态影响]**: {impact_val}\n"
                 f"- **[BENCHMARK // 实战案例]**: {item.example}\n"
             )
+
+
+def render_regularization_params(key_prefix: str = "") -> dict[str, Any]:
+    """渲染正则化与惩罚项参数 (Visual Radio Cards)"""
+    st.sidebar.markdown("#### REGULARIZATION // 正则化机制")
+
+    reg_labels = [meta.label for meta in REGULARIZERS.values()]
+    reg_hints = {
+        "None (无正则)": "纯经验风险最小化 · 自由拟合无参数惩罚",
+        "L1 正则 (Lasso)": "曼哈顿范数约束 · 驱动权重绝对稀疏化 (产生 0 权重)",
+        "L2 正则 (Ridge)": "欧氏范数约束 · 惩罚极端大权重 · 提升泛化",
+    }
+
+    selected_reg_label = st.sidebar.radio(
+        "正则化类型",
+        options=reg_labels,
+        format_func=lambda o: f"**{o}**\n\n↳ *{reg_hints.get(o, '泛化约束')}*",
+        index=0,
+        help="通过在损失函数中增加权重范数惩罚，约束模型复杂度，防止过拟合。",
+        key=f"{key_prefix}regularization",
+    )
+
+    reg_meta = next(m for m in REGULARIZERS.values() if m.label == selected_reg_label)
+
+    reg_lambda = 0.0
+    if reg_meta.id != "None":
+        reg_lambda = st.sidebar.slider(
+            "惩罚强度 (Lambda \\lambda)",
+            0.0001,
+            0.1,
+            0.01,
+            step=0.001,
+            format="%.4f",
+            help="正则化损失项的权重系数。值越大，对网络权重的惩罚越严厉，边界越平滑简单。",
+            key=f"{key_prefix}reg_lambda",
+        )
+
+    return {
+        "regularization": reg_meta.id,
+        "regularization_label": reg_meta.label,
+        "lambda": reg_lambda,
+    }

@@ -603,7 +603,91 @@ body,
         unsafe_allow_html=True,
     )
 
-    # 导航事件由页面空间 HUD 自身管理，避免跨 iframe 的陈旧全局监听器。
+    sidebar_nav_js = """<!doctype html><html><head><meta charset="utf-8"></head><body>
+    <script>
+    (function() {
+        try {
+            var doc = window.parent.document;
+            if (!doc) return;
+
+            var labelMap = {
+                'app': '首页 · 导航大厅',
+                '数学基础': 'M00 · 数学基础',
+                '0 数学基础': 'M00 · 数学基础',
+                '0_数学基础': 'M00 · 数学基础',
+                '单神经元感知器': 'M01 · 单神经元感知器',
+                '1 单神经元感知器': 'M01 · 单神经元感知器',
+                '1_单神经元感知器': 'M01 · 单神经元感知器',
+                '多层网络': 'M02 · 多层网络',
+                '2 多层网络': 'M02 · 多层网络',
+                '2_多层网络': 'M02 · 多层网络',
+                '优化器对比': 'M03 · 优化器对比',
+                '3 优化器对比': 'M03 · 优化器对比',
+                '3_优化器对比': 'M03 · 优化器对比',
+                '参数实验室': 'M04 · 参数实验室',
+                '4 参数实验室': 'M04 · 参数实验室',
+                '4_参数实验室': 'M04 · 参数实验室',
+                '词嵌入空间': 'M05 · 词嵌入空间',
+                '5 词嵌入空间': 'M05 · 词嵌入空间',
+                '5_词嵌入空间': 'M05 · 词嵌入空间',
+                '序列记忆': 'M06 · 序列记忆',
+                '6 序列记忆': 'M06 · 序列记忆',
+                '6_序列记忆': 'M06 · 序列记忆',
+                '注意力机制': 'M07 · 注意力机制',
+                '7 注意力机制': 'M07 · 注意力机制',
+                '7_注意力机制': 'M07 · 注意力机制',
+                'Transformer': 'M08 · Transformer',
+                '8 Transformer': 'M08 · Transformer',
+                '8_Transformer': 'M08 · Transformer',
+                'Mini_GPT': 'M09 · Mini-GPT',
+                'Mini GPT': 'M09 · Mini-GPT',
+                '9 Mini_GPT': 'M09 · Mini-GPT',
+                '9 Mini GPT': 'M09 · Mini-GPT',
+                '9_Mini_GPT': 'M09 · Mini-GPT',
+                '视觉感知': 'M10 · 视觉感知',
+                '10 视觉感知': 'M10 · 视觉感知',
+                '10_视觉感知': 'M10 · 视觉感知',
+                '音频感知': 'M11 · 音频感知',
+                '11 音频感知': 'M11 · 音频感知',
+                '11_音频感知': 'M11 · 音频感知',
+                '视频与世界模型': 'M12 · 视频与世界模型',
+                '12 视频与世界模型': 'M12 · 视频与世界模型',
+                '12_视频与世界模型': 'M12 · 视频与世界模型',
+                '预训练范式': 'M13 · 预训练范式',
+                '13 预训练范式': 'M13 · 预训练范式',
+                '13_预训练范式': 'M13 · 预训练范式',
+                '后训练工程': 'M14 · 后训练工程',
+                '14 后训练工程': 'M14 · 后训练工程',
+                '14_后训练工程': 'M14 · 后训练工程',
+                '评估基准': 'M15 · 评估基准',
+                '15 评估基准': 'M15 · 评估基准',
+                '15_评估基准': 'M15 · 评估基准',
+                '强化学习': 'M16 · 强化学习',
+                '16 强化学习': 'M16 · 强化学习',
+                '16_强化学习': 'M16 · 强化学习'
+            };
+
+            function formatSidebarNav() {
+                var links = doc.querySelectorAll('[data-testid="stSidebarNav"] a, [data-testid="stSidebarNavLink"]');
+                links.forEach(function(a) {
+                    var spans = a.querySelectorAll('span');
+                    spans.forEach(function(span) {
+                        var text = span.textContent.trim();
+                        if (labelMap[text]) {
+                            span.textContent = labelMap[text];
+                        }
+                    });
+                });
+            }
+
+            formatSidebarNav();
+            setTimeout(formatSidebarNav, 150);
+            setTimeout(formatSidebarNav, 500);
+            setTimeout(formatSidebarNav, 1200);
+        } catch(e) {}
+    })();
+    </script></body></html>"""
+    st.iframe(sidebar_nav_js, height=1, width=1)
 
 
 def render_hero_header(
@@ -806,11 +890,11 @@ def render_architecture_flow_card() -> None:
         f"</div>"
         f'<div style="display:flex;justify-content:space-around;align-items:center;flex-wrap:wrap;gap:0.8rem;">'
         f'<div style="background:#eff6ff;border:1px solid #bfdbfe;padding:0.7rem 1rem;border-radius:8px;text-align:center;"><span style="color:#1d4ed8;font-weight:800;">INPUT STREAM x</span><br><span style="font-size:0.72rem;color:#64748b;">(残差流主干)</span></div>'
-        f'<div style="color:#64748b;font-size:1.3rem;">➔</div>'
-        f'<div style="background:#f8fafc;border:1px solid #cbd5e1;padding:0.7rem 1rem;border-radius:8px;text-align:center;"><span style="color:#7c3aed;font-weight:800;">LayerNorm₁</span> ➔ <span style="color:#2563eb;font-weight:800;">MHA</span><br><span style="color:#059669;font-weight:700;">x = x + MHA(LN₁(x))</span></div>'
-        f'<div style="color:#64748b;font-size:1.3rem;">➔</div>'
-        f'<div style="background:#f8fafc;border:1px solid #cbd5e1;padding:0.7rem 1rem;border-radius:8px;text-align:center;"><span style="color:#7c3aed;font-weight:800;">LayerNorm₂</span> ➔ <span style="color:#b45309;font-weight:800;">GELU FFN</span><br><span style="color:#059669;font-weight:700;">x = x + FFN(LN₂(x))</span></div>'
-        f'<div style="color:#64748b;font-size:1.3rem;">➔</div>'
+        f'<div style="color:#64748b;font-size:1.3rem;"></div>'
+        f'<div style="background:#f8fafc;border:1px solid #cbd5e1;padding:0.7rem 1rem;border-radius:8px;text-align:center;"><span style="color:#7c3aed;font-weight:800;">LayerNorm₁</span>  <span style="color:#2563eb;font-weight:800;">MHA</span><br><span style="color:#059669;font-weight:700;">x = x + MHA(LN₁(x))</span></div>'
+        f'<div style="color:#64748b;font-size:1.3rem;"></div>'
+        f'<div style="background:#f8fafc;border:1px solid #cbd5e1;padding:0.7rem 1rem;border-radius:8px;text-align:center;"><span style="color:#7c3aed;font-weight:800;">LayerNorm₂</span>  <span style="color:#b45309;font-weight:800;">GELU FFN</span><br><span style="color:#059669;font-weight:700;">x = x + FFN(LN₂(x))</span></div>'
+        f'<div style="color:#64748b;font-size:1.3rem;"></div>'
         f'<div style="background:#ecfdf5;border:1px solid #a7f3d0;padding:0.7rem 1rem;border-radius:8px;text-align:center;"><span style="color:#047857;font-weight:800;">OUTPUT STREAM x</span><br><span style="font-size:0.72rem;color:#64748b;">(进入下一层)</span></div>'
         f"</div>"
         f"</div>"
@@ -842,6 +926,73 @@ def render_text_stream_box(tokens: list[str], prompt_len: int) -> None:
         f"{' '.join(badges)}"
         f'<span style="display:inline-block;width:7px;height:16px;background:#1d4ed8;"></span>'
         f"</div>"
+        f"</div>"
+    )
+    st.markdown(html, unsafe_allow_html=True)
+
+
+def render_live_param_status_bar(
+    title: str = "LIVE MATHEMATICAL PARAMETERS // 实时微观参数与数学状态",
+    badges: list[dict[str, str]] | None = None,
+    metrics: list[tuple[str, str]] | None = None,
+    tag: str | None = None,
+    tag_color: str = "emerald",
+) -> None:
+    """
+    渲染全站统一的现代 Linear/Stripe 风格实时数学参数与动力学遥测状态栏。
+
+    参数：
+    - title: 状态栏左侧标题（中英双语）
+    - badges: 高亮数学徽标列表，每个元素形如 {"label": "w₁₁", "value": "0.324", "color": "blue"|"amber"|"emerald"|"purple"|"rose"}
+    - metrics: 键值对指标列表，每个元素形如 ("权重均值 ‖W‖", "0.4512")
+    - tag: 右侧状态标签（如 "TOTAL PARAMS: 120" 或 "STATUS: CONVERGED"）
+    - tag_color: 标签主题色 ("emerald"|"blue"|"amber"|"purple"|"rose")
+    """
+    color_map = {
+        "blue": ("#eff6ff", "#bfdbfe", "#1d4ed8"),
+        "amber": ("#fffbeb", "#fde68a", "#92400e"),
+        "emerald": ("#ecfdf5", "#a7f3d0", "#047857"),
+        "purple": ("#f5f3ff", "#ddd6fe", "#6d28d9"),
+        "rose": ("#fff1f2", "#fecdd3", "#be123c"),
+    }
+
+    badges_html = []
+    if badges:
+        for b in badges:
+            lbl = b.get("label", "")
+            val = b.get("value", "")
+            c = b.get("color", "blue")
+            bg_c, border_c, text_c = color_map.get(c, color_map["blue"])
+            badges_html.append(
+                f"<span style=\"background:{bg_c};color:{text_c};border:1px solid {border_c};padding:0.1rem 0.42rem;border-radius:4px;font-weight:700;font-family:'JetBrains Mono', monospace;\">"
+                f"{lbl} = {val}"
+                f"</span>"
+            )
+
+    metrics_html = []
+    if metrics:
+        for k, v in metrics:
+            metrics_html.append(
+                f"<span style=\"color:#64748b;font-family:'JetBrains Mono', monospace;\">| {k}: <b style=\"color:#0f172a;\">{v}</b></span>"
+            )
+
+    tag_html = ""
+    if tag:
+        t_bg, t_border, t_text = color_map.get(tag_color, color_map["emerald"])
+        tag_html = (
+            f'<div style="color:{t_text};font-weight:700;background:{t_bg};border:1px solid {t_border};padding:0.12rem 0.45rem;border-radius:4px;font-family:\'JetBrains Mono\', monospace;font-size:0.72rem;letter-spacing:0.02em;">'
+            f"{tag}"
+            f"</div>"
+        )
+
+    html = (
+        f'<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:0.5rem 0.8rem;margin-bottom:0.75rem;font-family:\'JetBrains Mono\', -apple-system, sans-serif;font-size:0.76rem;color:#1e293b;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.4rem;box-shadow:0 1px 3px rgba(15,23,42,0.02);">'
+        f'<div style="display:flex;align-items:center;flex-wrap:wrap;gap:0.45rem;">'
+        f'<span style="color:#1e40af;font-weight:800;letter-spacing:0.02em;">[{title}]</span>'
+        f"{''.join(badges_html)}"
+        f"{''.join(metrics_html)}"
+        f"</div>"
+        f"{tag_html}"
         f"</div>"
     )
     st.markdown(html, unsafe_allow_html=True)
@@ -911,13 +1062,21 @@ def render_page_blueprint(sections: list[dict]) -> None:
         "rose": ("#fff1f2", "#fecdd3", "#9f1239"),
     }
 
+    normalized_sections = []
     for sec in sections:
-        sec_id = sec.get("id", "A")
-        sec_name = sec.get("name", "")
-        sec_desc = sec.get("desc", "")
+        sec_id = sec.get("id") or sec.get("letter") or "A"
+        sec_name = sec.get("name") or sec.get("title") or ""
+        sec_desc = sec.get("desc") or sec.get("role") or ""
         sec_color = sec.get("color", "blue")
-        target_id = sec.get("target_id", f"region-{sec_id.lower()}")
+        target_id = sec.get("target_id") or f"region-{sec_id.lower()}"
         bg_c, border_c, text_c = color_border_map.get(sec_color, color_border_map["blue"])
+        normalized_sections.append({
+            "id": sec_id,
+            "name": sec_name,
+            "desc": sec_desc,
+            "color": sec_color,
+            "target_id": target_id,
+        })
 
         block = (
             f'<a href="#{target_id}" style="text-decoration:none;color:inherit;flex:1 1 180px;min-width:150px;">'
@@ -946,12 +1105,26 @@ def render_page_blueprint(sections: list[dict]) -> None:
         f"</div>"
     )
     st.markdown(html, unsafe_allow_html=True)
-    render_floating_hud_navigator(sections)
+    render_floating_hud_navigator(normalized_sections)
 
 
 def render_floating_hud_navigator(sections: list[dict]) -> None:
     """使用 st.iframe 在宿主视窗右侧挂载常驻悬浮微缩罗盘 HUD。"""
-    sec_json = json.dumps(sections, ensure_ascii=False)
+    normalized = []
+    for s in sections:
+        s_id = s.get("id") or s.get("letter") or "A"
+        s_name = s.get("name") or s.get("title") or ""
+        s_desc = s.get("desc") or s.get("role") or ""
+        s_color = s.get("color", "blue")
+        s_target = s.get("target_id") or f"region-{s_id.lower()}"
+        normalized.append({
+            "id": s_id,
+            "name": s_name,
+            "desc": s_desc,
+            "color": s_color,
+            "target_id": s_target,
+        })
+    sec_json = json.dumps(normalized, ensure_ascii=False)
     js = f"""<!doctype html><html><head><meta charset="utf-8"></head><body>
     <script>
     (function() {{
@@ -1059,13 +1232,15 @@ def render_floating_hud_navigator(sections: list[dict]) -> None:
             list.style.cssText = 'display:flex;flex-direction:column;gap:0.25rem;';
 
             sections.forEach(function(sec) {{
-                var targetId = sec.target_id || ('region-' + (sec.id || '').toLowerCase());
+                var secId = sec.id || sec.letter || 'A';
+                var secName = sec.name || sec.title || '';
+                var targetId = sec.target_id || ('region-' + secId.toLowerCase());
                 var item = doc.createElement('a');
                 item.href = '#' + targetId;
                 item.className = 'nn-hud-item';
                 item.setAttribute('data-target', targetId);
                 item.style.cssText = 'display:flex;align-items:center;gap:0.4rem;padding:0.3rem 0.45rem;border-radius:6px;text-decoration:none;color:#334155;font-weight:600;transition:all 0.15s ease;cursor:pointer;';
-                item.innerHTML = '<span style="font-family:monospace;font-size:0.72rem;font-weight:800;color:#2563eb;background:#eff6ff;border:1px solid #bfdbfe;padding:0.05rem 0.3rem;border-radius:4px;">[' + sec.id + ']</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:115px;">' + sec.name + '</span>';
+                item.innerHTML = '<span style="font-family:monospace;font-size:0.72rem;font-weight:800;color:#2563eb;background:#eff6ff;border:1px solid #bfdbfe;padding:0.05rem 0.3rem;border-radius:4px;">[' + secId + ']</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:115px;">' + secName + '</span>';
                 
                 item.addEventListener('mouseenter', function() {{
                     if (!this.classList.contains('active')) {{
@@ -1170,3 +1345,34 @@ def render_floating_hud_navigator(sections: list[dict]) -> None:
     </script></body></html>
     """
     st.iframe(js, height=1, width=1)
+
+
+def render_formula_breakdown_card(
+    formula_latex: str,
+    math_principle: str,
+    params_breakdown: list[dict],
+) -> None:
+    """渲染公式拆解卡片，展示 LaTeX 公式、数学原理与参数拆解表格。"""
+    rows_html = "".join([
+        f'<tr><td style="padding:6px 10px;font-family:monospace;font-weight:700;color:#1e40af;border-bottom:1px solid #e2e8f0;">{p.get("param", "")}</td>'
+        f'<td style="padding:6px 10px;font-family:monospace;color:#64748b;border-bottom:1px solid #e2e8f0;">{p.get("shape", "")}</td>'
+        f'<td style="padding:6px 10px;color:#334155;border-bottom:1px solid #e2e8f0;">{p.get("role", "")}</td></tr>'
+        for p in params_breakdown
+    ])
+
+    card_html = (
+        f'<div style="background:#ffffff;border:1px solid #cbd5e1;border-radius:10px;padding:0.9rem 1.1rem;margin:0.8rem 0;box-shadow:0 2px 6px rgba(0,0,0,0.03);">'
+        f'<div style="font-size:0.76rem;font-weight:800;color:#2563eb;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:0.4rem;">[FORMULA CONTRACT // 数学公式与参数拆解]</div>'
+        f'<div style="text-align:center;padding:0.5rem;background:#f8fafc;border-radius:6px;margin-bottom:0.6rem;font-size:1.1rem;">$${formula_latex}$$</div>'
+        f'<div style="font-size:0.85rem;color:#475569;margin-bottom:0.7rem;line-height:1.5;">{math_principle}</div>'
+        f'<table style="width:100%;border-collapse:collapse;font-size:0.82rem;text-align:left;">'
+        f'<thead><tr style="background:#f1f5f9;color:#475569;">'
+        f'<th style="padding:6px 10px;border-bottom:2px solid #cbd5e1;">参数符号</th>'
+        f'<th style="padding:6px 10px;border-bottom:2px solid #cbd5e1;">张量形状 (Shape)</th>'
+        f'<th style="padding:6px 10px;border-bottom:2px solid #cbd5e1;">物理角色与维度意义</th>'
+        f'</tr></thead>'
+        f'<tbody>{rows_html}</tbody>'
+        f'</table>'
+        f'</div>'
+    )
+    st.markdown(card_html, unsafe_allow_html=True)

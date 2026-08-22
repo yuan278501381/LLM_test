@@ -40,6 +40,7 @@ from dashboard.styles.theme import (
     anchor_badge,
     apply_custom_theme,
     render_hero_header,
+    render_live_param_status_bar,
     render_metric_card,
     render_page_guide,
     render_preset_badge,
@@ -307,6 +308,14 @@ grid_html = (
 )
 st.markdown(grid_html, unsafe_allow_html=True)
 
+if "VANISHING" in grad_health_status:
+    st.warning(
+        "[SCIENTIFIC PHENOMENON // 深度学习经典现象复现]\n\n"
+        "您当前成功复现了著名的【梯度消失 (Vanishing Gradient)】困境！\n\n"
+        "• **为什么播放演练时画面完全静止不变？** 本预设采用了 4 个隐藏层的深层网络，配合 Sigmoid 激活函数与普通随机初始化。在反向传播链式法则中，Sigmoid 导数最大仅 0.25，经过 5 层连乘后梯度衰减至极其微弱的 10^-13（几乎归零）。权重更新量 ΔW = -η·∇W ≈ 0，模型彻底卡死无法学习，训练 200 轮 Loss 与边界均无法动弹。\n"
+        "• **如何一秒拯救模型？** 在左侧控制台切换为【自定义配置】：将激活函数换为 **ReLU**，初始化换为 **He (Kaiming)**，再次播放即可见证梯度满血复活、同心圆边界迅速形成的奇迹！"
+    )
+
 # ---------------------------------------------------------------------------
 # 可视化布局 (双栏联动)
 # ---------------------------------------------------------------------------
@@ -320,6 +329,26 @@ render_timeline_controls(
     progress_name="训练检查点",
     inspect_label="当前 Epoch",
     interval_ms=480,
+)
+
+dense_layers = [layer for layer in model.layers if isinstance(layer, Dense)]
+weights_norm_val = float(np.mean([np.mean(np.abs(layer.weights)) for layer in dense_layers]))
+total_neurons = sum(layer.weights.shape[1] for layer in dense_layers)
+
+render_live_param_status_bar(
+    title="DEEP TOPOLOGY & PROBE // 多层微观状态与探针响应",
+    badges=[
+        {"label": "Probe (x₁,x₂)", "value": f"({probe_pt[0]:.2f}, {probe_pt[1]:.2f})", "color": "amber"},
+        {"label": "P(y=1|x)", "value": f"{probe_prob:.1%}", "color": "blue" if probe_pred_class == 0 else "rose"},
+        {"label": "Pred Class", "value": f"{probe_pred_class}", "color": "purple"},
+    ],
+    metrics=[
+        ("激活函数 σ", f"{activation_name}"),
+        ("平均权重 ‖W‖", f"{weights_norm_val:.4f}"),
+        ("最小层梯度 ‖∇W‖", f"{min_grad_norm:.2e}"),
+    ],
+    tag=f"DEPTH: {len(dense_layers)} LAYERS · {total_neurons} NEURONS",
+    tag_color="emerald",
 )
 
 col_topo, col_bound = st.columns([1.1, 1])

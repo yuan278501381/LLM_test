@@ -394,13 +394,38 @@ LESSONS: dict[str, LessonMeta] = {
             ),
         ),
     ),
+    "M16": LessonMeta(
+        "M16",
+        "强化学习与自主智能体",
+        (EvidenceLevel.EXACT_COMPUTATION, EvidenceLevel.TEACHING_SCALE, EvidenceLevel.SIMULATION),
+        ("马尔可夫决策过程", "贝尔曼最优方程", "时序差分 Q-Learning"),
+        ("求解离散网格 MDP 最优价值函数", "观察时序差分探索与利用平衡", "理解 DeepSeek-R1 式 GRPO 组相对优化"),
+        "传统监督学习与预训练只能拟合固定数据分布，缺乏在环境中试错交互并自我反思纠错的能力。",
+        ("学习率 alpha", "折扣因子 gamma", "探索率 epsilon", "GRPO 训练轮数"),
+        ("累积回报", "TD-Error", "贝尔曼价值曲面", "策略箭头分布", "思考链 Token 长度"),
+        ("把单次试错失败当作无法收敛", "忽略探索率衰减导致无法收敛到最优策略", "混淆离散网格 Q-Learning 与大模型 GRPO 的适用边界"),
+        "当前网格寻路使用离散 Q-Table 与动态规划精确求解；GRPO 演化展示为基于公开论文规律的教学级动力学仿真。",
+        "从经典 MDP 贝尔曼方程到 DeepSeek-R1 纯强化学习，RL 构成了 AI 实现自主规划与慢思考推理的核心基石。",
+        (
+            _ref(
+                "Reinforcement Learning: An Introduction",
+                "https://incompleteideas.net/book/the-book-2nd.html",
+                "Sutton & Barto 强化学习圣经经典教材",
+            ),
+            _ref(
+                "DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning",
+                "https://arxiv.org/abs/2501.12948",
+                "DeepSeek-R1 纯强化学习推理论文",
+            ),
+        ),
+    ),
 }
 
 
 def validate_course_registry() -> None:
     """在导入和测试时快速发现缺页、空字段或不合法引用。"""
 
-    expected = {f"M{i:02d}" for i in range(16)}
+    expected = {f"M{i:02d}" for i in range(17)}
     if set(LESSONS) != expected:
         missing = sorted(expected - set(LESSONS))
         extra = sorted(set(LESSONS) - expected)

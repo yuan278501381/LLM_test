@@ -39,6 +39,7 @@ from dashboard.styles.theme import (
     anchor_badge,
     apply_custom_theme,
     render_hero_header,
+    render_live_param_status_bar,
     render_metric_card,
     render_page_guide,
     render_section_heading,
@@ -176,10 +177,16 @@ batch_size = train_params["batch_size"]
 st.sidebar.markdown("#### REGULARIZATION // 正则化策略")
 reg_list = list(REGULARIZERS.values())
 reg_labels = [m.label for m in reg_list]
+reg_hints = {
+    "None (无正则)": "纯经验风险最小化 · 自由拟合无约束",
+    "L1 正则 (Lasso)": "曼哈顿范数约束 · 驱动权重绝对稀疏化 (产生 0 权重)",
+    "L2 正则 (Ridge)": "欧氏范数约束 · 惩罚极端大权重 · 提升泛化",
+}
 
-selected_reg_label = st.sidebar.selectbox(
+selected_reg_label = st.sidebar.radio(
     "正则化类型",
-    reg_labels,
+    options=reg_labels,
+    format_func=lambda o: f"**{o}**\n\n↳ *{reg_hints.get(o, '泛化约束')}*",
     help="权重约束项。通过惩罚过大的权重值，防止模型强行记忆样本噪声，有效提升泛化能力。",
     key="m4_reg",
 )
@@ -328,6 +335,26 @@ st.markdown(
     f'{anchor_badge("D", "purple")} <span style="font-weight:800;color:#5b21b6;font-size:0.86rem;">QUAD TELEMETRY CONSOLE // 四宫格微观全景遥测监控台</span>'
     f"</div>",
     unsafe_allow_html=True,
+)
+
+first_layer_w = weights_list[0] if weights_list else None
+w11_str = f"{first_layer_w[0, 0]:.3f}" if first_layer_w is not None and first_layer_w.size > 0 else "0.000"
+w12_str = f"{first_layer_w[1, 0]:.3f}" if first_layer_w is not None and first_layer_w.shape[0] > 1 else "0.000"
+total_params_count = sum(w.size for w in weights_list)
+
+render_live_param_status_bar(
+    title="LIVE WEIGHT PARAMETERS // 实时微观参数与网络状态",
+    badges=[
+        {"label": "w₁₁", "value": w11_str, "color": "blue"},
+        {"label": "w₁₂", "value": w12_str, "color": "amber"},
+    ],
+    metrics=[
+        ("权重均值 ‖W‖", f"{weight_norm:.4f}"),
+        ("梯度均值 ‖∇W‖", f"{grad_norm:.2e}"),
+        ("正则惩罚 λ", f"{reg_lambda:.4f}"),
+    ],
+    tag=f"TOTAL PARAMS: {total_params_count} 个权重参数",
+    tag_color="emerald",
 )
 
 grid_c1, grid_c2 = st.columns(2)

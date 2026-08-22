@@ -27,6 +27,7 @@ from dashboard.styles.theme import (
     anchor_badge,
     apply_custom_theme,
     render_hero_header,
+    render_live_param_status_bar,
     render_metric_card,
     render_page_guide,
     render_section_heading,
@@ -196,6 +197,20 @@ dim_choice = st.sidebar.radio(
     help="将 32 维词向量通过主成分分析 (PCA) 降维投影到低维视口供直观观察。",
 )
 
+group_card_options = [
+    ("全部词汇 (All Vocabulary)", "全局无遮挡展现全部词汇 2D/3D 流形空间"),
+    ("王族概念 (Royalty)", "king, queen, prince, princess 性别与权阶流形"),
+    ("动物世界 (Animals)", "cat, dog, kitten, puppy 物种与幼崽聚类"),
+    ("国家与首都 (Geopolitics)", "china, beijing, japan, tokyo 地缘几何映射"),
+    ("人类行为 (Actions)", "run, walk, think, eat 动态语义拓扑"),
+]
+selected_group_card = st.sidebar.radio(
+    "高亮语义群组",
+    options=group_card_options,
+    format_func=lambda o: f"**{o[0]}**\n\n↳ *{o[1]}*",
+    index=1,
+    help="在散点图中高亮特定的概念族群，观察其聚集与几何分布模式。",
+)
 group_options = [
     "全部词汇 (All Vocabulary)",
     "王族概念 (Royalty: king, queen, prince...)",
@@ -203,25 +218,23 @@ group_options = [
     "国家与首都 (Geopolitics: china, beijing, japan...)",
     "人类行为 (Actions: run, walk, think...)",
 ]
-selected_group = st.sidebar.selectbox(
-    "高亮语义群组",
-    group_options,
-    index=1,
-    help="在散点图中高亮特定的概念族群，观察其聚集与几何分布模式。",
-)
+selected_group = group_options[group_card_options.index(selected_group_card)]
 
 st.sidebar.markdown("#### SEMANTIC ARITHMETIC // 向量语义算术")
-preset_arithmetic = st.sidebar.selectbox(
+arithmetic_options = [
+    ("king - man + woman = ? (经典王族变换)", "经典性别与王权关系向量平移"),
+    ("beijing - china + japan = ? (国家首都变换)", "首都与国家地缘几何投影"),
+    ("puppy - dog + cat = ? (幼崽概念类比)", "动物幼态概念语义平移"),
+    ("princess - queen + king = ? (性阶转换)", "双重属性线性加减"),
+    ("自定义算术方程...", "自由选择 3 个词向量进行代数计算"),
+]
+selected_arith_card = st.sidebar.radio(
     "预设算术方程",
-    [
-        "king - man + woman = ? (经典王族变换)",
-        "beijing - china + japan = ? (国家首都变换)",
-        "puppy - dog + cat = ? (幼崽概念类比)",
-        "princess - queen + king = ? (性阶转换)",
-        "自定义算术方程...",
-    ],
+    options=arithmetic_options,
+    format_func=lambda o: f"**{o[0]}**\n\n↳ *{o[1]}*",
     index=0,
 )
+preset_arithmetic = selected_arith_card[0]
 
 if preset_arithmetic.startswith("king"):
     default_a, default_b, default_c = "king", "man", "woman"
@@ -332,6 +345,23 @@ st.markdown(metric_grid_html, unsafe_allow_html=True)
 # ---------------------------------------------------------------------------
 render_section_heading(
     "SEMANTIC MANIFOLD & VECTOR ARITHMETIC // 语义流形与向量算术空间", icon_name="activity"
+)
+
+render_live_param_status_bar(
+    title="EMBEDDING GEOMETRY & COSINE TELEMETRY // 词向量几何与语义夹角",
+    badges=[
+        {"label": "Vector A", "value": f"{word_a}", "color": "blue"},
+        {"label": "Vector B", "value": f"{word_b}", "color": "amber"},
+        {"label": "Vector C", "value": f"{word_c}", "color": "purple"},
+        {"label": "Target ≈", "value": f"{best_match_word}", "color": "emerald"},
+    ],
+    metrics=[
+        ("最优余弦相似度", f"{best_match_sim * 100:.2f}%"),
+        ("向量维度 d_model", f"{embeddings_matrix.shape[1]}D"),
+        ("词表规模 |V|", f"{len(vocab_words)} words"),
+    ],
+    tag="LINEAR ANALOGY VERIFIED",
+    tag_color="emerald",
 )
 
 # 确定高亮列表
@@ -491,7 +521,7 @@ with col_bpe_viz:
     with st.container(border=True):
         st.markdown(f"#### [TOKENIZED OUTPUT // 彩虹分词切片] (压缩比: {compression_ratio:.2f}×)")
         st.caption(
-            f"原始字节数: {raw_bytes_len} Bytes ➔ 压缩为: {token_count} Tokens (节省 {(1 - 1 / compression_ratio) * 100:.1f}% 序列长度)"
+            f"原始字节数: {raw_bytes_len} Bytes  压缩为: {token_count} Tokens (节省 {(1 - 1 / compression_ratio) * 100:.1f}% 序列长度)"
         )
 
         # 渲染彩虹色块

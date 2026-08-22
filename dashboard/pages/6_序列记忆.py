@@ -26,6 +26,7 @@ from dashboard.styles.theme import (
     anchor_badge,
     apply_custom_theme,
     render_hero_header,
+    render_live_param_status_bar,
     render_metric_card,
     render_page_guide,
     render_section_heading,
@@ -145,12 +146,21 @@ sentence_presets = {
     "自定义输入 (Custom Input)...": "",
 }
 
-selected_preset = st.sidebar.selectbox(
+seq_card_options = [
+    ("短句测试 (5 词 - 短程易记)", "单层 RNN 轻松保持首词隐状态表征"),
+    ("中等长度句 (9 词 - 记忆衰减)", "反向传播梯度开始指数级衰减"),
+    ("超长叙事句 (16 词 - 严重遗忘)", "经典梯度消失，末尾隐状态几乎丢失首词信息"),
+    ("自定义输入 (Custom Input)...", "自由输入任意测试语料进行步进分析"),
+]
+
+selected_seq_card = st.sidebar.radio(
     "测试句子预设",
-    list(sentence_presets.keys()),
+    options=seq_card_options,
+    format_func=lambda o: f"**{o[0]}**\n\n↳ *{o[1]}*",
     index=2,
     help="对比不同长度文本在 RNN 中的记忆留存表现。",
 )
+selected_preset = list(sentence_presets.keys())[seq_card_options.index(selected_seq_card)]
 
 if "自定义" in selected_preset:
     input_text = st.sidebar.text_input(
@@ -262,6 +272,31 @@ st.markdown(
     f'{anchor_badge("E", "blue")} <span style="font-weight:800;color:#1e40af;font-size:0.86rem;">MEMORY DECAY HEATMAP // 序列记忆与历史衰减矩阵</span>'
     f"</div>",
     unsafe_allow_html=True,
+)
+
+first_last_sim = float(
+    np.dot(hidden_states_list[0].ravel(), hidden_states_list[-1].ravel())
+    / (
+        np.linalg.norm(hidden_states_list[0].ravel())
+        * np.linalg.norm(hidden_states_list[-1].ravel())
+        + 1e-12
+    )
+)
+
+render_live_param_status_bar(
+    title="RECURRENT DYNAMICS // RNN 递推隐状态与记忆衰减",
+    badges=[
+        {"label": "Seq Len T", "value": f"{seq_len} steps", "color": "blue"},
+        {"label": "Hidden Dim d_h", "value": f"{hidden_dim}", "color": "amber"},
+        {"label": "首尾词保留度", "value": f"{first_last_sim * 100:.1f}%", "color": "purple" if first_last_sim > 0.4 else "rose"},
+    ],
+    metrics=[
+        ("激活函数", "Tanh"),
+        ("记忆半衰期估算", f"{max(1, int(hidden_dim / 8))} steps"),
+        ("瓶颈状态", "FORGETTING" if seq_len > 8 else "INTACT"),
+    ],
+    tag="ATTENTION REQUIRED" if seq_len > 8 else "MEMORY STABLE",
+    tag_color="rose" if seq_len > 8 else "emerald",
 )
 
 fig_decay = plot_memory_decay_heatmap(

@@ -27,6 +27,7 @@ from dashboard.styles.theme import (
     anchor_badge,
     apply_custom_theme,
     render_hero_header,
+    render_live_param_status_bar,
     render_metric_card,
     render_page_guide,
     render_section_heading,
@@ -149,11 +150,13 @@ sentence_options = {
     "自定义输入 (Custom Input)...": "",
 }
 
-selected_sentence_label = st.sidebar.selectbox(
+sent_opts = list(sentence_options.keys())
+selected_sentence_label = st.sidebar.segmented_control(
     "测试句子预设",
-    list(sentence_options.keys()),
-    index=0,
+    options=sent_opts,
+    default=sent_opts[0],
 )
+selected_sentence_label = selected_sentence_label or sent_opts[0]
 
 if "自定义" in selected_sentence_label:
     input_text = st.sidebar.text_input(
@@ -321,6 +324,23 @@ st.markdown(
     f'{anchor_badge("E", "blue")} <span style="font-weight:800;color:#1e40af;font-size:0.86rem;">ATTENTION MATRIX // 核心注意力多头权重矩阵与因果掩码</span>'
     f"</div>",
     unsafe_allow_html=True,
+)
+
+render_live_param_status_bar(
+    title="ATTENTION DYNAMICS // 缩放点积与注意力分布微观参数",
+    badges=[
+        {"label": "Scale Factor 1/√d_k", "value": f"{1.0 / np.sqrt(d_k):.3f}", "color": "blue"},
+        {"label": "Entropy H", "value": f"{entropy:.2f} nats", "color": "emerald"},
+        {"label": "Max Peak α", "value": f"{max_attn_val * 100:.1f}%", "color": "purple"},
+        {"label": "Mask Type", "value": "Causal" if use_causal_mask else "Full Bidirectional", "color": "amber"},
+    ],
+    metrics=[
+        ("多头数量 h", f"{num_heads}"),
+        ("单头维度 d_k", f"{d_k}"),
+        ("缩放状态", "ENABLED" if enable_scale else "DISABLED"),
+    ],
+    tag=f"ROUTING: {seq_len}x{seq_len} ATTENTION MATRIX",
+    tag_color="emerald",
 )
 
 col_main_heat, col_cmp_heat = st.columns([1.3, 1])

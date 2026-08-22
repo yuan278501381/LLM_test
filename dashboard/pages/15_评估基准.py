@@ -22,6 +22,7 @@ from dashboard.styles.theme import (
     anchor_badge,
     apply_custom_theme,
     render_hero_header,
+    render_live_param_status_bar,
     render_metric_card,
     render_floating_hud_navigator,
     render_page_guide,
@@ -279,6 +280,24 @@ st.markdown(
     f"</div>",
     unsafe_allow_html=True,
 )
+
+render_live_param_status_bar(
+    title="EVALUATION HARNESS & BENCHMARK DYNAMICS // 评测套件与困惑度参数",
+    badges=[
+        {"label": "Model Tier", "value": f"{model_tier.split()[0]}", "color": "blue"},
+        {"label": "Simulated PPL", "value": f"{sim_ppl:.1f}", "color": "amber"},
+        {"label": "Pass Rate", "value": f"{accuracy_prob:.0%}", "color": "emerald"},
+        {"label": "Overall Score", "value": f"{avg_score:.1f}/100", "color": "purple"},
+    ],
+    metrics=[
+        ("参评科目数", f"{len(selected_task_names)} 科"),
+        ("总题目数量", f"{total_questions_count} 题"),
+        ("评估协议", "Zero-Shot Harness"),
+    ],
+    tag="BENCHMARK PASS" if avg_score >= 60 else "RE-ALIGNMENT NEEDED",
+    tag_color="emerald" if avg_score >= 60 else "rose",
+)
+
 render_section_heading("SIMULATED PERPLEXITY // 困惑度计算示意（非模型实测）", icon_name="activity")
 
 st.warning(
@@ -370,11 +389,11 @@ for t_name in selected_task_names:
             for c_i, c_text in enumerate(q.choices):
                 with c_cols[c_i]:
                     if c_i == q.answer_idx and c_i == pred_idx:
-                        st.success(f"✓ {c_text} (正确答案/模型选择)")
+                        st.success(f"[OK]  {c_text} (正确答案/模型选择)")
                     elif c_i == q.answer_idx:
-                        st.info(f"✓ {c_text} (标准答案)")
+                        st.info(f"[OK]  {c_text} (标准答案)")
                     elif c_i == pred_idx:
-                        st.error(f"✗ {c_text} (模型误选)")
+                        st.error(f" {c_text} (模型误选)")
                     else:
                         st.markdown(f"○ {c_text}")
             st.divider()

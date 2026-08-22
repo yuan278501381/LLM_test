@@ -36,6 +36,7 @@ from dashboard.styles.theme import (
     anchor_badge,
     apply_custom_theme,
     render_hero_header,
+    render_live_param_status_bar,
     render_metric_card,
     render_page_guide,
     render_region_anchor,
@@ -227,11 +228,28 @@ st.sidebar.markdown(
     unsafe_allow_html=True,
 )
 
+ACTIVATION_HINTS = {
+    "ReLU (线性整流函数)": "正向恒等 / 负向截断 · 单神经元线性分界面",
+    "Sigmoid (S型激活函数)": "二分类概率压缩 (0, 1) · 经典 Logistic 回归",
+    "Tanh (双曲正切函数)": "零中心化平滑映射 (-1, 1) · 梯度传播对称",
+    "LeakyReLU (带泄露线性整流)": "负区间微小斜率 · 避免神经元坏死",
+    "GELU (高斯误差线性单元)": "概率平滑门控 · Transformer 常用",
+    "Linear (纯线性恒等变换)": "纯线性加权仿射变换",
+}
+
+OPTIMIZER_HINTS = {
+    "Adam (自适应矩估计)": "一阶动量 + 二阶方差自校准 · 默认首选",
+    "SGD (标准随机梯度下降)": "纯沿瞬时小批量梯度方向更新",
+    "Momentum (动量梯度下降)": "累积历史速度惯性 · 冲过局部平坦区",
+    "RMSprop (均方根传播)": "指数滑动平均自适应步长",
+}
+
 act_list = [m for m in ACTIVATIONS.values() if m.id != "Softmax"]
 act_labels = [m.label for m in act_list]
-selected_act_label = st.sidebar.selectbox(
+selected_act_label = st.sidebar.radio(
     "激活函数",
-    act_labels,
+    options=act_labels,
+    format_func=lambda o: f"**{o}**\n\n↳ *{ACTIVATION_HINTS.get(o, '非线性激活函数')}*",
     help="非线性激活函数。对单神经元而言，Sigmoid 将实数加权值映射为 (0,1) 的二分类置信概率。",
     key="m1_act",
 )
@@ -239,9 +257,10 @@ act_meta = next(m for m in act_list if m.label == selected_act_label)
 
 opt_list = list(OPTIMIZERS.values())
 opt_labels = [m.label for m in opt_list]
-selected_opt_label = st.sidebar.selectbox(
+selected_opt_label = st.sidebar.radio(
     "优化器",
-    opt_labels,
+    options=opt_labels,
+    format_func=lambda o: f"**{o}**\n\n↳ *{OPTIMIZER_HINTS.get(o, '梯度优化算法')}*",
     help="梯度下降算法。负责根据损失对权重 (w₁, w₂) 和偏置 b 的梯度调整参数大小。",
     key="m1_opt",
 )
@@ -573,6 +592,30 @@ player_payload = build_perceptron_payload(
     (y_min, y_max),
 )
 render_player_controls(player_payload)
+
+final_w_arr = np.asarray(weight_trajectory[-1]).ravel()
+final_b_arr = np.asarray(bias_trajectory[-1]).ravel()
+w1_val = float(final_w_arr[0]) if len(final_w_arr) > 0 else 0.0
+w2_val = float(final_w_arr[1]) if len(final_w_arr) > 1 else 0.0
+b_val = float(final_b_arr[0]) if len(final_b_arr) > 0 else 0.0
+final_loss = history["loss"][-1] if history["loss"] else 0.0
+final_acc = history["accuracy"][-1] if history["accuracy"] else 0.0
+
+render_live_param_status_bar(
+    title="PERCEPTRON DYNAMICS // 空间决策方程与收敛参数",
+    badges=[
+        {"label": "w₁", "value": f"{w1_val:+.3f}", "color": "blue"},
+        {"label": "w₂", "value": f"{w2_val:+.3f}", "color": "amber"},
+        {"label": "b", "value": f"{b_val:+.3f}", "color": "purple"},
+    ],
+    metrics=[
+        ("学习率 η", f"{lr}"),
+        ("最终 Loss", f"{final_loss:.4f}"),
+        ("最终 Acc", f"{final_acc:.1%}"),
+    ],
+    tag=f"CONVERGED · {len(weight_trajectory)} STEPS",
+    tag_color="emerald" if final_acc >= 0.9 else "amber",
+)
 
 col_left, col_right = st.columns([1, 1])
 with col_left:

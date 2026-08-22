@@ -31,6 +31,7 @@ from dashboard.styles.theme import (
     anchor_badge,
     apply_custom_theme,
     render_hero_header,
+    render_live_param_status_bar,
     render_metric_card,
     render_page_guide,
     render_section_heading,
@@ -283,6 +284,27 @@ st.markdown(
     f"</div>",
     unsafe_allow_html=True,
 )
+
+best_opt = min(histories.keys(), key=lambda k: histories[k]["loss"][-1])
+best_loss = histories[best_opt]["loss"][-1]
+best_acc = histories[best_opt]["accuracy"][-1]
+
+render_live_param_status_bar(
+    title="OPTIMIZER ARENA DYNAMICS // 优化器多轨竞速微观参数",
+    badges=[
+        {"label": "TOP OPT", "value": f"{best_opt}", "color": "emerald"},
+        {"label": "MIN LOSS", "value": f"{best_loss:.4f}", "color": "blue"},
+        {"label": "PEAK ACC", "value": f"{best_acc:.1%}", "color": "purple"},
+    ],
+    metrics=[
+        ("学习率 η", f"{lr}"),
+        ("对比算法数", f"{len(histories)}"),
+        ("总训练步数", f"{epochs} Epochs"),
+    ],
+    tag=f"WINNER: {best_opt.upper()}",
+    tag_color="emerald",
+)
+
 fig_multi_loss = plot_multi_loss_curves(
     histories, title="OPTIMIZER BENCHMARK // 优化器多轨收敛对比"
 )

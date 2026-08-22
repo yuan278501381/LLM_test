@@ -22,6 +22,7 @@ from dashboard.styles.theme import (
     anchor_badge,
     apply_custom_theme,
     render_hero_header,
+    render_live_param_status_bar,
     render_metric_card,
     render_page_guide,
     render_section_heading,
@@ -125,23 +126,35 @@ st.sidebar.markdown(
 # ---------------------------------------------------------------------------
 st.sidebar.markdown("#### HYPERPARAMETERS // 超参数与配置")
 
-img_choice = st.sidebar.selectbox(
-    "合成测试图像",
-    options=["圆形 (Circle)", "方形 (Square)", "三角形 (Triangle)"],
-    index=0,
-)
+img_options = [
+    ("圆形 (Circle)", "全方向各向同性曲线 · 观察全向滤波特征"),
+    ("方形 (Square)", "高对比轴向直角边缘 · 观察水平/垂直一阶微分"),
+    ("三角形 (Triangle)", "包含斜向 45° 分界线 · 检验多方向梯度响应"),
+]
 
-kernel_choice = st.sidebar.selectbox(
-    "卷积核类型 (Filter Kernel)",
-    options=[
-        "Sobel 水平边缘 (Sobel-X)",
-        "Sobel 垂直边缘 (Sobel-Y)",
-        "拉普拉斯全向边缘 (Laplacian)",
-        "图像锐化 (Sharpen)",
-        "高斯模糊 (Gaussian Blur)",
-    ],
+selected_img_card = st.sidebar.radio(
+    "合成测试图像",
+    options=img_options,
+    format_func=lambda o: f"**{o[0]}**\n\n↳ *{o[1]}*",
     index=0,
 )
+img_choice = selected_img_card[0]
+
+kernel_options = [
+    ("Sobel 水平边缘 (Sobel-X)", "一阶水平微分核 · 提取横向轮廓结构"),
+    ("Sobel 垂直边缘 (Sobel-Y)", "一阶垂直微分核 · 提取纵向轮廓结构"),
+    ("拉普拉斯全向边缘 (Laplacian)", "二阶各向同性微分核 · 提取全方向边缘"),
+    ("图像锐化 (Sharpen)", "中心高权重微分增强 · 强化高频纹理细节"),
+    ("高斯模糊 (Gaussian Blur)", "低通加权平滑 · 抑制高频噪点"),
+]
+
+selected_kernel_card = st.sidebar.radio(
+    "卷积核类型 (Filter Kernel)",
+    options=kernel_options,
+    format_func=lambda o: f"**{o[0]}**\n\n↳ *{o[1]}*",
+    index=0,
+)
+kernel_choice = selected_kernel_card[0]
 
 vit_patch_size = st.sidebar.select_slider(
     "ViT Patch 尺寸 (Patch Size)",
@@ -248,6 +261,22 @@ st.markdown(
     f'{anchor_badge("D", "purple")} <span style="font-weight:800;color:#5b21b6;font-size:0.86rem;">2D CONVOLUTION // 卷积滑动滤波计算演示</span>'
     f"</div>",
     unsafe_allow_html=True,
+)
+
+render_live_param_status_bar(
+    title="CONV2D & SPATIAL FILTERING // 2D 卷积滑动内积与特征图提取",
+    badges=[
+        {"label": "Filter", "value": f"{kernel_choice}", "color": "blue"},
+        {"label": "Kernel Size", "value": "3x3", "color": "amber"},
+        {"label": "Feature Shape", "value": f"{feature_map.shape[0]}x{feature_map.shape[1]}", "color": "emerald"},
+    ],
+    metrics=[
+        ("步长 Stride", "1"),
+        ("填充 Padding", "1 (Same)"),
+        ("输出通道 C_out", "1"),
+    ],
+    tag="SPATIAL INVARIANCE ACTIVE",
+    tag_color="emerald",
 )
 
 col_img_in, col_kernel, col_img_out = st.columns([1.2, 0.8, 1.2])

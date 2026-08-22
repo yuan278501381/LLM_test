@@ -22,6 +22,7 @@ from dashboard.styles.theme import (
     anchor_badge,
     apply_custom_theme,
     render_hero_header,
+    render_live_param_status_bar,
     render_metric_card,
     render_floating_hud_navigator,
     render_page_guide,
@@ -192,11 +193,13 @@ lora_rank_val = st.sidebar.select_slider(
     value=4,
 )
 
-lora_dmodel = st.sidebar.selectbox(
+dmodel_opts = [64, 128, 256, 512, 1024]
+lora_dmodel = st.sidebar.segmented_control(
     "主干模型维度 (d_model)",
-    options=[64, 128, 256, 512, 1024],
-    index=3,
+    options=dmodel_opts,
+    default=512,
 )
+lora_dmodel = lora_dmodel or 512
 
 stage_options = list(AlignmentPipeline.STAGE_SCORES.keys())
 selected_stages = st.sidebar.multiselect(
@@ -351,6 +354,23 @@ st.markdown(
     f'{anchor_badge("E", "blue")} <span style="font-weight:800;color:#1e40af;font-size:0.86rem;">6D RADAR EVOLUTION // 模型能力画像六维雷达演进图</span>'
     f"</div>",
     unsafe_allow_html=True,
+)
+
+render_live_param_status_bar(
+    title="POST-TRAINING & LORA DYNAMICS // 后训练微调与对齐微观参数",
+    badges=[
+        {"label": "LoRA Rank r", "value": f"{lora_rank_val}", "color": "blue"},
+        {"label": "d_model", "value": f"{lora_dmodel}", "color": "amber"},
+        {"label": "PPO Clip ε", "value": f"{ppo_eps:.2f}", "color": "purple"},
+        {"label": "DPO Beta β", "value": f"{dpo_beta:.2f}", "color": "emerald"},
+    ],
+    metrics=[
+        ("参数压缩比", f"{lora_stats['compression_ratio']:.1f}x"),
+        ("显存节省率", f"{lora_stats['saved_percent']:.1f}%"),
+        ("对齐奖励峰值", f"+{rlhf_traj['reward'][-1]:.2f}"),
+    ],
+    tag=f"LORA SAVINGS: {lora_stats['saved_percent']:.1f}% VRAM",
+    tag_color="emerald",
 )
 
 categories = ["有用性", "无害性", "诚实性", "指令跟随", "创造力", "安全性"]

@@ -28,7 +28,7 @@ def _declared_lesson_ids(page: Path) -> list[str]:
 
 
 def test_evidence_registry_is_complete_and_not_self_claimed_reproduction():
-    assert set(LESSONS) == {f"M{i:02d}" for i in range(16)}
+    assert set(LESSONS) == {f"M{i:02d}" for i in range(17)}
     assert set(EVIDENCE_DESCRIPTIONS) == set(EvidenceLevel)
     for lesson in LESSONS.values():
         assert lesson.evidence
@@ -50,7 +50,7 @@ def test_unknown_evidence_level_is_rejected():
 
 def test_every_page_declares_exactly_one_matching_lesson():
     pages = sorted(PAGES_DIR.glob("*.py"))
-    assert len(pages) == 16
+    assert len(pages) == 17
     for page in pages:
         lesson_number = int(page.name.split("_", maxsplit=1)[0])
         expected = f"M{lesson_number:02d}"

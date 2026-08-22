@@ -27,6 +27,7 @@ from dashboard.styles.theme import (
     anchor_badge,
     apply_custom_theme,
     render_hero_header,
+    render_live_param_status_bar,
     render_metric_card,
     render_page_guide,
     render_section_heading,
@@ -168,11 +169,13 @@ prompt_presets = {
     "自定义 Prompt...": "",
 }
 
-selected_prompt_key = st.sidebar.selectbox(
+prompt_opts = list(prompt_presets.keys())
+selected_prompt_key = st.sidebar.segmented_control(
     "Prompt 预设",
-    list(prompt_presets.keys()),
-    index=0,
+    options=prompt_opts,
+    default=prompt_opts[0],
 )
+selected_prompt_key = selected_prompt_key or prompt_opts[0]
 
 if "自定义" in selected_prompt_key:
     custom_prompt = st.sidebar.text_input("输入自定义英文 Prompt", "the king and")
@@ -343,6 +346,27 @@ st.markdown(
 )
 prompt_len = len(current_prompt_text.strip().split())
 render_text_stream_box(current_tokens, prompt_len)
+
+top_idx = int(np.argmax(current_probs))
+top_token_name = vocab_words[top_idx]
+top_token_prob = float(current_probs[top_idx])
+
+render_live_param_status_bar(
+    title="NEXT-TOKEN GENERATION DYNAMICS // 自回归生成与采样参数",
+    badges=[
+        {"label": "Temperature T", "value": f"{temperature:.2f}", "color": "blue"},
+        {"label": "Top-K", "value": f"{top_k}", "color": "amber"},
+        {"label": "Argmax Token", "value": f"'{top_token_name}'", "color": "emerald"},
+        {"label": "Peak P", "value": f"{top_token_prob:.1%}", "color": "purple"},
+    ],
+    metrics=[
+        ("序列长度 T", f"{len(current_tokens)} tokens"),
+        ("词表规模 |V|", f"{len(vocab_words)}"),
+        ("解码策略", "Greedy" if temperature < 0.05 else f"Top-{top_k} Sampling"),
+    ],
+    tag=f"GENERATING: +{len(current_tokens) - prompt_len} TOKENS",
+    tag_color="emerald",
+)
 
 # ---------------------------------------------------------------------------
 # 主视图区 2：下一词概率柱状图 & 实时注意力热力图

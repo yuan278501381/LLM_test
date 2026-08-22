@@ -31,8 +31,8 @@ apply_custom_theme()
 # Hero 区域
 render_hero_header(
     title="NN Playground",
-    subtitle="从数学、感知器与反向传播出发，用纯 NumPy 教学实现逐步理解 Transformer、多模态、训练与评估",
-    badge_text="EVIDENCE-LABELED · PURE NUMPY CORE · M00-M15",
+    subtitle="从数学、感知器与反向传播出发，用纯 NumPy 教学实现逐步理解 Transformer、多模态、训练、评估与强化学习",
+    badge_text="EVIDENCE-LABELED · PURE NUMPY CORE · M00-M16",
     badge_type="blue",
 )
 
@@ -252,6 +252,30 @@ with col_a3:
         st.page_link("pages/15_评估基准.py", label="进入实验 // LAUNCH →", width="stretch")
 
 # ---------------------------------------------------------------------------
+# 板块 3: 2026 前沿强化学习与自主智能体
+# ---------------------------------------------------------------------------
+render_section_heading(
+    "REINFORCEMENT LEARNING & REASONING AGENTS // 强化学习与自主智能体 (DeepSeek-R1 式纯 RL 涌现)",
+    icon_name="compass",
+    subtext="从经典网格马尔可夫决策过程 (MDP) 到 2026 年前沿的 GRPO 纯强化学习推理演进与长思维链顿悟 (Aha Moment)",
+)
+
+with st.container(border=True):
+    icon_reinf = svg_icon("compass", size=24, color="#be123c")
+    st.markdown(
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;">'
+        f'<div style="display:flex;align-items:center;gap:0.6rem;">{icon_reinf}'
+        '<span style="font-size:1.25rem;font-weight:800;color:#0f172a;">强化学习与自主智能体实验室 (MDP · 贝尔曼曲面 · Q-Learning · GRPO)</span></div>'
+        '<span class="pill-badge pill-rose">M16</span>'
+        "</div>"
+        '<div style="color:#475569;font-size:0.92rem;margin-bottom:0.8rem;line-height:1.6;">'
+        '体验智能体如何在未知迷宫中试错寻路、避开悬崖并收敛最优策略；见证 2026 前沿 DeepSeek-R1 式 GRPO 算法如何仅靠确定性规则奖励，自发涌现上千 Token 的深度慢思考与自我纠错反思！'
+        "</div>",
+        unsafe_allow_html=True,
+    )
+    st.page_link("pages/16_强化学习.py", label="进入强化学习实验室 // LAUNCH →", width="stretch")
+
+# ---------------------------------------------------------------------------
 # 系统技术架构与工程标准
 # ---------------------------------------------------------------------------
 col_arch, col_stats = st.columns([1.5, 1])
@@ -289,7 +313,7 @@ with col_stats:
             """
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;margin-top:0.6rem;">
                 <div style="background:#f8fafc;border:1px solid #e2e8f0;padding:0.8rem;border-radius:8px;text-align:center;">
-                    <div style="font-size:1.45rem;font-weight:800;color:#1d4ed8;font-family:'JetBrains Mono';">PYTEST ✓</div>
+                    <div style="font-size:1.45rem;font-weight:800;color:#1d4ed8;font-family:'JetBrains Mono';">PYTEST [OK] </div>
                     <div style="font-size:0.72rem;color:#64748b;font-weight:700;text-transform:uppercase;">RUN LOCALLY FOR COUNT</div>
                 </div>
                 <div style="background:#f8fafc;border:1px solid #e2e8f0;padding:0.8rem;border-radius:8px;text-align:center;">
@@ -297,7 +321,7 @@ with col_stats:
                     <div style="font-size:0.72rem;color:#64748b;font-weight:700;text-transform:uppercase;">GRAD ERROR</div>
                 </div>
                 <div style="background:#f8fafc;border:1px solid #e2e8f0;padding:0.8rem;border-radius:8px;text-align:center;">
-                    <div style="font-size:1.45rem;font-weight:800;color:#b45309;font-family:'JetBrains Mono';">M00–M15</div>
+                    <div style="font-size:1.45rem;font-weight:800;color:#b45309;font-family:'JetBrains Mono';">M00–M16</div>
                     <div style="font-size:0.72rem;color:#64748b;font-weight:700;text-transform:uppercase;">MILESTONES</div>
                 </div>
                 <div style="background:#f8fafc;border:1px solid #e2e8f0;padding:0.8rem;border-radius:8px;text-align:center;">
