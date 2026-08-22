@@ -20,6 +20,13 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 from dashboard.styles.icons import svg_icon
+from nn_core.observability import (
+    generate_trace_id,
+    get_logger,
+    get_trace_id,
+    set_trace_id,
+    setup_logging,
+)
 
 
 def reload_runtime_modules() -> None:
@@ -44,7 +51,7 @@ def _install_plotly_playback() -> None:
 
     @wraps(original_plotly_chart)
     def animated_plotly_chart(figure_or_data: Any, *args: Any, **kwargs: Any) -> Any:
-        if hasattr(figure_or_data, "data") and hasattr(figure_or_data, "layout"):
+        if isinstance(figure_or_data, object) and figure_or_data.__class__.__name__ == "Figure":
             figure_or_data = add_chart_playback(figure_or_data)
         return original_plotly_chart(figure_or_data, *args, **kwargs)
 
@@ -54,10 +61,17 @@ def _install_plotly_playback() -> None:
 
 def apply_custom_theme() -> None:
     """
-    注入全局现代极简高对比度亮色 CSS 样式表。
+    注入全局现代极简高对比度亮色 CSS 样式表与全链路 TraceID 上下文。
     全面适配 High-DPI / 4K 屏幕与全操作系统缩放（Windows / macOS / Linux）。
     采用 0ms 本地原生高精字体栈，彻底根绝 FOUT (Flash of Unstyled Text) 字体粗细闪烁与页面跳动。
     """
+    setup_logging()
+    if "session_trace_id" not in st.session_state:
+        st.session_state["session_trace_id"] = generate_trace_id("st")
+    set_trace_id(str(st.session_state["session_trace_id"]))
+    logger = get_logger("dashboard.theme")
+    logger.debug("页面主题与 Trace 上下文加载完成 [TraceID: %s]", get_trace_id())
+
     _install_plotly_playback()
     st.markdown(
         """<style>

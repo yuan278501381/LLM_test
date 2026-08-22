@@ -76,6 +76,21 @@ from nn_core.layers import Dense, Dropout
 from nn_core.lora import LoRALayer, compute_param_savings
 from nn_core.losses import MSE, BinaryCrossEntropy, CategoricalCrossEntropy
 from nn_core.model import Sequential
+from nn_core.observability import (
+    GLOBAL_RING_BUFFER,
+    DailyRetentionFileHandler,
+    RingBufferLogHandler,
+    StandardLogFormatter,
+    TraceIdFilter,
+    generate_trace_id,
+    get_logger,
+    get_trace_id,
+    purge_expired_logs,
+    set_trace_id,
+    setup_logging,
+    trace_scope,
+    traced_span,
+)
 from nn_core.optimizers import SGD, Adam, Momentum, RMSProp
 from nn_core.posttraining import AlignmentPipeline, generate_before_after_examples
 
@@ -114,6 +129,7 @@ from nn_core.world_model import (
 
 __all__ = [
     "GELU",
+    "GLOBAL_RING_BUFFER",
     # 基础
     "L1",
     "L2",
@@ -137,6 +153,7 @@ __all__ = [
     # 视觉与音频
     "Conv2D",
     "DPOLoss",
+    "DailyRetentionFileHandler",
     "DataMixtureEngine",
     "Dense",
     "DiffusionScheduler",
@@ -170,6 +187,7 @@ __all__ = [
     "ReLU",
     "ReversalCurseEngine",
     "RewardModel",
+    "RingBufferLogHandler",
     "RotaryPositionalEmbedding",
     "ScalingLawEngine",
     "Sequential",
@@ -178,10 +196,12 @@ __all__ = [
     "Softmax",
     "SpatioTemporalPatchEmbed",
     "SpectrogramFramePatcher",
+    "StandardLogFormatter",
     "SwiGLU",
     "Tanh",
     "TinyGPT",
     "TokenizerTrapInspector",
+    "TraceIdFilter",
     "TrainingHistory",
     "TransformerBlock",
     "VideoFrameSampler",
@@ -203,7 +223,9 @@ __all__ = [
     "generate_chord",
     # 视频与世界模型
     "generate_synthetic_video",
+    "generate_trace_id",
     "generate_waveform",
+    "get_logger",
     "get_mini_gsm8k",
     "get_mini_hellaswag",
     "get_mini_mmlu",
@@ -213,6 +235,7 @@ __all__ = [
     "get_pretrained_embeddings",
     "get_synthetic_clip_demo_data",
     "get_synthetic_demo_embeddings",
+    "get_trace_id",
     "he_init",
     "hz_to_mel",
     "im2col",
@@ -220,14 +243,19 @@ __all__ = [
     "mel_to_hz",
     "numpy_to_wav_bytes",
     "precompute_freqs_cis",
+    "purge_expired_logs",
     "random_init",
     "repeat_kv",
     "safe_exp",
     "safe_log",
     "scaled_dot_product_attention",
     "set_seed",
+    "set_trace_id",
+    "setup_logging",
     "silu",
     "stft",
+    "trace_scope",
+    "traced_span",
     "visualize_diffusion_process",
     "xavier_init",
     "zeros_init",

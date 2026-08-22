@@ -13,6 +13,7 @@ if _PROJECT_ROOT not in sys.path:
 
 import streamlit as st
 
+from dashboard.components.telemetry import render_live_log_drawer
 from dashboard.styles.icons import svg_icon
 from dashboard.styles.theme import (
     apply_custom_theme,
@@ -360,6 +361,9 @@ with col_stats:
             """,
             unsafe_allow_html=True,
         )
+
+# 全链路 TraceID 实时可观测性诊断探针
+render_live_log_drawer()
 
 # 底部版权声明
 st.markdown(
