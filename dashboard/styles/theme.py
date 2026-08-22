@@ -428,46 +428,56 @@ g.updatemenu-button {
     font-feature-settings: "tnum" 1 !important;
 }
 
-/* 教学指代聚焦：单次柔和入场 + 定位标签，避免高频闪烁造成认知干扰 */
+/* 教学指代聚焦：高能量视觉呼吸脉冲 + 饱满光晕，确保视线从屏幕右侧扫视过来时清晰捕获 */
 .interactive-region {
     border-radius: 10px !important;
     position: relative !important;
-    transition: background-color 0.35s ease, border-color 0.35s ease,
-                box-shadow 0.35s ease, transform 0.35s ease !important;
+    transition: background-color 0.4s ease, border-color 0.4s ease,
+                box-shadow 0.4s ease, transform 0.4s ease !important;
     scroll-margin-top: 80px !important;
 }
 
 .nn-focus-target,
 .interactive-region:target {
-    animation: region-focus-enter 2.8s cubic-bezier(0.16, 1, 0.3, 1) both !important;
+    animation: region-focus-enter 4.2s cubic-bezier(0.16, 1, 0.3, 1) both !important;
+    border-left: 6px solid #1d4ed8 !important;
 }
 
 @keyframes region-focus-enter {
     0% {
-        opacity: 0.76;
-        background-color: #eff6ff;
-        box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.48), 0 8px 30px rgba(37, 99, 235, 0.18);
-        border-color: #60a5fa;
-        transform: translateY(8px);
+        opacity: 0.85;
+        background-color: #dbeafe;
+        box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.42), 0 16px 45px rgba(37, 99, 235, 0.28);
+        border-color: #2563eb;
+        transform: translateY(6px) scale(1.006);
     }
-    28% {
+    20% {
+        opacity: 1;
+        background-color: #bfdbfe;
+        box-shadow: 0 0 0 10px rgba(37, 99, 235, 0.32), 0 20px 50px rgba(37, 99, 235, 0.35);
+        border-color: #1d4ed8;
+        transform: translateY(0) scale(1.008);
+    }
+    45% {
         opacity: 1;
         background-color: #dbeafe;
-        box-shadow: 0 0 0 7px rgba(37, 99, 235, 0.12), 0 12px 34px rgba(37, 99, 235, 0.16);
+        box-shadow: 0 0 0 8px rgba(37, 99, 235, 0.22), 0 14px 36px rgba(37, 99, 235, 0.22);
         border-color: #3b82f6;
-        transform: translateY(0);
+        transform: translateY(0) scale(1.004);
     }
-    68% {
+    75% {
+        opacity: 1;
         background-color: #eff6ff;
-        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.07), 0 8px 24px rgba(37, 99, 235, 0.09);
-        border-color: #93c5fd;
+        box-shadow: 0 0 0 5px rgba(37, 99, 235, 0.12), 0 8px 24px rgba(37, 99, 235, 0.12);
+        border-color: #60a5fa;
+        transform: translateY(0) scale(1);
     }
     100% {
         opacity: 1;
         background-color: #ffffff;
         box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
         border-color: #e2e8f0;
-        transform: translateY(0);
+        transform: translateY(0) scale(1);
     }
 }
 
@@ -475,25 +485,25 @@ g.updatemenu-button {
     position: absolute !important;
     left: 0.85rem !important;
     right: auto !important;
-    top: -0.75rem !important;
+    top: -0.9rem !important;
     z-index: 9999 !important;
-    padding: 0.25rem 0.75rem !important;
-    border: 1px solid #2563eb !important;
+    padding: 0.28rem 0.85rem !important;
+    border: 2px solid #38bdf8 !important;
     border-radius: 999px !important;
     background: #0f172a !important;
-    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.32), 0 0 0 2px rgba(37, 99, 235, 0.2) !important;
+    box-shadow: 0 8px 25px rgba(15, 23, 42, 0.45), 0 0 0 3px rgba(56, 189, 248, 0.35) !important;
     color: #ffffff !important;
-    font-size: 0.72rem !important;
+    font-size: 0.76rem !important;
     font-weight: 800 !important;
-    letter-spacing: 0.03em !important;
+    letter-spacing: 0.04em !important;
     pointer-events: none !important;
-    animation: focus-chip-enter 2.8s cubic-bezier(0.16, 1, 0.3, 1) both !important;
+    animation: focus-chip-enter 4.2s cubic-bezier(0.16, 1, 0.3, 1) both !important;
 }
 
 @keyframes focus-chip-enter {
-    0% { opacity: 0; transform: translateY(7px); }
-    16%, 74% { opacity: 1; transform: translateY(0); }
-    100% { opacity: 0; transform: translateY(-3px); }
+    0% { opacity: 0; transform: translateY(10px) scale(0.92); }
+    12%, 80% { opacity: 1; transform: translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateY(-4px) scale(0.96); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1265,12 +1275,12 @@ def render_floating_hud_navigator(sections: list[dict]) -> None:
                 var chip = doc.createElement('span');
                 chip.className = 'nn-focus-chip';
                 chip.setAttribute('role', 'status');
-                chip.textContent = '正在查看这里';
-                chip.style.cssText = 'position:absolute !important; left:0.85rem !important; right:auto !important; top:-0.75rem !important; z-index:9999 !important; padding:0.25rem 0.75rem !important; border:1px solid #2563eb !important; border-radius:999px !important; background:#0f172a !important; box-shadow:0 4px 14px rgba(15, 23, 42, 0.32), 0 0 0 2px rgba(37, 99, 235, 0.2) !important; color:#ffffff !important; font-size:0.72rem !important; font-weight:800 !important; letter-spacing:0.03em !important; pointer-events:none !important;';
+                chip.innerHTML = '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#38bdf8;margin-right:7px;box-shadow:0 0 8px #38bdf8;vertical-align:middle;"></span>正在查看此板块';
+                chip.style.cssText = 'position:absolute !important; left:0.85rem !important; right:auto !important; top:-0.9rem !important; z-index:9999 !important; padding:0.28rem 0.85rem !important; border:2px solid #38bdf8 !important; border-radius:999px !important; background:#0f172a !important; box-shadow:0 8px 25px rgba(15, 23, 42, 0.45), 0 0 0 3px rgba(56, 189, 248, 0.35) !important; color:#ffffff !important; font-size:0.76rem !important; font-weight:800 !important; letter-spacing:0.04em !important; pointer-events:none !important;';
                 el.appendChild(chip);
                 window.parent.clearTimeout(doc.__nnFocusTimer);
                 doc.__nnFocusTimer = window.parent.setTimeout(
-                    clearFocus, reducedMotion ? 1800 : 3000
+                    clearFocus, reducedMotion ? 2000 : 4200
                 );
                 return true;
             }}
