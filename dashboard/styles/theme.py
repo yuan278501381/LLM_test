@@ -952,7 +952,7 @@ def render_page_blueprint(sections: list[dict]) -> None:
 def render_floating_hud_navigator(sections: list[dict]) -> None:
     """使用 st.iframe 在宿主视窗右侧挂载常驻悬浮微缩罗盘 HUD。"""
     sec_json = json.dumps(sections, ensure_ascii=False)
-    js = f"""
+    js = f"""<!doctype html><html><head><meta charset="utf-8"></head><body>
     <script>
     (function() {{
         try {{
@@ -965,6 +965,26 @@ def render_floating_hud_navigator(sections: list[dict]) -> None:
             var sections = {sec_json};
             if (!sections || sections.length === 0) return;
 
+            doc.__nnIsNavigating = false;
+
+            function setActiveItem(targetId) {{
+                doc.querySelectorAll('.nn-hud-item').forEach(function(el) {{
+                    if (el.getAttribute('data-target') === targetId) {{
+                        el.classList.add('active');
+                        el.style.background = '#eff6ff';
+                        el.style.color = '#1d4ed8';
+                        el.style.fontWeight = '800';
+                        el.style.borderLeft = '3px solid #2563eb';
+                    }} else {{
+                        el.classList.remove('active');
+                        el.style.background = 'transparent';
+                        el.style.color = '#334155';
+                        el.style.fontWeight = '600';
+                        el.style.borderLeft = 'none';
+                    }}
+                }});
+            }}
+
             function clearFocus() {{
                 doc.querySelectorAll('.nn-focus-target').forEach(function(node) {{
                     node.classList.remove('nn-focus-target');
@@ -973,9 +993,21 @@ def render_floating_hud_navigator(sections: list[dict]) -> None:
             }}
 
             function focusRegion(target) {{
+                var targetId = typeof target === 'string' ? target : (target ? target.id : '');
                 var el = typeof target === 'string' ? doc.getElementById(target) : target;
                 if (!el) return false;
                 clearFocus();
+
+                if (targetId) {{
+                    setActiveItem(targetId);
+                    doc.__nnIsNavigating = true;
+                    if (doc.__nnNavTimer) window.parent.clearTimeout(doc.__nnNavTimer);
+                    doc.__nnNavTimer = window.parent.setTimeout(function() {{
+                        doc.__nnIsNavigating = false;
+                        updateActiveSection();
+                    }}, 900);
+                }}
+
                 var reducedMotion = window.parent.matchMedia &&
                     window.parent.matchMedia('(prefers-reduced-motion: reduce)').matches;
                 el.scrollIntoView({{ behavior: reducedMotion ? 'auto' : 'smooth', block: 'center' }});
@@ -1015,12 +1047,12 @@ def render_floating_hud_navigator(sections: list[dict]) -> None:
 
             var hud = doc.createElement('div');
             hud.id = 'nn-floating-spatial-hud';
-            hud.style.cssText = 'position:fixed;right:22px;top:130px;z-index:999999;background:rgba(255,255,255,0.92);backdrop-filter:blur(16px);border:1px solid #cbd5e1;border-radius:12px;box-shadow:0 10px 30px rgba(15,23,42,0.1);padding:0.65rem 0.75rem;width:175px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:0.75rem;transition:all 0.2s ease;';
-            if (window.parent.innerWidth < 2200) hud.style.display = 'none';
+            hud.style.cssText = 'position:fixed;right:20px;top:115px;z-index:999999;background:rgba(255,255,255,0.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid #cbd5e1;border-radius:12px;box-shadow:0 10px 25px -5px rgba(15,23,42,0.08),0 4px 6px -2px rgba(15,23,42,0.04);padding:0.65rem 0.75rem;width:178px;font-family:JetBrains Mono,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:0.75rem;transition:all 0.2s cubic-bezier(0.4,0,0.2,1);';
+            if (window.parent.innerWidth < 1280) hud.style.display = 'none';
 
             var header = doc.createElement('div');
             header.style.cssText = 'font-size:0.68rem;font-weight:800;color:#64748b;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:0.45rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #f1f5f9;padding-bottom:0.3rem;';
-            header.innerHTML = '<span>🧭 SPATIAL HUD</span><span style="font-size:0.65rem;color:#3b82f6;font-weight:700;">NAV</span>';
+            header.innerHTML = '<span style="display:inline-flex;align-items:center;gap:4px;"><span style="color:#2563eb;font-weight:800;">[NAV]</span> SPATIAL HUD</span><span style="font-size:0.62rem;color:#3b82f6;font-weight:800;background:#eff6ff;border:1px solid #bfdbfe;padding:1px 4px;border-radius:3px;">LIVE</span>';
             hud.appendChild(header);
 
             var list = doc.createElement('div');
@@ -1050,6 +1082,7 @@ def render_floating_hud_navigator(sections: list[dict]) -> None:
 
                 item.addEventListener('click', function(e) {{
                     e.preventDefault();
+                    e.stopPropagation();
                     focusRegion(targetId);
                 }});
 
@@ -1075,47 +1108,65 @@ def render_floating_hud_navigator(sections: list[dict]) -> None:
             doc.body.appendChild(hud);
 
             function updateActiveSection() {{
-                var main = doc.querySelector('[data-testid="stMain"]');
-                var scrollPos = (main ? main.scrollTop : window.parent.scrollY) + 220;
-                var currentActiveId = null;
+                if (doc.__nnIsNavigating) return;
 
-                sections.forEach(function(sec) {{
+                var main = doc.querySelector('[data-testid="stMain"]');
+                var viewH = (main ? main.clientHeight : window.parent.innerHeight) || 800;
+                var focalLine = viewH * 0.45;
+
+                // 页面触底保护：如果已经滚动到底部，直接高亮最后一项
+                if (main && (main.scrollTop + main.clientHeight >= main.scrollHeight - 40)) {{
+                    var lastSec = sections[sections.length - 1];
+                    if (lastSec) {{
+                        setActiveItem(lastSec.target_id || ('region-' + (lastSec.id || '').toLowerCase()));
+                        return;
+                    }}
+                }}
+
+                var currentActive = null;
+
+                for (var i = 0; i < sections.length; i++) {{
+                    var sec = sections[i];
                     var targetId = sec.target_id || ('region-' + (sec.id || '').toLowerCase());
                     var el = doc.getElementById(targetId);
-                    if (el) {{
-                        var top = el.getBoundingClientRect().top +
-                            (main ? main.scrollTop : window.parent.scrollY);
-                        if (scrollPos >= top) {{
-                            currentActiveId = targetId;
-                        }}
-                    }}
-                }});
+                    if (!el) continue;
 
-                doc.querySelectorAll('.nn-hud-item').forEach(function(el) {{
-                    if (el.getAttribute('data-target') === currentActiveId) {{
-                        el.classList.add('active');
-                        el.style.background = '#eff6ff';
-                        el.style.color = '#1d4ed8';
-                        el.style.fontWeight = '800';
-                        el.style.borderLeft = '3px solid #2563eb';
-                    }} else {{
-                        el.classList.remove('active');
-                        el.style.background = 'transparent';
-                        el.style.color = '#334155';
-                        el.style.fontWeight = '600';
-                        el.style.borderLeft = 'none';
+                    // 忽略侧边栏中的固定元素（如 region-a）
+                    if (el.closest && el.closest('[data-testid="stSidebar"]')) {{
+                        continue;
                     }}
-                }});
+
+                    var rect = el.getBoundingClientRect();
+                    // 标准 ScrollSpy 判定：顶部到达或穿过焦点线（+50px 容差）
+                    if (rect.top <= focalLine + 50) {{
+                        currentActive = targetId;
+                    }}
+                }}
+
+                if (!currentActive) {{
+                    currentActive = sections[0].target_id || ('region-' + (sections[0].id || '').toLowerCase());
+                }}
+
+                if (currentActive) {{
+                    setActiveItem(currentActive);
+                }}
             }}
 
             var scrollContainer = doc.querySelector('[data-testid="stMain"]') || window.parent;
+            if (doc.__nnScrollListener && doc.__nnScrollContainer) {{
+                doc.__nnScrollContainer.removeEventListener('scroll', doc.__nnScrollListener);
+            }}
+            doc.__nnScrollListener = updateActiveSection;
+            doc.__nnScrollContainer = scrollContainer;
             scrollContainer.addEventListener('scroll', updateActiveSection, {{ passive: true }});
+            
             setTimeout(updateActiveSection, 300);
+            setTimeout(updateActiveSection, 800);
 
         }} catch(e) {{
             console.error('Floating HUD error:', e);
         }}
     }})();
-    </script>
+    </script></body></html>
     """
     st.iframe(js, height=1, width=1)

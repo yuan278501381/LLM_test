@@ -60,24 +60,27 @@ def render_timeline_controls(
     html = f"""
     <!doctype html><html><head><meta charset="utf-8"><style>
     *{{box-sizing:border-box}} body{{margin:0;padding:2px 0 0;background:transparent;color:#0f172a;
-      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif}}
+      font-family:'JetBrains Mono',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}}
     .status{{height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;
       border:1px solid #e2e8f0;border-radius:10px;background:#fff;box-shadow:0 2px 8px rgba(15,23,42,.03)}}
-    .title{{display:flex;align-items:center;gap:9px;color:#4338ca;font-size:13px;font-weight:800}}
+    .title{{display:flex;align-items:center;gap:9px;color:#1e40af;font-size:13px;font-weight:800;letter-spacing:0.02em}}
     .badge{{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:7px;background:#f5f3ff;
-      border:1px solid #ddd6fe;color:#5b21b6;font-family:monospace}}
-    .state{{font:700 12px ui-monospace,SFMono-Regular,Consolas,monospace;padding:5px 10px;border-radius:6px;
+      border:1px solid #ddd6fe;color:#5b21b6;font-family:'JetBrains Mono',monospace;font-weight:800}}
+    .state{{font:700 12px 'JetBrains Mono',ui-monospace,SFMono-Regular,Consolas,monospace;padding:5px 10px;border-radius:6px;
       color:#047857;background:#ecfdf5;border:1px solid #a7f3d0;font-variant-numeric:tabular-nums}}
     .buttons{{display:grid;grid-template-columns:1fr 1.1fr 1.8fr 1.1fr 1fr;gap:12px;margin-top:12px}}
     button{{height:42px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:#0f172a;
-      font-size:14px;font-weight:650;cursor:pointer;transition:background .18s,border-color .18s,transform .12s}}
-    button:hover{{border-color:#4f46e5;background:#f8fafc}} button:active{{transform:translateY(1px)}}
-    #toggle{{background:#4f63df;border-color:#4f63df;color:#fff}} #toggle:hover{{background:#4054d2}}
-    .progress-label{{margin-top:12px;font-size:13px;font-variant-numeric:tabular-nums}}
-    .track{{height:6px;margin-top:7px;border-radius:999px;background:#eef2f7;overflow:hidden}}
-    .fill{{height:100%;width:100%;background:#4f63df;transform-origin:left center;transition:transform .38s linear}}
-    .caption{{margin-top:10px;color:#64748b;font-size:12px}}
-    @media(max-width:720px){{.buttons{{grid-template-columns:1fr 1fr 1.5fr 1fr 1fr;gap:5px}}button{{font-size:12px}}}}
+      font-family:'JetBrains Mono',-apple-system,sans-serif;font-size:13px;font-weight:700;cursor:pointer;
+      box-shadow:0 1px 3px rgba(15,23,42,0.04);transition:all .18s cubic-bezier(0.4,0,0.2,1)}}
+    button:hover{{border-color:#2563eb;color:#1d4ed8;background:#f8fafc;box-shadow:0 3px 8px rgba(37,99,235,0.08);transform:translateY(-1px)}}
+    button:active{{transform:translateY(1px) scale(0.99)}}
+    #toggle{{background:#1d4ed8;border-color:#1d4ed8;color:#fff;box-shadow:0 2px 6px rgba(29,78,216,0.24)}}
+    #toggle:hover{{background:#1e40af;border-color:#1e40af;color:#fff;box-shadow:0 4px 12px rgba(29,78,216,0.32)}}
+    .progress-label{{margin-top:12px;font-size:12.5px;font-weight:600;color:#334155;font-variant-numeric:tabular-nums}}
+    .track{{height:6px;margin-top:7px;border-radius:999px;background:#e2e8f0;overflow:hidden}}
+    .fill{{height:100%;width:100%;background:linear-gradient(90deg,#1d4ed8 0%,#4338ca 100%);transform-origin:left center;transition:transform .38s cubic-bezier(0.16,1,0.3,1)}}
+    .caption{{margin-top:10px;color:#64748b;font-size:12px;line-height:1.5}}
+    @media(max-width:720px){{.buttons{{grid-template-columns:1fr 1fr 1.5fr 1fr 1fr;gap:5px}}button{{font-size:11px}}}}
     @media(prefers-reduced-motion:reduce){{*{{transition:none!important}}}}
     </style></head><body>
       <div class="status"><div class="title"><span id="badge" class="badge"></span>
@@ -148,10 +151,10 @@ def render_player_controls(payload_json: str) -> None:
 def _canvas_base_css(height: int) -> str:
     return f"""
     *{{box-sizing:border-box}}body{{margin:0;background:transparent;color:#0f172a;
-      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;overflow:hidden}}
-    .equation{{height:30px;line-height:28px;padding:0 10px;border:1px solid #e2e8f0;border-radius:6px;
-      background:#f8fafc;color:#1e40af;font:700 12px/28px ui-monospace,SFMono-Regular,Consolas,monospace;
-      font-variant-numeric:tabular-nums}}
+      font-family:'JetBrains Mono',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;overflow:hidden}}
+    .equation{{height:32px;line-height:30px;padding:0 12px;border:1px solid #e2e8f0;border-radius:7px;
+      background:#f8fafc;color:#1e40af;font:700 12px/30px 'JetBrains Mono',ui-monospace,SFMono-Regular,Consolas,monospace;
+      font-variant-numeric:tabular-nums;margin-bottom:6px;box-shadow:0 1px 3px rgba(15,23,42,0.02)}}
     canvas{{display:block;width:100%;height:{height}px;background:#fff}}
     """
 
@@ -180,7 +183,7 @@ def render_boundary_canvas(payload_json: str) -> None:
         if(Math.abs(w[1])>1e-9){{for(const x of [xmin,xmax]){{let y=-(w[0]*x+b)/w[1];if(y>=ymin&&y<=ymax)pts.push([x,y])}}}}
         if(Math.abs(w[0])>1e-9){{for(const y of [ymin,ymax]){{let x=-(w[1]*y+b)/w[0];if(x>=xmin&&x<=xmax&&!pts.some(p=>Math.abs(p[0]-x)<1e-6))pts.push([x,y])}}}}
         if(pts.length>=2){{ctx.strokeStyle='#111827';ctx.lineWidth=3.2;ctx.beginPath();ctx.moveTo(sx(pts[0][0]),sy(pts[0][1]));ctx.lineTo(sx(pts[1][0]),sy(pts[1][1]));ctx.stroke()}}}}
-      function draw(){{if(!W)return;let w=data.weights[step-1],b=data.biases[step-1];ctx.clearRect(0,0,W,H);background(w,b);grid();line(w,b);points(data.class0,'#4f63df');points(data.class1,'#b8324b');
+      function draw(){{if(!W)return;let w=data.weights[step-1],b=data.biases[step-1];ctx.clearRect(0,0,W,H);background(w,b);grid();line(w,b);points(data.class0,'#1d4ed8');points(data.class1,'#be123c');
         let sign=b>=0?'+':'−';eq.textContent=`分界实线方程：${{w[0].toFixed(2)}}x₁ + ${{w[1].toFixed(2)}}x₂ ${{sign}} ${{Math.abs(b).toFixed(2)}} = 0`}}
       window.parent.addEventListener('nn:m1-step',e=>{{step=e.detail.step;requestAnimationFrame(draw)}});new ResizeObserver(resize).observe(canvas);resize();
     }})();</script></body></html>"""
@@ -200,7 +203,7 @@ def render_trajectory_canvas(payload_json: str) -> None:
       function resize(){{W=Math.max(420,canvas.clientWidth);dpr=window.devicePixelRatio||1;canvas.width=W*dpr;canvas.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);draw()}}
       function draw(){{if(!W)return;ctx.clearRect(0,0,W,H);ctx.font='11px ui-monospace,monospace';
         for(let i=0;i<=4;i++){{ctx.strokeStyle='#e8edf4';let x=xr[0]+(xr[1]-xr[0])*i/4,xx=sx(x),y=yr[0]+(yr[1]-yr[0])*i/4,yy=sy(y);ctx.beginPath();ctx.moveTo(xx,m.t);ctx.lineTo(xx,H-m.b);ctx.stroke();ctx.beginPath();ctx.moveTo(m.l,yy);ctx.lineTo(W-m.r,yy);ctx.stroke();ctx.fillStyle='#64748b';ctx.textAlign='center';ctx.fillText(x.toFixed(2),xx,H-m.b+19);ctx.textAlign='right';ctx.fillText(y.toFixed(2),m.l-8,yy+4)}}
-        let pts=all.slice(0,step);ctx.strokeStyle='#4f63df';ctx.lineWidth=2.6;ctx.lineJoin='round';ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(sx(p[0]),sy(p[1])):ctx.moveTo(sx(p[0]),sy(p[1])));ctx.stroke();
+        let pts=all.slice(0,step);ctx.strokeStyle='#1d4ed8';ctx.lineWidth=2.8;ctx.lineJoin='round';ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(sx(p[0]),sy(p[1])):ctx.moveTo(sx(p[0]),sy(p[1])));ctx.stroke();
         for(let i=0;i<pts.length;i+=Math.max(1,Math.floor(pts.length/24))){{ctx.fillStyle='#93c5fd';ctx.beginPath();ctx.arc(sx(pts[i][0]),sy(pts[i][1]),3,0,Math.PI*2);ctx.fill()}}
         let first=all[0],cur=pts[pts.length-1];ctx.fillStyle='#be123c';ctx.beginPath();ctx.arc(sx(first[0]),sy(first[1]),6,0,Math.PI*2);ctx.fill();ctx.fillStyle='#047857';ctx.save();ctx.translate(sx(cur[0]),sy(cur[1]));ctx.rotate(Math.PI/4);ctx.fillRect(-6,-6,12,12);ctx.restore();
         ctx.fillStyle='#64748b';ctx.textAlign='center';ctx.fillText('Parameter w₁',(m.l+W-m.r)/2,H-10);ctx.save();ctx.translate(15,(m.t+H-m.b)/2);ctx.rotate(-Math.PI/2);ctx.fillText('Parameter w₂',0,0);ctx.restore();ctx.textAlign='right';ctx.fillText(`Step ${{step}}/${{all.length}}`,W-m.r,m.t+4)}}

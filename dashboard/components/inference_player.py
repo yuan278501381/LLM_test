@@ -91,8 +91,8 @@ def build_training_payload(
 def _base_css(height: int) -> str:
     return f"""
     *{{box-sizing:border-box}}body{{margin:0;background:transparent;color:#0f172a;
-      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;overflow:hidden}}
-    .shell{{height:{height}px;border:1px solid #e2e8f0;border-radius:9px;background:#fff;overflow:hidden}}
+      font-family:'JetBrains Mono',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;overflow:hidden}}
+    .shell{{height:{height}px;border:1px solid #e2e8f0;border-radius:10px;background:#fff;overflow:hidden;box-shadow:0 2px 8px rgba(15,23,42,0.03)}}
     canvas{{display:block;width:100%;height:100%}}
     """
 
@@ -107,20 +107,20 @@ def render_network_signal_canvas(payload_json: str) -> None:
       const labels=['INPUT',...sizes.slice(1,-1).map((_,i)=>`HIDDEN #${{i+1}}`),'OUTPUT'];
       function positions(){{return sizes.map((count,l)=>{{const shown=Math.min(count,limit),x=58+l*(W-116)/(n-1),gap=Math.min(43,270/Math.max(shown-1,1));
         const top=190-gap*(shown-1)/2;return Array.from({{length:shown}},(_,i)=>[x,top+i*gap])}})}}
-      function color(a,alpha=1){{if(a>.5)return `rgba(37,99,235,${{alpha}})`;if(a>.05)return `rgba(5,150,105,${{alpha}})`;
-        if(a<-.05)return `rgba(225,29,72,${{alpha}})`;return `rgba(226,232,240,${{alpha}})`}}
+      function color(a,alpha=1){{if(a>.5)return `rgba(29,78,216,${{alpha}})`;if(a>.05)return `rgba(4,120,87,${{alpha}})`;
+        if(a<-.05)return `rgba(190,18,60,${{alpha}})`;return `rgba(226,232,240,${{alpha}})`}}
       function resize(){{W=Math.max(520,canvas.clientWidth);dpr=devicePixelRatio||1;canvas.width=W*dpr;canvas.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);draw(performance.now())}}
       function lerp(a,b,t){{return a+(b-a)*t}}function draw(now){{if(!W)return;const pos=positions(),t=from===target?1:Math.min(1,(now-started)/duration),fa=frames[from],fb=frames[target];ctx.clearRect(0,0,W,H);
-        ctx.fillStyle='#0f172a';ctx.font='700 14px ui-monospace,monospace';ctx.textAlign='left';ctx.fillText('TRAINING DYNAMICS // 权重与探针响应同步演化',18,25);
+        ctx.fillStyle='#0f172a';ctx.font='700 13px JetBrains Mono,monospace';ctx.textAlign='left';ctx.fillText('TRAINING DYNAMICS // 权重与探针响应同步演化',18,25);
         for(let l=0;l<n-1;l++)for(let i=0;i<pos[l].length;i++)for(let j=0;j<pos[l+1].length;j++){{
-          const w=lerp(fa.weights[l]?.[i]?.[j]??0,fb.weights[l]?.[i]?.[j]??0,t),alpha=Math.min(.78,.12+Math.abs(w)*.36);ctx.strokeStyle=w>=0?`rgba(37,99,235,${{alpha}})`:`rgba(225,29,72,${{alpha}})`;
+          const w=lerp(fa.weights[l]?.[i]?.[j]??0,fb.weights[l]?.[i]?.[j]??0,t),alpha=Math.min(.78,.12+Math.abs(w)*.36);ctx.strokeStyle=w>=0?`rgba(29,78,216,${{alpha}})`:`rgba(190,18,60,${{alpha}})`;
           ctx.lineWidth=Math.min(4.2,.6+Math.abs(w)*2.1);ctx.beginPath();ctx.moveTo(...pos[l][i]);ctx.lineTo(...pos[l+1][j]);ctx.stroke();
           if(t<1&&Math.abs(w)>.22){{const x=lerp(pos[l][i][0],pos[l+1][j][0],t),y=lerp(pos[l][i][1],pos[l+1][j][1],t);ctx.fillStyle=w>=0?'#60a5fa':'#fb7185';ctx.beginPath();ctx.arc(x,y,2.8,0,Math.PI*2);ctx.fill()}}}}
         for(let l=0;l<n;l++){{for(let i=0;i<pos[l].length;i++){{const a=lerp(fa.activations[l][i]??0,fb.activations[l][i]??0,t),x=pos[l][i][0],y=pos[l][i][1];
           ctx.fillStyle='rgba(99,102,241,.08)';ctx.beginPath();ctx.arc(x,y,15+Math.min(6,Math.abs(a)*4),0,Math.PI*2);ctx.fill();ctx.fillStyle=color(a);ctx.strokeStyle='#cbd5e1';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(x,y,12,0,Math.PI*2);ctx.fill();ctx.stroke();
-          ctx.fillStyle=Math.abs(a)>.05?'#fff':'#64748b';ctx.font='9px ui-monospace,monospace';ctx.textAlign='center';ctx.fillText(String(i+1),x,y+3)}}
-          ctx.fillStyle='#0f172a';ctx.font='700 11px ui-monospace,monospace';ctx.fillText(labels[l],pos[l][0][0],365);ctx.fillStyle='#64748b';ctx.font='10px ui-monospace,monospace';ctx.fillText(`dim=${{sizes[l]}}`,pos[l][0][0],382)}}
-        const epoch=Math.round(lerp(fa.epoch,fb.epoch,t)),loss=fb.loss==null?'初始化':`Loss ${{fb.loss.toFixed(4)}} · Acc ${{(fb.accuracy*100).toFixed(1)}}%`;ctx.fillStyle='#4338ca';ctx.font='700 12px ui-monospace,monospace';ctx.textAlign='left';ctx.fillText(`真实训练检查点 · Epoch ${{epoch}} · ${{loss}}`,18,408);
+          ctx.fillStyle=Math.abs(a)>.05?'#fff':'#64748b';ctx.font='9px JetBrains Mono,monospace';ctx.textAlign='center';ctx.fillText(String(i+1),x,y+3)}}
+          ctx.fillStyle='#0f172a';ctx.font='700 11px JetBrains Mono,monospace';ctx.fillText(labels[l],pos[l][0][0],365);ctx.fillStyle='#64748b';ctx.font='10px JetBrains Mono,monospace';ctx.fillText(`dim=${{sizes[l]}}`,pos[l][0][0],382)}}
+        const epoch=Math.round(lerp(fa.epoch,fb.epoch,t)),loss=fb.loss==null?'初始化':`Loss ${{fb.loss.toFixed(4)}} · Acc ${{(fb.accuracy*100).toFixed(1)}}%`;ctx.fillStyle='#1e40af';ctx.font='700 12px JetBrains Mono,monospace';ctx.textAlign='left';ctx.fillText(`真实训练检查点 · Epoch ${{epoch}} · ${{loss}}`,18,408);
         if(t<1)raf=requestAnimationFrame(draw);else{{current=target;from=target}}}}
       window.parent.addEventListener('nn:m2-train',e=>{{const next=Math.min(frames.length-1,Math.max(0,e.detail.step-1));from=current;target=next;started=performance.now();cancelAnimationFrame(raf);raf=requestAnimationFrame(draw)}});
       new ResizeObserver(resize).observe(canvas);resize();
@@ -138,18 +138,18 @@ def render_probe_manifold_canvas(payload_json: str) -> None:
       function resize(){{W=Math.max(480,canvas.clientWidth);dpr=devicePixelRatio||1;canvas.width=W*dpr;canvas.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);draw(performance.now())}}
       function field(a,b,t){{const rows=a.length,cols=a[0].length,pw=W-m.l-m.r,ph=H-m.t-m.b,cw=pw/(cols-1),ch=ph/(rows-1),val=(r,c)=>a[r][c]+(b[r][c]-a[r][c])*t;
         const off=document.createElement('canvas');off.width=cols;off.height=rows;const oc=off.getContext('2d'),im=oc.createImageData(cols,rows);
-        for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){{const p=val(r,c),strength=.14+.34*Math.abs(p-.5)*2,base=p<.5?[79,99,223]:[184,50,75],k=((rows-1-r)*cols+c)*4;
+        for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){{const p=val(r,c),strength=.14+.34*Math.abs(p-.5)*2,base=p<.5?[29,78,216]:[190,18,60],k=((rows-1-r)*cols+c)*4;
           im.data[k]=Math.round(255+(base[0]-255)*strength);im.data[k+1]=Math.round(255+(base[1]-255)*strength);im.data[k+2]=Math.round(255+(base[2]-255)*strength);im.data[k+3]=255}}oc.putImageData(im,0,0);ctx.imageSmoothingEnabled=true;ctx.drawImage(off,m.l,m.t,pw,ph);
         function edge(p1,p2,v1,v2){{if((v1<.5)===(v2<.5))return null;const q=(.5-v1)/(v2-v1);return [p1[0]+(p2[0]-p1[0])*q,p1[1]+(p2[1]-p1[1])*q]}}
-        ctx.strokeStyle='#111827';ctx.lineWidth=3;ctx.lineCap='round';for(let r=0;r<rows-1;r++)for(let c=0;c<cols-1;c++){{const x=m.l+c*cw,yb=H-m.b-r*ch,yt=yb-ch,v0=val(r,c),v1=val(r,c+1),v2=val(r+1,c+1),v3=val(r+1,c),pts=[];
+        ctx.strokeStyle='#0f172a';ctx.lineWidth=3;ctx.lineCap='round';for(let r=0;r<rows-1;r++)for(let c=0;c<cols-1;c++){{const x=m.l+c*cw,yb=H-m.b-r*ch,yt=yb-ch,v0=val(r,c),v1=val(r,c+1),v2=val(r+1,c+1),v3=val(r+1,c),pts=[];
           for(const p of [edge([x,yb],[x+cw,yb],v0,v1),edge([x+cw,yb],[x+cw,yt],v1,v2),edge([x+cw,yt],[x,yt],v2,v3),edge([x,yt],[x,yb],v3,v0)])if(p)pts.push(p);
           if(pts.length>=2){{ctx.beginPath();ctx.moveTo(...pts[0]);ctx.lineTo(...pts[1]);ctx.stroke()}}if(pts.length===4){{ctx.beginPath();ctx.moveTo(...pts[2]);ctx.lineTo(...pts[3]);ctx.stroke()}}}}}}
       function draw(now){{if(!W)return;const t=from===target?1:Math.min(1,(now-started)/duration),fa=frames[from],fb=frames[target];ctx.clearRect(0,0,W,H);field(fa.field,fb.field,t);
         ctx.strokeStyle='#e2e8f0';ctx.lineWidth=1;for(let i=0;i<=4;i++){{const x=m.l+(W-m.l-m.r)*i/4,y=m.t+(H-m.t-m.b)*i/4;ctx.beginPath();ctx.moveTo(x,m.t);ctx.lineTo(x,H-m.b);ctx.stroke();ctx.beginPath();ctx.moveTo(m.l,y);ctx.lineTo(W-m.r,y);ctx.stroke()}}
-        data.points.forEach((p,i)=>{{ctx.fillStyle=data.labels[i]?'#b8324b':'#4f63df';ctx.strokeStyle='#fff';ctx.lineWidth=1.4;ctx.beginPath();ctx.arc(sx(p[0]),sy(p[1]),3.5,0,Math.PI*2);ctx.fill();ctx.stroke()}});
+        data.points.forEach((p,i)=>{{ctx.fillStyle=data.labels[i]?'#be123c':'#1d4ed8';ctx.strokeStyle='#fff';ctx.lineWidth=1.4;ctx.beginPath();ctx.arc(sx(p[0]),sy(p[1]),3.5,0,Math.PI*2);ctx.fill();ctx.stroke()}});
         const px=sx(data.probe[0]),py=sy(data.probe[1]);ctx.strokeStyle='#b45309';ctx.lineWidth=3;ctx.beginPath();ctx.arc(px,py,12,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.moveTo(px-9,py);ctx.lineTo(px+9,py);ctx.moveTo(px,py-9);ctx.lineTo(px,py+9);ctx.stroke();
-        const prob=fa.probeProb+(fb.probeProb-fa.probeProb)*t,epoch=Math.round(fa.epoch+(fb.epoch-fa.epoch)*t);ctx.fillStyle='#92400e';ctx.font='700 10px ui-monospace,monospace';ctx.fillText('PROBE',px+13,py-13);ctx.fillStyle='#0f172a';ctx.font='700 13px ui-monospace,monospace';ctx.textAlign='left';ctx.fillText('DECISION FIELD // 真实训练边界演化',14,18);
-        ctx.fillStyle='#4338ca';ctx.font='700 11px ui-monospace,monospace';ctx.textAlign='right';ctx.fillText(`Epoch ${{epoch}} · Probe ${{(prob*100).toFixed(1)}}% · Class ${{prob>=.5?1:0}}`,W-18,39);ctx.textAlign='center';ctx.fillStyle='#64748b';ctx.font='11px ui-monospace,monospace';ctx.fillText('Feature x₁',(m.l+W-m.r)/2,H-12);
+        const prob=fa.probeProb+(fb.probeProb-fa.probeProb)*t,epoch=Math.round(fa.epoch+(fb.epoch-fa.epoch)*t);ctx.fillStyle='#92400e';ctx.font='700 10px JetBrains Mono,monospace';ctx.fillText('PROBE',px+13,py-13);ctx.fillStyle='#0f172a';ctx.font='700 13px JetBrains Mono,monospace';ctx.textAlign='left';ctx.fillText('DECISION FIELD // 真实训练边界演化',14,18);
+        ctx.fillStyle='#1e40af';ctx.font='700 11px JetBrains Mono,monospace';ctx.textAlign='right';ctx.fillText(`Epoch ${{epoch}} · Probe ${{(prob*100).toFixed(1)}}% · Class ${{prob>=.5?1:0}}`,W-18,39);ctx.textAlign='center';ctx.fillStyle='#64748b';ctx.font='11px JetBrains Mono,monospace';ctx.fillText('Feature x₁',(m.l+W-m.r)/2,H-12);
         if(t<1)raf=requestAnimationFrame(draw);else{{current=target;from=target}}}}
       window.parent.addEventListener('nn:m2-train',e=>{{const next=Math.min(frames.length-1,Math.max(0,e.detail.step-1));from=current;target=next;started=performance.now();cancelAnimationFrame(raf);raf=requestAnimationFrame(draw)}});
       new ResizeObserver(resize).observe(canvas);resize();
