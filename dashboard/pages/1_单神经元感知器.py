@@ -200,7 +200,7 @@ st.sidebar.markdown(
 c_q1, c_q2, c_q3 = st.sidebar.columns(3)
 if c_q1.button(
     "关卡 1\n初出茅庐",
-    help="Blobs 线性可分简单题，见证单神经元一枪干掉分类 (100% 准确率)",
+    help="Blobs 线性可分简单题，见证单神经元在标准配置下实现线性分割 (高准确率收敛)",
     width="stretch",
 ):
     st.session_state["m1_dataset"] = DATASETS["blobs"].label

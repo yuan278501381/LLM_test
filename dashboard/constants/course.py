@@ -786,37 +786,37 @@ LESSONS: dict[str, LessonMeta] = {
     "M17": LessonMeta(
         "M17",
         "工程陷阱与Harness",
-        (EvidenceLevel.EXACT_COMPUTATION, EvidenceLevel.SIMULATION),
+        (EvidenceLevel.SIMULATION, EvidenceLevel.TEACHING_SCALE),
         ("M07 注意力机制", "M08 Transformer", "M13 预训练范式", "M15 评估基准"),
         (
-            "掌握 Attention Sink 与滑动窗口困惑度稳定方案",
-            "理解 Lost in the Middle U 型注意力衰减与 Rerank 优化",
-            "掌握上下文压缩成功/失败案例与 AST 骨架保留最佳实践",
-            "剖析 2026 Claude Code 事故根因与 Agent Harness 熔断防御",
+            "理解 Attention Sink 经验现象与流式 KV 缓存保留方案的适用边界",
+            "理解 Lost in the Middle U 型位置敏感现象与 Rerank 权衡",
+            "对比滑动截断、级联摘要与 AST 骨架保留等上下文压缩策略及反例",
+            "剖析 Anthropic 2026 官方复盘与 Agent 循环工程、确定性验证及沙箱防线",
         ),
         "误以为大模型具备全能泛化且外围脚手架无需架构设计，在长上下文、反向推理、分词或工具调用中频繁遭遇物理盲区与系统崩溃。",
         (
-            "滑动窗口 Sink Token 数",
-            "目标信息相对深度",
-            "是否开启 Rerank",
-            "工具调用重复阈值",
-            "Claude Code 事故状态",
+            "流式滑动窗口与 Sink Token 配置",
+            "长文档关键信息相对深度",
+            "是否开启重排 (Rerank)",
+            "循环工程验证器与回滚开关",
+            "Claude Code 官方事故推演节点",
         ),
         (
-            "滑动窗口困惑度",
-            "U 型检索准确率",
-            "前向与逆向因果概率",
-            "工具死循环拦截状态",
-            "事故修复前后准确率与延迟",
+            "流式窗口困惑度演化模拟",
+            "不同深度检索率与注意力稀释",
+            "实体前向与逆向条件概率断裂",
+            "工具重复与关键词过滤拦截状态",
+            "确定性测试门禁下循环收敛轨迹",
         ),
         (
-            "丢弃初始 4 个 Sink Token 导致流式生成困惑度指数爆炸",
-            "关键证据置于 128K 上下文正中间且未作 Rerank 导致检索失败",
-            "上下文压缩采用简单滚动摘要导致关键行号与变量被幻觉抹杀",
-            "工具调用缺少幂等守卫陷入数十轮循环震荡烧光 Token",
+            "丢弃初始 Token 导致滑动窗口注意力激活畸变与困惑度上升",
+            "长文本中间信息检索召回率下降且重排破坏时序依赖",
+            "AST 骨架压缩丢失函数体与控制流导致关键信息不可用",
+            "缺乏外部验证器导致智能体陷入幻觉假阳性或级联发散",
         ),
-        "AI 系统的最终表现 80% 取决于外围 Harness 控制环的严谨性；通过保留 Attention Sinks、Rerank 置顶重排、AST 骨架压缩、工具调用幂等熔断与确定性 Evaluation Harness，方可构建工业级高可用系统。",
-        "推动 AI 工程从单模型崇拜走向 Harness 系统级防御，奠定了 2026 智能体控制环、长文本检索与上下文压缩的工业级最佳实践。",
+        "模型能力与外围系统架构（Prompt 编排、工具约束、上下文管理、状态回退、执行沙箱）共同决定实际系统表现；页面曲线为规则模拟，结论需在具体任务集与模型协议下严格评测。",
+        "推动 AI 应用开发从单模型崇拜演进为涵盖确定性验证门禁、受限沙箱与状态机回退的 Harness 系统级工程架构。",
         (
             _ref(
                 "Efficient Streaming Language Models with Attention Sinks",
@@ -827,22 +827,22 @@ LESSONS: dict[str, LessonMeta] = {
             ),
             _ref(
                 "Lost in the Middle: How Language Models Use Long Contexts",
-                "https://arxiv.org/abs/2307.03172",
-                "长上下文 U 型注意力衰减与位置偏置论文",
+                "https://aclanthology.org/2024.tacl-1.9/",
+                "长上下文多段落检索 U 型注意力衰减与位置偏置论文",
                 author_or_organization="Nelson F. Liu et al.; Stanford",
-                year=2023,
+                year=2024,
             ),
             _ref(
                 "The Reversal Curse: LLMs trained on 'A is B' fail to learn 'B is A'",
                 "https://arxiv.org/abs/2309.12288",
-                "自回归单向条件概率导致的逆向知识检索断裂",
+                "自回归单向条件概率导致的逆向知识泛化断裂",
                 author_or_organization="Lukas Berglund et al.; NYU",
                 year=2023,
             ),
             _ref(
-                "Claude Code Performance Postmortem and Systemic Improvements",
-                "https://www.anthropic.com/news/claude-code-postmortem-2026",
-                "Anthropic 官方对 2026 年 3~4 月 Claude Code 三大工程事故的深度复盘报告",
+                "April 23, 2026: Claude Code Postmortem",
+                "https://www.anthropic.com/engineering/april-23-postmortem",
+                "Anthropic 官方对 2026 年 3~4 月 Claude Code 三大工程事故与改进的复盘报告",
                 source_type=SourceType.OFFICIAL_DOCUMENTATION,
                 author_or_organization="Anthropic",
                 year=2026,
@@ -874,6 +874,58 @@ def _build_claims() -> dict[str, Claim]:
     """为每页建立公式、结果、历史和失败模式四类最小可追溯集。"""
     claims: dict[str, Claim] = {}
     for lesson_id, lesson in LESSONS.items():
+        if lesson_id == "M17":
+            # 为 M17 精准绑定每项主张与特定参考论文
+            m17_rows = (
+                (
+                    ClaimKind.CORE_FORMULA,
+                    "本页 Attention Sink 汇聚、长上下文 U 型衰减与控制环状态演化均为基于论文现象的规则模拟。",
+                    "formula",
+                    "规则模拟不代表所有模型在所有输入长度下的真实 PPL；Softmax 归一化是注意力汇聚的背景而非全部充分条件。",
+                    lesson.references[0],
+                    EvidenceLevel.SIMULATION,
+                ),
+                (
+                    ClaimKind.CORE_RESULT,
+                    "页内图表用于观察长上下文多键值检索下的位置敏感性以及 Rerank 重排的权衡。",
+                    "result",
+                    "U 型现象在特定长文档 QA/检索评测中被观察到，不代表所有模型必为固定 U 型；重排可能破坏时序依赖与跨段证据。",
+                    lesson.references[1],
+                    EvidenceLevel.SIMULATION,
+                ),
+                (
+                    ClaimKind.HISTORY,
+                    "从 2026 年 Anthropic 官方复盘中总结工程教训：外围系统需具备确定性验证门禁、受限沙箱与状态机回退能力。",
+                    "history",
+                    "事故复盘基于特定产品版本；官方仅确认某一扩展评测性能下降 3% 及具体配置变更，未公布全场景总体准确率数字。",
+                    lesson.references[3],
+                    EvidenceLevel.TEACHING_SCALE,
+                ),
+                (
+                    ClaimKind.FAILURE_MODE,
+                    "本页必须检查的失败模式：丢弃初始 Token 导致滑动窗口困惑度上升、分词器字符盲区及无验证器智能体死循环。",
+                    "failure",
+                    "分词切分使字符操作在单步自回归中缺乏显式表征，但通过思维链展开可解；反向诅咒在提供上下文推导时并不成立。",
+                    lesson.references[0],
+                    EvidenceLevel.SIMULATION,
+                ),
+            )
+            for kind, statement, suffix, limitations, source, ev_level in m17_rows:
+                claim_id = f"m17-{suffix}"
+                claims[claim_id] = Claim(
+                    claim_id=claim_id,
+                    lesson_id="M17",
+                    kind=kind,
+                    statement=statement,
+                    conditions="适用于 M17 工程陷阱与Harness 页面所公开的规则模拟、参数和证据等级。",
+                    evidence_level=ev_level,
+                    sources=(source,),
+                    result_id=f"m17-{suffix}",
+                    limitations=limitations,
+                    last_verified="2026-08-22",
+                )
+            continue
+
         rows = (
             (
                 ClaimKind.CORE_FORMULA,

@@ -505,3 +505,17 @@ class TestStreamlitAppE2E:
         )
         at = AppTest.from_file(page_path, default_timeout=25).run()
         assert not at.exception, f"Page 16 runtime error: {at.exception}"
+
+    def test_page17_engineering_traps_e2e(self):
+        """测试 M17: 工程陷阱与Harness控制环页面"""
+        page_path = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__),
+                "..",
+                "dashboard",
+                "pages",
+                "17_工程陷阱与Harness.py",
+            )
+        )
+        at = AppTest.from_file(page_path, default_timeout=25).run()
+        assert not at.exception, f"Page 17 runtime error: {at.exception}"
