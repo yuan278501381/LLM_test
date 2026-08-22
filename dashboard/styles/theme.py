@@ -134,7 +134,11 @@ header {background-color: transparent !important;}
    - 当页面有超参数控制台时 (如 M01~M17)：自动展开为双栏（180px 课程罗盘 + 310px 参数微观控制台）！
 ------------------------------------------------------------------------- */
 /* 1. 单栏模式 (无超参数控件时，如 M00 / 首页) */
+section[data-testid="stSidebar"].nn-sidebar-single-col,
+section[data-testid="stSidebar"].nn-sidebar-single-col > div,
 [data-testid="stSidebar"].nn-sidebar-single-col,
+[data-testid="stSidebar"].nn-sidebar-single-col > div,
+section[data-testid="stSidebar"]:not(:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"])),
 [data-testid="stSidebar"]:not(:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"])) {
     width: 250px !important;
     min-width: 250px !important;
@@ -167,11 +171,17 @@ header {background-color: transparent !important;}
 
 /* 2. 双栏模式 (有超参数控件时，且屏幕 >= 1260px) */
 @media (min-width: 1260px) {
+    section[data-testid="stSidebar"].nn-sidebar-dual-col,
+    section[data-testid="stSidebar"].nn-sidebar-dual-col > div,
     [data-testid="stSidebar"].nn-sidebar-dual-col,
-    [data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"]) {
-        width: 530px !important;
-        min-width: 530px !important;
-        max-width: 560px !important;
+    [data-testid="stSidebar"].nn-sidebar-dual-col > div,
+    section[data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"]),
+    section[data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"]) > div,
+    [data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"]),
+    [data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"]) > div {
+        width: 540px !important;
+        min-width: 540px !important;
+        max-width: 570px !important;
         background-color: #f8fafc !important;
         border-right: 1px solid #e2e8f0 !important;
     }
@@ -181,6 +191,8 @@ header {background-color: transparent !important;}
         display: flex !important;
         flex-direction: row !important;
         height: 100vh !important;
+        width: 540px !important;
+        min-width: 540px !important;
         padding: 0 !important;
         overflow: hidden !important;
     }
@@ -199,16 +211,29 @@ header {background-color: transparent !important;}
         box-sizing: border-box !important;
     }
 
-    /* 栏位 2：微观超参数控制台 (Detail Parameter Deck, 350px 充裕舒展宽度) */
+    /* 栏位 2：微观超参数控制台 (Detail Parameter Deck, 360px 充裕舒展宽度，彻底杜绝内容被截断) */
     [data-testid="stSidebar"].nn-sidebar-dual-col [data-testid="stSidebarUserContent"],
     [data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"]) [data-testid="stSidebarUserContent"] {
-        flex: 1 !important;
-        min-width: 350px !important;
+        flex: 1 1 360px !important;
+        min-width: 360px !important;
+        max-width: 380px !important;
         height: 100% !important;
         overflow-y: auto !important;
-        padding: 2.8rem 1rem 1.5rem 1rem !important;
+        overflow-x: hidden !important;
+        padding: 2.8rem 1.1rem 1.5rem 1.1rem !important;
         background-color: #ffffff !important;
         box-sizing: border-box !important;
+    }
+
+    /* 控制台内部多列与滑块自适应容器 */
+    [data-testid="stSidebarUserContent"] [data-testid="stHorizontalBlock"] {
+        width: 100% !important;
+        gap: 0.5rem !important;
+    }
+
+    [data-testid="stSidebarUserContent"] [data-testid="column"] {
+        min-width: 0 !important;
+        flex: 1 1 calc(50% - 0.25rem) !important;
     }
 }
 
@@ -967,11 +992,17 @@ g.updatemenu-button {
 
                     /* 2. 双栏模式 (有超参数控件时，且屏幕 >= 1260px) */
                     @media (min-width: 1260px) {
+                        section[data-testid="stSidebar"].nn-sidebar-dual-col,
+                        section[data-testid="stSidebar"].nn-sidebar-dual-col > div,
                         [data-testid="stSidebar"].nn-sidebar-dual-col,
-                        [data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"]) {
-                            width: 530px !important;
-                            min-width: 530px !important;
-                            max-width: 560px !important;
+                        [data-testid="stSidebar"].nn-sidebar-dual-col > div,
+                        section[data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"]),
+                        section[data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"]) > div,
+                        [data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"]),
+                        [data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"]) > div {
+                            width: 540px !important;
+                            min-width: 540px !important;
+                            max-width: 570px !important;
                             background-color: #f8fafc !important;
                             border-right: 1px solid #e2e8f0 !important;
                         }
@@ -980,6 +1011,8 @@ g.updatemenu-button {
                             display: flex !important;
                             flex-direction: row !important;
                             height: 100vh !important;
+                            width: 540px !important;
+                            min-width: 540px !important;
                             padding: 0 !important;
                             overflow: hidden !important;
                         }
@@ -997,13 +1030,23 @@ g.updatemenu-button {
                         }
                         [data-testid="stSidebar"].nn-sidebar-dual-col [data-testid="stSidebarUserContent"],
                         [data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"]) [data-testid="stSidebarUserContent"] {
-                            flex: 1 !important;
-                            min-width: 350px !important;
+                            flex: 1 1 360px !important;
+                            min-width: 360px !important;
+                            max-width: 380px !important;
                             height: 100% !important;
                             overflow-y: auto !important;
-                            padding: 2.8rem 1rem 1.5rem 1rem !important;
+                            overflow-x: hidden !important;
+                            padding: 2.8rem 1.1rem 1.5rem 1.1rem !important;
                             background-color: #ffffff !important;
                             box-sizing: border-box !important;
+                        }
+                        [data-testid="stSidebarUserContent"] [data-testid="stHorizontalBlock"] {
+                            width: 100% !important;
+                            gap: 0.5rem !important;
+                        }
+                        [data-testid="stSidebarUserContent"] [data-testid="column"] {
+                            min-width: 0 !important;
+                            flex: 1 1 calc(50% - 0.25rem) !important;
                         }
                     }
 
