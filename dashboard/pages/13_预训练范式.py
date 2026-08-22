@@ -327,6 +327,13 @@ fig_loss.update_layout(
 )
 fig_loss = _apply_light_theme(fig_loss, "纯 NumPy 真实梯度反向传播损失收敛曲线")
 st.plotly_chart(fig_loss, use_container_width=True)
+with st.expander("[HOW TO READ // 读图指南] 预训练损失单调收敛曲线", expanded=False):
+    st.markdown(
+        """
+        * **横轴【优化迭代步数】** 与 **纵轴【交叉熵损失 (Loss)】**。
+        * **[OPTIMAL // 真实梯度特征]**：在真实解析梯度驱动下，损失单调下滑，表明模型成功在预训练目标上学到了语言统计规律。
+        """
+    )
 
 # ---------------------------------------------------------------------------
 # Section 3: MAE 75% 视觉高比例图块掩码与自编码重建
@@ -368,6 +375,14 @@ with col_mae3:
     fig_m3 = _apply_light_theme(fig_m3, "MAE 自编码注意力重建")
     st.plotly_chart(fig_m3, use_container_width=True)
 
+with st.expander("[HOW TO READ // 读图指南] MAE 高比例遮蔽重建三联图", expanded=False):
+    st.markdown(
+        """
+        * **中图【75% 极高遮蔽】**：大部分像素消失，仅留 25% 可见图块；
+        * **右图【模型脑补重建】**：模型依靠 Transformer 空间自注意力，从仅有的少量线索中还原出被遮挡的完整物理几何轮廓！
+        """
+    )
+
 # ---------------------------------------------------------------------------
 # Section 4: 预训练范式向下游任务迁移效果对比图
 # ---------------------------------------------------------------------------
@@ -397,6 +412,14 @@ fig_trans.update_layout(
 )
 fig_trans = _apply_light_theme(fig_trans, "四大预训练范式向各类下游任务迁移得分全景对比")
 st.plotly_chart(fig_trans, use_container_width=True)
+with st.expander("[HOW TO READ // 读图指南] 预训练基因与下游任务迁移能力雷达/柱状图", expanded=False):
+    st.markdown(
+        """
+        * **横轴【4 种典型下游任务】** 与 **纵轴【迁移能力得分 (0~100)】**。
+        * **CLM (GPT 式因果接龙)**：在**自回归生成**任务上一骑绝尘；
+        * **MLM (BERT 式完形填空)**：在**分类与阅读理解**任务上得分最高。
+        """
+    )
 
 # ---------------------------------------------------------------------------
 # Section 5: 大模型扩展定律 (Scaling Laws) 与最优算力分配计算器 (Chinchilla)
@@ -496,6 +519,15 @@ with col_s_res:
         )
         fig_scale = _apply_light_theme(fig_scale, "大模型算力扩展定律与前沿工业界模型位置")
         st.plotly_chart(fig_scale, use_container_width=True)
+        with st.expander("[HOW TO READ // 读图指南] Chinchilla 对数双轴扩展定律散点图", expanded=False):
+            st.markdown(
+                """
+                * **双对数坐标轴**：横轴【参数量 N (十亿 / B)】，纵轴【训练数据量 D (万亿 / T)】。
+                * **蓝色虚线 (理论最优线)**：严格满足 $D \\approx 20N$ 的最佳算力投资分配线。
+                * **GPT-3 (偏右下)**：参数巨大但数据少（严重欠训练）；
+                * **LLaMA-3 (偏左上)**：8B 小模型狂喂 15T 数据（超训练，换取极致推理轻量化）。
+                """
+            )
 
 # ---------------------------------------------------------------------------
 # Section 6: BPE (Byte-Pair Encoding) 分词器动态演练
@@ -581,6 +613,12 @@ with col_d_mix:
         fig_donut.update_layout(margin=dict(l=10, r=10, t=20, b=20), showlegend=False)
         fig_donut = _apply_light_theme(fig_donut, f"{model_mix_choice} 语料构成分布")
         st.plotly_chart(fig_donut, use_container_width=True)
+        with st.expander("[HOW TO READ // 读图指南] 预训练多源语料配比环形图", expanded=False):
+            st.markdown(
+                """
+                * **扇区比例**：不同领域知识（网页、代码、学术论文、书籍、数学题）在 10T+ 数据中的百分比构成。
+                """
+            )
 
 with col_d_pipe:
     with st.container(border=True):

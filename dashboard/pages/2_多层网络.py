@@ -233,25 +233,30 @@ with col_topo:
         title=f"TOPOLOGY & PROBE // 激活探针响应 (x₁={probe_x:.2f}, x₂={probe_y:.2f})",
     )
     st.plotly_chart(fig_topo, use_container_width=True)
+    with st.expander("[HOW TO READ // 读图指南] 网络拓扑与激活点亮", expanded=False):
+        st.markdown(
+            """
+            * **从左到右三层**：输入特征层 $(x_1, x_2) \\to$ 中间隐藏层 $\\to$ 输出层 $(\\hat{y})$。
+            * **圆圈高亮**：当前探针点强力激活点亮了哪个神经元（深蓝代表高度兴奋）。
+            * **连线粗细与颜色**：**蓝色**为正权重（兴奋），**红色**为负权重（抑制），**越粗**影响力越大。
+            * **[OPTIMAL // 观察要点]**：切换不同探针位置，观察不同特征是如何通过不同神经元通路组合决策的。
+            """
+        )
 
 with col_bound:
     fig_bound = plot_decision_boundary(
         model, X, y, probe_point=probe_pt, title="DECISION MANIFOLD // 空间决策流形与探针定位"
     )
     st.plotly_chart(fig_bound, use_container_width=True)
-
-with st.expander("[HOW TO READ // 读图指南] 网络拓扑、神经元点亮与决策分界线", expanded=False):
-    st.markdown(
-        """
-        * **左图【网络拓扑图】**：
-          * **圆圈（神经元）**：从左往右是输入层 $\\to$ 隐藏层 $\\to$ 输出层。**圆圈被染成深蓝色**，代表当前探针位置 $(x_1, x_2)$ 强烈**点亮（激活）**了该神经元！
-          * **连线（权重连接）**：**蓝色连线**代表正权重（促进兴奋），**红色连线**代表负权重（抑制信号），**线条越粗**代表权重数值越大、影响力越强。
-        * **右图【空间决策流形】**：
-          * **黑色加粗实线 (Line: P=0.5)**：这是多层网络通过非线性折叠拼出的**弯曲分界线**，不再是单神经元死板的一根直线！
-          * **黄色十字交叉点 (PROBE)**：你在左侧拖动的探针定位点，右图显示它位于哪个分类区域，左图同步显示该点激发的神经元通路！
-        * 🎯 **【最优趋势】**：弯曲的黑色决策线把红蓝两类完全分隔开，准确率达到 95%+；探针在不同颜色区域时，左侧网络能清晰看到不同的激活通路切换。
-        """
-    )
+    with st.expander("[HOW TO READ // 读图指南] 空间非线性弯曲决策分界线", expanded=False):
+        st.markdown(
+            """
+            * **横轴 $X_1$ 与纵轴 $X_2$**：样本二维特征坐标。
+            * **黑色加粗实线 `[DECISION LINE]`**：多层网络折叠拼出的**弯曲分界线**（不再是单层死板的直线）。
+            * **黄色十字交叉点 (PROBE)**：你在左侧拖动的探针定位点，右图显示它所在的分类概率区域。
+            * **[OPTIMAL // 最优形态]**：弯曲的黑线完美环绕或切分非线性数据集（如月牙/双圈）。
+            """
+        )
 
 # ---------------------------------------------------------------------------
 # 深度诊断：逐层激活热力图 & 梯度直方图
@@ -262,26 +267,27 @@ with col_heat:
     if all_activations:
         fig_heat = plot_activation_heatmap(all_activations, title="ACTIVATION HEATMAP // 逐层神经元激活分布")
         st.plotly_chart(fig_heat, use_container_width=True)
+        with st.expander("[HOW TO READ // 读图指南] 逐层神经元激活热力图", expanded=False):
+            st.markdown(
+                """
+                * **横轴**：该隐藏层各神经元编号；**纵轴**：前 30 个输入样本。
+                * **颜色深浅**：颜色越亮代表神经元激活输出值越大。
+                * **[WARNING // Dead ReLU 诊断]**：若某整列全黑全灰（值为 0），说明该神经元已死，不再传递信息。可切换为 `LeakyReLU` / `GELU`。
+                """
+            )
 
 with col_grad:
     if dense_grads:
         fig_grad = plot_gradient_histograms(dense_grads, layer_names, title="GRADIENT FLOW // 反向传播梯度流分布")
         st.plotly_chart(fig_grad, use_container_width=True)
-
-with st.expander("[HOW TO READ // 读图指南] 神经元失活、梯度消失与梯度爆炸诊断", expanded=False):
-    st.markdown(
-        """
-        * **左图【逐层神经元激活热力图】**：
-          * **横轴**是该层神经元编号，**纵轴**是输入样本。颜色越亮代表激活值越高。
-          * ⚠️ **【异常现象：Dead ReLU (神经元死亡)】**：如果整列都呈现暗淡无光或全灰（数值为 0），说明该神经元进入负值区彻底“死掉”了，不再参与学习！
-          * [NOTE] **【调优方案】**：换用 `LeakyReLU` / `GELU`，或者调小初始学习率。
-        * **右图【梯度流分布直方图】**：
-          * 展示反向传播时每一层权重接收到的梯度大小。
-          * 🎯 **【健康趋势】**：各层梯度处于相近的数量级（如 $0.01 \\sim 1.0$ 之间），信号能顺畅传递到第一层。
-          * ⚠️ **【异常现象：梯度消失 (Vanishing)】**：浅层（靠近输入的层）梯度极小（如 $< 10^{-5}$），柱子几乎贴底，网络根本学不动 $\\implies$ 换用 `He/Xavier` 初始化与 `ReLU`。
-          * ⚠️ **【异常现象：梯度爆炸 (Exploding)】**：深层梯度突然达到几十上百，导致 Loss 变成 NaN $\\implies$ 调小学习率或开启梯度裁剪。
-        """
-    )
+        with st.expander("[HOW TO READ // 读图指南] 反向传播梯度流分布直方图", expanded=False):
+            st.markdown(
+                """
+                * **横轴**：梯度数值范围；**纵轴**：落入该区间的权重参数数量。
+                * **[OPTIMAL // 健康形态]**：各层梯度幅度相近（如 $10^{-3} \\sim 1.0$），呈钟形平滑分布。
+                * **[WARNING // 梯度消失]**：浅层梯度柱子全部死死贴在 0 附近（$< 10^{-6}$），说明深层误差无法回传给前层。
+                """
+            )
 
 # 深度知识学习指南 (折叠微观原理解析)
 act_meta = ACTIVATIONS.get(activation_name, ACTIVATIONS.get(activation_name.split(" ")[0], ACTIVATIONS["ReLU"]))

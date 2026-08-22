@@ -226,11 +226,11 @@ def plot_loss_curve(
     history: dict[str, list[float]],
     title: str | None = None,
 ) -> go.Figure:
-    """绘制亮色平滑训练收敛图"""
+    """绘制亮色平滑训练收敛图 (严格防多列重叠)"""
     fig = make_subplots(
         rows=1, cols=2,
-        subplot_titles=("LOSS CONVERGENCE // 损失收敛", "ACCURACY PROGRESSION // 准确率提升"),
-        horizontal_spacing=0.12,
+        subplot_titles=("损失收敛 (Loss)", "准确率 (Accuracy)"),
+        horizontal_spacing=0.14,
     )
 
     epochs = list(range(1, len(history.get("loss", [])) + 1))
@@ -246,7 +246,7 @@ def plot_loss_curve(
                 line=dict(color=LIGHT_PALETTE["primary"], width=2.5, shape="spline", smoothing=1.1),
                 fill="tozeroy",
                 fillcolor="rgba(29, 78, 216, 0.05)",
-                hovertemplate="Epoch %{x}: Loss = %{y:.4f}<extra></extra>",
+                hovertemplate="轮数 %{x}: 损失 Loss = %{y:.4f}<extra></extra>",
             ),
             row=1, col=1,
         )
@@ -256,7 +256,7 @@ def plot_loss_curve(
                 mode="markers",
                 name="Min Loss",
                 marker=dict(size=8, color=LIGHT_PALETTE["accent"], symbol="diamond"),
-                hovertemplate=f"Min Loss: {losses[min_idx]:.4f} (Epoch {epochs[min_idx]})<extra></extra>",
+                hovertemplate=f"最低损失: {losses[min_idx]:.4f} (第 {epochs[min_idx]} 轮)<extra></extra>",
                 showlegend=False,
             ),
             row=1, col=1,
@@ -272,15 +272,15 @@ def plot_loss_curve(
                 line=dict(color=LIGHT_PALETTE["accent"], width=2.5, shape="spline", smoothing=1.1),
                 fill="tozeroy",
                 fillcolor="rgba(4, 120, 87, 0.05)",
-                hovertemplate="Epoch %{x}: Acc = %{y:.2%}<extra></extra>",
+                hovertemplate="轮数 %{x}: 准确率 Acc = %{y:.2%}<extra></extra>",
             ),
             row=1, col=2,
         )
 
-    fig.update_xaxes(title_text="Epoch", row=1, col=1, gridcolor=LIGHT_PALETTE["grid"])
-    fig.update_xaxes(title_text="Epoch", row=1, col=2, gridcolor=LIGHT_PALETTE["grid"])
-    fig.update_yaxes(title_text="Loss", row=1, col=1, gridcolor=LIGHT_PALETTE["grid"])
-    fig.update_yaxes(title_text="Accuracy", row=1, col=2, gridcolor=LIGHT_PALETTE["grid"], range=[0, 1.05])
+    fig.update_xaxes(title_text="训练轮数 (Epoch)", row=1, col=1, gridcolor=LIGHT_PALETTE["grid"])
+    fig.update_xaxes(title_text="训练轮数 (Epoch)", row=1, col=2, gridcolor=LIGHT_PALETTE["grid"])
+    fig.update_yaxes(title_text="损失误差 (Loss)", row=1, col=1, gridcolor=LIGHT_PALETTE["grid"])
+    fig.update_yaxes(title_text="准确率 (Accuracy)", row=1, col=2, gridcolor=LIGHT_PALETTE["grid"], range=[0, 1.05])
 
     fig.update_layout(
         showlegend=False,

@@ -205,6 +205,14 @@ with col_wave_plot:
     )
     fig_wave = _apply_light_theme(fig_wave, f"微观时域振动连续波形 (前 20ms)")
     st.plotly_chart(fig_wave, use_container_width=True)
+    with st.expander("[HOW TO READ // 读图指南] 微观时域振动波形图", expanded=False):
+        st.markdown(
+            """
+            * **横轴【时间 (毫秒 / ms)】** 与 **纵轴【空气压强振幅 (-1.0 ~ +1.0)】**。
+            * **波形密集度**：波峰与波谷交替越频繁，说明声音**频率越高 (音调尖锐)**。
+            * **波形高低**：振幅绝对值越大，说明声音**响度越大 (音量震耳)**。
+            """
+        )
 
 with col_audio_play:
     with st.container(border=True):
@@ -246,6 +254,14 @@ fig_fft.update_layout(
 )
 fig_fft = _apply_light_theme(fig_fft, "FFT 全局频谱能量分布图 (0 ~ 3000 Hz)")
 st.plotly_chart(fig_fft, use_container_width=True)
+with st.expander("[HOW TO READ // 读图指南] FFT 全局频谱能量柱状图", expanded=False):
+    st.markdown(
+        """
+        * **横轴【物理频率 (Hz)】** 与 **纵轴【该频率下的谐波能量强度】**。
+        * **柱子尖峰位置**：声音中包含哪些音调成分（如 440 Hz 基频，以及 880 Hz、1320 Hz 泛音倍频）。
+        * **[OPTIMAL // 物理意义]**：傅里叶变换像棱镜分光一样，把复杂的时域混杂声波解构为纯净的正弦分量。
+        """
+    )
 
 # ---------------------------------------------------------------------------
 # Section 3: 梅尔声学滤波器组与 2D 频谱图
@@ -279,6 +295,12 @@ with col_fb_plot:
     )
     fig_fb = _apply_light_theme(fig_fb, f"梅尔三角滤波器组 ({n_mels_val} 临界频带几何重叠)")
     st.plotly_chart(fig_fb, use_container_width=True)
+    with st.expander("[HOW TO READ // 读图指南] 梅尔三角滤波器组分布", expanded=False):
+        st.markdown(
+            """
+            * **低频段密集、高频段稀疏**：模拟人耳耳蜗对低频声音变化极度敏感、对高频不敏感的非线性生理特性。
+            """
+        )
 
 with col_mel_heat:
     fig_spec = go.Figure(
@@ -297,6 +319,13 @@ with col_mel_heat:
     )
     fig_spec = _apply_light_theme(fig_spec, "2D 对数梅尔功率频谱图 (Log-Mel Spectrogram)")
     st.plotly_chart(fig_spec, use_container_width=True)
+    with st.expander("[HOW TO READ // 读图指南] 2D 对数梅尔时频谱图", expanded=False):
+        st.markdown(
+            """
+            * **横轴【时间流逝】**、**纵轴【梅尔频段高低】**、**颜色深浅【能量强弱 (dB)】**。
+            * **[OPTIMAL // 现代 AI 声学输入]**：Whisper / 语音大模型直接把这张 2D 时频谱当成图片喂给视觉 Transformer！
+            """
+        )
 
 # ---------------------------------------------------------------------------
 # Section 4: Whisper 语音模型端到端流水线 (2026 前沿)

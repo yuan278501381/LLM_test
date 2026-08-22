@@ -245,15 +245,39 @@ with grid_c1:
         model, X, y, title=f"DECISION MANIFOLD // 空间决策流形 (Acc: {current_acc:.1%})"
     )
     st.plotly_chart(fig_bound, use_container_width=True)
+    with st.expander("[HOW TO READ // 读图指南] 空间决策流形与分界线", expanded=False):
+        st.markdown(
+            """
+            * **横轴 $X_1$ 与纵轴 $X_2$**：样本的两个特征坐标。
+            * **黑色加粗实线 `[DECISION LINE]`**：当前模型画出的二分类决策分水岭 ($P=0.5$)。
+            * **[OPTIMAL // 最优形态]**：黑色实线随着训练轮数增加，优雅包裹月牙或环形数据，准确率达 95%+。
+            """
+        )
 
     fig_w_hist = plot_weight_histograms(
         weights_list, layer_names, title="WEIGHT SPECTRUM // 逐层权重参数分布"
     )
     st.plotly_chart(fig_w_hist, use_container_width=True)
+    with st.expander("[HOW TO READ // 读图指南] 逐层权重参数直方图", expanded=False):
+        st.markdown(
+            """
+            * **横轴**：权重参数的具体数值范围（如 $-1.0 \\sim +1.0$）；**纵轴**：落入该数值区间的参数个数。
+            * **[OPTIMAL // 健康形态]**：以 0 为中心呈紧凑的**钟形高斯分布**。
+            * **[WARNING // 过拟合风险]**：权重扩散到 $[-10, +10]$ 以上，说明权重膨胀过大，建议调大 L2 正则化系数 $\\lambda$。
+            """
+        )
 
 with grid_c2:
     fig_loss = plot_loss_curve(history, title="TRAINING DYNAMICS // 损失与准确率收敛动态")
     st.plotly_chart(fig_loss, use_container_width=True)
+    with st.expander("[HOW TO READ // 读图指南] 损失收敛 (Loss) 与准确率 (Accuracy)", expanded=False):
+        st.markdown(
+            """
+            * **横轴**：训练轮数 (Epochs)；**左纵轴**：损失 (Loss，越低越好)；**右纵轴**：准确率 (Accuracy，越高越好)。
+            * **[OPTIMAL // 最优形态]**：Loss 大滑梯式俯冲至 0，Accuracy 单调攀升至 100%。
+            * **[WARNING // 震荡]**：若 Loss 剧烈锯齿波动，说明学习率 LR 过大，需调小。
+            """
+        )
 
     fig_g_hist = plot_gradient_histograms(
         grads_list if grads_list else [np.zeros((2, 2))],
@@ -261,18 +285,14 @@ with grid_c2:
         title="GRADIENT FLOW // 反向传播梯度流分布",
     )
     st.plotly_chart(fig_g_hist, use_container_width=True)
-
-with st.expander("[HOW TO READ // 读图指南] 权重分布、梯度流与收敛健康度", expanded=False):
-    st.markdown(
-        """
-        * **1. 左上【空间决策流形】**：黑色实线是模型画出的分界线，观察它是否随着训练逐步弯曲包裹住月牙形或圆形数据。
-        * **2. 左下【权重参数直方图】**：
-          * 🎯 **【健康形态】**：权重以 0 为中心呈**钟形高斯分布**（正负均衡分布在 $-1.0 \\sim +1.0$ 之间）。
-          * ⚠️ **【异常形态】**：如果权重范围扩散到 $[-10, +10]$ 以上，说明模型强行记忆噪声（过拟合）$\\implies$ 开启 L2 正则化或调大惩罚系数 $\\lambda$。
-        * **3. 右上【损失与准确率曲线】**：Loss 单调俯冲向 0、Accuracy 单调抬升到 100% 为最优。
-        * **4. 右下【反向传播梯度流】**：各层梯度在 $10^{-3} \\sim 1.0$ 之间为健康；浅层如果柱子消失说明梯度传不过来。
-        """
-    )
+    with st.expander("[HOW TO READ // 读图指南] 反向传播梯度流分布", expanded=False):
+        st.markdown(
+            """
+            * **横轴**：梯度数值范围；**纵轴**：参数个数。
+            * **[OPTIMAL // 健康形态]**：各层梯度稳定在 $10^{-3} \\sim 1.0$ 数量级，信号能顺畅直达浅层。
+            * **[WARNING // 梯度消失]**：浅层梯度柱子全部贴在 0 附近，需更换激活函数 (ReLU/GELU) 或采用 He 初始化。
+            """
+        )
 
 # ---------------------------------------------------------------------------
 # 快照与实验状态导出 (Snapshot Export / Rollback)

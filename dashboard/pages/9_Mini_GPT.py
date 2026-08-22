@@ -282,6 +282,14 @@ with col_bar:
         title=f"PROBABILITY DISTRIBUTION // 下一词概率柱状图 (Top {top_k})",
     )
     st.plotly_chart(fig_probs, use_container_width=True)
+    with st.expander("[HOW TO READ // 读图指南] 下一词概率预测柱状图", expanded=False):
+        st.markdown(
+            """
+            * **横轴【预测候选单词】** 与 **纵轴【置信度概率 (0% ~ 100%)】**。
+            * **柱子高度**：模型基于所有历史上下文，计算出下一个词是该候选词的几率。
+            * **[OPTIMAL // 采样机制]**：当 Temperature=0 时强制选择最高的柱子 (Greedy)；开启 Top-K 后，仅在最高的 K 根柱子里按比例轮盘赌采样。
+            """
+        )
 
 with col_attn:
     render_section_heading("STEP ATTENTION FOCUS // 当前步注意力聚光灯", icon_name="zap")
@@ -297,6 +305,13 @@ with col_attn:
             title="Transformer Layer 2 Attention",
         )
         st.plotly_chart(fig_realtime_attn, use_container_width=True)
+        with st.expander("[HOW TO READ // 读图指南] 当前步因果注意力聚焦矩阵", expanded=False):
+            st.markdown(
+                """
+                * **最底下一行**：最新生成的单词正在把“聚光灯”打在前面哪几个词上。
+                * **高亮亮点**：说明最新词与历史哪个特定词产生了强烈的因果逻辑关联。
+                """
+            )
     else:
         st.info("模型正在初始化注意力矩阵...")
 
@@ -336,6 +351,16 @@ with col_t3:
         st.caption("差异被强行抹平，所有词概率趋同，模型极易产生乱码和幻觉。")
         fig_t3 = plot_token_probabilities(toy_softmax(toy_logits, 2.0), toy_words, top_k=5, title="T=2.0 极度平坦 (Uniform)")
         st.plotly_chart(fig_t3, use_container_width=True)
+
+with st.expander("[HOW TO READ // 读图指南] 采样温度 Temperature 概率塑形对比", expanded=False):
+    st.markdown(
+        """
+        * **横向对比三张图**：
+          * **T=0.1 (左图，极度陡峭)**：第 1 个词独占近 100% 概率，模型回答严谨、确定但死板；
+          * **T=0.7 (中图，经典平衡)**：保留首选词的明显优势，同时给 2~3 个同义词合理的微弱几率，生成生动富有文采；
+          * **T=2.0 (右图，极度平缓)**：所有柱子高度几乎拉平，模型开始胡言乱语。
+        """
+    )
 
 # ---------------------------------------------------------------------------
 # 2026 前沿拓展：KV-Cache 自回归推理加速与显存占用实时监控

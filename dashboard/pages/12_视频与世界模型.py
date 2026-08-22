@@ -241,6 +241,13 @@ fig_energy.update_layout(
 )
 fig_energy = _apply_light_theme(fig_energy, "视频时序动力学帧间差分能量曲线 (Motion Energy)")
 st.plotly_chart(fig_energy, use_container_width=True)
+with st.expander("[HOW TO READ // 读图指南] 帧间运动差分能量曲线", expanded=False):
+    st.markdown(
+        """
+        * **横轴【帧序号】** 与 **纵轴【相邻帧间像素变化能量】**。
+        * **尖峰高点**：物体发生剧烈位移、碰撞反弹或形态瞬变的时间点。
+        """
+    )
 
 # ---------------------------------------------------------------------------
 # Section 2: 空间注意力 vs 时间注意力机制
@@ -266,6 +273,12 @@ with col_sp_attn:
     )
     fig_sp = _apply_light_theme(fig_sp, "空间注意力 (Spatial Attention: 同一时刻全局画面)")
     st.plotly_chart(fig_sp, use_container_width=True)
+    with st.expander("[HOW TO READ // 读图指南] 空间注意力热力矩阵", expanded=False):
+        st.markdown(
+            """
+            * **在单张画面内部**：不同物体 Patch 之间的相互关联（如球与地面的几何相对位置）。
+            """
+        )
 
 with col_tp_attn:
     fig_tp = go.Figure(
@@ -284,6 +297,12 @@ with col_tp_attn:
     )
     fig_tp = _apply_light_theme(fig_tp, "时间注意力 (Temporal Attention: 同一位置历史运动)")
     st.plotly_chart(fig_tp, use_container_width=True)
+    with st.expander("[HOW TO READ // 读图指南] 时间注意力时序追踪矩阵", expanded=False):
+        st.markdown(
+            """
+            * **跨越时间维度**：当前帧该位置与过去所有历史帧的关联（追踪运动轨迹与速度惯性）。
+            """
+        )
 
 # ---------------------------------------------------------------------------
 # Section 3: 世界模型自回归下一帧物理预测
@@ -338,6 +357,14 @@ with col_world_info:
             """
         )
 
+with st.expander("[HOW TO READ // 读图指南] 物理世界下一帧推演预测对比", expanded=False):
+    st.markdown(
+        """
+        * **左图 (模型想象)** vs **中图 (真实物理)**：对比小球位置与反弹形变是否严丝合缝一致。
+        * **[OPTIMAL // 成功标志]**：预测误差 MSE 极小，小球位置准确落在反弹轨迹上。
+        """
+    )
+
 # ---------------------------------------------------------------------------
 # Section 4: Diffusion 噪声调度与 Sora 架构
 # ---------------------------------------------------------------------------
@@ -380,6 +407,13 @@ fig_sched.update_layout(
 )
 fig_sched = _apply_light_theme(fig_sched, "Diffusion 前向方差与信号保留率调度曲线")
 st.plotly_chart(fig_sched, use_container_width=True)
+with st.expander("[HOW TO READ // 读图指南] 扩散加噪与方差调度曲线", expanded=False):
+    st.markdown(
+        """
+        * **上方 5 张快照图**：从 $t=0$ (清晰原图) 随着加噪逐步被雪花点吞没，直到第 20 步变成纯白噪声。
+        * **下方折线图**：**红线 (加噪率 $\\beta_t$)** 逐步抬升，**蓝线 (原图残留率 $\\bar{\\alpha}_t$)** 单调骤降至 0。
+        """
+    )
 
 # 架构流程总结卡
 with st.container(border=True):

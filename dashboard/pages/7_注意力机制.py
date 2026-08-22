@@ -267,6 +267,15 @@ with col_main_heat:
         title=f"CAUSAL ATTENTION MATRIX // 因果自注意力权重矩阵 (Head 0 / {num_heads})",
     )
     st.plotly_chart(fig_main, use_container_width=True)
+    with st.expander("[HOW TO READ // 读图指南] 因果自注意力热力图", expanded=False):
+        st.markdown(
+            """
+            * **纵轴 (Query)**：“发出查询的当前词”；**横轴 (Key)**：“被查询关注的历史词”。
+            * **颜色深浅**：方格越亮（亮黄/亮绿），代表当前词对该历史词的**注意力权重占比越高**（每一行的概率总和严格等于 $1.0$）。
+            * **右上角全灰**：因果下三角掩码生效，防止当前词穿越时空偷看未来词。
+            * **[OPTIMAL // 观察要点]**：观察代词（如 `it`）是否跨距离高亮连接回它所指代的主语名词。
+            """
+        )
 
 with col_cmp_heat:
     st.markdown("#### [SCALE COMPARISON // 缩放因子效应对比]")
@@ -281,6 +290,13 @@ with col_cmp_heat:
         head_0_unscaled, raw_tokens, raw_tokens, title="[UNSCALED] 未缩放 (极化失效)"
     )
     st.plotly_chart(fig_unscaled_thumb, use_container_width=True)
+    with st.expander("[HOW TO READ // 读图指南] 缩放因子有效性对比", expanded=False):
+        st.markdown(
+            """
+            * **上方 [SCALED]**：除了最相关的词高亮外，其余词保留适当注意力过渡（软性 Softmax），梯度反向传播顺畅。
+            * **下方 [UNSCALED]**：Softmax 发生极化死锁，单点达到 100% 其余全为 0（退化为硬性 Hardmax），梯度近乎完全消失。
+            """
+        )
 
 # ---------------------------------------------------------------------------
 # 底部理论卡片：因果掩码 (Causal Mask)
@@ -350,6 +366,14 @@ with col_rope:
         )
         fig_rope = _apply_light_theme(fig_rope, "RoPE 相对位置内积衰减矩阵 (对角线为1)")
         st.plotly_chart(fig_rope, use_container_width=True)
+        with st.expander("[HOW TO READ // 读图指南] RoPE 相对衰减矩阵", expanded=False):
+            st.markdown(
+                """
+                * **主对角线 (值为 1.0)**：自己与自己的相对距离为 0，内积最大（最亮）。
+                * **远离对角线 (平滑变暗)**：随着词与词之间的距离拉大，内积得分自然衰减。
+                * **[OPTIMAL // 优势]**：模型天然感知相对顺序，泛化到超长上下文时外推性极强。
+                """
+            )
 
 with col_gqa:
     with st.container(border=True):

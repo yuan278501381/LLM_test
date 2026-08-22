@@ -234,6 +234,13 @@ with col_img_out:
     )
     fig_out = _apply_light_theme(fig_out, "输出特征响应图 (Feature Map)")
     st.plotly_chart(fig_out, use_container_width=True)
+    with st.expander("[HOW TO READ // 读图指南] 卷积特征响应图", expanded=False):
+        st.markdown(
+            """
+            * **亮黄色线条**：卷积核与当前区域像素特征强力匹配（如检测出边界）。
+            * **暗黑色背景**：平坦均匀区域，差分滤波后数值为 0。
+            """
+        )
 
 # ---------------------------------------------------------------------------
 # Section 2: 多通道特征图对比
@@ -271,6 +278,15 @@ for idx, (k_name, k_mat) in enumerate(sample_kernels):
         sub_fig = _apply_light_theme(sub_fig, k_name)
         st.plotly_chart(sub_fig, use_container_width=True)
 
+with st.expander("[HOW TO READ // 读图指南] 经典空间滤波算子横向对比", expanded=False):
+    st.markdown(
+        """
+        * **Sobel-X vs Sobel-Y**：分别敏锐捕捉垂直与水平方向的明暗边界。
+        * **Laplacian**：二阶导数算子，无死角勾勒全向高频边缘。
+        * **Sharpen**：强化中心对比度，让图像细节更锐利。
+        """
+    )
+
 # ---------------------------------------------------------------------------
 # Section 3: ViT 图块切片与 Token 化
 # ---------------------------------------------------------------------------
@@ -305,6 +321,13 @@ with col_vit_img:
     )
     fig_grid = _apply_light_theme(fig_grid, f"ViT 切片网格 (Patch={P}×{P}, 共 {num_patches} 个图块)")
     st.plotly_chart(fig_grid, use_container_width=True)
+    with st.expander("[HOW TO READ // 读图指南] ViT 图像 Patch 网格切分", expanded=False):
+        st.markdown(
+            """
+            * **虚线白格**：把一张 $32 \\times 32$ 连续图片打碎切割为 $N$ 个独立的方形小拼图。
+            * **Token 序列化**：每个小拼图像一维单词一样被展平并线性投影为向量，直接作为 Token 喂入 Transformer 堆叠层。
+            """
+        )
 
 with col_vit_info:
     with st.container(border=True):
@@ -350,6 +373,15 @@ with col_clip_mat:
     )
     fig_clip = _apply_light_theme(fig_clip, "CLIP 跨模态余弦相似度矩阵 (对角线为正样本对)")
     st.plotly_chart(fig_clip, use_container_width=True)
+    with st.expander("[HOW TO READ // 读图指南] CLIP 图文跨模态对齐矩阵", expanded=False):
+        st.markdown(
+            """
+            * **纵轴【图像概念类别】** 与 **横轴【文本提示描述】**。
+            * **主对角线高亮 (黄色亮色)**：图像与其自身真实文本描述之间的余弦相似度极高（约 $0.85 \\sim 0.95$）。
+            * **非对角线区域 (紫色暗色)**：不匹配的图文负样本对相似度被压低到 0 附近。
+            * **[OPTIMAL // 对齐标杆]**：对角线如金线般发亮，非对角线一片漆黑，说明多模态模型完全具备了跨模态零样本分类能力。
+            """
+        )
 
 with col_clip_desc:
     with st.container(border=True):

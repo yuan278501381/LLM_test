@@ -197,15 +197,46 @@ with col_left:
         model, X, y, title=f"DECISION MANIFOLD // {act_meta.id.upper()} 决策流形"
     )
     st.plotly_chart(fig_boundary, use_container_width=True)
+    with st.expander("[HOW TO READ // 读图指南] 空间决策流形与分界实线", expanded=False):
+        st.markdown(
+            """
+            * **横轴 $X_1$ 与纵轴 $X_2$**：样本的两个特征坐标（例如身高与体重、温度与湿度）。
+            * **红蓝圆点**：两类真实的训练样本点（红色代表类别 0，蓝色代表类别 1）。
+            * **加粗黑色实线 `[DECISION LINE]`**：模型画出的分类决策分界线（满足预测概率 $P=0.5$ 的分水岭）。
+            * **背景淡色流形**：模型对全平面每一个坐标点的预测概率（越红说明模型越有把握判定为类别 0，越蓝越有把握为类别 1）。
+            * **[OPTIMAL // 最优形态]**：黑色实线稳健地横穿在红蓝两堆点正中央，没有任何错分点。
+            """
+        )
 
 with col_right:
     fig_loss = plot_loss_curve(history)
     st.plotly_chart(fig_loss, use_container_width=True)
+    with st.expander("[HOW TO READ // 读图指南] 损失收敛 (Loss) 与准确率 (Accuracy) 曲线", expanded=False):
+        st.markdown(
+            """
+            * **两图横轴【训练轮数 (Epoch)】**：
+              - 模型把全部训练样本**从头到尾完整做过几遍试卷**（100 轮代表重温并反思了 100 遍错题）。
+            * **左子图纵轴【损失误差 (Loss)】**：
+              - **模型做错题目的扣分罚分**。Loss 越小，说明预测概率与真实答案越接近（0 代表完全没有误差）。
+              - **[OPTIMAL // 最优形态]**：呈现**"大滑梯型"**，从最初的高误差急剧下跌并平稳贴近 0。绿色菱形标出全过程最低损失点。
+            * **右子图纵轴【分类准确率 (Accuracy)】**：
+              - **模型答对题目的百分比**（$0.0 \\sim 1.0$，即 $0\\% \\sim 100\\%$）。
+              - **[OPTIMAL // 最优形态]**：从初始约 $0.5$（$50\\%$ 随机瞎猜）迅速爬坡，最终平稳锁定在 $1.0$（$100\\%$ 全对）。
+            """
+        )
 
 # 底部权重轨迹图
 render_section_heading("权重参数空间寻优轨迹 (Weight Trajectory)", icon_name="crosshair", subtext="参数 (w₁, w₂) 从初始位置沿损失梯度向全局最优收敛的连续路径：")
 fig_traj = plot_weight_trajectory(weight_trajectory)
 st.plotly_chart(fig_traj, use_container_width=True)
+with st.expander("[HOW TO READ // 读图指南] 权重参数空间寻优轨迹图", expanded=False):
+    st.markdown(
+        """
+        * **横轴 $w_1$ 与纵轴 $w_2$**：单神经元的两个核心权重参数。
+        * **等高线椭圆**：损失函数在地表形成的盆地地形（越靠中央，损失 Loss 越低）。
+        * **连续折线轨迹**：参数从随机出发点（小圆圈）顺着梯度下坡滚入盆地最低点（全局最优解）的过程。
+        """
+    )
 
 # 深度知识学习指南 (折叠微观原理解析)
 render_deep_dive_card("单神经元感知器核心参数与激活函数", [act_meta, opt_meta])

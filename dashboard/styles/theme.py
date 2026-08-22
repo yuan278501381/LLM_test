@@ -9,8 +9,22 @@ dashboard.styles.theme - 世界级纯净现代亮色视觉引擎 (Light Mode Des
 - 针对零基础初学者定制的保姆级新手教学指引系统 (Zero-Barrier Beginner Pedagogy)
 """
 
+import importlib
+import sys
+
 import streamlit as st
 from dashboard.styles.icons import svg_icon
+
+def reload_nn_core_modules() -> None:
+    """在 Streamlit 热重载时安全同步 nn_core 核心算法模块，杜绝长时间运行下的模块导入缓存问题"""
+    for mod_name in list(sys.modules.keys()):
+        if mod_name.startswith("nn_core."):
+            mod = sys.modules.get(mod_name)
+            if mod is not None:
+                try:
+                    importlib.reload(mod)
+                except Exception:
+                    pass
 
 
 def apply_custom_theme() -> None:
@@ -18,6 +32,7 @@ def apply_custom_theme() -> None:
     注入全局现代极简高对比度亮色 CSS 样式表。
     全面适配 High-DPI / 4K 屏幕与全操作系统缩放（Windows / macOS / Linux）。
     """
+    reload_nn_core_modules()
     st.markdown(
         """<style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
@@ -322,6 +337,56 @@ code, pre, .stCode {
 
 .stButton>button:active {
     transform: translateY(1px) !important;
+}
+
+/* -------------------------------------------------------------------------
+   世界级交互折叠框与读图指南 (Interactive Reading Guide / Explainer Cards)
+------------------------------------------------------------------------- */
+[data-testid="stExpander"] {
+    background: #ffffff !important;
+    border: 1px solid #bfdbfe !important;
+    border-left: 3.5px solid #2563eb !important;
+    border-radius: 10px !important;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.05) !important;
+    margin-top: 0.4rem !important;
+    margin-bottom: 0.9rem !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    overflow: hidden !important;
+}
+
+[data-testid="stExpander"]:hover {
+    border-color: #3b82f6 !important;
+    border-left: 3.5px solid #1d4ed8 !important;
+    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.12) !important;
+    transform: translateY(-1px) !important;
+}
+
+[data-testid="stExpander"] summary {
+    background: linear-gradient(180deg, #ffffff 0%, #eff6ff 100%) !important;
+    padding: 0.65rem 1rem !important;
+    font-weight: 700 !important;
+    font-size: 0.88rem !important;
+    color: #1e3a8a !important;
+    letter-spacing: 0.01em !important;
+}
+
+[data-testid="stExpander"] summary:hover {
+    color: #1d4ed8 !important;
+    background: #dbeafe !important;
+}
+
+[data-testid="stExpander"] summary svg {
+    color: #2563eb !important;
+    stroke-width: 2.5 !important;
+}
+
+[data-testid="stExpander"] [data-testid="stExpanderDetails"] {
+    padding: 1rem 1.25rem !important;
+    background: #ffffff !important;
+    border-top: 1px solid #e2e8f0 !important;
+    font-size: 0.9rem !important;
+    line-height: 1.65 !important;
+    color: #1e293b !important;
 }
 </style>""",
         unsafe_allow_html=True,

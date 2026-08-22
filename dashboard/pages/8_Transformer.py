@@ -224,6 +224,16 @@ for i in range(num_layers):
         )
         st.plotly_chart(fig_layer, use_container_width=True)
 
+with st.expander("[HOW TO READ // 读图指南] 逐层注意力演进热力图", expanded=False):
+    st.markdown(
+        """
+        * **纵轴 (当前词)** 与 **横轴 (历史关注词)**：展示每个 Transformer 层的自注意力分布。
+        * **[OPTIMAL // 逐层抽象演进]**：
+          * **第 1 层 (浅层)**：注意力主要集中在邻近词（提取局部短语、标点等浅层语法特征）。
+          * **深层 (第 2/3 层)**：注意力亮点开始跳跃式分布在远距离的关键核心词（完成深层语义理解与长程代词绑定）。
+        """
+    )
+
 # ---------------------------------------------------------------------------
 # 主视图区 3：残差流范数增长曲线
 # ---------------------------------------------------------------------------
@@ -248,12 +258,20 @@ with col_curve:
         )
     )
     fig_norm.update_layout(
-        xaxis_title="Network Depth (网络层级深度)",
-        yaxis_title="Mean Vector L2 Norm (平均特征向量范数)",
+        xaxis_title="网络深度 (Network Depth)",
+        yaxis_title="平均特征向量 L2 范数 (Vector L2 Norm)",
         showlegend=False,
     )
     fig_norm = _apply_light_theme(fig_norm, "RESIDUAL NORM GROWTH // 残差流模长递增趋势")
     st.plotly_chart(fig_norm, use_container_width=True)
+    with st.expander("[HOW TO READ // 读图指南] 残差流模长与特征累积折线图", expanded=False):
+        st.markdown(
+            """
+            * **横轴【网络层级深度】**：从最底层的词嵌入输入层 $\\to$ Layer 1 $\\to$ Layer 2 $\\to$ 最终输出层。
+            * **纵轴【特征向量 L2 模长】**：残差流中隐藏状态向量的能量总和。
+            * **[OPTIMAL // 健康形态]**：模长随着网络层数平滑阶梯式稳步递增，说明每个 Block 都在以“加法”形式不断往中央总线注入新的抽象信息。
+            """
+        )
 
 with col_math:
     with st.container(border=True):

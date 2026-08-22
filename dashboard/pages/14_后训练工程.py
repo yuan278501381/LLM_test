@@ -281,6 +281,13 @@ fig_radar.update_layout(
 )
 fig_radar = _apply_light_theme(fig_radar, "大模型各训练阶段六维能力画像雷达对比")
 st.plotly_chart(fig_radar, use_container_width=True)
+with st.expander("[HOW TO READ // 读图指南] 六维对齐能力雷达图", expanded=False):
+    st.markdown(
+        """
+        * **6 个顶点维度**：有用性、无害性、诚实性、指令跟随、创造力、安全性。
+        * **[OPTIMAL // 演进趋势]**：从原始基座（只有创造力高，其余极低）$\\to$ SFT (指令跟随暴涨) $\\to$ RLHF/DPO (安全与诚实性全面拉满成六边形战士)。
+        """
+    )
 
 # ---------------------------------------------------------------------------
 # Section 4: RLHF PPO 轨迹 vs DPO 直接偏好机制
@@ -316,6 +323,12 @@ with col_ppo_plot:
     )
     fig_ppo = _apply_light_theme(fig_ppo, f"RLHF PPO 策略训练轨迹 (Clip={ppo_eps})")
     st.plotly_chart(fig_ppo, use_container_width=True)
+    with st.expander("[HOW TO READ // 读图指南] RLHF PPO 策略强化学习轨迹", expanded=False):
+        st.markdown(
+            """
+            * **绿线【奖励得分 (Reward)】** 稳步爬升；**棕虚线【KL 散度约束】** 稳定在低位未发生失控（防止模型对齐崩塌）。
+            """
+        )
 
 with col_dpo_card:
     with st.container(border=True):
@@ -362,6 +375,12 @@ fig_lora.update_layout(
 )
 fig_lora = _apply_light_theme(fig_lora, f"LoRA 不同 Rank 下与全量微调参数量对比 (d_model={lora_dmodel})")
 st.plotly_chart(fig_lora, use_container_width=True)
+with st.expander("[HOW TO READ // 读图指南] LoRA 参数量削减对比柱状图", expanded=False):
+    st.markdown(
+        """
+        * **红色虚线**：全量微调需更新的全部权重；**蓝色柱子**：不同 Rank 下 LoRA 仅需训练的微量参数（削减 90%~99% 显存）。
+        """
+    )
 
 # ---------------------------------------------------------------------------
 # 零基础进阶：后训练对齐与 LoRA 核心公式拆解

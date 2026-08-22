@@ -226,6 +226,14 @@ with col_ppl_curve:
     fig_ppl = _apply_light_theme(fig_ppl, "预训练全周期困惑度 (PPL) 下降收敛曲线")
     st.plotly_chart(fig_ppl, use_container_width=True)
 
+with st.expander("[HOW TO READ // 读图指南] 困惑度 (PPL) 仪表盘与收敛曲线", expanded=False):
+    st.markdown(
+        """
+        * **左图【PPL 仪表盘】**：指针落在**绿色区间 ($< 20$)** 说明模型猜词非常自信准确；落在**红色区间 ($> 80$)** 说明模型严重失智。
+        * **右图【PPL 下降曲线】**：横轴【训练轮数】，纵轴【PPL 数值】。**[OPTIMAL // 最优趋势]**：从 200 高位指数平滑暴跌至 10 左右。
+        """
+    )
+
 # ---------------------------------------------------------------------------
 # Section 2: Mini 客观基准模拟考场
 # ---------------------------------------------------------------------------
@@ -290,6 +298,13 @@ with col_radar_plot:
     )
     radar_fig = _apply_light_theme(radar_fig, "大模型基准考试能力画像雷达图")
     st.plotly_chart(radar_fig, use_container_width=True)
+    with st.expander("[HOW TO READ // 读图指南] 多维基准考试雷达图", expanded=False):
+        st.markdown(
+            """
+            * **各轴顶点**：学科通识 (MMLU)、常识推理 (HellaSwag)、数学应用 (GSM8K)、安全合规 (Safety)。
+            * **[OPTIMAL // 越饱满越强]**：蓝色多边形面积越大、向外扩散越广，说明模型的通用综合素质越高。
+            """
+        )
 
 with col_radar_desc:
     with st.container(border=True):
