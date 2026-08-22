@@ -129,18 +129,55 @@ header {background-color: transparent !important;}
    侧边栏完全亮色化与导航条文字锐利化 (消除切页字重闪烁)
 ------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------
-   世界级双栏响应式级联侧边栏 (Tier-1 课程罗盘 + Tier-2 参数微观控制台)
+   世界级双栏/单栏智能自适应侧边栏 (Content-Aware Dynamic Layout)
+   - 当页面无超参数控制台时 (如 M00 / 首页)：自动收拢为 240px 极简单栏，导航 100% 满宽，杜绝大片空白！
+   - 当页面有超参数控制台时 (如 M01~M17)：自动展开为双栏（180px 课程罗盘 + 310px 参数微观控制台）！
 ------------------------------------------------------------------------- */
-@media (min-width: 1200px) {
-    [data-testid="stSidebar"] {
-        width: 520px !important;
-        min-width: 520px !important;
-        max-width: 560px !important;
+/* 1. 单栏模式 (无超参数控件时) */
+[data-testid="stSidebar"].nn-sidebar-single-col,
+[data-testid="stSidebar"]:not(:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"])) {
+    width: 240px !important;
+    min-width: 240px !important;
+    max-width: 260px !important;
+    background-color: #f8fafc !important;
+}
+
+[data-testid="stSidebar"].nn-sidebar-single-col [data-testid="stSidebarContent"],
+[data-testid="stSidebar"]:not(:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"])) [data-testid="stSidebarContent"] {
+    display: block !important;
+    padding: 1rem 0.6rem !important;
+    height: 100vh !important;
+    overflow-y: auto !important;
+}
+
+[data-testid="stSidebar"].nn-sidebar-single-col [data-testid="stSidebarNav"],
+[data-testid="stSidebar"]:not(:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"])) [data-testid="stSidebarNav"] {
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    border-right: none !important;
+    padding: 0 !important;
+    background-color: transparent !important;
+}
+
+[data-testid="stSidebar"].nn-sidebar-single-col [data-testid="stSidebarUserContent"],
+[data-testid="stSidebar"]:not(:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"])) [data-testid="stSidebarUserContent"] {
+    display: none !important;
+}
+
+/* 2. 双栏模式 (有超参数控件时，且屏幕 >= 1260px) */
+@media (min-width: 1260px) {
+    [data-testid="stSidebar"].nn-sidebar-dual-col,
+    [data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"]) {
+        width: 495px !important;
+        min-width: 495px !important;
+        max-width: 530px !important;
         background-color: #f8fafc !important;
         border-right: 1px solid #e2e8f0 !important;
     }
 
-    [data-testid="stSidebarContent"] {
+    [data-testid="stSidebar"].nn-sidebar-dual-col [data-testid="stSidebarContent"],
+    [data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"]) [data-testid="stSidebarContent"] {
         display: flex !important;
         flex-direction: row !important;
         height: 100vh !important;
@@ -148,32 +185,35 @@ header {background-color: transparent !important;}
         overflow: hidden !important;
     }
 
-    /* 栏位 1：主导航航母罗盘 (Master Rail) */
-    [data-testid="stSidebarNav"] {
-        width: 220px !important;
-        min-width: 220px !important;
-        max-width: 220px !important;
+    /* 栏位 1：主导航航母罗盘 (Master Rail, 180px 紧凑流线) */
+    [data-testid="stSidebar"].nn-sidebar-dual-col [data-testid="stSidebarNav"],
+    [data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"]) [data-testid="stSidebarNav"] {
+        width: 180px !important;
+        min-width: 180px !important;
+        max-width: 180px !important;
         height: 100% !important;
         overflow-y: auto !important;
         border-right: 1px solid #e2e8f0 !important;
-        padding: 1.1rem 0.5rem !important;
+        padding: 0.9rem 0.4rem !important;
         background-color: #f8fafc !important;
         box-sizing: border-box !important;
     }
 
-    /* 栏位 2：微观超参数控制台 (Detail Parameter Deck) */
-    [data-testid="stSidebarUserContent"] {
+    /* 栏位 2：微观超参数控制台 (Detail Parameter Deck, 315px 舒展宽度) */
+    [data-testid="stSidebar"].nn-sidebar-dual-col [data-testid="stSidebarUserContent"],
+    [data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"]) [data-testid="stSidebarUserContent"] {
         flex: 1 !important;
-        min-width: 280px !important;
+        min-width: 315px !important;
         height: 100% !important;
         overflow-y: auto !important;
-        padding: 1.1rem 0.9rem !important;
+        padding: 1rem 0.85rem !important;
         background-color: #ffffff !important;
         box-sizing: border-box !important;
     }
 }
 
-@media (max-width: 1199px) {
+/* 3. 响应式折叠模式 (屏幕 < 1260px 时弹性回退为垂直单列) */
+@media (max-width: 1259px) {
     [data-testid="stSidebar"] {
         width: 330px !important;
         min-width: 330px !important;
@@ -888,43 +928,79 @@ g.updatemenu-button {
                 headStyle = doc.createElement('style');
                 headStyle.id = 'nn-persistent-sidebar-style';
                 headStyle.textContent = `
-                    @media (min-width: 1200px) {
-                        [data-testid="stSidebar"] {
-                            width: 520px !important;
-                            min-width: 520px !important;
-                            max-width: 560px !important;
+                    /* 1. 单栏模式 (无超参数控件时) */
+                    [data-testid="stSidebar"].nn-sidebar-single-col,
+                    [data-testid="stSidebar"]:not(:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"])) {
+                        width: 240px !important;
+                        min-width: 240px !important;
+                        max-width: 260px !important;
+                        background-color: #f8fafc !important;
+                    }
+                    [data-testid="stSidebar"].nn-sidebar-single-col [data-testid="stSidebarContent"],
+                    [data-testid="stSidebar"]:not(:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"])) [data-testid="stSidebarContent"] {
+                        display: block !important;
+                        padding: 1rem 0.6rem !important;
+                        height: 100vh !important;
+                        overflow-y: auto !important;
+                    }
+                    [data-testid="stSidebar"].nn-sidebar-single-col [data-testid="stSidebarNav"],
+                    [data-testid="stSidebar"]:not(:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"])) [data-testid="stSidebarNav"] {
+                        width: 100% !important;
+                        min-width: 100% !important;
+                        max-width: 100% !important;
+                        border-right: none !important;
+                        padding: 0 !important;
+                        background-color: transparent !important;
+                    }
+                    [data-testid="stSidebar"].nn-sidebar-single-col [data-testid="stSidebarUserContent"],
+                    [data-testid="stSidebar"]:not(:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"])) [data-testid="stSidebarUserContent"] {
+                        display: none !important;
+                    }
+
+                    /* 2. 双栏模式 (有超参数控件时，且屏幕 >= 1260px) */
+                    @media (min-width: 1260px) {
+                        [data-testid="stSidebar"].nn-sidebar-dual-col,
+                        [data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"]) {
+                            width: 495px !important;
+                            min-width: 495px !important;
+                            max-width: 530px !important;
                             background-color: #f8fafc !important;
                             border-right: 1px solid #e2e8f0 !important;
                         }
-                        [data-testid="stSidebarContent"] {
+                        [data-testid="stSidebar"].nn-sidebar-dual-col [data-testid="stSidebarContent"],
+                        [data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"]) [data-testid="stSidebarContent"] {
                             display: flex !important;
                             flex-direction: row !important;
                             height: 100vh !important;
                             padding: 0 !important;
                             overflow: hidden !important;
                         }
-                        [data-testid="stSidebarNav"] {
-                            width: 220px !important;
-                            min-width: 220px !important;
-                            max-width: 220px !important;
+                        [data-testid="stSidebar"].nn-sidebar-dual-col [data-testid="stSidebarNav"],
+                        [data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"]) [data-testid="stSidebarNav"] {
+                            width: 180px !important;
+                            min-width: 180px !important;
+                            max-width: 180px !important;
                             height: 100% !important;
                             overflow-y: auto !important;
                             border-right: 1px solid #e2e8f0 !important;
-                            padding: 1.1rem 0.5rem !important;
+                            padding: 0.9rem 0.4rem !important;
                             background-color: #f8fafc !important;
                             box-sizing: border-box !important;
                         }
-                        [data-testid="stSidebarUserContent"] {
+                        [data-testid="stSidebar"].nn-sidebar-dual-col [data-testid="stSidebarUserContent"],
+                        [data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"]) [data-testid="stSidebarUserContent"] {
                             flex: 1 !important;
-                            min-width: 280px !important;
+                            min-width: 315px !important;
                             height: 100% !important;
                             overflow-y: auto !important;
-                            padding: 1.1rem 0.9rem !important;
+                            padding: 1rem 0.85rem !important;
                             background-color: #ffffff !important;
                             box-sizing: border-box !important;
                         }
                     }
-                    @media (max-width: 1199px) {
+
+                    /* 3. 响应式折叠模式 (屏幕 < 1260px 时弹性回退为垂直单列) */
+                    @media (max-width: 1259px) {
                         [data-testid="stSidebar"] {
                             width: 330px !important;
                             min-width: 330px !important;
@@ -948,6 +1024,7 @@ g.updatemenu-button {
                             width: 100% !important;
                         }
                     }
+
                     [data-testid="stSidebarNavItems"] {
                         max-height: none !important;
                         overflow-y: visible !important;
@@ -959,11 +1036,11 @@ g.updatemenu-button {
                     }
                     [data-testid="stSidebarNav"] a,
                     [data-testid="stSidebarNavLink"] {
-                        min-height: 38px !important;
+                        min-height: 36px !important;
                         display: flex !important;
                         align-items: center !important;
-                        border-radius: 8px !important;
-                        padding: 0.35rem 0.65rem !important;
+                        border-radius: 6px !important;
+                        padding: 0.3rem 0.5rem !important;
                         transition: background-color 0.15s ease, border-color 0.15s ease !important;
                         contain: layout style !important;
                         text-decoration: none !important;
@@ -972,9 +1049,11 @@ g.updatemenu-button {
                     [data-testid="stSidebarNavLink"] span {
                         font-weight: 600 !important;
                         color: #334155 !important;
-                        font-size: 0.88rem !important;
+                        font-size: 0.82rem !important;
                         transition: color 0.15s ease !important;
                         white-space: nowrap !important;
+                        overflow: hidden !important;
+                        text-overflow: ellipsis !important;
                         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif !important;
                     }
                     [data-testid="stSidebarNav"] a[aria-current="page"],
@@ -1018,7 +1097,30 @@ g.updatemenu-button {
                 doc.head.appendChild(headStyle);
             }
 
+            function updateSidebarLayoutMode() {
+                var sidebar = doc.querySelector('[data-testid="stSidebar"]');
+                if (!sidebar) return;
+                var userContent = sidebar.querySelector('[data-testid="stSidebarUserContent"]');
+                var hasControls = false;
+                if (userContent) {
+                    var widgets = userContent.querySelectorAll('input, select, [data-testid="stSlider"], [data-testid="stSelectbox"], [data-testid="stRadio"], [data-testid="stNumberInput"], [data-testid="stCheckbox"]');
+                    hasControls = widgets.length > 0;
+                }
+                if (hasControls) {
+                    if (!sidebar.classList.contains('nn-sidebar-dual-col')) {
+                        sidebar.classList.add('nn-sidebar-dual-col');
+                        sidebar.classList.remove('nn-sidebar-single-col');
+                    }
+                } else {
+                    if (!sidebar.classList.contains('nn-sidebar-single-col')) {
+                        sidebar.classList.add('nn-sidebar-single-col');
+                        sidebar.classList.remove('nn-sidebar-dual-col');
+                    }
+                }
+            }
+
             function formatSidebarNav() {
+                updateSidebarLayoutMode();
                 var links = doc.querySelectorAll('[data-testid="stSidebarNav"] a, [data-testid="stSidebarNavLink"]');
                 links.forEach(function(a) {
                     var spans = a.querySelectorAll('span');
