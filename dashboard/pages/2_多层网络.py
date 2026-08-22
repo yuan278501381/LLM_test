@@ -311,10 +311,28 @@ st.markdown(grid_html, unsafe_allow_html=True)
 
 if "VANISHING" in grad_health_status:
     st.warning(
-        "[SCIENTIFIC PHENOMENON // 深度学习经典现象复现]\n\n"
+        "**[SCIENTIFIC PHENOMENON // 深度学习经典现象复现]**\n\n"
         "您当前成功复现了著名的【梯度消失 (Vanishing Gradient)】困境！\n\n"
-        "• **为什么播放演练时变化很小？** 本预设采用较深的 Sigmoid 网络与普通随机初始化。链式乘积可能使浅层梯度变小；界面显示的是这次实际算得的梯度范数，而不是仅凭 0.25^层数推出固定的 10^-13。\n"
-        "• **如何做对照？** 切换为 **ReLU + He** 后重跑，并同时比较梯度、损失与多种子结果。该组合常能改善信号传播，但不保证对每个数据集都收敛。"
+        "• **为什么播放演练时变化很小？** 本实验采用了 4 层较深的 Sigmoid 网络与普通随机初始化。链式法则连乘导致浅层梯度急剧衰减至 $10^{-7}$ 数量级，前端权重几乎停止更新。\n\n"
+        "• **如何设置并进行对照实验？**\n\n"
+        "  **方式一（一键切换）**：点击下方【一键切换为 ReLU + He 对照组重跑】按钮，系统将自动配置并重跑；\n\n"
+        "  **方式二（左侧侧边栏手动调参）**：\n"
+        "  1. 在左侧侧边栏最上方的 **【PRESET // 经典实验预设】** 中，选择 **`自定义配置 (Custom)`**（此时下方将展开全量调参面板）；\n"
+        "  2. 在展开的 **【NETWORK // 网络结构与激活函数】** 面板中：\n"
+        "     - 将 **【网络隐藏层数】** 设为 **4**（保持深层对比）\n"
+        "     - 将 **【激活函数 (Activation)】** 切换为 **`ReLU (线性整流函数)`**（消除正向饱和区）\n"
+        "     - 将 **【权重初始化 (Initializer)】** 切换为 **`He / Kaiming (正态分布)`**（方差自适应缩放）\n"
+        "  3. 观察右侧 `GRADIENT NORM` 梯度范数指标恢复至健康绿灯（HEALTHY）且损失快速下降！"
+    )
+    def _apply_remedy_callback() -> None:
+        st.session_state["m2_preset_choice"] = "梯度消失拯救对照 (ReLU + He 对照组)"
+
+    col_remedy, _ = st.columns([1, 2])
+    col_remedy.button(
+        "一键切换为 ReLU + He 对照组重跑",
+        key="btn_m2_remedy_relu_he",
+        help="自动切换为 4层 + ReLU + He 初始化 + Adam 优化器对照方案",
+        on_click=_apply_remedy_callback,
     )
 
 # ---------------------------------------------------------------------------
