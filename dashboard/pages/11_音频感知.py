@@ -18,6 +18,7 @@ import streamlit as st
 
 from dashboard.components.charts import _apply_light_theme
 from dashboard.styles.theme import (
+    anchor_badge,
     apply_custom_theme,
     render_hero_header,
     render_metric_card,
@@ -51,31 +52,44 @@ render_hero_header(
 # 零基础保姆级指引 (Zero-Barrier Beginner Guide)
 # ---------------------------------------------------------------------------
 render_page_guide(
-    title="音频信号处理与语音大模型入门",
+    title="音频感知架构与空间交互地图",
+    blueprint_sections=[
+        {"id": "A", "name": "音频合成控制台", "desc": "在左侧侧边栏调节基频、波形类型、泛音叠加与梅尔频段数", "color": "amber", "target_id": "region-a"},
+        {"id": "B", "name": "教学指引", "desc": "当前卡片：通俗理解声波连续振动、STFT 傅里叶分光与梅尔耳蜗滤波", "color": "blue", "target_id": "region-b"},
+        {"id": "C", "name": "实时声学遥测", "desc": "显示采样率、频谱帧数、梅尔频段数与 Token 序列长度", "color": "emerald", "target_id": "region-c"},
+        {"id": "D", "name": "时域示波器与播放", "desc": "微观连续振动波形与纯 NumPy 实时合成标准 WAV 音频试听", "color": "purple", "target_id": "region-d"},
+        {"id": "E", "name": "梅尔滤波与 Whisper", "desc": "耳蜗非线性滤波器组、2D 梅尔声学热力图与 Whisper Token", "color": "blue", "target_id": "region-e"},
+    ],
     plain_intro=(
-        "<b>大模型是如何'听到'声音的？</b><br>"
-        "人类耳朵听到的声音，在物理上只是<b>空气压强的连续时间振动波形</b>；<br>"
-        "计算机通过 <b>傅里叶变换 (FFT)</b> 像三棱镜分解白光一样，将复杂的混合波形拆解为不同频率成分；<br>"
-        "再通过模拟人耳非线性听觉的 <b>梅尔滤波器组 (Mel Filterbank)</b>，将一维声音压缩为一张 2D 的<b>'声音热力图 (Mel Spectrogram)'</b>；<br>"
-        "最后像 Whisper 这样的现代大模型，就可以直接<b>像阅读文本一样阅读这张声音频谱图</b>！"
+        f"<b>大模型是如何'听到'声音的？</b><br>"
+        f"人类耳朵听到的声音，在物理上只是<b>空气压强的连续时间振动波形</b>；<br>"
+        f"计算机通过 <b>傅里叶变换 (FFT)</b> 像三棱镜分解白光一样，将复杂的混合波形拆解为不同频率成分；<br>"
+        f"再通过模拟人耳非线性听觉的 <b>梅尔滤波器组 (Mel Filterbank)</b>，在 {anchor_badge('[E. 梅尔频谱图]', 'blue', target_id='region-e')} 将一维声音压缩为一张 2D 的<b>'声音热力图'</b>；<br>"
+        f"最后像 Whisper 这样的现代大模型，就可以直接<b>像阅读文本一样阅读这张声音频谱图</b>！"
     ),
     hyperparams_desc=(
-        "• <b>基频 (Frequency)</b>：声音的音高。例如中央 C 约为 261.6 Hz，国际标准音 A4 为 440 Hz。<br>"
-        "• <b>波形类型 (Wave Type)</b>：正弦波（纯音）、方波（复古电子音）、锯齿波（明亮丰富）。<br>"
-        "• <b>梅尔频段数 (Mel Bins)</b>：频域分辨率通道数，工业标准通常为 80 或 128。<br>"
-        "• <b>FFT 窗口大小</b>：时频权衡。窗口越小时间越准，窗口越大频率越准（测不准原理）。"
+        f"• <b>在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 调节</b>：<br>"
+        f"• <b>基频 (Frequency)</b>：声音的音高。例如中央 C 约为 261.6 Hz，国际标准音 A4 为 440 Hz。<br>"
+        f"• <b>波形类型 (Wave Type)</b>：正弦波（纯音）、方波（复古电子音）、锯齿波（明亮丰富）。<br>"
+        f"• <b>梅尔频段数 (Mel Bins)</b>：频域分辨率通道数，工业标准通常为 80 或 128。<br>"
+        f"• <b>FFT 窗口大小</b>：时频权衡。窗口越小时间越准，窗口越大频率越准（测不准原理）。"
     ),
     telemetry_desc=(
-        "• <b>采样率与波形点数</b>：16,000 Hz 工业标准单声道实时波形采样。<br>"
-        "• <b>FFT 频域特征谱</b>：离散傅里叶变换提取的各频率分量振幅响应。<br>"
-        "• <b>语音 Token 序列长度</b>：音频分帧打包为大模型输入向量的 Token 数量。"
+        f"• <b>在 {anchor_badge('[D. 时域示波器]', 'purple', target_id='region-d')} 观测</b>：微观连续振动波形与真实声音试听。<br>"
+        f"• <b>在 {anchor_badge('[E. 梅尔频谱图]', 'blue', target_id='region-e')} 观测</b>：对数梅尔功率谱能量分布。<br>"
+        f"• <b>在 {anchor_badge('[C. 声学遥测]', 'emerald', target_id='region-c')} 评估</b>：采样率与 Whisper 序列长度。"
     ),
     experiments=[
-        "<b>第 1 步【聆听与观察纯音】</b>：点击 Section 1 的播放器试听 440Hz 纯音，并观察上方示波器中优美的正弦波形！",
-        "<b>第 2 步【合成和弦与观察泛音】</b>：在左侧勾选【叠加泛音】，在 Section 2 观察频谱图上如何瞬间冒出 2 倍频与 3 倍频的尖锐峰值！",
-        "<b>第 3 步【观测梅尔声学图】</b>：在 Section 3 观察 2D 梅尔热力图与三角形滤波器形状，理解为什么低频区域分布密集而高频区域分布稀疏！",
+        f"<b>第 1 步【聆听与观察纯音】</b>：点击 {anchor_badge('[D. 示波器]', 'purple', target_id='region-d')} 旁边的播放器试听 440Hz 纯音，并观察上方示波器中优美的正弦波形！",
+        f"<b>第 2 步【合成和弦与观察泛音】</b>：在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 勾选【叠加泛音】，观察频谱图上如何瞬间冒出 2 倍频与 3 倍频的尖锐峰值！",
+        f"<b>第 3 步【观测梅尔声学图】</b>：在 {anchor_badge('[E. 梅尔声学图]', 'blue', target_id='region-e')} 观察 2D 梅尔热力图与三角形滤波器形状，理解为什么低频区域分布密集而高频区域分布稀疏！",
     ],
 )
+
+# ---------------------------------------------------------------------------
+# 侧边栏参数控制
+# ---------------------------------------------------------------------------
+st.sidebar.markdown(f'<div id="region-a" class="interactive-region" style="margin-bottom:0.6rem;padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">{anchor_badge("A", "amber")} <b>AUDIO CONTROLS // 音频信号控制台</b></div>', unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
 # 侧边栏参数控制
@@ -174,12 +188,23 @@ metric_grid_html = (
     )
     + "</div>"
 )
+st.markdown(
+    f'<div id="region-c" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;">'
+    f'{anchor_badge("C", "emerald")} <span style="font-weight:800;color:#065f46;font-size:0.86rem;">AUDIO TELEMETRY // 音频特征与时频分解遥测</span>'
+    f'</div>',
+    unsafe_allow_html=True,
+)
 st.markdown(metric_grid_html, unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
 # Section 1: 时域连续波形示波器
 # ---------------------------------------------------------------------------
-render_section_heading("TIME-DOMAIN OSCILLOSCOPE // 时域连续振动波形示波器", icon_name="activity")
+st.markdown(
+    f'<div id="region-d" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;margin-top:1rem;">'
+    f'{anchor_badge("D", "purple")} <span style="font-weight:800;color:#5b21b6;font-size:0.86rem;">TIME-DOMAIN OSCILLOSCOPE // 时域连续波形与声音播放器</span>'
+    f'</div>',
+    unsafe_allow_html=True,
+)
 
 col_wave_plot, col_audio_play = st.columns([1.5, 0.8])
 
@@ -266,7 +291,12 @@ with st.expander("[HOW TO READ // 读图指南] FFT 全局频谱能量柱状图"
 # ---------------------------------------------------------------------------
 # Section 3: 梅尔声学滤波器组与 2D 频谱图
 # ---------------------------------------------------------------------------
-render_section_heading("MEL FILTERBANK & SPECTROGRAM // 梅尔滤波器组与 2D 对数梅尔频谱图", icon_name="layers")
+st.markdown(
+    f'<div id="region-e" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;margin-top:1.2rem;">'
+    f'{anchor_badge("E", "blue")} <span style="font-weight:800;color:#1e40af;font-size:0.86rem;">MEL FILTERBANK & SPECTROGRAM // 梅尔滤波器组与 2D 对数梅尔频谱图</span>'
+    f'</div>',
+    unsafe_allow_html=True,
+)
 
 col_fb_plot, col_mel_heat = st.columns(2)
 

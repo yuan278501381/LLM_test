@@ -18,9 +18,11 @@ import streamlit as st
 
 from dashboard.components.charts import _apply_light_theme
 from dashboard.styles.theme import (
+    anchor_badge,
     apply_custom_theme,
     render_hero_header,
     render_metric_card,
+    render_floating_hud_navigator,
     render_page_guide,
     render_section_heading,
 )
@@ -50,36 +52,57 @@ render_hero_header(
     badge_type="blue",
 )
 
+render_floating_hud_navigator([
+        {"id": "A", "name": "预训练控制台", "desc": "在左侧侧边栏切换核心预训练目标、掩码比例与学习率", "color": "amber", "target_id": "region-a"},
+        {"id": "B", "name": "教学指引", "desc": "当前卡片：通俗理解自监督预训练基因、Scaling Laws 与数据清洗工程", "color": "blue", "target_id": "region-b"},
+        {"id": "C", "name": "实时预训练遥测", "desc": "显示当前范式、梯度收敛损失、掩码遮蔽率与最优迁移领域", "color": "emerald", "target_id": "region-c"},
+        {"id": "D", "name": "MLM vs CLM 真实训练", "desc": "完形填空与因果接龙对比互动及纯 NumPy 真实梯度反向传播收敛", "color": "purple", "target_id": "region-d"},
+        {"id": "E", "name": "Scaling Laws 实验", "desc": "Chinchilla 扩展定律算力计算器、历史模型散点与 BPE 演化", "color": "blue", "target_id": "region-e"},
+    ])
+
 # ---------------------------------------------------------------------------
 # 零基础保姆级指引 (Zero-Barrier Beginner Guide)
 # ---------------------------------------------------------------------------
 render_page_guide(
-    title="预训练目标函数、扩展定律与数据工程",
+    title="预训练范式全景与空间交互地图",
+    blueprint_sections=[
+        {"id": "A", "name": "预训练控制台", "desc": "在左侧侧边栏切换核心预训练目标、掩码比例与学习率", "color": "amber", "target_id": "region-a"},
+        {"id": "B", "name": "教学指引", "desc": "当前卡片：通俗理解自监督预训练基因、Scaling Laws 与数据清洗工程", "color": "blue", "target_id": "region-b"},
+        {"id": "C", "name": "实时预训练遥测", "desc": "显示当前范式、梯度收敛损失、掩码遮蔽率与最优迁移领域", "color": "emerald", "target_id": "region-c"},
+        {"id": "D", "name": "MLM vs CLM 真实训练", "desc": "完形填空与因果接龙对比互动及纯 NumPy 真实梯度反向传播收敛", "color": "purple", "target_id": "region-d"},
+        {"id": "E", "name": "Scaling Laws 实验", "desc": "Chinchilla 扩展定律算力计算器、历史模型散点与 BPE 演化", "color": "blue", "target_id": "region-e"},
+    ],
     plain_intro=(
-        "<b>大模型的底座智能究竟是从哪里来的？</b><br>"
-        "在没有任何人工标注的情况下，我们如何让模型自学成才？答案是<b>自监督预训练 (Self-Supervised Pre-training)</b> 与 <b>大模型扩展定律 (Scaling Laws)</b>！<br>"
-        "• <b>四大目标基因</b>：BERT (MLM) 完形填空擅长理解；GPT (CLM) 因果接龙擅长创作推理；CLIP 擅长跨模态对齐；MAE 擅长全局视觉补全。<br>"
-        "• <b>扩展定律经济学</b>：DeepMind Chinchilla 严格证明，模型参数量 $N$ 与训练 Token 数 $D$ 应等比例扩展（$D \\approx 20N$），算力 $C \\approx 6ND$。<br>"
-        "• <b>分词与数据工程</b>：BPE (Byte-Pair Encoding) 从字符自底向上合并出高频子词；高质量多源语料清洗决定模型智能上限！"
+        f"<b>大模型的底座智能究竟是从哪里来的？</b><br>"
+        f"在没有任何人工标注的情况下，我们如何让模型自学成才？答案是<b>自监督预训练 (Self-Supervised Pre-training)</b> 与 <b>大模型扩展定律 (Scaling Laws)</b>！<br>"
+        f"• <b>四大目标基因</b>：BERT (MLM) 完形填空擅长理解；GPT (CLM) 因果接龙擅长创作推理；CLIP 擅长跨模态对齐；MAE 擅长全局视觉补全。<br>"
+        f"• <b>扩展定律经济学</b>：在 {anchor_badge('[E. Scaling Laws 实验室]', 'blue', target_id='region-e')} 体验 DeepMind Chinchilla 严格证明的黄金配比 $D \\approx 20N$ 与算力公式 $C \\approx 6ND$。<br>"
+        f"• <b>分词与数据工程</b>：BPE 自底向上合并高频子词；高质量语料清洗决定智能上限！"
     ),
     hyperparams_desc=(
-        "• <b>预训练范式选择</b>：MLM (BERT) / CLM (GPT) / Contrastive (CLIP) / MAE (视觉自编码)。<br>"
-        "• <b>算力预算对数指数</b>：从 $10^{18}$ FLOPs 到 $10^{24}$ FLOPs 动态求解 Chinchilla 最优参数量与 Token 数。<br>"
-        "• <b>BPE 目标词表大小</b>：观察从单字符演化为包含常见词根词缀的紧凑词表。<br>"
-        "• <b>迷你训练 Epochs</b>：在笔记本 CPU 上体验纯 NumPy 真实梯度反向传播损失收敛。"
+        f"• <b>在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 调节</b>：<br>"
+        f"• <b>预训练范式选择</b>：MLM (BERT) / CLM (GPT) / Contrastive (CLIP) / MAE (视觉自编码)。<br>"
+        f"• <b>算力预算对数指数</b>：从 $10^{{18}}$ FLOPs 到 $10^{{25}}$ FLOPs 动态求解 Chinchilla 最优参数量与 Token 数。<br>"
+        f"• <b>BPE 目标词表大小</b>：观察从单字符演化为包含常见词根词缀的紧凑词表。<br>"
+        f"• <b>迷你训练 Epochs</b>：在笔记本 CPU 上体验纯 NumPy 真实梯度反向传播损失收敛。"
     ),
     telemetry_desc=(
-        "• <b>Chinchilla 最优配置</b>：当前算力预算下的最优参数规模 $N_{\\text{opt}}$ 与最优 Token 数 $D_{\\text{opt}}$。<br>"
-        "• <b>H100 训练工期</b>：基于工业界 MFU=45% 换算的真实 GPU-Days 成本。<br>"
-        "• <b>BPE 文本压缩倍率</b>：子词化相较于纯字符级的序列长度压缩比。"
+        f"• <b>在 {anchor_badge('[D. 真实训练]', 'purple', target_id='region-d')} 观测</b>：解析梯度驱动下的损失单调收敛曲线。<br>"
+        f"• <b>在 {anchor_badge('[E. Scaling Laws]', 'blue', target_id='region-e')} 计算</b>：最优参数规模 $N_{{\\text{{opt}}}}$、最优 Token 数 $D_{{\\text{{opt}}}}$ 与 H100 训练工期。<br>"
+        f"• <b>在 {anchor_badge('[C. 预训练遥测]', 'emerald', target_id='region-c')} 评估</b>：核心范式迁移优势与损失。"
     ),
     experiments=[
-        "<b>第 1 步【对比完形填空与接龙】</b>：在 Section 2 观察同一句话在 MLM（双向关注两端）与 CLM（仅单向看前文）下的真实梯度训练收敛！",
-        "<b>第 2 步【探索 Chinchilla 扩展定律】</b>：在 Section 5 拖动算力预算滑块，观察为什么 70B 模型需要喂 1.4T Token，以及 GPT-3 175B 为何欠训练！",
-        "<b>第 3 步【动手训练 BPE 分词器】</b>：在 Section 6 输入自定义句子并点击【训练 BPE 分词规则】，亲眼见证常见词是如何一步步被合并诞生的！",
-        "<b>第 4 步【拆解工业级数据流水线】</b>：在 Section 7 观察 LLaMA-3 与 DeepSeek-V3 的真实语料配比与 4 阶段清洗过滤规则！",
+        f"<b>第 1 步【对比完形填空与接龙】</b>：在 {anchor_badge('[D. 真实训练]', 'purple', target_id='region-d')} 观察同一句话在 MLM 与 CLM 下的真实梯度训练收敛！",
+        f"<b>第 2 步【探索 Chinchilla 扩展定律】</b>：在 {anchor_badge('[E. Scaling Laws]', 'blue', target_id='region-e')} 拖动算力预算滑块，观察为什么 70B 模型需要喂 1.4T Token，以及 GPT-3 175B 为何欠训练！",
+        f"<b>第 3 步【动手训练 BPE 分词器】</b>：在 Section 6 输入自定义句子并点击【训练 BPE 分词规则】，亲眼见证常见词是如何一步步被合并诞生的！",
+        f"<b>第 4 步【拆解工业级数据流水线】</b>：在 Section 7 观察 LLaMA-3 与 DeepSeek-V3 的真实语料配比与 4 阶段清洗过滤规则！",
     ],
 )
+
+# ---------------------------------------------------------------------------
+# 侧边栏参数控制
+# ---------------------------------------------------------------------------
+st.sidebar.markdown(f'<div id="region-a" class="interactive-region" style="margin-bottom:0.6rem;padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">{anchor_badge("A", "amber")} <b>PRE-TRAINING CONTROLS // 预训练控制台</b></div>', unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
 # 侧边栏参数控制
@@ -206,6 +229,12 @@ metric_grid_html = (
     )
     + "</div>"
 )
+st.markdown(
+    f'<div id="region-c" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;">'
+    f'{anchor_badge("C", "emerald")} <span style="font-weight:800;color:#065f46;font-size:0.86rem;">PRE-TRAINING TELEMETRY // 预训练损失与能力基因遥测</span>'
+    f'</div>',
+    unsafe_allow_html=True,
+)
 st.markdown(metric_grid_html, unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
@@ -270,7 +299,12 @@ with col_p4:
 # ---------------------------------------------------------------------------
 # Section 2: MLM 完形填空 vs CLM 因果接龙互动对比与真实训练
 # ---------------------------------------------------------------------------
-render_section_heading("MLM VS CLM INTERACTION // 完形填空与接龙预测互动对比与训练", icon_name="target")
+st.markdown(
+    f'<div id="region-d" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;margin-top:1rem;">'
+    f'{anchor_badge("D", "purple")} <span style="font-weight:800;color:#5b21b6;font-size:0.86rem;">MLM VS CLM TRAINING // 完形填空与接龙对比及真实梯度反向传播收敛</span>'
+    f'</div>',
+    unsafe_allow_html=True,
+)
 
 col_mlm_view, col_clm_view = st.columns(2)
 
@@ -424,7 +458,12 @@ with st.expander("[HOW TO READ // 读图指南] 预训练基因与下游任务�
 # ---------------------------------------------------------------------------
 # Section 5: 大模型扩展定律 (Scaling Laws) 与最优算力分配计算器 (Chinchilla)
 # ---------------------------------------------------------------------------
-render_section_heading("SCALING LAWS & COMPUTE ALLOCATION // 大模型扩展定律与 Chinchilla 最优算力分配", icon_name="activity")
+st.markdown(
+    f'<div id="region-e" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;margin-top:1.2rem;">'
+    f'{anchor_badge("E", "blue")} <span style="font-weight:800;color:#1e40af;font-size:0.86rem;">SCALING LAWS & BPE // 大模型扩展定律 (Chinchilla) 与 BPE 分词演化</span>'
+    f'</div>',
+    unsafe_allow_html=True,
+)
 
 st.markdown(
     """

@@ -31,6 +31,7 @@ from dashboard.components.param_panel import (
 )
 from dashboard.constants.knowledge import ACTIVATIONS, INITIALIZERS, OPTIMIZERS
 from dashboard.styles.theme import (
+    anchor_badge,
     apply_custom_theme,
     render_hero_header,
     render_metric_card,
@@ -66,33 +67,43 @@ render_hero_header(
 # 零基础保姆级指引 (Zero-Barrier Beginner Guide)
 # ---------------------------------------------------------------------------
 render_page_guide(
-    title="多层神经网络与活性探针入门",
+    title="多层神经网络与空间交互地图",
+    blueprint_sections=[
+        {"id": "A", "name": "控制台与探针", "desc": "在左侧侧边栏调节网络层数、神经元数与虚拟探针坐标", "color": "amber", "target_id": "region-a"},
+        {"id": "B", "name": "教学指引", "desc": "当前卡片：通俗理解隐藏层如何像折纸一样折叠出复杂弯曲分界面", "color": "blue", "target_id": "region-b"},
+        {"id": "C", "name": "实时遥测指标", "desc": "监测参数量、最终损失与全网神经元平均激活度", "color": "emerald", "target_id": "region-c"},
+        {"id": "D", "name": "网络拓扑点亮", "desc": "微观观察探针信号在层层神经元之间被点亮激发的物理过程", "color": "purple", "target_id": "region-d"},
+        {"id": "E", "name": "弯曲决策流形", "desc": "观察多层网络如何画出优雅的弯曲圆环包裹住复杂月牙数据", "color": "blue", "target_id": "region-e"},
+    ],
     plain_intro=(
-        "<b>单神经元只能画 1 根直线，而多层网络像一双能折纸的手！</b><br>"
-        "通过把很多个神经元串联成「隐藏层（Hidden Layers）」，模型可以把多根直线折叠拼装成<b>弯曲的圆环、螺旋和不规则多边形</b>，"
-        "轻松解决所有复杂的非线性分类问题。"
+        f"<b>单神经元只能画 1 根直线，而多层网络像一双能折纸的手！</b><br>"
+        f"通过在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 把多个神经元串联成「隐藏层」，模型可以在 {anchor_badge('[E. 决策流形图]', 'blue', target_id='region-e')} 把多根直线折叠拼装成<b>弯曲的圆环、螺旋和复杂多边形</b>，"
+        f"轻松解决所有单层网络无法切开的非线性难题。<br>"
+        f"同时在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 插入一根虚拟探针，就能在 {anchor_badge('[D. 拓扑图]', 'purple', target_id='region-d')} 实时像听诊器一样看到每一个神经元是否被点亮！"
     ),
     hyperparams_desc=(
-        "• <b>经典实验预设</b>：一键载入历史著名场景（如 XOR 难题、双螺旋等）。<br>"
-        "• <b>隐藏层深度 (Depth)</b>：串联多少层神经元，网络越深，折叠能力越强。<br>"
-        "• <b>神经元数 (Neurons)</b>：每一层有多少个节点（相当于多少根基础折线）。<br>"
-        "• <b>探针坐标 (x₁, x₂)</b>：在地图上插一根虚拟探针，像听诊器一样实时听取内部反应。"
+        f"• <b>在 {anchor_badge('[A. 左侧控制台]', 'amber', target_id='region-a')} 调节</b>：<br>"
+        f"• <b>经典实验预设</b>：一键载入历史著名场景（如 XOR 难题、双螺旋等）。<br>"
+        f"• <b>隐藏层深度 (Depth)</b>：串联多少层神经元，网络越深，折叠能力越强。<br>"
+        f"• <b>神经元数 (Neurons)</b>：每一层有多少个节点（相当于多少根基础折线）。<br>"
+        f"• <b>探针坐标 (x₁, x₂)</b>：在地图上插一根虚拟探针，实时听取神经元反应。"
     ),
     telemetry_desc=(
-        "• <b>左图（网络拓扑与探针响应）</b>：展示信号从左往右流过的过程，<b>深蓝色代表该神经元被强烈点亮激活</b>。<br>"
-        "• <b>右图（空间决策流形）</b>：展示模型最终在空间中折叠出的弯曲分界面与探针定位。<br>"
-        "• <b>底图（梯度流分布）</b>：检查深层网络信号是否健康传递（防止梯度归零消失）。"
+        f"• <b>在 {anchor_badge('[C. 实时指标]', 'emerald', target_id='region-c')} 查看</b>：损失、准确率与探针响应。<br>"
+        f"• <b>在 {anchor_badge('[D. 拓扑图]', 'purple', target_id='region-d')} 观察</b>：探针微观激活状态。<br>"
+        f"• <b>底图（梯度流分布）</b>：检查深层网络信号是否健康传递（防止梯度归零消失）。"
     ),
     experiments=[
-        "<b>第 1 步【一键破解 XOR 难题】</b>：在左侧【经典实验预设】中选择 <code>XOR 历史困境与破解</code>，观察 2 层网络如何用弯曲的曲线完美切开对角分布的异或数据！",
-        "<b>第 2 步【体验探针听诊】</b>：在左侧拖动【探针坐标 x₁、x₂】滑动条，观察左下角拓扑图中，哪些神经元被染成了深蓝色（被强力激活）！",
-        "<b>第 3 步【挑战双螺旋极限】</b>：选择预设 <code>双螺旋奇点挑战</code>，见证 3 层深度网络如何像拉花一样把极其复杂的双螺旋流形完全解开！",
+        f"<b>第 1 步【一键破解 XOR 难题】</b>：在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')}【经典实验预设】中选择 <code>XOR 历史困境与破解</code>，观察 2 层网络如何用弯曲的曲线完美切开对角分布的异或数据！",
+        f"<b>第 2 步【体验探针听诊】</b>：在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 拖动【探针坐标 x₁、x₂】滑动条，观察 {anchor_badge('[D. 拓扑图]', 'purple', target_id='region-d')} 中，哪些神经元被染成了深蓝色（被强力激活）！",
+        f"<b>第 3 步【挑战双螺旋极限】</b>：选择预设 <code>双螺旋奇点挑战</code>，见证 3 层深度网络如何像拉花一样把极其复杂的双螺旋流形完全解开！",
     ],
 )
 
 # ---------------------------------------------------------------------------
 # 侧边栏控制面板 (含预设，由 knowledge 元数据驱动)
 # ---------------------------------------------------------------------------
+st.sidebar.markdown(f'<div id="region-a" class="interactive-region" style="margin-bottom:0.6rem;padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">{anchor_badge("A", "amber")} <b>HYPERPARAMETERS // 控制台与探针</b></div>', unsafe_allow_html=True)
 preset = render_presets_selector(key_prefix="m2_")
 
 if preset:
@@ -210,6 +221,12 @@ else:
 # ---------------------------------------------------------------------------
 # 遥测指标卡 (中英双语标签)
 # ---------------------------------------------------------------------------
+st.markdown(
+    f'<div id="region-c" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;">'
+    f'{anchor_badge("C", "emerald")} <span style="font-weight:800;color:#065f46;font-size:0.86rem;">TELEMETRY BENCHMARK // 实时遥测指标看板</span>'
+    f'</div>',
+    unsafe_allow_html=True,
+)
 grid_html = (
     '<div class="metric-grid">'
     + render_metric_card("FINAL LOSS // 最终损失", f"{final_loss:.4f}", delta="CONVERGED" if final_loss < 0.2 else "TRAINING", delta_type="positive" if final_loss < 0.2 else "neutral", icon_name="trending-down")
@@ -226,6 +243,12 @@ st.markdown(grid_html, unsafe_allow_html=True)
 col_topo, col_bound = st.columns([1.1, 1])
 
 with col_topo:
+    st.markdown(
+        f'<div id="region-d" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;">'
+        f'{anchor_badge("D", "purple")} <span style="font-weight:800;color:#5b21b6;font-size:0.86rem;">TOPOLOGY & PROBE // 激活探针与网络拓扑</span>'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
     fig_topo = plot_network_topology(
         layer_sizes=layer_sizes,
         weights=dense_weights,
@@ -244,6 +267,12 @@ with col_topo:
         )
 
 with col_bound:
+    st.markdown(
+        f'<div id="region-e" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;">'
+        f'{anchor_badge("E", "blue")} <span style="font-weight:800;color:#1e40af;font-size:0.86rem;">DECISION MANIFOLD // 空间决策流形与探针定位</span>'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
     fig_bound = plot_decision_boundary(
         model, X, y, probe_point=probe_pt, title="DECISION MANIFOLD // 空间决策流形与探针定位"
     )

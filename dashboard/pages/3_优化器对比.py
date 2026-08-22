@@ -27,6 +27,7 @@ from dashboard.components.param_panel import (
 )
 from dashboard.constants.knowledge import OPTIMIZERS
 from dashboard.styles.theme import (
+    anchor_badge,
     apply_custom_theme,
     render_hero_header,
     render_metric_card,
@@ -61,35 +62,44 @@ render_hero_header(
 # 零基础保姆级指引 (Zero-Barrier Beginner Guide)
 # ---------------------------------------------------------------------------
 render_page_guide(
-    title="优化器多轨竞速对比入门",
+    title="优化器多轨竞速对比与空间交互地图",
+    blueprint_sections=[
+        {"id": "A", "name": "控制台面板", "desc": "在左侧侧边栏调节基准学习率、网络结构与训练轮数", "color": "amber", "target_id": "region-a"},
+        {"id": "B", "name": "教学指引", "desc": "当前卡片：通俗理解 SGD/Momentum/RMSProp/Adam 算法本质", "color": "blue", "target_id": "region-b"},
+        {"id": "C", "name": "实时竞速遥测", "desc": "查看四大优化器最终的做题扣分与登顶冠军", "color": "emerald", "target_id": "region-c"},
+        {"id": "D", "name": "多轨收敛对比图", "desc": "同一起跑线 4 色多轨竞速曲线，看谁最先贴底收敛", "color": "purple", "target_id": "region-d"},
+        {"id": "E", "name": "排行榜与四分屏", "desc": "并排对比四大算法最终画出的空间决策分界质量", "color": "blue", "target_id": "region-e"},
+    ],
     plain_intro=(
-        "<b>优化器（Optimizer）就是模型下山寻宝的「导航算法」！</b><br>"
-        "模型的目标是从高山（Loss 损失很大）一路滑到谷底（Loss 为 0）。<br>"
-        "• <b>SGD（普通梯度下降）</b>：像近视眼，只看脚下哪边陡就走哪边，容易在峡谷里来回撞墙。<br>"
-        "• <b>Momentum（动量加速）</b>：给机器人加了滑雪惯性，能在平缓处加速冲刺，冲过小土坡。<br>"
-        "• <b>RMSProp（自适应步长）</b>：经常大跳的参数自动减速，平缓的参数自动加速。<br>"
-        "• <b>Adam（现代 AI 之王）</b>：结合了动量惯性与自适应步长，是 ChatGPT 等大模型的工业级默认标配！"
+        f"<b>优化器（Optimizer）就是模型下山寻宝的「导航算法」！</b><br>"
+        f"模型的目标是从高山（Loss 损失很大）一路滑到谷底（Loss 为 0）。<br>"
+        f"• <b>SGD（普通梯度下降）</b>：像近视眼，只看脚下哪边陡就走哪边，容易在峡谷里来回撞墙。<br>"
+        f"• <b>Momentum（动量加速）</b>：给机器人加了滑雪惯性，能在平缓处加速冲刺，冲过小土坡。<br>"
+        f"• <b>RMSProp（自适应步长）</b>：经常大跳的参数自动减速，平缓的参数自动加速。<br>"
+        f"• <b>Adam（现代 AI 之王）</b>：结合了动量惯性与自适应步长，是 ChatGPT 等大模型的工业级默认标配！"
     ),
     hyperparams_desc=(
-        "• <b>基准学习率 (LR)</b>：4 种优化器共同遵守的初始油门大小。<br>"
-        "• <b>分布类型</b>：选择不同的地形复杂度（如 Moons 复杂曲面，Spiral 极度扭曲）。<br>"
-        "• <b>竞速轮数 (Epochs)</b>：让 4 辆赛车在同一起跑线上跑多少圈。"
+        f"• <b>在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 调节</b>：<br>"
+        f"• <b>基准学习率 (LR)</b>：4 种优化器共同遵守的初始油门大小。<br>"
+        f"• <b>分布类型</b>：选择不同的地形复杂度（如 Moons 复杂曲面，Spiral 极度扭曲）。<br>"
+        f"• <b>竞速轮数 (Epochs)</b>：让 4 辆赛车在同一起跑线上跑多少圈。"
     ),
     telemetry_desc=(
-        "• <b>多轨 Loss 对比图</b>：4 根不同颜色的线，<b>谁的线掉得最快、最低，谁就是冠军</b>！<br>"
-        "• <b>收敛排行榜</b>：统计谁最先到达 Loss < 0.25 的终点。<br>"
-        "• <b>底部 4 分屏决策面</b>：并排展示 4 种算法各自最终画出的分界面质量。"
+        f"• <b>在 {anchor_badge('[D. 多轨收敛图]', 'purple', target_id='region-d')} 观战</b>：4 根不同颜色的线，<b>谁的线掉得最快、最低，谁就是冠军</b>！<br>"
+        f"• <b>在 {anchor_badge('[C. 竞速遥测指标]', 'emerald', target_id='region-c')} 揭晓</b>：查看全场最优表现者。<br>"
+        f"• <b>在 {anchor_badge('[E. 四分屏分界]', 'blue', target_id='region-e')} 验收</b>：并排展示 4 种算法各自最终画出的分界面质量。"
     ),
     experiments=[
-        "<b>第 1 步【看多轨竞速】</b>：直接观察中央的图表，看绿色线 (Adam) 是不是比灰色线 (SGD) 下降得快得多！",
-        "<b>第 2 步【大油门测试】</b>：在左侧把【基准学习率】从 <code>0.03</code> 调大到 <code>0.1</code>。你会发现 SGD 开始剧烈颠簸震荡，而 Adam 依然稳健冲刺到底！",
-        "<b>第 3 步【四分屏对比】</b>：往下滑动看底部的 4 张并排图，对比 4 种优化器最终谁把红蓝两类分得最漂亮！",
+        f"<b>第 1 步【看多轨竞速】</b>：直接观察 {anchor_badge('[D. 多轨对比图]', 'purple', target_id='region-d')}，看绿色线 (Adam) 是不是比灰色线 (SGD) 下降得快得多！",
+        f"<b>第 2 步【大油门测试】</b>：在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 把【基准学习率】从 <code>0.03</code> 调大到 <code>0.1</code>。你会发现 SGD 开始剧烈颠簸震荡，而 Adam 依然稳健冲刺到底！",
+        f"<b>第 3 步【四分屏对比】</b>：在 {anchor_badge('[E. 四分屏分界]', 'blue', target_id='region-e')} 对比 4 种优化器最终谁把红蓝两类分得最漂亮！",
     ],
 )
 
 # ---------------------------------------------------------------------------
 # 侧边栏控制面板
 # ---------------------------------------------------------------------------
+st.sidebar.markdown(f'<div id="region-a" class="interactive-region" style="margin-bottom:0.6rem;padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">{anchor_badge("A", "amber")} <b>HYPERPARAMETERS // 控制台配置</b></div>', unsafe_allow_html=True)
 dataset_name, n_samples, noise, random_state = render_dataset_selector(
     key_prefix="m3_", default_dataset="moons"
 )
@@ -180,6 +190,12 @@ champion_acc = leaderboard_rows[0]["最终准确率"]
 # ---------------------------------------------------------------------------
 # 遥测指标卡 (中英双语标签)
 # ---------------------------------------------------------------------------
+st.markdown(
+    f'<div id="region-c" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;">'
+    f'{anchor_badge("C", "emerald")} <span style="font-weight:800;color:#065f46;font-size:0.86rem;">TELEMETRY BENCHMARK // 实时竞速遥测看板</span>'
+    f'</div>',
+    unsafe_allow_html=True,
+)
 grid_html = (
     '<div class="metric-grid">'
     + render_metric_card("BENCHMARK WINNER // 竞速冠军", champion, delta=f"Loss: {champion_loss} | Acc: {champion_acc}", delta_type="positive", icon_name="award")
@@ -193,6 +209,12 @@ st.markdown(grid_html, unsafe_allow_html=True)
 # ---------------------------------------------------------------------------
 # 核心可视化：多轨 Loss 对比图
 # ---------------------------------------------------------------------------
+st.markdown(
+    f'<div id="region-d" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;">'
+    f'{anchor_badge("D", "purple")} <span style="font-weight:800;color:#5b21b6;font-size:0.86rem;">MULTI-LOSS BENCHMARK // 多轨收敛竞速对比图</span>'
+    f'</div>',
+    unsafe_allow_html=True,
+)
 fig_multi_loss = plot_multi_loss_curves(histories, title="OPTIMIZER BENCHMARK // 优化器多轨收敛对比")
 st.plotly_chart(fig_multi_loss, use_container_width=True)
 
@@ -200,10 +222,10 @@ with st.expander("[HOW TO READ // 读图指南] 判断优化器速度与稳定�
     st.markdown(
         """
         * **横轴**：训练轮数 (Epochs)；**纵轴**：损失 (Loss)。
-        * 🎯 **【最优趋势（冠军特征）】**：
+        * [OPTIMAL] **【最优趋势（冠军特征）】**：
           * 曲线以**最大的斜率垂直俯冲**，并且在最少的时间步内（如 20 轮内）贴底并保持水平。
           * 曲线平滑无毛刺，说明每一步都走在正确的下坡捷径上（通常是 **Adam** 或带调优动量的 **Momentum**）。
-        * ⚠️ **【典型现象对比】**：
+        * [WARNING] **【典型现象对比】**：
           * **纯 SGD**：下降像爬行，常常停在半山腰或鞍点平原迟迟不动；
           * **Momentum (冲量)**：初期冲得极快，但在急转弯山谷容易“惯性冲过头”出现局部上扬，随后迅速回调；
           * **RMSProp / Adam**：具有自适应步长，在平缓地带大步流星，在陡峭峡谷自动减速防翻车。
@@ -213,11 +235,15 @@ with st.expander("[HOW TO READ // 读图指南] 判断优化器速度与稳定�
 # ---------------------------------------------------------------------------
 # 排行榜与四分屏决策边界对比
 # ---------------------------------------------------------------------------
-render_section_heading("优化器收敛效能排行榜", icon_name="award")
+st.markdown(
+    f'<div id="region-e" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;">'
+    f'{anchor_badge("E", "blue")} <span style="font-weight:800;color:#1e40af;font-size:0.86rem;">LEADERBOARD & 4-QUADRANT VIEW // 效能排行榜与四分屏决策边界并排透视</span>'
+    f'</div>',
+    unsafe_allow_html=True,
+)
 df_board = pd.DataFrame(leaderboard_rows).drop(columns=["_raw_loss"])
 st.dataframe(df_board, use_container_width=True, hide_index=True)
 
-render_section_heading("四大优化器最终决策边界并排透视", icon_name="crosshair")
 cols = st.columns(4)
 
 for idx, opt_meta in enumerate(optimizer_items):
@@ -233,8 +259,8 @@ with st.expander("[HOW TO READ // 读图指南] 直观验证最终划分能力",
     st.markdown(
         """
         * **对比重点**：在相同轮数下，哪一个优化器画出的黑色决策线最平滑、最准确地把两类点包裹切分。
-        * 🎯 **【最优形态】**：黑色实线优雅地避开所有异色点，准确率达到 95%~100%；
-        * ⚠️ **【欠训练形态】**：如果某个优化器的图里黑色分界线依然是一根僵硬的斜线甚至切错了大部分点，说明它在有限轮数内没能逃出平原（如学习率未调准的纯 SGD）。
+        * [OPTIMAL] **【最优形态】**：黑色实线优雅地避开所有异色点，准确率达到 95%~100%；
+        * [WARNING] **【欠训练形态】**：如果某个优化器的图里黑色分界线依然是一根僵硬的斜线甚至切错了大部分点，说明它在有限轮数内没能逃出平原（如学习率未调准的纯 SGD）。
         """
     )
 

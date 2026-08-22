@@ -73,6 +73,8 @@ def _apply_light_theme(fig: go.Figure, title: str | None = None) -> go.Figure:
             tickfont=dict(size=10, color=LIGHT_PALETTE["font_muted"]),
             linecolor="rgba(15, 23, 42, 0.1)",
         ),
+        "uirevision": "constant",
+        "transition": dict(duration=0),
     }
 
     if title:

@@ -22,6 +22,7 @@ importlib.reload(dashboard.components.charts)
 
 from dashboard.components.charts import _apply_light_theme, plot_attention_heatmap_nlp
 from dashboard.styles.theme import (
+    anchor_badge,
     apply_custom_theme,
     render_hero_header,
     render_metric_card,
@@ -49,33 +50,46 @@ render_hero_header(
 # 零基础保姆级指引 (Zero-Barrier Beginner Guide)
 # ---------------------------------------------------------------------------
 render_page_guide(
-    title="注意力机制与动态路由 (Attention & Routing)",
+    title="注意力机制与空间交互地图",
+    blueprint_sections=[
+        {"id": "A", "name": "注意力控制台", "desc": "在左侧侧边栏调节句子输入、多头数与缩放因子开关", "color": "amber", "target_id": "region-a"},
+        {"id": "B", "name": "教学指引", "desc": "当前卡片：通俗理解 QKV 数据库检索开卷查阅与动态软路由", "color": "blue", "target_id": "region-b"},
+        {"id": "C", "name": "实时注意力遥测", "desc": "监测头数、缩放系数 1/√d_k、分布熵与最大峰值", "color": "emerald", "target_id": "region-c"},
+        {"id": "D", "name": "QKV 检索隐喻", "desc": "直观拆解 Query 探针、Key 标签与 Value 内容三位一体", "color": "purple", "target_id": "region-d"},
+        {"id": "E", "name": "多头注意力热力图", "desc": "观察多头聚光灯在词与词之间的关联权重与因果三角掩码", "color": "blue", "target_id": "region-e"},
+    ],
     plain_intro=(
-        "<b>注意力机制就像考试时的'开卷查阅'</b>。<br>"
-        "它不再强迫模型死记硬背所有前文，而是让每一个词手握一个<b>搜索探针 (Query)</b>；<br>"
-        "去和其他所有词的<b>索引标签 (Key)</b> 做点积匹配，算出相关度得分；<br>"
-        "最后把最相关的词的<b>信息载荷 (Value)</b> 打包提取出来！<br><br>"
-        "<b>【2026 前沿拓展】：RoPE 与 GQA</b><br>"
-        "现代大模型（如 Llama-3）抛弃了绝对正弦编码，改用 <b>RoPE 旋转位置编码</b> 使点积自带相对距离衰减；"
-        "同时采用 <b>GQA 分组查询</b> 让多个 Query 头共享 Key/Value，极大降低了显存开销！"
+        f"<b>注意力机制就像考试时的'开卷查阅'</b>。<br>"
+        f"它不再强迫模型死记硬背所有前文，而是让每一个词手握一个<b>搜索探针 (Query)</b>；<br>"
+        f"去和其他所有词的<b>索引标签 (Key)</b> 做点积匹配，算出相关度得分；<br>"
+        f"最后把最相关的词的<b>信息载荷 (Value)</b> 打包提取出来！<br><br>"
+        f"<b>【2026 前沿拓展】：RoPE 与 GQA</b><br>"
+        f"现代大模型（如 Llama-3）改用 <b>RoPE 旋转位置编码</b> 使点积自带相对距离衰减；"
+        f"同时采用 <b>GQA 分组查询</b> 让多个 Query 头共享 Key/Value，极大降低了显存开销！"
     ),
     hyperparams_desc=(
-        "• <b>测试句子</b>：观察不同句子中词与词之间的注意力连线。<br>"
-        "• <b>注意力头数 (Heads)</b>：相当于多组独立的探照灯，各自关注语法、语义或代词指代。<br>"
-        "• <b>缩放因子开关 (1/√d_k)</b>：验证为什么高维点积必须除以 $\\sqrt{d_k}$ 防止 Softmax 极化失效。<br>"
-        "• <b>因果掩码 (Causal Mask)</b>：确保生成模型只能看过去、绝不能偷看未来。"
+        f"• <b>在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 调节</b>：<br>"
+        f"• <b>测试句子</b>：观察不同句子中词与词之间的注意力连线。<br>"
+        f"• <b>注意力头数 (Heads)</b>：相当于多组独立的探照灯，各自关注语法、语义或代词指代。<br>"
+        f"• <b>缩放因子开关 (1/√d_k)</b>：验证为什么高维点积必须除以 $\\sqrt{{d_k}}$ 防止 Softmax 极化失效。<br>"
+        f"• <b>因果掩码 (Causal Mask)</b>：确保生成模型只能看过去、绝不能偷看未来。"
     ),
     telemetry_desc=(
-        "• <b>N×N 注意力热力图</b>：当前词（行）与被关注词（列）之间的注意力分配比例。<br>"
-        "• <b>缩放 vs 未缩放对比</b>：直观对比数值稳定性技巧对概率分布平滑度的影响。<br>"
-        "• <b>RoPE 衰减矩阵</b>：展示旋转位置编码如何通过复数内积天然实现相对距离的指数衰减。"
+        f"• <b>在 {anchor_badge('[E. 注意力热力图]', 'blue', target_id='region-e')} 观测</b>：当前词（行）与被关注词（列）之间的注意力分配比例。<br>"
+        f"• <b>在 {anchor_badge('[D. QKV 隐喻]', 'purple', target_id='region-d')} 拆解</b>：Query 探针与 Key 标签的匹配机制。<br>"
+        f"• <b>在 {anchor_badge('[C. 注意力遥测]', 'emerald', target_id='region-c')} 评估</b>：分布熵与峰值极化状态。"
     ),
     experiments=[
-        "<b>第 1 步【看懂聚光灯】</b>：观察默认句子中，词汇 <code>queen</code> 在处理时如何对 <code>king</code> 产生强烈的注意力响应！",
-        "<b>第 2 步【体验缩放因子】</b>：在左侧关闭【缩放因子 (1/√d_k)】，观察右侧对比图：没有缩放时，矩阵瞬间极化为非 0 即 1，梯度彻底消失！",
-        "<b>第 3 步【探索前沿架构】</b>：滚动到底部实验室，对比 RoPE 的相对距离热力图，并切换 GQA/MHA 选项，观察显存压缩比如何从 1.0x 暴涨至 4.0x！",
+        f"<b>第 1 步【看懂聚光灯】</b>：观察默认句子中，词汇 <code>queen</code> 在处理时如何对 <code>king</code> 产生强烈的注意力响应！",
+        f"<b>第 2 步【体验缩放因子】</b>：在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 关闭【缩放因子 (1/√d_k)】，观察 {anchor_badge('[E. 热力图]', 'blue', target_id='region-e')}：没有缩放时，矩阵瞬间极化为非 0 即 1，梯度彻底消失！",
+        f"<b>第 3 步【探索前沿架构】</b>：滚动到底部实验室，对比 RoPE 的相对距离热力图，并切换 GQA/MHA 选项，观察显存压缩比如何从 1.0x 暴涨至 4.0x！",
     ],
 )
+
+# ---------------------------------------------------------------------------
+# 侧边栏控制面板
+# ---------------------------------------------------------------------------
+st.sidebar.markdown(f'<div id="region-a" class="interactive-region" style="margin-bottom:0.6rem;padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">{anchor_badge("A", "amber")} <b>ATTENTION CONFIG // 注意力控制台</b></div>', unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
 # 词表与嵌入层
@@ -184,6 +198,12 @@ max_attn_val = float(np.max(head_0_weights))
 # ---------------------------------------------------------------------------
 # 遥测指标卡
 # ---------------------------------------------------------------------------
+st.markdown(
+    f'<div id="region-c" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;">'
+    f'{anchor_badge("C", "emerald")} <span style="font-weight:800;color:#065f46;font-size:0.86rem;">ATTENTION TELEMETRY // 注意力分布与极化遥测</span>'
+    f'</div>',
+    unsafe_allow_html=True,
+)
 metric_grid_html = (
     '<div class="metric-grid">'
     + render_metric_card(
@@ -221,7 +241,12 @@ st.markdown(metric_grid_html, unsafe_allow_html=True)
 # ---------------------------------------------------------------------------
 # 主视图区 1：QKV 数据库检索隐喻
 # ---------------------------------------------------------------------------
-render_section_heading("QKV SEARCH METAPHOR // Query-Key-Value 数据库检索隐喻", icon_name="activity")
+st.markdown(
+    f'<div id="region-d" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;margin-top:1rem;">'
+    f'{anchor_badge("D", "purple")} <span style="font-weight:800;color:#5b21b6;font-size:0.86rem;">QKV SEARCH METAPHOR // Query-Key-Value 数据库检索隐喻</span>'
+    f'</div>',
+    unsafe_allow_html=True,
+)
 
 col_q, col_k, col_v = st.columns(3)
 with col_q:
@@ -255,7 +280,12 @@ with col_v:
 # ---------------------------------------------------------------------------
 # 主视图区 2：核心注意力矩阵热力图 & 缩放效应对比
 # ---------------------------------------------------------------------------
-render_section_heading("ATTENTION MATRIX & SCALE FACTOR // 核心注意力权重热力图与缩放效应", icon_name="target")
+st.markdown(
+    f'<div id="region-e" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;margin-top:1.2rem;">'
+    f'{anchor_badge("E", "blue")} <span style="font-weight:800;color:#1e40af;font-size:0.86rem;">ATTENTION MATRIX // 核心注意力多头权重矩阵与因果掩码</span>'
+    f'</div>',
+    unsafe_allow_html=True,
+)
 
 col_main_heat, col_cmp_heat = st.columns([1.3, 1])
 

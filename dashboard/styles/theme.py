@@ -10,9 +10,11 @@ dashboard.styles.theme - 世界级纯净现代亮色视觉引擎 (Light Mode Des
 """
 
 import importlib
+import json
 import sys
 
 import streamlit as st
+import streamlit.components.v1 as components
 from dashboard.styles.icons import svg_icon
 
 def reload_nn_core_modules() -> None:
@@ -303,6 +305,131 @@ code, pre, .stCode {
     border: 1px solid #fde68a !important;
 }
 
+/* 全局平滑平移滚动 */
+html {
+    scroll-behavior: smooth !important;
+}
+
+/* 全局图表抗闪烁与 GPU 硬件加速 */
+.stPlotlyChart {
+    min-height: 380px !important;
+    contain: layout style paint !important;
+    transform: translateZ(0) !important;
+    backface-visibility: hidden !important;
+    will-change: transform !important;
+}
+
+/* 文本防抖动：等宽数字排版 */
+.tabular-nums, .hero-metric-value, .metric-value, [data-testid="stMetricValue"] {
+    font-variant-numeric: tabular-nums !important;
+    font-feature-settings: "tnum" 1 !important;
+}
+
+/* 目标区域聚光灯聚焦与背景呼吸高光闪烁 (Target Spotlight & Flash Highlight) */
+.interactive-region {
+    border-radius: 10px !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    scroll-margin-top: 80px !important;
+}
+
+.flash-highlight,
+.interactive-region:target,
+:target {
+    animation: region-flash-pulse 2.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+@keyframes region-flash-pulse {
+    0% {
+        background-color: #bfdbfe !important;
+        box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.5), 0 12px 36px rgba(37, 99, 235, 0.35) !important;
+        border-color: #1d4ed8 !important;
+        transform: scale(1.008) !important;
+    }
+    30% {
+        background-color: #dbeafe !important;
+        box-shadow: 0 0 0 10px rgba(37, 99, 235, 0.22), 0 16px 40px rgba(37, 99, 235, 0.22) !important;
+        border-color: #3b82f6 !important;
+    }
+    65% {
+        background-color: #eff6ff !important;
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1), 0 8px 24px rgba(37, 99, 235, 0.1) !important;
+        border-color: #93c5fd !important;
+    }
+    100% {
+        background-color: #ffffff !important;
+        box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04) !important;
+        border-color: #e2e8f0 !important;
+        transform: scale(1) !important;
+    }
+}
+
+/* 空间映射语义锚点胶囊 (Spatial Semantic Badges) */
+.anchor-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.3rem !important;
+    font-size: 0.78rem !important;
+    font-weight: 700 !important;
+    font-family: 'JetBrains Mono', monospace !important;
+    padding: 0.15rem 0.55rem !important;
+    border-radius: 6px !important;
+    vertical-align: middle !important;
+    margin: 0 0.15rem !important;
+    line-height: 1.4 !important;
+    cursor: pointer !important;
+    text-decoration: none !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+.anchor-badge:hover {
+    transform: translateY(-1px) scale(1.03) !important;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08) !important;
+}
+.anchor-badge-amber {
+    background: #fffbeb !important;
+    color: #92400e !important;
+    border: 1px solid #fde68a !important;
+}
+.anchor-badge-amber:hover {
+    background: #fef3c7 !important;
+    border-color: #f59e0b !important;
+}
+.anchor-badge-blue {
+    background: #eff6ff !important;
+    color: #1e40af !important;
+    border: 1px solid #bfdbfe !important;
+}
+.anchor-badge-blue:hover {
+    background: #dbeafe !important;
+    border-color: #3b82f6 !important;
+}
+.anchor-badge-emerald {
+    background: #ecfdf5 !important;
+    color: #065f46 !important;
+    border: 1px solid #a7f3d0 !important;
+}
+.anchor-badge-emerald:hover {
+    background: #d1fae5 !important;
+    border-color: #10b981 !important;
+}
+.anchor-badge-purple {
+    background: #f5f3ff !important;
+    color: #5b21b6 !important;
+    border: 1px solid #ddd6fe !important;
+}
+.anchor-badge-purple:hover {
+    background: #ede9fe !important;
+    border-color: #8b5cf6 !important;
+}
+.anchor-badge-rose {
+    background: #fff1f2 !important;
+    color: #9f1239 !important;
+    border: 1px solid #fecdd3 !important;
+}
+.anchor-badge-rose:hover {
+    background: #ffe4e6 !important;
+    border-color: #f43f5e !important;
+}
+
 .status-dot {
     width: 6px;
     height: 6px;
@@ -392,6 +519,57 @@ code, pre, .stCode {
         unsafe_allow_html=True,
     )
 
+    # 注入穿透 iframe 的父窗口瞬移与聚焦闪烁监听器
+    js_teleport = """
+    <script>
+    (function() {
+        try {
+            var doc = window.parent.document;
+            if (!doc || doc.__spotlight_injected) return;
+            doc.__spotlight_injected = true;
+
+            function triggerFlash(el) {
+                if (!el) return;
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                el.classList.remove('flash-highlight');
+                void el.offsetWidth;
+                el.classList.add('flash-highlight');
+
+                var parentContainer = el.closest('[data-testid="stVerticalBlockBorderWrapper"]') || el.parentElement;
+                if (parentContainer) {
+                    parentContainer.classList.remove('flash-highlight');
+                    void parentContainer.offsetWidth;
+                    parentContainer.classList.add('flash-highlight');
+                }
+            }
+
+            doc.addEventListener('click', function(e) {
+                var a = e.target.closest('a');
+                if (a && a.getAttribute('href') && a.getAttribute('href').includes('#region-')) {
+                    e.preventDefault();
+                    var targetId = a.getAttribute('href').substring(1);
+                    var targetEl = doc.getElementById(targetId);
+                    if (targetEl) {
+                        triggerFlash(targetEl);
+                    }
+                }
+            }, true);
+
+            window.parent.addEventListener('hashchange', function() {
+                var hash = window.parent.location.hash;
+                if (hash && hash.includes('#region-')) {
+                    var el = doc.querySelector(hash);
+                    if (el) triggerFlash(el);
+                }
+            });
+        } catch(e) {
+            console.error('Spotlight injection error:', e);
+        }
+    })();
+    </script>
+    """
+    components.html(js_teleport, height=0, width=0)
+
 
 def render_hero_header(
     title: str,
@@ -469,46 +647,52 @@ def render_page_guide(
     hyperparams_desc: str,
     telemetry_desc: str,
     experiments: list[str],
+    blueprint_sections: list[dict] | None = None,
 ) -> None:
     """
-    渲染全站统一的世界级高对比度【零基础新手教学指引卡片】(100% 纯矢量 SVG 图标，无 Low 端 Emoji)。
+    渲染全站统一的世界级高对比度【零基础新手教学指引卡片】(Vercel / Linear 顶奢级交互质感)。
     包含：
-    1. [CORE PRINCIPLE] 通俗原理解析
-    2. [PARAMETERS VS TELEMETRY] 输入超参数与输出指标的精确映射
-    3. [LAB EXPERIMENTS] 结构化实验任务
+    1. [SPATIAL BLUEPRINT] 页面空间交互地图（可选微缩拓扑）
+    2. [CORE PRINCIPLE] 通俗原理解析与空间指代
+    3. [PARAMETERS VS TELEMETRY] 输入超参数与输出指标的精确色彩映射
+    4. [LAB EXPERIMENTS] 结构化探索任务清单
     """
     icon_compass = svg_icon("compass", size=15, color="#1d4ed8")
     icon_bulb = svg_icon("lightbulb", size=15, color="#1d4ed8")
-    icon_sliders = svg_icon("sliders", size=14, color="#1d4ed8")
+    icon_sliders = svg_icon("sliders", size=14, color="#b45309")
     icon_target = svg_icon("target", size=14, color="#047857")
     icon_terminal = svg_icon("terminal", size=14, color="#0f172a")
 
-    with st.expander(f"GUIDE // 教学指引: {title}", expanded=True):
-        items_html = "".join([f'<li style="margin-bottom:0.4rem;line-height:1.6;">{exp}</li>' for exp in experiments])
+    with st.expander(f"[GROWTH GUIDE // 教学指引] {title}", expanded=True):
+        # 1. 渲染空间微缩地图 (如果提供)
+        if blueprint_sections:
+            render_page_blueprint(blueprint_sections)
+
+        items_html = "".join([f'<li style="margin-bottom:0.45rem;line-height:1.65;">{exp}</li>' for exp in experiments])
         guide_html = (
             f'<div style="color:#0f172a;font-size:0.92rem;line-height:1.7;">'
-            f'<div style="background:#eff6ff;border:1px solid #bfdbfe;border-left:4px solid #1d4ed8;padding:0.75rem 1rem;border-radius:6px;margin-bottom:0.9rem;">'
-            f'<div style="display:flex;align-items:center;gap:0.45rem;font-weight:700;color:#1e40af;margin-bottom:0.25rem;">'
-            f'{icon_bulb} <span style="text-transform:uppercase;font-size:0.8rem;letter-spacing:0.04em;">[CORE PRINCIPLE // 核心原理解析]</span>'
+            f'<div style="background:#ffffff;border:1px solid #bfdbfe;border-left:4px solid #2563eb;padding:0.9rem 1.15rem;border-radius:8px;margin-bottom:1rem;box-shadow:0 2px 10px rgba(37,99,235,0.04);">'
+            f'<div style="display:flex;align-items:center;gap:0.45rem;font-weight:800;color:#1e40af;margin-bottom:0.35rem;">'
+            f'{icon_bulb} <span style="text-transform:uppercase;font-size:0.8rem;letter-spacing:0.04em;">[CORE PRINCIPLE // 核心原理解析与空间导引]</span>'
             f'</div>'
-            f'<div style="color:#1e293b;">{plain_intro}</div>'
+            f'<div style="color:#1e293b;line-height:1.75;">{plain_intro}</div>'
             f'</div>'
-            f'<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:0.9rem;">'
-            f'<div style="background:#f8fafc;padding:0.85rem 1rem;border-radius:8px;border:1px solid #e2e8f0;">'
-            f'<div style="display:flex;align-items:center;gap:0.4rem;font-weight:700;color:#1d4ed8;font-size:0.84rem;margin-bottom:0.35rem;">'
-            f'{icon_sliders} <span style="text-transform:uppercase;letter-spacing:0.04em;">[HYPERPARAMETERS // 控制台输入参数]</span>'
+            f'<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">'
+            f'<div style="background:#ffffff;padding:0.95rem 1.15rem;border-radius:8px;border:1px solid #fde68a;border-left:3.5px solid #b45309;box-shadow:0 2px 8px rgba(180,83,9,0.03);">'
+            f'<div style="display:flex;align-items:center;gap:0.4rem;font-weight:800;color:#92400e;font-size:0.84rem;margin-bottom:0.35rem;">'
+            f'{icon_sliders} <span style="text-transform:uppercase;letter-spacing:0.04em;">[INPUT CONTROLS // 控制台输入参数]</span>'
             f'</div>'
-            f'<div style="font-size:0.84rem;color:#475569;line-height:1.6;">{hyperparams_desc}</div>'
+            f'<div style="font-size:0.84rem;color:#475569;line-height:1.65;">{hyperparams_desc}</div>'
             f'</div>'
-            f'<div style="background:#f8fafc;padding:0.85rem 1rem;border-radius:8px;border:1px solid #e2e8f0;">'
-            f'<div style="display:flex;align-items:center;gap:0.4rem;font-weight:700;color:#047857;font-size:0.84rem;margin-bottom:0.35rem;">'
-            f'{icon_target} <span style="text-transform:uppercase;letter-spacing:0.04em;">[TELEMETRY // 模型自学习遥测成果]</span>'
+            f'<div style="background:#ffffff;padding:0.95rem 1.15rem;border-radius:8px;border:1px solid #a7f3d0;border-left:3.5px solid #047857;box-shadow:0 2px 8px rgba(4,120,87,0.03);">'
+            f'<div style="display:flex;align-items:center;gap:0.4rem;font-weight:800;color:#065f46;font-size:0.84rem;margin-bottom:0.35rem;">'
+            f'{icon_target} <span style="text-transform:uppercase;letter-spacing:0.04em;">[TELEMETRY // 模型学习遥测成果]</span>'
             f'</div>'
-            f'<div style="font-size:0.84rem;color:#475569;line-height:1.6;">{telemetry_desc}</div>'
+            f'<div style="font-size:0.84rem;color:#475569;line-height:1.65;">{telemetry_desc}</div>'
             f'</div>'
             f'</div>'
-            f'<div style="background:#f1f5f9;padding:0.85rem 1rem;border-radius:8px;border:1px solid #cbd5e1;">'
-            f'<div style="display:flex;align-items:center;gap:0.4rem;font-weight:700;color:#0f172a;font-size:0.86rem;margin-bottom:0.45rem;">'
+            f'<div style="background:#ffffff;padding:0.95rem 1.15rem;border-radius:8px;border:1px solid #cbd5e1;border-left:3.5px solid #0f172a;box-shadow:0 2px 8px rgba(15,23,42,0.03);">'
+            f'<div style="display:flex;align-items:center;gap:0.4rem;font-weight:800;color:#0f172a;font-size:0.86rem;margin-bottom:0.5rem;">'
             f'{icon_terminal} <span style="text-transform:uppercase;letter-spacing:0.04em;">[LAB EXPERIMENTS // 结构化探索任务]</span>'
             f'</div>'
             f'<ol style="margin:0;padding-left:1.3rem;color:#334155;font-size:0.84rem;">{items_html}</ol>'
@@ -516,6 +700,7 @@ def render_page_guide(
             f'</div>'
         )
         st.markdown(guide_html, unsafe_allow_html=True)
+
 
 
 def render_sequence_flow(tokens: list[str], hidden_states: list) -> None:
@@ -603,5 +788,224 @@ def render_text_stream_box(tokens: list[str], prompt_len: int) -> None:
         f'</div>'
     )
     st.markdown(html, unsafe_allow_html=True)
+
+
+def anchor_badge(text: str, color_type: str = "blue", target_id: str | None = None) -> str:
+    """
+    生成带空间语义色彩的高对比度胶囊徽标 HTML。
+    若指定 target_id，徽标将自动变为可点击穿梭平滑滚动的超链接锚点，并激发目标容器聚光灯高光！
+    """
+    if target_id:
+        return f'<a href="#{target_id}" class="anchor-badge anchor-badge-{color_type}">{text}</a>'
+    return f'<span class="anchor-badge anchor-badge-{color_type}">{text}</span>'
+
+
+def render_region_anchor(target_id: str) -> None:
+    """在组件正上方注入平滑滚动停靠锚点"""
+    st.markdown(f'<div id="{target_id}" style="position:relative;top:-30px;visibility:hidden;height:0;margin:0;padding:0;"></div>', unsafe_allow_html=True)
+
+
+def render_interactive_region_header(
+    region_id: str,
+    title: str,
+    badge_letter: str,
+    badge_color: str = "blue",
+    subtext: str | None = None,
+) -> None:
+    """
+    渲染带有空间锚点与独立背景呼吸闪烁的目标区域头部（严禁 Emoji，纯 SVG 矢量图标）。
+    点击微缩地图直达时，此区域将产生 2.2s 极具质感的淡蓝微光呼吸背景闪烁！
+    """
+    sub_html = f'<div style="color:#64748b;font-size:0.84rem;margin-top:0.25rem;font-weight:500;">{subtext}</div>' if subtext else ""
+    badge_html = anchor_badge(badge_letter, badge_color)
+    html = (
+        f'<div id="{region_id}" class="interactive-region" style="scroll-margin-top:75px;padding:0.6rem 0.85rem;margin-top:1.2rem;margin-bottom:0.6rem;border-radius:10px;border:1px solid #e2e8f0;background:#ffffff;">'
+        f'<div style="display:flex;align-items:center;gap:0.45rem;">'
+        f'{badge_html}'
+        f'<span style="font-size:1.02rem;font-weight:800;color:#0f172a;letter-spacing:-0.01em;">{title}</span>'
+        f'</div>'
+        f'{sub_html}'
+        f'</div>'
+    )
+    st.markdown(html, unsafe_allow_html=True)
+
+
+def render_page_blueprint(sections: list[dict]) -> None:
+    """
+    渲染页面空间交互蓝图微缩地图 (Page Spatial Blueprint)。
+    每个区域卡片均可直接点击平滑穿梭至目标图表/控制台，并在目标区域触发背景高光呼吸闪烁！
+    """
+    icon_map = svg_icon("target", size=14, color="#1d4ed8")
+    icon_sparkle = svg_icon("sparkles", size=12, color="#1d4ed8")
+    
+    blocks_html = []
+    color_border_map = {
+        "amber": ("#fffbeb", "#fde68a", "#92400e"),
+        "blue": ("#eff6ff", "#bfdbfe", "#1e40af"),
+        "emerald": ("#ecfdf5", "#a7f3d0", "#065f46"),
+        "purple": ("#f5f3ff", "#ddd6fe", "#5b21b6"),
+        "rose": ("#fff1f2", "#fecdd3", "#9f1239"),
+    }
+    
+    for sec in sections:
+        sec_id = sec.get("id", "A")
+        sec_name = sec.get("name", "")
+        sec_desc = sec.get("desc", "")
+        sec_color = sec.get("color", "blue")
+        target_id = sec.get("target_id", f"region-{sec_id.lower()}")
+        bg_c, border_c, text_c = color_border_map.get(sec_color, color_border_map["blue"])
+        
+        block = (
+            f'<a href="#{target_id}" style="text-decoration:none;color:inherit;flex:1 1 180px;min-width:150px;">'
+            f'<div style="background:{bg_c};border:1px solid {border_c};border-radius:8px;padding:0.6rem 0.8rem;transition:all 0.2s cubic-bezier(0.4,0,0.2,1);cursor:pointer;" onmouseover="this.style.transform=\'translateY(-2px)\';this.style.boxShadow=\'0 4px 12px rgba(0,0,0,0.06)\';" onmouseout="this.style.transform=\'none\';this.style.boxShadow=\'none\';">'
+            f'<div style="display:flex;align-items:center;gap:0.35rem;margin-bottom:0.25rem;">'
+            f'<span class="anchor-badge anchor-badge-{sec_color}" style="font-size:0.72rem;padding:0.1rem 0.35rem;">[{sec_id}]</span>'
+            f'<span style="font-weight:800;font-size:0.82rem;color:{text_c};">{sec_name}</span>'
+            f'</div>'
+            f'<div style="font-size:0.74rem;color:#475569;line-height:1.4;">{sec_desc}</div>'
+            f'</div>'
+            f'</a>'
+        )
+        blocks_html.append(block)
+    
+    html = (
+        f'<div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:0.85rem 1.1rem;margin-bottom:1rem;box-shadow:0 2px 8px rgba(15,23,42,0.03);">'
+        f'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;">'
+        f'<div style="display:flex;align-items:center;gap:0.4rem;font-size:0.74rem;font-weight:800;color:#1e40af;letter-spacing:0.04em;text-transform:uppercase;">'
+        f'{icon_map} [SPATIAL BLUEPRINT // 页面空间交互地图 (点击卡片直达物理区域)]'
+        f'</div>'
+        f'<div style="font-size:0.74rem;font-weight:700;color:#1d4ed8;display:flex;align-items:center;gap:0.3rem;">{icon_sparkle} [CLICK TO FOCUS // 点击瞬移高亮]</div>'
+        f'</div>'
+        f'<div style="display:flex;flex-wrap:wrap;gap:0.6rem;">'
+        f'{"".join(blocks_html)}'
+        f'</div>'
+        f'</div>'
+    )
+    st.markdown(html, unsafe_allow_html=True)
+    render_floating_hud_navigator(sections)
+
+
+def render_floating_hud_navigator(sections: list[dict]) -> None:
+    """使用 components.html 在宿主视窗右侧挂载常驻悬浮微缩罗盘 HUD (ScrollSpy 滚动感知 + 点击瞬移 + 目标呼吸高光)"""
+    sec_json = json.dumps(sections, ensure_ascii=False)
+    js = f"""
+    <script>
+    (function() {{
+        try {{
+            var doc = window.parent.document;
+            if (!doc) return;
+
+            var oldHud = doc.getElementById('nn-floating-spatial-hud');
+            if (oldHud) oldHud.remove();
+
+            var sections = {sec_json};
+            if (!sections || sections.length === 0) return;
+
+            var hud = doc.createElement('div');
+            hud.id = 'nn-floating-spatial-hud';
+            hud.style.cssText = 'position:fixed;right:22px;top:130px;z-index:999999;background:rgba(255,255,255,0.92);backdrop-filter:blur(16px);border:1px solid #cbd5e1;border-radius:12px;box-shadow:0 10px 30px rgba(15,23,42,0.1);padding:0.65rem 0.75rem;width:175px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:0.75rem;transition:all 0.2s ease;';
+
+            var header = doc.createElement('div');
+            header.style.cssText = 'font-size:0.68rem;font-weight:800;color:#64748b;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:0.45rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #f1f5f9;padding-bottom:0.3rem;';
+            header.innerHTML = '<span>🧭 SPATIAL HUD</span><span style="font-size:0.65rem;color:#3b82f6;font-weight:700;">NAV</span>';
+            hud.appendChild(header);
+
+            var list = doc.createElement('div');
+            list.style.cssText = 'display:flex;flex-direction:column;gap:0.25rem;';
+
+            sections.forEach(function(sec) {{
+                var targetId = sec.target_id || ('region-' + (sec.id || '').toLowerCase());
+                var item = doc.createElement('a');
+                item.href = '#' + targetId;
+                item.className = 'nn-hud-item';
+                item.setAttribute('data-target', targetId);
+                item.style.cssText = 'display:flex;align-items:center;gap:0.4rem;padding:0.3rem 0.45rem;border-radius:6px;text-decoration:none;color:#334155;font-weight:600;transition:all 0.15s ease;cursor:pointer;';
+                item.innerHTML = '<span style="font-family:monospace;font-size:0.72rem;font-weight:800;color:#2563eb;background:#eff6ff;border:1px solid #bfdbfe;padding:0.05rem 0.3rem;border-radius:4px;">[' + sec.id + ']</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:115px;">' + sec.name + '</span>';
+                
+                item.addEventListener('mouseenter', function() {{
+                    if (!this.classList.contains('active')) {{
+                        this.style.background = '#f8fafc';
+                        this.style.transform = 'translateX(-2px)';
+                    }}
+                }});
+                item.addEventListener('mouseleave', function() {{
+                    if (!this.classList.contains('active')) {{
+                        this.style.background = 'transparent';
+                        this.style.transform = 'none';
+                    }}
+                }});
+
+                item.addEventListener('click', function(e) {{
+                    e.preventDefault();
+                    var el = doc.getElementById(targetId);
+                    if (el) {{
+                        el.scrollIntoView({{ behavior: 'smooth', block: 'center' }});
+                        el.classList.remove('flash-highlight');
+                        void el.offsetWidth;
+                        el.classList.add('flash-highlight');
+                    }}
+                }});
+
+                list.appendChild(item);
+            }});
+
+            hud.appendChild(list);
+
+            var topBtn = doc.createElement('div');
+            topBtn.style.cssText = 'margin-top:0.45rem;padding-top:0.35rem;border-top:1px solid #f1f5f9;text-align:center;color:#64748b;cursor:pointer;font-size:0.7rem;font-weight:700;transition:color 0.15s;';
+            topBtn.innerHTML = '↑ 回到顶部 (Top)';
+            topBtn.addEventListener('mouseenter', function() {{ this.style.color = '#2563eb'; }});
+            topBtn.addEventListener('mouseleave', function() {{ this.style.color = '#64748b'; }});
+            topBtn.addEventListener('click', function() {{
+                window.parent.scrollTo({{ top: 0, behavior: 'smooth' }});
+            }});
+            hud.appendChild(topBtn);
+
+            doc.body.appendChild(hud);
+
+            function updateActiveSection() {{
+                var scrollPos = window.parent.scrollY + 220;
+                var currentActiveId = null;
+
+                sections.forEach(function(sec) {{
+                    var targetId = sec.target_id || ('region-' + (sec.id || '').toLowerCase());
+                    var el = doc.getElementById(targetId);
+                    if (el) {{
+                        var top = el.getBoundingClientRect().top + window.parent.scrollY;
+                        if (scrollPos >= top) {{
+                            currentActiveId = targetId;
+                        }}
+                    }}
+                }});
+
+                doc.querySelectorAll('.nn-hud-item').forEach(function(el) {{
+                    if (el.getAttribute('data-target') === currentActiveId) {{
+                        el.classList.add('active');
+                        el.style.background = '#eff6ff';
+                        el.style.color = '#1d4ed8';
+                        el.style.fontWeight = '800';
+                        el.style.borderLeft = '3px solid #2563eb';
+                    }} else {{
+                        el.classList.remove('active');
+                        el.style.background = 'transparent';
+                        el.style.color = '#334155';
+                        el.style.fontWeight = '600';
+                        el.style.borderLeft = 'none';
+                    }}
+                }});
+            }}
+
+            window.parent.addEventListener('scroll', updateActiveSection, {{ passive: true }});
+            setTimeout(updateActiveSection, 300);
+
+        }} catch(e) {{
+            console.error('Floating HUD error:', e);
+        }}
+    }})();
+    </script>
+    """
+    components.html(js, height=0, width=0)
+
+
 
 

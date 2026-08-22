@@ -22,6 +22,7 @@ importlib.reload(dashboard.components.charts)
 
 from dashboard.components.charts import _apply_light_theme, plot_attention_heatmap_nlp
 from dashboard.styles.theme import (
+    anchor_badge,
     apply_custom_theme,
     render_architecture_flow_card,
     render_hero_header,
@@ -50,33 +51,46 @@ render_hero_header(
 # 零基础保姆级指引 (Zero-Barrier Beginner Guide)
 # ---------------------------------------------------------------------------
 render_page_guide(
-    title="Transformer 结构块与残差流入门",
+    title="Transformer 结构块与空间交互地图",
+    blueprint_sections=[
+        {"id": "A", "name": "积木架构控制台", "desc": "在左侧侧边栏调节堆叠层数、隐藏层维度与输入测试句子", "color": "amber", "target_id": "region-a"},
+        {"id": "B", "name": "教学指引", "desc": "当前卡片：通俗理解 Pre-LN 架构、残差高速公路与 SwiGLU 门控前馈", "color": "blue", "target_id": "region-b"},
+        {"id": "C", "name": "实时积木遥测", "desc": "监测堆叠层数、残差流向量模长增长、FFN 维度与总参数量", "color": "emerald", "target_id": "region-c"},
+        {"id": "D", "name": "Pre-LN 数据流拓扑", "desc": "直观拆解 LayerNorm、MHA、GELU FFN 与主干残差流计算图", "color": "purple", "target_id": "region-d"},
+        {"id": "E", "name": "逐层注意力演进", "desc": "同屏对比从浅层局部短语到深层全局语义跨距的注意力分工", "color": "blue", "target_id": "region-e"},
+    ],
     plain_intro=(
-        "<b>Transformer Block 就是现代大语言模型的标准积木块</b>。<br>"
-        "它把<b>自注意力机制 (MHA)</b>、<b>前馈全连接网络 (FFN)</b> 和<b>残差高速公路 (Residual Stream)</b> 封装在同一个盒子里。<br>"
-        "主干道上的残差流像一块中央黑板，数据在流动过程中，MHA 负责在不同词之间搬运信息，FFN 负责非线性思考与知识提取。<br>"
-        "每一层只在黑板上写下微小的增量，<b>层数堆得越多，模型理解越深刻！</b><br><br>"
-        "<b>【2026 前沿拓展】：SwiGLU 门控前馈网络</b><br>"
-        "现代 LLM 使用 SwiGLU 替代了传统的 GELU FFN，它引入了与输入相关的门控（Gate）机制："
-        "不仅决定激活强度，还直接调控信息流转通道，极大提升了同等参数量下的知识容量！"
+        f"<b>Transformer Block 就是现代大语言模型的标准积木块</b>。<br>"
+        f"它把<b>自注意力机制 (MHA)</b>、<b>前馈全连接网络 (FFN)</b> 和<b>残差高速公路 (Residual Stream)</b> 封装在同一个盒子里。<br>"
+        f"主干道上的残差流像一块中央黑板，数据在流动过程中，MHA 负责在不同词之间搬运信息，FFN 负责非线性思考与知识提取。<br>"
+        f"每一层只在黑板上写下微小的增量，<b>层数堆得越多，模型理解越深刻！</b><br><br>"
+        f"<b>【2026 前沿拓展】：SwiGLU 门控前馈网络</b><br>"
+        f"现代 LLM 使用 SwiGLU 替代了传统的 GELU FFN，它引入了与输入相关的门控（Gate）机制："
+        f"不仅决定激活强度，还直接调控信息流转通道，极大提升了同等参数量下的知识容量！"
     ),
     hyperparams_desc=(
-        "• <b>Transformer 堆叠层数 (Num Layers)</b>：堆叠的积木数量（1~4层），层数越深抽象推理能力越强。<br>"
-        "• <b>隐藏层维度 (d_model)</b>：残差流主干道的向量宽度（32/64 维）。<br>"
-        "• <b>注意力头数 (Heads)</b>：每个结构块内的并行观察视角数。<br>"
-        "• <b>测试输入句子</b>：观察多层网络在处理真实文本时的逐层注意力演进。"
+        f"• <b>在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 调节</b>：<br>"
+        f"• <b>Transformer 堆叠层数 (Num Layers)</b>：堆叠的积木数量（1~4层），层数越深抽象推理能力越强。<br>"
+        f"• <b>隐藏层维度 (d_model)</b>：残差流主干道的向量宽度（32/64 维）。<br>"
+        f"• <b>注意力头数 (Heads)</b>：每个结构块内的并行观察视角数。<br>"
+        f"• <b>测试输入句子</b>：观察多层网络在处理真实文本时的逐层注意力演进。"
     ),
     telemetry_desc=(
-        "• <b>逐层注意力热力图</b>：同屏对比 Layer 1 到 Layer N 的注意力模式分工。<br>"
-        "• <b>残差流向量范数曲线</b>：展示特征向量范数如何随着层数稳步增长。<br>"
-        "• <b>GELU vs SwiGLU 激活对比</b>：对比分析标准 MLP 与门控网络对数据流的激活响应差异。"
+        f"• <b>在 {anchor_badge('[E. 逐层注意力热力图]', 'blue', target_id='region-e')} 观测</b>：同屏对比 Layer 1 到 Layer N 的注意力模式分工。<br>"
+        f"• <b>在 {anchor_badge('[D. Pre-LN 数据流]', 'purple', target_id='region-d')} 拆解</b>：主干残差流计算流程。<br>"
+        f"• <b>在 {anchor_badge('[C. 积木遥测]', 'emerald', target_id='region-c')} 评估</b>：残差流向量模长增长折线。"
     ),
     experiments=[
-        "<b>第 1 步【对比逐层分工】</b>：在左侧把【堆叠层数】调到 3 或 4，观察下方逐层注意力热力图：第 1 层偏向相邻词，而高层开始跨距跳跃关注语义相关词！",
-        "<b>第 2 步【观察残差流范数】</b>：查看残差流向量模长增长折线，体会残差连接能让深层网络绝不发生梯度消失！",
-        "<b>第 3 步【对比前沿门控机制】</b>：滚动至底部实验室，体验 SwiGLU 的乘法门控机制如何通过 $x \\otimes \\text{Swish}(Wx)$ 实现对特征的高级非线性调制！",
+        f"<b>第 1 步【对比逐层分工】</b>：在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 把【堆叠层数】调到 3 或 4，观察 {anchor_badge('[E. 逐层热力图]', 'blue', target_id='region-e')}：第 1 层偏向相邻词，而高层开始跨距跳跃关注语义相关词！",
+        f"<b>第 2 步【观察残差流范数】</b>：查看残差流向量模长增长折线，体会残差连接能让深层网络绝不发生梯度消失！",
+        f"<b>第 3 步【对比前沿门控机制】</b>：滚动至底部实验室，体验 SwiGLU 的乘法门控机制如何通过 $x \\otimes \\text{{Swish}}(Wx)$ 实现对特征的高级非线性调制！",
     ],
 )
+
+# ---------------------------------------------------------------------------
+# 侧边栏控制面板
+# ---------------------------------------------------------------------------
+st.sidebar.markdown(f'<div id="region-a" class="interactive-region" style="margin-bottom:0.6rem;padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">{anchor_badge("A", "amber")} <b>BLOCK ARCHITECTURE // 积木架构控制台</b></div>', unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
 # 词表与嵌入层
@@ -168,6 +182,12 @@ total_params = params_per_block * num_layers + (len(vocab_words) * 32)
 # ---------------------------------------------------------------------------
 # 遥测指标卡
 # ---------------------------------------------------------------------------
+st.markdown(
+    f'<div id="region-c" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;">'
+    f'{anchor_badge("C", "emerald")} <span style="font-weight:800;color:#065f46;font-size:0.86rem;">BLOCK TELEMETRY // 积木架构与特征流遥测</span>'
+    f'</div>',
+    unsafe_allow_html=True,
+)
 metric_grid_html = (
     '<div class="metric-grid">'
     + render_metric_card(
@@ -205,13 +225,23 @@ st.markdown(metric_grid_html, unsafe_allow_html=True)
 # ---------------------------------------------------------------------------
 # 主视图区 1：Pre-LN Transformer 结构块数据流拓扑
 # ---------------------------------------------------------------------------
-render_section_heading("PRE-LN ARCHITECTURE // Pre-LN Transformer 结构块内部数据流拓扑", icon_name="activity")
+st.markdown(
+    f'<div id="region-d" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;margin-top:1rem;">'
+    f'{anchor_badge("D", "purple")} <span style="font-weight:800;color:#5b21b6;font-size:0.86rem;">PRE-LN ARCHITECTURE // Pre-LN Transformer 结构块内部数据流拓扑</span>'
+    f'</div>',
+    unsafe_allow_html=True,
+)
 render_architecture_flow_card()
 
 # ---------------------------------------------------------------------------
 # 主视图区 2：逐层注意力热力图同屏对比
 # ---------------------------------------------------------------------------
-render_section_heading(f"LAYER-WISE ATTENTION EVOLUTION // 逐层注意力模式演进同屏对比 (1 ~ {num_layers} 层)", icon_name="target")
+st.markdown(
+    f'<div id="region-e" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;margin-top:1.2rem;">'
+    f'{anchor_badge("E", "blue")} <span style="font-weight:800;color:#1e40af;font-size:0.86rem;">LAYER-WISE ATTENTION // 逐层注意力模式演进同屏对比 (1 ~ {num_layers} 层)</span>'
+    f'</div>',
+    unsafe_allow_html=True,
+)
 
 cols = st.columns(num_layers)
 for i in range(num_layers):

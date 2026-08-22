@@ -45,11 +45,21 @@
 ### 10. 关键交付物必须跨 Agent 独立交叉验证
 实现完成后必须由不同模型/Agent 逐行代码审查与数值验算。审查必须包含 `python -c` 关键中间值验算，不能仅依赖测试通过。对声称"已修复"的代码，验收时必须读实际代码而非信任声明。
 
-## 🎨 UI 视觉红线
+## 🎨 UI 视觉与交互世界级规范 (World-Class UX & UI Standards)
 
-### 11. 严禁滥用廉价感彩色 Emoji (Professional World-Class UI)
-世界级专业产品与开源顶级项目严禁在页面标题、卡片标题、Tab、按钮和核心度量中使用廉价感彩色 Emoji（如 🚀, 📖, 📊, 🎯, ⚡, 💡, ⚠️ 等）。必须统一采用高质感专业设计语言：
-1. **统一图标规范**：使用内置的专业 SVG 矢量线框图标系统（`styles.icons` / Feather / Lucide 规范，如 `render_icon("activity")`）；
-2. **极简专业标牌**：使用大写双斜杠国际化排版（如 `[GROWTH GUIDE // 成长指南]`、`[HOW TO READ // 读图指南]`、`[TELEMETRY]`、`[MATHEMATICS]`、`[CRITICAL // 关键注意]`、`[TIP]`）；
+### 11. 严禁滥用廉价感彩色 Emoji (Pure SVG & Typography)
+世界级专业产品与顶级开源项目严禁在页面标题、卡片标题、Tab、按钮、参数滑块和度量卡片中使用廉价感彩色 Emoji（如 🚀, 📖, 📊, 🎯, ⚡, 💡, ⚠️, ⏱️, ✨, 👉, 👇, 👈 等）。必须统一采用高质感专业设计语言：
+1. **统一矢量图标**：使用内置的专业 SVG 矢量线框图标系统（`dashboard.styles.icons.svg_icon` / Feather / Lucide 规范，如 `svg_icon("activity", size=14)`）；
+2. **极简专业标牌**：使用大写双斜杠国际化排版（如 `[GROWTH GUIDE // 成长指南]`、`[HOW TO READ // 读图指南]`、`[TELEMETRY]`、`[TIME-TRAVEL PLAYER // 时空演播厅]`、`[CLICK TO FOCUS]`）；
 3. **视觉一致性**：保持科技感、极客感与高保真专业学术气质。
+
+### 13. 栅格对称与双视窗像素级水平对齐铁律 (Pixel-Perfect Grid Alignment)
+1. **拒绝高度撕裂**：在同一行并列呈现的图表（如 `st.columns([1, 1])` 左右双重视窗），两侧的顶部标牌、图表画布（统一显式指定 `height`）以及底部的 `[HOW TO READ // 读图指南]` 折叠卡片必须 **100% 绝对水平对齐**。
+2. **控制器顶置独立化**：严禁把“时空回放滑块/演播控制器”塞入单侧列内导致左右图表产生严重的高低落差与视觉错位。时间轴、演播厅等控制器必须提升为跨越全宽的独立控制条（Full-Width Bar），置于双图正上方。
+
+### 14. 空间交互地图与精准区域入场呼吸闪烁 (Spatial Blueprint & Flash Affordance)
+1. **微缩地图瞬移**：页面顶部必须提供 `render_page_blueprint()` 页面空间微缩地图，使用 `[A] [B] [C] [D] [E]` 统一色彩胶囊建立全局空间坐标系；
+2. **入场背景呼吸高光**：点击微缩地图胶囊直达物理区域时，目标区域外框与背景必须伴随 2.2 秒的淡蓝科技呼吸微光闪烁（`region-flash-highlight`），消除用户的“认知分裂注意力（Split-Attention）”；
+3. **HTML 渲染安全红线**：所有包含自定义 HTML / 徽标渲染的 `st.markdown()` 与 `st.sidebar.markdown()` 必须强制显式声明 `unsafe_allow_html=True`，严防 `<span class="...">` 源码泄漏事故。
+
 

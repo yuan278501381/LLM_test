@@ -18,9 +18,11 @@ import streamlit as st
 
 from dashboard.components.charts import _apply_light_theme
 from dashboard.styles.theme import (
+    anchor_badge,
     apply_custom_theme,
     render_hero_header,
     render_metric_card,
+    render_floating_hud_navigator,
     render_page_guide,
     render_section_heading,
 )
@@ -42,36 +44,57 @@ render_hero_header(
     badge_type="amber",
 )
 
+render_floating_hud_navigator([
+        {"id": "A", "name": "对齐参数控制台", "desc": "在左侧侧边栏调节 PPO Clip 阈值、DPO 奖励系数与 LoRA Rank", "color": "amber", "target_id": "region-a"},
+        {"id": "B", "name": "教学指引", "desc": "当前卡片：通俗理解从基座接龙到 SFT 听话学徒与 RLHF/DPO 对齐助手", "color": "blue", "target_id": "region-b"},
+        {"id": "C", "name": "实时对齐遥测", "desc": "显示 LoRA 参数节约比例、微调后总显存节省与当前对齐状态", "color": "emerald", "target_id": "region-c"},
+        {"id": "D", "name": "三阶段回答实录", "desc": "同一提示词在 Pre-training、SFT 与 RLHF 三代下的回答质量质变", "color": "purple", "target_id": "region-d"},
+        {"id": "E", "name": "六维雷达画像", "desc": "有用性、无害性、诚实性与安全性等全方位能力画像演进雷达图", "color": "blue", "target_id": "region-e"},
+    ])
+
 # ---------------------------------------------------------------------------
 # 零基础保姆级指引 (Zero-Barrier Beginner Guide)
 # ---------------------------------------------------------------------------
 render_page_guide(
-    title="后训练对齐与微调工程入门",
+    title="后训练对齐与空间交互地图",
+    blueprint_sections=[
+        {"id": "A", "name": "对齐参数控制台", "desc": "在左侧侧边栏调节 PPO Clip 阈值、DPO 奖励系数与 LoRA Rank", "color": "amber", "target_id": "region-a"},
+        {"id": "B", "name": "教学指引", "desc": "当前卡片：通俗理解从基座接龙到 SFT 听话学徒与 RLHF/DPO 对齐助手", "color": "blue", "target_id": "region-b"},
+        {"id": "C", "name": "实时对齐遥测", "desc": "显示 LoRA 参数节约比例、微调后总显存节省与当前对齐状态", "color": "emerald", "target_id": "region-c"},
+        {"id": "D", "name": "三阶段回答实录", "desc": "同一提示词在 Pre-training、SFT 与 RLHF 三代下的回答质量质变", "color": "purple", "target_id": "region-d"},
+        {"id": "E", "name": "六维雷达画像", "desc": "有用性、无害性、诚实性与安全性等全方位能力画像演进雷达图", "color": "blue", "target_id": "region-e"},
+    ],
     plain_intro=(
-        "<b>为什么预训练完的 GPT 还不能直接当 ChatGPT 用？</b><br>"
-        "基座模型读完了互联网全部文章，但他只会'接着你的话往下猜'，既不懂礼貌、也不会听指令、甚至会教人做坏事；<br>"
-        "<b>后训练 (Post-training)</b> 是赋予大模型'灵魂与教养'的蜕变工程：<br>"
-        "1. <b>SFT (监督指令微调)</b>：用高质量问答对教模型学会'像助手一样说话'；<br>"
-        "2. <b>RLHF / DPO (偏好对齐)</b>：通过奖励惩罚机制，让模型变得<b>有用 (Helpful)、诚实 (Honest)、无害 (Harmless)</b>；<br>"
-        "3. <b>LoRA (低秩微调)</b>：只修改不到 1% 的旁路参数，在一张消费级显卡上就能让大模型掌握全新专业领域的知识！"
+        f"<b>为什么预训练完的 GPT 还不能直接当 ChatGPT 用？</b><br>"
+        f"基座模型读完了互联网全部文章，但他只会'接着你的话往下猜'，既不懂礼貌、也不会听指令、甚至会教人做坏事；<br>"
+        f"<b>后训练 (Post-training)</b> 是赋予大模型'灵魂与教养'的蜕变工程：<br>"
+        f"1. <b>SFT (监督指令微调)</b>：用高质量问答对教模型学会'像助手一样说话'；<br>"
+        f"2. <b>RLHF / DPO (偏好对齐)</b>：通过奖励惩罚机制，让模型变得<b>有用 (Helpful)、诚实 (Honest)、无害 (Harmless)</b>；<br>"
+        f"3. <b>LoRA (低秩微调)</b>：只修改不到 1% 的旁路参数，在消费级显卡上就能让大模型掌握全新专业领域的知识！"
     ),
     hyperparams_desc=(
-        "• <b>PPO Clip 截断系数 ($\\epsilon$)</b>：强化学习更新步长安全带，防止策略模型更新过猛崩溃。<br>"
-        "• <b>DPO 温度系数 ($\\beta$)</b>：直接偏好优化中对参考模型的偏离惩罚项。<br>"
-        "• <b>LoRA 秩 (Rank $r$)</b>：低秩矩阵的瓶颈维度。秩越小显存越省，秩越大表达能力越强。<br>"
-        "• <b>主干矩阵维度 ($d$)</b>：待微调大模型隐藏层宽度。"
+        f"• <b>在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 调节</b>：<br>"
+        f"• <b>PPO Clip 截断系数 ($\\epsilon$)</b>：强化学习更新步长安全带，防止策略模型更新过猛崩溃。<br>"
+        f"• <b>DPO 温度系数 ($\\beta$)</b>：直接偏好优化中对参考模型的偏离惩罚项。<br>"
+        f"• <b>LoRA 秩 (Rank $r$)</b>：低秩矩阵的瓶颈维度。秩越小显存越省，秩越大表达能力越强。<br>"
+        f"• <b>主干矩阵维度 ($d$)</b>：待微调大模型隐藏层宽度。"
     ),
     telemetry_desc=(
-        "• <b>LoRA 显存压缩比</b>：相较于全量微调，参数量节约的倍数。<br>"
-        "• <b>六维能力演进画像</b>：模型在有用性、无害性、安全性等维度的综合雷达得分。<br>"
-        "• <b>RLHF 奖励与 KL 轨迹</b>：强化学习训练过程中奖励上升与稳定性监控。"
+        f"• <b>在 {anchor_badge('[C. 对齐遥测]', 'emerald', target_id='region-c')} 评估</b>：LoRA 显存压缩比与参数量节约倍数。<br>"
+        f"• <b>在 {anchor_badge('[E. 六维雷达]', 'blue', target_id='region-e')} 观测</b>：模型在有用性、无害性、安全性等维度的综合雷达得分。<br>"
+        f"• <b>在 {anchor_badge('[D. 案例实录]', 'purple', target_id='region-d')} 对比</b>：三阶段回答质变实况。"
     ),
     experiments=[
-        "<b>第 1 步【对比同一问题三阶段回答】</b>：在 Section 2 查看 5 个真实问题，观察同一个模型在 Pretrain -> SFT -> RLHF 下回答质量的巨大跃迁！",
-        "<b>第 2 步【观察六维能力雷达演进】</b>：在 Section 3 勾选不同的训练阶段，观察大模型如何从偏科的'野蛮天才'进化为'全能专家'！",
-        "<b>第 3 步【体验 LoRA 暴跌的参数量】</b>：在左侧调整 LoRA Rank，观察 Section 5 中参数量如何直接缩减 98% 以上！",
+        f"<b>第 1 步【对比同一问题三阶段回答】</b>：在 {anchor_badge('[D. 案例实录]', 'purple', target_id='region-d')} 查看 5 个真实问题，观察同一个模型在 Pretrain -> SFT -> RLHF 下回答质量的巨大跃迁！",
+        f"<b>第 2 步【观察六维能力雷达演进】</b>：在 {anchor_badge('[E. 六维雷达]', 'blue', target_id='region-e')} 勾选不同的训练阶段，观察大模型如何从偏科的'野蛮天才'进化为'全能专家'！",
+        f"<b>第 3 步【体验 LoRA 暴跌的参数量】</b>：在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 调整 LoRA Rank，观察参数量如何直接缩减 98% 以上！",
     ],
 )
+
+# ---------------------------------------------------------------------------
+# 侧边栏参数控制
+# ---------------------------------------------------------------------------
+st.sidebar.markdown(f'<div id="region-a" class="interactive-region" style="margin-bottom:0.6rem;padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">{anchor_badge("A", "amber")} <b>ALIGNMENT CONTROLS // 对齐控制台</b></div>', unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
 # 侧边栏参数控制
@@ -156,6 +179,12 @@ metric_grid_html = (
     )
     + "</div>"
 )
+st.markdown(
+    f'<div id="region-c" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;">'
+    f'{anchor_badge("C", "emerald")} <span style="font-weight:800;color:#065f46;font-size:0.86rem;">POST-TRAINING TELEMETRY // 对齐收益与显存压缩遥测</span>'
+    f'</div>',
+    unsafe_allow_html=True,
+)
 st.markdown(metric_grid_html, unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
@@ -216,33 +245,43 @@ with col_s4:
 # ---------------------------------------------------------------------------
 # Section 2: 真实案例演进对比 (同一问题的三阶段质变)
 # ---------------------------------------------------------------------------
-render_section_heading("BEFORE VS AFTER CASE STUDY // 同一指令在不同阶段下的回答质变实录", icon_name="target")
+st.markdown(
+    f'<div id="region-d" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;margin-top:1rem;">'
+    f'{anchor_badge("D", "purple")} <span style="font-weight:800;color:#5b21b6;font-size:0.86rem;">BEFORE VS AFTER CASE STUDY // 同一指令在不同阶段下的回答质变实录</span>'
+    f'</div>',
+    unsafe_allow_html=True,
+)
 
 cases = generate_before_after_examples()
 
 for case_idx, case_data in enumerate(cases):
-    with st.expander(f"📌 案例 {case_idx + 1}：【{case_data['category']}】— \"{case_data['prompt']}\"", expanded=(case_idx == 0)):
+    with st.expander(f"[CASE] 案例 {case_idx + 1}：【{case_data['category']}】— \"{case_data['prompt']}\"", expanded=(case_idx == 0)):
         c_pre, c_sft, c_rlhf = st.columns(3)
         with c_pre:
             with st.container(border=True):
-                st.markdown("##### 🔴 预训练基座回答 (Pre-training)")
+                st.markdown("##### [FAILED] 预训练基座回答 (Pre-training)")
                 st.caption("只会胡乱接龙，缺乏指令遵循意识：")
                 st.info(case_data["pretrain"])
         with c_sft:
             with st.container(border=True):
-                st.markdown("##### 🔵 SFT 指令微调回答 (Supervised FT)")
+                st.markdown("##### [SFT] SFT 指令微调回答 (Supervised FT)")
                 st.caption("能听懂意图并回答，但深度与安全性欠佳：")
                 st.warning(case_data["sft"])
         with c_rlhf:
             with st.container(border=True):
-                st.markdown("##### 🟢 RLHF / DPO 对齐回答 (Aligned)")
+                st.markdown("##### [PASSED] RLHF / DPO 对齐回答 (Aligned)")
                 st.caption("结构严谨、通俗深刻、安全合规：")
                 st.success(case_data["rlhf"])
 
 # ---------------------------------------------------------------------------
 # Section 3: 六维能力雷达图演进
 # ---------------------------------------------------------------------------
-render_section_heading("6D RADAR EVOLUTION // 模型能力画像六维雷达演进图", icon_name="activity")
+st.markdown(
+    f'<div id="region-e" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;margin-top:1.2rem;">'
+    f'{anchor_badge("E", "blue")} <span style="font-weight:800;color:#1e40af;font-size:0.86rem;">6D RADAR EVOLUTION // 模型能力画像六维雷达演进图</span>'
+    f'</div>',
+    unsafe_allow_html=True,
+)
 
 categories = ["有用性", "无害性", "诚实性", "指令跟随", "创造力", "安全性"]
 colors_map = {

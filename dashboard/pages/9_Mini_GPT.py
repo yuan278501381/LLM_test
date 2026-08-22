@@ -22,6 +22,7 @@ importlib.reload(dashboard.components.charts)
 
 from dashboard.components.charts import plot_attention_heatmap_nlp, plot_token_probabilities
 from dashboard.styles.theme import (
+    anchor_badge,
     apply_custom_theme,
     render_hero_header,
     render_metric_card,
@@ -50,33 +51,46 @@ render_hero_header(
 # 零基础保姆级指引 (Zero-Barrier Beginner Guide)
 # ---------------------------------------------------------------------------
 render_page_guide(
-    title="Mini-GPT 文本生成与自回归引擎",
+    title="Mini-GPT 文本生成与空间交互地图",
+    blueprint_sections=[
+        {"id": "A", "name": "文本生成控制台", "desc": "在左侧侧边栏调节 Prompt、Temperature 温度与 Top-K 候选池", "color": "amber", "target_id": "region-a"},
+        {"id": "B", "name": "教学指引", "desc": "当前卡片：通俗理解 ChatGPT 逐词猜下一个字机理与 KV-Cache", "color": "blue", "target_id": "region-b"},
+        {"id": "C", "name": "实时生成遥测", "desc": "显示当前置信度最高的下一词预测、创造力系数与序列长度", "color": "emerald", "target_id": "region-c"},
+        {"id": "D", "name": "实时文本流展示", "desc": "打字机效果逐词呈现模型吐出的新词汇与上下文窗口", "color": "purple", "target_id": "region-d"},
+        {"id": "E", "name": "候选词概率排行榜", "desc": "柱状图实时揭秘模型心中的候选词概率分布与温度平滑度", "color": "blue", "target_id": "region-e"},
+    ],
     plain_intro=(
-        "<b>终于到了见证奇迹的时刻——我们把前面的所有技术拼成了一个微型 ChatGPT！</b><br>"
-        "GPT 的本质其实非常纯粹：<b>它永远只做一件事——猜下一个词 (Next-Token Prediction)</b>。<br>"
-        "它给词表中每一个词打一个概率分（如'女王': 45%, '国王': 20%, '桌子': 0.1%）；<br>"
-        "然后根据你设定的<b>温度 (Temperature)</b> 进行概率轮盘赌，抽中一个词拼到句子末尾，再重复这个过程！<br><br>"
-        "<b>【2026 前沿拓展】：KV-Cache 推理加速</b><br>"
-        "每次生成新词时，模型不需要把前面的所有词都重新计算一遍，而是将历史词汇的 Key/Value 缓存起来。<br>"
-        "这使得 Transformer 的推理复杂度从 $O(N^2)$ 骤降为 $O(1)$，是实现流式实时响应的核心关键！"
+        f"<b>终于到了见证奇迹的时刻——我们把前面的所有技术拼成了一个微型 ChatGPT！</b><br>"
+        f"GPT 的本质其实非常纯粹：<b>它永远只做一件事——猜下一个词 (Next-Token Prediction)</b>。<br>"
+        f"它给词表中每一个词打一个概率分（如'女王': 45%, '国王': 20%, '桌子': 0.1%）；<br>"
+        f"然后根据你在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 设定的<b>温度 (Temperature)</b> 进行概率轮盘赌，抽中一个词拼到 {anchor_badge('[D. 文本流]', 'purple', target_id='region-d')}，再重复这个过程！<br><br>"
+        f"<b>【2026 前沿拓展】：KV-Cache 推理加速</b><br>"
+        f"每次生成新词时，模型不需要把前面的所有词都重新计算一遍，而是将历史词汇的 Key/Value 缓存起来。<br>"
+        f"这使得 Transformer 的推理复杂度从 $O(N^2)$ 骤降为 $O(1)$，是实现流式实时响应的核心关键！"
     ),
     hyperparams_desc=(
-        "• <b>提示词 (Prompt)</b>：给 GPT 的开头引导语（如 <code>the king and</code>）。<br>"
-        "• <b>采样温度 (Temperature)</b>：控制创造力。T=0.1 确定保守，T=0.8 均衡灵动。<br>"
-        "• <b>Top-k 过滤</b>：只在概率最高的前 K 个词中采样，过滤长尾词。<br>"
-        "• <b>生成长度 (Max Tokens)</b>：让模型接续生成的词数。"
+        f"• <b>在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 调节</b>：<br>"
+        f"• <b>提示词 (Prompt)</b>：给 GPT 的开头引导语（如 <code>the king and</code>）。<br>"
+        f"• <b>采样温度 (Temperature)</b>：控制创造力。T=0.1 确定保守，T=0.8 均衡灵动。<br>"
+        f"• <b>Top-k 过滤</b>：只在概率最高的前 K 个词中采样，过滤长尾词。<br>"
+        f"• <b>生成长度 (Max Tokens)</b>：让模型接续生成的词数。"
     ),
     telemetry_desc=(
-        "• <b>实时生成文本流</b>：打字机效果逐词呈现 GPT 吐出的新词汇。<br>"
-        "• <b>概率分布柱状图</b>：实时揭秘模型心中的'候选词排行榜'。<br>"
-        "• <b>KV-Cache 显存开销遥测</b>：实时监控由于不断延长上下文而消耗的缓存显存池。"
+        f"• <b>在 {anchor_badge('[D. 实时文本流]', 'purple', target_id='region-d')} 观测</b>：打字机效果逐词呈现 GPT 吐出的新词汇。<br>"
+        f"• <b>在 {anchor_badge('[E. 概率排行榜]', 'blue', target_id='region-e')} 揭秘</b>：实时揭秘模型心中的'候选词排行榜'。<br>"
+        f"• <b>在 {anchor_badge('[C. 实时指标]', 'emerald', target_id='region-c')} 评估</b>：下一词预测置信度与创造力状态。"
     ),
     experiments=[
-        "<b>第 1 步【体验确定性生成】</b>：把【Temperature】设为 <code>0.1</code>，点击生成，观察柱状图顶端出现尖锐的绝对优势词！",
-        "<b>第 2 步【体验高创造力】</b>：把【Temperature】调到 <code>1.5</code>，观察概率柱状图变得平坦，模型给出随机出人意料的词汇组合！",
-        "<b>第 3 步【观测显存暴涨】</b>：滚动到底部实验室，点击生成后，观察 KV-Cache Size 随着生成步数的增加呈现线性甚至几何级膨胀的现象！",
+        f"<b>第 1 步【体验确定性生成】</b>：在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 把【Temperature】设为 <code>0.1</code>，点击生成，观察 {anchor_badge('[E. 概率图]', 'blue', target_id='region-e')} 顶端出现尖锐的绝对优势词！",
+        f"<b>第 2 步【体验高创造力】</b>：在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 把【Temperature】调到 <code>1.5</code>，观察概率柱状图变得平坦，模型给出随机出人意料的词汇组合！",
+        f"<b>第 3 步【观测显存暴涨】</b>：滚动到底部实验室，点击生成后，观察 KV-Cache Size 随着生成步数的增加呈现线性甚至几何级膨胀的现象！",
     ],
 )
+
+# ---------------------------------------------------------------------------
+# 侧边栏控制面板
+# ---------------------------------------------------------------------------
+st.sidebar.markdown(f'<div id="region-a" class="interactive-region" style="margin-bottom:0.6rem;padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">{anchor_badge("A", "amber")} <b>GENERATION CONTROLS // 文本生成控制台</b></div>', unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
 # 模型与词表初始化
@@ -227,6 +241,12 @@ top_predicted_prob = float(current_probs[top_predicted_id])
 # ---------------------------------------------------------------------------
 # 遥测指标卡
 # ---------------------------------------------------------------------------
+st.markdown(
+    f'<div id="region-c" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;">'
+    f'{anchor_badge("C", "emerald")} <span style="font-weight:800;color:#065f46;font-size:0.86rem;">GENERATION TELEMETRY // 实时生成与采样遥测</span>'
+    f'</div>',
+    unsafe_allow_html=True,
+)
 metric_grid_html = (
     '<div class="metric-grid">'
     + render_metric_card(
@@ -264,7 +284,12 @@ st.markdown(metric_grid_html, unsafe_allow_html=True)
 # ---------------------------------------------------------------------------
 # 主视图区 1：自回归实时文本输出展示
 # ---------------------------------------------------------------------------
-render_section_heading("LIVE TEXT STREAM // 实时自回归文本流 (打字机效果)", icon_name="activity")
+st.markdown(
+    f'<div id="region-d" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;margin-top:1rem;">'
+    f'{anchor_badge("D", "purple")} <span style="font-weight:800;color:#5b21b6;font-size:0.86rem;">LIVE TEXT STREAM // 实时自回归文本流 (打字机效果)</span>'
+    f'</div>',
+    unsafe_allow_html=True,
+)
 prompt_len = len(current_prompt_text.strip().split())
 render_text_stream_box(current_tokens, prompt_len)
 
@@ -274,7 +299,12 @@ render_text_stream_box(current_tokens, prompt_len)
 col_bar, col_attn = st.columns([1.2, 1])
 
 with col_bar:
-    render_section_heading(f"NEXT-TOKEN PROBABILITIES // 下一个词候选排行榜 (T={temperature})", icon_name="target")
+    st.markdown(
+        f'<div id="region-e" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;margin-top:0.4rem;">'
+        f'{anchor_badge("E", "blue")} <span style="font-weight:800;color:#1e40af;font-size:0.86rem;">NEXT-TOKEN PROBABILITIES // 候选词概率排行榜 (T={temperature})</span>'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
     fig_probs = plot_token_probabilities(
         token_probs=current_probs,
         vocab=vocab_words,

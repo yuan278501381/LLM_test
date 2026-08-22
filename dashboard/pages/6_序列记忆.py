@@ -21,6 +21,7 @@ importlib.reload(dashboard.components.charts)
 
 from dashboard.components.charts import plot_memory_decay_heatmap
 from dashboard.styles.theme import (
+    anchor_badge,
     apply_custom_theme,
     render_hero_header,
     render_metric_card,
@@ -49,29 +50,42 @@ render_hero_header(
 # 零基础保姆级指引 (Zero-Barrier Beginner Guide)
 # ---------------------------------------------------------------------------
 render_page_guide(
-    title="序列记忆与遗忘瓶颈入门",
+    title="序列记忆与空间交互地图",
+    blueprint_sections=[
+        {"id": "A", "name": "时序输入控制台", "desc": "在左侧侧边栏切换短句、长句或自定义句子与隐藏层维度", "color": "amber", "target_id": "region-a"},
+        {"id": "B", "name": "教学指引", "desc": "当前卡片：通俗理解 RNN 隐藏状态背包与长程遗忘致命缺陷", "color": "blue", "target_id": "region-b"},
+        {"id": "C", "name": "实时记忆遥测", "desc": "显示当前序列长度、句首信息保留率与时间步记忆衰减", "color": "emerald", "target_id": "region-c"},
+        {"id": "D", "name": "时序流水线色块", "desc": "按时间步展示每一个 Token 的隐藏状态向量流动与激活强度", "color": "purple", "target_id": "region-d"},
+        {"id": "E", "name": "记忆衰减热力图", "desc": "直观验证右上角大面积褪色白块，见证信息稀释与注意力诞生背景", "color": "blue", "target_id": "region-e"},
+    ],
     plain_intro=(
-        "<b>RNN 就像一个记性有限的听书人</b>。<br>"
-        "当听到一句话时，它用一个固定大小的<b>隐藏状态向量 $h_t$（相当于短期大脑记忆）</b>顺次吸收每个词。<br>"
-        "每读一个新词，旧的记忆就会被压缩、覆盖一部分。<br>"
-        "⚠️ <b>致命缺陷</b>：当句子达到 10~20 个词以上时，最开头的关键信息（如主语是谁）就会被彻底稀释忘光！"
+        f"<b>RNN 就像一个记性有限的听书人</b>。<br>"
+        f"当听到一句话时，它用一个固定大小的<b>隐藏状态向量 $h_t$（相当于短期大脑记忆）</b>顺次吸收每个词。<br>"
+        f"每读一个新词，旧的记忆就会被压缩、覆盖一部分。<br>"
+        f"[WARNING] <b>致命缺陷</b>：在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 换上长句时，最开头的关键信息（如主语是谁）在 {anchor_badge('[E. 记忆衰减热力图]', 'blue', target_id='region-e')} 就会被彻底稀释忘光！"
     ),
     hyperparams_desc=(
-        "• <b>预设测试句子</b>：选择短句（5词）或长句（15+词）观察记忆衰减现象。<br>"
-        "• <b>RNN 隐藏层维度 (Hidden Dim)</b>：相当于记忆背包的容量（8/16/32 维）。<br>"
-        "• <b>记忆保持系数</b>：调节循环权重对历史状态的衰减速率。"
+        f"• <b>在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 调节</b>：<br>"
+        f"• <b>预设测试句子</b>：选择短句（5词）或长句（15+词）观察记忆衰减现象。<br>"
+        f"• <b>RNN 隐藏层维度 (Hidden Dim)</b>：相当于记忆背包的容量（8/16/32 维）。<br>"
+        f"• <b>记忆保持系数</b>：调节循环权重对历史状态的衰减速率。"
     ),
     telemetry_desc=(
-        "• <b>时序流水线色块</b>：直观展示每一个时间步的词汇与记忆激活强度。<br>"
-        "• <b>记忆留存衰减热力图</b>：展示第 $t$ 步时对第 $k$ 步历史词汇的记忆强度（越靠右上角颜色越浅代表遗忘越严重）。<br>"
-        "• <b>句首主语留存率</b>：量化评估长程关键信息的衰减比例。"
+        f"• <b>在 {anchor_badge('[D. 时序流水线]', 'purple', target_id='region-d')} 观察</b>：直观展示每一个时间步的词汇与记忆激活强度。<br>"
+        f"• <b>在 {anchor_badge('[E. 记忆留存热力图]', 'blue', target_id='region-e')} 诊断</b>：展示第 $t$ 步时对第 $k$ 步历史词汇的记忆强度（越靠右上角颜色越浅代表遗忘越严重）。<br>"
+        f"• <b>在 {anchor_badge('[C. 记忆遥测指标]', 'emerald', target_id='region-c')} 评估</b>：量化评估句首关键信息的衰减比例。"
     ),
     experiments=[
-        "<b>第 1 步【体验短句记忆】</b>：在左侧选择 <code>短句测试 (5 词)</code>，观察下方热力图每个词之间都有深蓝色的连接，记忆留存率高达 80% 以上！",
-        "<b>第 2 步【目睹长句遗忘灾难】</b>：切换为 <code>超长叙事句 (16 词)</code>，观察热力图右上角大面积变白！读到最后几个词时，对句首'king'的记忆几乎彻底归零！",
-        "<b>第 3 步【尝试增大容量】</b>：把【隐藏层维度】调到 32，观察虽然略微改善，但根本无法解决固定容量压缩的瓶颈——从而理解<b>为什么 2017 年 Attention 机制颠覆了 RNN</b>！",
+        f"<b>第 1 步【体验短句记忆】</b>：在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 选择 <code>短句测试 (5 词)</code>，观察下方热力图每个词之间都有深蓝色的连接，记忆留存率高达 80% 以上！",
+        f"<b>第 2 步【目睹长句遗忘灾难】</b>：在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 切换为 <code>超长叙事句 (16 词)</code>，观察 {anchor_badge('[E. 记忆热力图]', 'blue', target_id='region-e')} 右上角大面积变白！读到最后几个词时，对句首'king'的记忆几乎彻底归零！",
+        f"<b>第 3 步【尝试增大容量】</b>：把【隐藏层维度】调到 32，观察虽然略微改善，但根本无法解决固定容量压缩的瓶颈——从而理解<b>为什么 2017 年 Attention 机制颠覆了 RNN</b>！",
     ],
 )
+
+# ---------------------------------------------------------------------------
+# 侧边栏控制面板
+# ---------------------------------------------------------------------------
+st.sidebar.markdown(f'<div id="region-a" class="interactive-region" style="margin-bottom:0.6rem;padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">{anchor_badge("A", "amber")} <b>SEQUENCE CONTROLS // 时序输入控制台</b></div>', unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
 # 词表与模型初始化
@@ -141,13 +155,20 @@ seq_len = len(raw_tokens)
 # 计算句首词 (t=0) 在最后一步 (t=T-1) 的记忆余弦相似度
 h_first = hidden_states_list[0].ravel()
 h_last = hidden_states_list[-1].ravel()
-retention_rate = float(
+first_token_retention = float(
     np.abs(np.dot(h_first, h_last)) / (np.linalg.norm(h_first) * np.linalg.norm(h_last) + 1e-12)
 )
+retention_rate = first_token_retention
 
 # ---------------------------------------------------------------------------
 # 遥测指标卡
 # ---------------------------------------------------------------------------
+st.markdown(
+    f'<div id="region-c" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;">'
+    f'{anchor_badge("C", "emerald")} <span style="font-weight:800;color:#065f46;font-size:0.86rem;">MEMORY TELEMETRY // 序列记忆与衰减遥测看板</span>'
+    f'</div>',
+    unsafe_allow_html=True,
+)
 metric_grid_html = (
     '<div class="metric-grid">'
     + render_metric_card(
@@ -185,13 +206,23 @@ st.markdown(metric_grid_html, unsafe_allow_html=True)
 # ---------------------------------------------------------------------------
 # 主视图区 1：时序流水线逐步流动
 # ---------------------------------------------------------------------------
-render_section_heading("STEP-BY-STEP RECURRENT FLOW // RNN 隐状态顺次传递管道", icon_name="activity")
+st.markdown(
+    f'<div id="region-d" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;margin-top:1rem;">'
+    f'{anchor_badge("D", "purple")} <span style="font-weight:800;color:#5b21b6;font-size:0.86rem;">STEP-BY-STEP RECURRENT FLOW // RNN 隐状态顺次传递流水线</span>'
+    f'</div>',
+    unsafe_allow_html=True,
+)
 render_sequence_flow(raw_tokens, hidden_states_list)
 
 # ---------------------------------------------------------------------------
 # 主视图区 2：记忆衰减热力图
 # ---------------------------------------------------------------------------
-render_section_heading("MEMORY DECAY HEATMAP // 序列记忆与历史衰减矩阵", icon_name="target")
+st.markdown(
+    f'<div id="region-e" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;margin-top:1.2rem;">'
+    f'{anchor_badge("E", "blue")} <span style="font-weight:800;color:#1e40af;font-size:0.86rem;">MEMORY DECAY HEATMAP // 序列记忆与历史衰减矩阵</span>'
+    f'</div>',
+    unsafe_allow_html=True,
+)
 
 fig_decay = plot_memory_decay_heatmap(
     hidden_states=hidden_states_list,
@@ -205,7 +236,7 @@ with st.expander("[HOW TO READ // 读图指南] 时间步传递与长程遗忘�
         """
         * **横轴与纵轴**：句子中的时间步词汇（从第 1 个词到最后一个词）。每个方格的颜色代表第 $t$ 步的隐藏状态与之前第 $t-k$ 步状态的**余弦相似度（记忆保留度）**。
         * **对角线（亮黄色）**：自己与自己的相似度恒为 1.0。
-        * ⚠️ **【读图重点：右上角褪色】**：
+        * [WARNING] **【读图重点：右上角褪色】**：
           * 观察矩阵的右上角区域：距离当前词越远的早期词汇，颜色越**暗淡变冷**（接近 0）；
           * 这直观证明了**RNN 具有严重的物理遗忘性**——随着时间推移，最早输入的词（如句首的“国王”）被后来输入的词冲淡冲没了！
         """

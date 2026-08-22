@@ -18,6 +18,7 @@ import streamlit as st
 
 from dashboard.components.charts import _apply_light_theme
 from dashboard.styles.theme import (
+    anchor_badge,
     apply_custom_theme,
     render_hero_header,
     render_metric_card,
@@ -56,31 +57,44 @@ render_hero_header(
 # 零基础保姆级指引 (Zero-Barrier Beginner Guide)
 # ---------------------------------------------------------------------------
 render_page_guide(
-    title="视频大模型与世界模型入门",
+    title="视频理解与世界模型空间交互地图",
+    blueprint_sections=[
+        {"id": "A", "name": "动力学控制台", "desc": "在左侧侧边栏切换合成动力学模式、视频总帧数与 Patch 尺寸", "color": "amber", "target_id": "region-a"},
+        {"id": "B", "name": "教学指引", "desc": "当前卡片：通俗理解 3D 时空图块、时空双轨注意力与 Sora 扩散去噪", "color": "blue", "target_id": "region-b"},
+        {"id": "C", "name": "实时时空遥测", "desc": "显示 3D 时空 Token 规模、帧间运动能量与世界模型推演误差", "color": "emerald", "target_id": "region-c"},
+        {"id": "D", "name": "时序采样与能量", "desc": "32x32 视频连续帧序列展示与相邻帧间差分运动能量折线", "color": "purple", "target_id": "region-d"},
+        {"id": "E", "name": "时空注意力与 Sora", "desc": "空间与时间注意力热力图解耦与 Sora 扩散去噪多步时间表", "color": "blue", "target_id": "region-e"},
+    ],
     plain_intro=(
-        "<b>视频不仅是图片的集合，更是物理世界在时间轴上的因果连续流！</b><br>"
-        "大模型理解视频的核心技巧是 <b>3D 时空图块 (Spatio-Temporal Patches)</b>：把视频切成时空小方块，"
-        "并用<b>空间注意力</b>看'这一刻画面里发生了什么'，用<b>时间注意力</b>追踪'这个物体运动到了哪里'；<br>"
-        "更进一步的 <b>世界模型 (World Model)</b> 像人类的大脑一样，具备在脑海中推演未来画面的能力；<br>"
-        "而 <b>Sora</b> 则将 Transformer 与 Diffusion 扩散去噪相结合，在纯高斯白噪声的泥土中，一步步雕刻出符合物理规律的高清动态视频！"
+        f"<b>视频不仅是图片的集合，更是物理世界在时间轴上的因果连续流！</b><br>"
+        f"大模型理解视频的核心技巧是 <b>3D 时空图块 (Spatio-Temporal Patches)</b>：把视频切成时空小方块，"
+        f"并用<b>空间注意力</b>看'这一刻画面里发生了什么'，用<b>时间注意力</b>追踪'这个物体运动到了哪里'；<br>"
+        f"更进一步的 <b>世界模型 (World Model)</b> 像人类的大脑一样，具备在脑海中推演未来画面的能力；<br>"
+        f"而 <b>Sora</b> 则在 {anchor_badge('[E. 扩散实验室]', 'blue', target_id='region-e')} 中，在纯高斯白噪声的泥土中，一步步雕刻出符合物理规律的高清动态视频！"
     ),
     hyperparams_desc=(
-        "• <b>运动模式</b>：内置合成连续动力学轨迹（弹跳运动 / 匀速平移 / 扩散膨胀）。<br>"
-        "• <b>视频总帧数</b>：时间序列长度（4 ~ 16 帧）。<br>"
-        "• <b>Patch 尺寸</b>：空间切片分辨率（4x4 或 8x8）。<br>"
-        "• <b>Diffusion 加噪步数</b>：模拟扩散前向轨迹的精细度时间表。"
+        f"• <b>在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 调节</b>：<br>"
+        f"• <b>运动模式</b>：内置合成连续动力学轨迹（弹跳运动 / 匀速平移 / 扩散膨胀）。<br>"
+        f"• <b>视频总帧数</b>：时间序列长度（4 ~ 16 帧）。<br>"
+        f"• <b>Patch 尺寸</b>：空间切片分辨率（4x4 或 8x8）。<br>"
+        f"• <b>Diffusion 加噪步数</b>：模拟扩散前向轨迹的精细度时间表。"
     ),
     telemetry_desc=(
-        "• <b>时空 Token 规模</b>：$T \\times (H/P) \\times (W/P)$ 总计打包的高维表征向量数量。<br>"
-        "• <b>帧间运动能量</b>：相邻时间步画面像素位移的均方差 (MSE)。<br>"
-        "• <b>下一帧预测误差</b>：世界模型推演未来物理轨迹的准确度。"
+        f"• <b>在 {anchor_badge('[D. 时序采样]', 'purple', target_id='region-d')} 观测</b>：视频序列帧与运动能量折线。<br>"
+        f"• <b>在 {anchor_badge('[E. 时空注意力与扩散]', 'blue', target_id='region-e')} 观测</b>：空间与时间双轨热力图与去噪轨迹。<br>"
+        f"• <b>在 {anchor_badge('[C. 时空遥测]', 'emerald', target_id='region-c')} 评估</b>：时空 Token 规模与世界模型推演误差。"
     ),
     experiments=[
-        "<b>第 1 步【观察时空采样】</b>：在 Section 1 中观察 32x32 视频连续帧及下方的帧间运动能量曲线！",
-        "<b>第 2 步【对比空间与时间注意力】</b>：在 Section 2 中对比两组热力图，体会模型如何将空间特征与时间轨迹解耦！",
-        "<b>第 3 步【观测 Sora 噪声雕刻】</b>：在 Section 4 观察清晰视频帧如何一步步衰减为纯高斯白噪声，并理解去噪逆过程！",
+        f"<b>第 1 步【观察时空采样】</b>：在 {anchor_badge('[D. 采样与能量]', 'purple', target_id='region-d')} 中观察 32x32 视频连续帧及下方的帧间运动能量曲线！",
+        f"<b>第 2 步【对比空间与时间注意力】</b>：在 {anchor_badge('[E. 双轨注意力]', 'blue', target_id='region-e')} 中对比两组热力图，体会模型如何将空间特征与时间轨迹解耦！",
+        f"<b>第 3 步【观测 Sora 噪声雕刻】</b>：在 {anchor_badge('[E. 扩散实验室]', 'blue', target_id='region-e')} 观察清晰视频帧如何一步步衰减为纯高斯白噪声，并理解去噪逆过程！",
     ],
 )
+
+# ---------------------------------------------------------------------------
+# 侧边栏参数控制
+# ---------------------------------------------------------------------------
+st.sidebar.markdown(f'<div id="region-a" class="interactive-region" style="margin-bottom:0.6rem;padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">{anchor_badge("A", "amber")} <b>WORLD MODEL CONTROLS // 动力学控制台</b></div>', unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
 # 侧边栏参数控制
@@ -195,12 +209,23 @@ metric_grid_html = (
     )
     + "</div>"
 )
+st.markdown(
+    f'<div id="region-c" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;">'
+    f'{anchor_badge("C", "emerald")} <span style="font-weight:800;color:#065f46;font-size:0.86rem;">SPATIO-TEMPORAL TELEMETRY // 时空动力学与世界模型遥测</span>'
+    f'</div>',
+    unsafe_allow_html=True,
+)
 st.markdown(metric_grid_html, unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
 # Section 1: 视频帧采样与动力学时间线
 # ---------------------------------------------------------------------------
-render_section_heading("VIDEO FRAME SEQUENCE // 32×32 视频时序采样与帧间动力学能量", icon_name="eye")
+st.markdown(
+    f'<div id="region-d" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;margin-top:1rem;">'
+    f'{anchor_badge("D", "purple")} <span style="font-weight:800;color:#5b21b6;font-size:0.86rem;">VIDEO FRAME SEQUENCE // 32×32 视频时序采样与帧间动力学能量</span>'
+    f'</div>',
+    unsafe_allow_html=True,
+)
 
 col_frames = st.columns(len(sampled_indices))
 for idx, frame_idx in enumerate(sampled_indices):
@@ -252,7 +277,12 @@ with st.expander("[HOW TO READ // 读图指南] 帧间运动差分能量曲线",
 # ---------------------------------------------------------------------------
 # Section 2: 空间注意力 vs 时间注意力机制
 # ---------------------------------------------------------------------------
-render_section_heading("SPATIAL VS TEMPORAL ATTENTION // 空间与时间注意力双轨解耦", icon_name="target")
+st.markdown(
+    f'<div id="region-e" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;margin-top:1.2rem;">'
+    f'{anchor_badge("E", "blue")} <span style="font-weight:800;color:#1e40af;font-size:0.86rem;">SPATIO-TEMPORAL ATTENTION & SORA // 空间时间双轨注意力与扩散去噪</span>'
+    f'</div>',
+    unsafe_allow_html=True,
+)
 
 col_sp_attn, col_tp_attn = st.columns(2)
 

@@ -19,9 +19,11 @@ import streamlit as st
 
 from dashboard.components.charts import _apply_light_theme
 from dashboard.styles.theme import (
+    anchor_badge,
     apply_custom_theme,
     render_hero_header,
     render_metric_card,
+    render_floating_hud_navigator,
     render_page_guide,
     render_section_heading,
 )
@@ -48,35 +50,56 @@ render_hero_header(
     badge_type="blue",
 )
 
+render_floating_hud_navigator([
+        {"id": "A", "name": "考场配置控制台", "desc": "在左侧侧边栏切换模拟模型智力等级与参加评测的基准考卷", "color": "amber", "target_id": "region-a"},
+        {"id": "B", "name": "教学指引", "desc": "当前卡片：通俗理解困惑度 PPL 吃惊程度、MMLU/GSM8K 考场与排行榜", "color": "blue", "target_id": "region-b"},
+        {"id": "C", "name": "实时评估遥测", "desc": "显示当前综合得分率、困惑度 PPL、总答题数与胜率统计", "color": "emerald", "target_id": "region-c"},
+        {"id": "D", "name": "PPL 仪表盘与考场", "desc": "PPL 困惑度仪表盘与四大基准考卷逐题答题透视判分", "color": "purple", "target_id": "region-d"},
+        {"id": "E", "name": "多维雷达与天梯榜", "desc": "学科/推理/安全多维能力雷达图与 Open LLM 全球天梯排行榜", "color": "blue", "target_id": "region-e"},
+    ])
+
 # ---------------------------------------------------------------------------
 # 零基础保姆级指引 (Zero-Barrier Beginner Guide)
 # ---------------------------------------------------------------------------
 render_page_guide(
-    title="大语言模型评估框架与能力画像入门",
+    title="大模型评估框架与空间交互地图",
+    blueprint_sections=[
+        {"id": "A", "name": "考场配置控制台", "desc": "在左侧侧边栏切换模拟模型智力等级与参加评测的基准考卷", "color": "amber", "target_id": "region-a"},
+        {"id": "B", "name": "教学指引", "desc": "当前卡片：通俗理解困惑度 PPL 吃惊程度、MMLU/GSM8K 考场与排行榜", "color": "blue", "target_id": "region-b"},
+        {"id": "C", "name": "实时评估遥测", "desc": "显示当前综合得分率、困惑度 PPL、总答题数与胜率统计", "color": "emerald", "target_id": "region-c"},
+        {"id": "D", "name": "PPL 仪表盘与考场", "desc": "PPL 困惑度仪表盘与四大基准考卷逐题答题透视判分", "color": "purple", "target_id": "region-d"},
+        {"id": "E", "name": "多维雷达与天梯榜", "desc": "学科/推理/安全多维能力雷达图与 Open LLM 全球天梯排行榜", "color": "blue", "target_id": "region-e"},
+    ],
     plain_intro=(
-        "<b>大模型训练完了，怎么客观证明它比别的模型更聪明？</b><br>"
-        "在学术界和工业界，我们绝不靠主观感觉，而是依赖一套严密的<b>标准化考试评估体系 (Evaluation Harness)</b>：<br>"
-        "• <b>困惑度 (Perplexity / PPL)</b>：衡量模型在阅读文本时的'吃惊程度'。PPL 越低，说明模型对人类语言越胸有成竹；<br>"
-        "• <b>Mini-MMLU (通识学科)</b>：覆盖数理化、文史哲的大综合单选题；<br>"
-        "• <b>Mini-HellaSwag (常识推理)</b>：考察模型能否识破荒谬的常识陷阱；<br>"
-        "• <b>Mini-GSM8K (小学数学)</b>：考验多步思维链推理能力；<br>"
-        "• <b>Mini-Safety (安全合规)</b>：严防越狱与危险红线诱导！"
+        f"<b>大模型训练完了，怎么客观证明它比别的模型更聪明？</b><br>"
+        f"在学术界和工业界，我们绝不靠主观感觉，而是依赖一套严密的<b>标准化考试评估体系 (Evaluation Harness)</b>：<br>"
+        f"• <b>困惑度 (Perplexity / PPL)</b>：衡量模型在阅读文本时的'吃惊程度'。PPL 越低，说明模型对人类语言越胸有成竹；<br>"
+        f"• <b>Mini-MMLU (通识学科)</b>：覆盖数理化、文史哲的大综合单选题；<br>"
+        f"• <b>Mini-HellaSwag (常识推理)</b>：考察模型能否识破荒谬的常识陷阱；<br>"
+        f"• <b>Mini-GSM8K (小学数学)</b>：考验多步思维链推理能力；<br>"
+        f"• <b>Mini-Safety (安全合规)</b>：严防越狱与危险红线诱导！"
     ),
     hyperparams_desc=(
-        "• <b>模拟模型智力等级</b>：切换'弱模型'（30% 猜对）、'中等模型'（65% 掌握）与'强模型'（90% 专家）。<br>"
-        "• <b>评测考卷勾选</b>：自由组合多维度能力测试套件。"
+        f"• <b>在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 调节</b>：<br>"
+        f"• <b>模拟模型智力等级</b>：切换'弱模型'（30% 猜对）、'中等模型'（65% 掌握）与'强模型'（90% 专家）。<br>"
+        f"• <b>评测考卷勾选</b>：自由组合多维度能力测试套件。"
     ),
     telemetry_desc=(
-        "• <b>当前模型综合得分</b>：所有已勾选考卷的加权平均准确率。<br>"
-        "• <b>困惑度 (PPL)</b>：语言模型对测试语料的交叉熵指数得分。<br>"
-        "• <b>总答题正确率</b>：当前模拟模型在客观考场中的答题通过比例。"
+        f"• <b>在 {anchor_badge('[C. 评估遥测]', 'emerald', target_id='region-c')} 评估</b>：综合得分率与 PPL 困惑度。<br>"
+        f"• <b>在 {anchor_badge('[D. 客观考场]', 'purple', target_id='region-d')} 透视</b>：逐题答题比对与 PPL 收敛曲线。<br>"
+        f"• <b>在 {anchor_badge('[E. 天梯排行榜]', 'blue', target_id='region-e')} 查阅</b>：Open LLM Leaderboard 全球排行榜。"
     ),
     experiments=[
-        "<b>第 1 步【体验全自动考试】</b>：在 Section 2 展开具体的试卷题目，观察模型是如何选出答案并与标准答案比对判分的！",
-        "<b>第 2 步【观察雷达能力画像】</b>：在左侧切换【模拟模型等级】为'强模型 (Expert)'，观察 Section 3 中雷达图面积如何全面膨胀！",
-        "<b>第 3 步【查阅工业级排行榜】</b>：在 Section 4 查阅模拟的 Open LLM Leaderboard，理解模型参数量与综合得分的正相关规律！",
+        f"<b>第 1 步【体验全自动考试】</b>：在 {anchor_badge('[D. 客观考场]', 'purple', target_id='region-d')} 展开具体的试卷题目，观察模型是如何选出答案并与标准答案比对判分的！",
+        f"<b>第 2 步【观察雷达能力画像】</b>：在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 切换【模拟模型等级】为'强模型 (Expert)'，观察 {anchor_badge('[E. 能力雷达]', 'blue', target_id='region-e')} 雷达图面积如何全面膨胀！",
+        f"<b>第 3 步【查阅工业级排行榜】</b>：在 {anchor_badge('[E. 天梯排行榜]', 'blue', target_id='region-e')} 查阅模拟的 Open LLM Leaderboard，理解模型参数量与综合得分的正相关规律！",
     ],
 )
+
+# ---------------------------------------------------------------------------
+# 侧边栏参数控制
+# ---------------------------------------------------------------------------
+st.sidebar.markdown(f'<div id="region-a" class="interactive-region" style="margin-bottom:0.6rem;padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">{anchor_badge("A", "amber")} <b>EVALUATION CONTROLS // 评估控制台</b></div>', unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
 # 侧边栏参数控制
@@ -242,12 +265,12 @@ render_section_heading("STANDARDIZED BENCHMARK EXAMS // 标准化客观基准模
 for t_name in selected_task_names:
     cur_task = all_tasks_dict[t_name]
     score = scores_dict.get(t_name, 0.0)
-    with st.expander(f"📝 考卷：【{t_name}】— 当前得分：{score:.1f}% ({cur_task.description})", expanded=False):
+    with st.expander(f"[EVAL] 考卷：【{t_name}】— 当前得分：{score:.1f}% ({cur_task.description})", expanded=False):
         for q_idx, q in enumerate(cur_task.questions):
             pred_idx = mock_predict_fn(q.question, q.choices)
             is_correct = (pred_idx == q.answer_idx)
             
-            status_badge = "🟢 正确 (PASSED)" if is_correct else "🔴 错误 (FAILED)"
+            status_badge = "[PASSED] 正确 (PASSED)" if is_correct else "[FAILED] 错误 (FAILED)"
             st.markdown(f"**第 {q_idx + 1} 题【{q.category}】**：{q.question}　`{status_badge}`")
             
             c_cols = st.columns(4)

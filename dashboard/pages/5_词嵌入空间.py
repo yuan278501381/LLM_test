@@ -22,6 +22,7 @@ importlib.reload(dashboard.components.charts)
 
 from dashboard.components.charts import plot_embedding_space
 from dashboard.styles.theme import (
+    anchor_badge,
     apply_custom_theme,
     render_hero_header,
     render_metric_card,
@@ -49,32 +50,45 @@ render_hero_header(
 # 零基础保姆级指引 (Zero-Barrier Beginner Guide)
 # ---------------------------------------------------------------------------
 render_page_guide(
-    title="词嵌入与分词工程 (Embedding & Tokenization)",
+    title="词嵌入与空间交互地图",
+    blueprint_sections=[
+        {"id": "A", "name": "语义算术控制台", "desc": "在左侧侧边栏配置经典向量算术公式与高亮词簇", "color": "amber", "target_id": "region-a"},
+        {"id": "B", "name": "教学指引", "desc": "当前卡片：通俗理解高维空间向量距离与国王女王平行四边形", "color": "blue", "target_id": "region-b"},
+        {"id": "C", "name": "实时算术遥测", "desc": "显示最优预测词、余弦相似度与几何对齐状态", "color": "emerald", "target_id": "region-c"},
+        {"id": "D", "name": "3D 语义几何流形", "desc": "3D 空间直观旋转观测词汇聚类与向量加减位移虚线", "color": "purple", "target_id": "region-d"},
+        {"id": "E", "name": "前沿 BPE 分词实验室", "desc": "探索工业级大模型的分词切片与贪心合并过程", "color": "blue", "target_id": "region-e"},
+    ],
     plain_intro=(
-        "<b>词嵌入将每个词汇映射为高维空间中的'方向坐标'</b>。<br>"
-        "在神经网络中，原本孤立的字符串，会被映射为一个 32 维的实数向量。<br>"
-        "于是，<b>词与词之间的空间距离就代表了语义的远近</b>，如 cat 和 dog 靠得很近；"
-        "我们甚至可以直接进行向量加减：<b>国王 - 男人 + 女人 ≈ 女王</b>。<br><br>"
-        "<b>【2026 前沿拓展】：BPE (字节对编码) 分词</b><br>"
-        "在查表前，现代大模型不再使用简单的空格分词，而是采用 BPE 贪心合并策略，"
-        "将高频词缀合并为一个专属 Token，兼顾词汇量与未登录词（OOV）的处理。"
+        f"<b>词嵌入将每个词汇映射为高维空间中的'方向坐标'</b>。<br>"
+        f"在神经网络中，原本孤立的字符串，会被映射为一个 32 维的实数向量。<br>"
+        f"于是，<b>词与词之间的空间距离就代表了语义的远近</b>，如 cat 和 dog 靠得很近；"
+        f"我们甚至可以在 {anchor_badge('[A. 算术控制台]', 'amber', target_id='region-a')} 直接进行向量加减：<b>国王 - 男人 + 女人 ≈ 女王</b>，并在 {anchor_badge('[D. 3D 空间]', 'purple', target_id='region-d')} 亲眼看到平行的位移虚线！<br><br>"
+        f"<b>【2026 前沿拓展】：BPE (字节对编码) 分词</b><br>"
+        f"在查表前，现代大模型在 {anchor_badge('[E. BPE 分词实验室]', 'blue', target_id='region-e')} 采用 BPE 贪心合并策略，"
+        f"将高频词缀合并为一个专属 Token，兼顾词汇量与未登录词（OOV）的处理。"
     ),
     hyperparams_desc=(
-        "• <b>投影维度 (2D/3D)</b>：将 32 维的高维词嵌入通过 PCA 降维投影至 3D 或 2D 平面。<br>"
-        "• <b>高亮词簇</b>：直观观察动物、国家、王族等特定概念在空间中的聚集状态。<br>"
-        "• <b>向量代数运算</b>：自动计算 $A - B + C = ?$ 并验证平行四边形法则。"
+        f"• <b>在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 调节</b>：<br>"
+        f"• <b>投影维度 (2D/3D)</b>：将 32 维的高维词嵌入通过 PCA 降维投影至 3D 或 2D 平面。<br>"
+        f"• <b>高亮词簇</b>：直观观察动物、国家、王族等特定概念在空间中的聚集状态。<br>"
+        f"• <b>向量代数运算</b>：自动计算 $A - B + C = ?$ 并验证平行四边形法则。"
     ),
     telemetry_desc=(
-        "• <b>空间散点图与向量箭头</b>：3D 空间内直观展示词汇聚落与加减法向量箭头。<br>"
-        "• <b>余弦相似度 Top-5</b>：全局词表中余弦夹角最小的候选词语。<br>"
-        "• <b>BPE 分词日志</b>：实时展示输入文本的字符级切片与高频词块的贪心合并轨迹。"
+        f"• <b>在 {anchor_badge('[D. 3D 散点图]', 'purple', target_id='region-d')} 观测</b>：3D 空间内直观展示词汇聚落与加减法向量箭头。<br>"
+        f"• <b>在 {anchor_badge('[C. 算术遥测]', 'emerald', target_id='region-c')} 揭晓</b>：全局词表中余弦夹角最小的候选词语。<br>"
+        f"• <b>在 {anchor_badge('[E. BPE 实验室]', 'blue', target_id='region-e')} 验证</b>：实时展示输入文本的字符级切片与高频词块的贪心合并轨迹。"
     ),
     experiments=[
-        "<b>第 1 步【观察聚类】</b>：在左侧【高亮语义组】选择 <code>王族 (Royalty)</code> 或 <code>动物 (Animals)</code>，旋转右侧 3D 图表，观察相关词汇如何自然聚集在同一个空间角落！",
-        "<b>第 2 步【见证经典算术】</b>：在左侧选择 <code>king - man + woman</code>，观察计算结果中最接近的词是不是 <code>queen (女王)</code>！",
-        "<b>第 3 步【体验 BPE 分词合并】</b>：滚动到底部的【2026 前沿拓展】实验室，尝试输入长难句，观察系统如何将碎片的字母一步步合并为有意义的专属 Token！",
+        f"<b>第 1 步【观察聚类】</b>：在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')}【高亮语义组】选择 <code>王族 (Royalty)</code> 或 <code>动物 (Animals)</code>，旋转 {anchor_badge('[D. 3D 图表]', 'purple', target_id='region-d')}，观察相关词汇如何自然聚集在同一个空间角落！",
+        f"<b>第 2 步【见证经典算术】</b>：在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 选择 <code>king - man + woman</code>，观察 {anchor_badge('[C. 算术遥测]', 'emerald', target_id='region-c')} 计算结果中最接近的词是不是 <code>queen (女王)</code>！",
+        f"<b>第 3 步【体验 BPE 分词合并】</b>：滚动到 {anchor_badge('[E. BPE 实验室]', 'blue', target_id='region-e')}，尝试输入长难句，观察系统如何将碎片的字母一步步合并为有意义的专属 Token！",
     ],
 )
+
+# ---------------------------------------------------------------------------
+# 侧边栏控制面板
+# ---------------------------------------------------------------------------
+st.sidebar.markdown(f'<div id="region-a" class="interactive-region" style="margin-bottom:0.6rem;padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">{anchor_badge("A", "amber")} <b>VECTOR CALCULATOR // 语义算术控制台</b></div>', unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
 # 词表与语义向量数据准备 (中英双语标签)
@@ -314,7 +328,7 @@ with st.expander("[HOW TO READ // 读图指南] 空间距离与向量语义算�
         * **2. 彩色虚线箭头（向量算术）**：
           * 红色箭头代表 $A \\to B$ 的语义位移（如从 `man` 走向 `king`，代表赋予“帝王统治权力”）；
           * 蓝色箭头代表 $C \\to Result$ 的平行位移（如从 `woman` 沿同样方向位移，精确落在 `queen` 上！）；
-        * 🎯 **【最优形态】**：两个箭头几乎完全平行且长度相同，形成一个优雅的**空间平行四边形**，代表模型学会了真正的逻辑类比能力！
+        * [OPTIMAL] **【最优形态】**：两个箭头几乎完全平行且长度相同，形成一个优雅的**空间平行四边形**，代表模型学会了真正的逻辑类比能力！
         """
     )
 

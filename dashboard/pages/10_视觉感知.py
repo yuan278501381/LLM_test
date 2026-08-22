@@ -18,6 +18,7 @@ import streamlit as st
 
 from dashboard.components.charts import _apply_light_theme
 from dashboard.styles.theme import (
+    anchor_badge,
     apply_custom_theme,
     render_hero_header,
     render_metric_card,
@@ -46,30 +47,43 @@ render_hero_header(
 # 零基础保姆级指引 (Zero-Barrier Beginner Guide)
 # ---------------------------------------------------------------------------
 render_page_guide(
-    title="视觉模型与多模态感知入门",
+    title="视觉感知架构与空间交互地图",
+    blueprint_sections=[
+        {"id": "A", "name": "视觉控制台", "desc": "在左侧侧边栏切换测试图像、滤波卷积核与 ViT Patch 尺寸", "color": "amber", "target_id": "region-a"},
+        {"id": "B", "name": "教学指引", "desc": "当前卡片：通俗理解 CNN 感受野、ViT 图块切片与 CLIP 图文对齐", "color": "blue", "target_id": "region-b"},
+        {"id": "C", "name": "实时视觉遥测", "desc": "显示当前特征图尺寸、Token 序列长度、感受野与参数量", "color": "emerald", "target_id": "region-c"},
+        {"id": "D", "name": "2D 卷积滑动响应", "desc": "原图、3x3 卷积核矩阵与输出响应图三视窗并排透视", "color": "purple", "target_id": "region-d"},
+        {"id": "E", "name": "ViT 图块与 CLIP 对齐", "desc": "图像切片重构网格与多模态图文对齐余弦相似度矩阵", "color": "blue", "target_id": "region-e"},
+    ],
     plain_intro=(
-        "<b>为什么处理文字的 Transformer 能看懂图片？</b><br>"
-        "在传统计算机视觉中，<b>卷积核 (CNN)</b> 像一个放大镜，在图像上一步步滑动，提取边缘、纹理等局部特征；<br>"
-        "而 2020 年诞生的 <b>Vision Transformer (ViT)</b> 提出了革命性的思想：把图片切成一个个网格小图块 (Patch)，"
-        "每个图块就像一个'词'，直接送入标准的 Transformer 中阅读！<br>"
-        "随后 <b>CLIP</b> 更是让文字和图片投影到了同一个语义向量空间，彻底打通了多模态大模型的任督二脉！"
+        f"<b>为什么处理文字的 Transformer 能看懂图片？</b><br>"
+        f"在传统计算机视觉中，<b>卷积核 (CNN)</b> 像一个放大镜，在图像上一步步滑动，提取边缘、纹理等局部特征；<br>"
+        f"而 2020 年诞生的 <b>Vision Transformer (ViT)</b> 提出了革命性的思想：把图片切成一个个网格小图块 (Patch)，"
+        f"每个图块就像一个'词'，直接送入标准的 Transformer 中阅读！<br>"
+        f"随后在 {anchor_badge('[E. CLIP 实验室]', 'blue', target_id='region-e')} 中，文字和图片投影到了同一个语义向量空间，彻底打通了多模态大模型的任督二脉！"
     ),
     hyperparams_desc=(
-        "• <b>卷积核类型</b>：边缘检测 (Sobel)、锐化 (Sharpen)、高斯模糊 (Gaussian) 等经典空间滤波矩阵。<br>"
-        "• <b>ViT Patch 尺寸</b>：将图像切分为 $P \\times P$ 大小的图块。尺寸越小，Token 序列越长，捕捉细节越精细。<br>"
-        "• <b>合成图像形状</b>：选择内置的合成几何测试流形（圆形/方形/三角形）。"
+        f"• <b>在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 调节</b>：<br>"
+        f"• <b>卷积核类型</b>：边缘检测 (Sobel)、锐化 (Sharpen)、高斯模糊 (Gaussian) 等经典空间滤波矩阵。<br>"
+        f"• <b>ViT Patch 尺寸</b>：将图像切分为 $P \\times P$ 大小的图块。尺寸越小，Token 序列越长，捕捉细节越精细。<br>"
+        f"• <b>合成图像形状</b>：选择内置的合成几何测试流形（圆形/方形/三角形）。"
     ),
     telemetry_desc=(
-        "• <b>卷积输出特征图</b>：空间滑动滤波后的梯度与响应强度分布。<br>"
-        "• <b>ViT 图块网格与维度</b>：图像空间切片到序列向量空间的精确映射关系。<br>"
-        "• <b>CLIP 余弦相似度矩阵</b>：8 组文本与图像在统一高维语义空间中的对齐得分。"
+        f"• <b>在 {anchor_badge('[D. 卷积特征响应]', 'purple', target_id='region-d')} 观测</b>：空间滑动滤波后的梯度与响应强度分布。<br>"
+        f"• <b>在 {anchor_badge('[E. ViT 切片网格]', 'blue', target_id='region-e')} 观测</b>：图像空间切片到序列向量空间的精确映射关系。<br>"
+        f"• <b>在 {anchor_badge('[C. 视觉遥测]', 'emerald', target_id='region-c')} 评估</b>：感受野与序列维度指标。"
     ),
     experiments=[
-        "<b>第 1 步【体验卷积滤波】</b>：在左侧切换【卷积核类型】，观察 Sobel-X 如何精准提取<b>左右垂直轮廓</b>（水平梯度 ∂I/∂x），Sobel-Y 如何提取<b>上下水平轮廓</b>（垂直梯度 ∂I/∂y）！",
-        "<b>第 2 步【体验 ViT 切片】</b>：将【Patch Size】从 8 改为 4，观察图像被细分为 64 个 Token，直观理解图像如何转化为语言模型的输入序列！",
-        "<b>第 3 步【观测 CLIP 图文对齐】</b>：滚动至 Section 4，观察对角线上明亮的黄色高分点，验证图文双塔如何将'猫咪文字'与'猫咪图片'自动拉近！",
+        f"<b>第 1 步【体验卷积滤波】</b>：在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 切换【卷积核类型】，观察 Sobel-X 如何精准提取<b>左右垂直轮廓</b>（水平梯度 ∂I/∂x），Sobel-Y 如何提取<b>上下水平轮廓</b>（垂直梯度 ∂I/∂y）！",
+        f"<b>第 2 步【体验 ViT 切片】</b>：将【Patch Size】从 8 改为 4，观察图像被细分为 64 个 Token，直观理解图像如何转化为语言模型的输入序列！",
+        f"<b>第 3 步【观测 CLIP 图文对齐】</b>：滚动至 Section 4，观察对角线上明亮的黄色高分点，验证图文双塔如何将'猫咪文字'与'猫咪图片'自动拉近！",
     ],
 )
+
+# ---------------------------------------------------------------------------
+# 侧边栏参数控制
+# ---------------------------------------------------------------------------
+st.sidebar.markdown(f'<div id="region-a" class="interactive-region" style="margin-bottom:0.6rem;padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">{anchor_badge("A", "amber")} <b>VISION CONTROLS // 视觉感知控制台</b></div>', unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
 # 侧边栏参数控制
@@ -182,12 +196,23 @@ metric_grid_html = (
     )
     + "</div>"
 )
+st.markdown(
+    f'<div id="region-c" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;">'
+    f'{anchor_badge("C", "emerald")} <span style="font-weight:800;color:#065f46;font-size:0.86rem;">VISION TELEMETRY // 视觉特征与 Token 化遥测</span>'
+    f'</div>',
+    unsafe_allow_html=True,
+)
 st.markdown(metric_grid_html, unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
 # Section 1: 2D 卷积滑动计算与特征图提取
 # ---------------------------------------------------------------------------
-render_section_heading("2D CONVOLUTION SLIDING WINDOW // 卷积滑动滤波计算演示", icon_name="eye")
+st.markdown(
+    f'<div id="region-d" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;margin-top:1rem;">'
+    f'{anchor_badge("D", "purple")} <span style="font-weight:800;color:#5b21b6;font-size:0.86rem;">2D CONVOLUTION // 卷积滑动滤波计算演示</span>'
+    f'</div>',
+    unsafe_allow_html=True,
+)
 
 col_img_in, col_kernel, col_img_out = st.columns([1.2, 0.8, 1.2])
 
@@ -290,7 +315,12 @@ with st.expander("[HOW TO READ // 读图指南] 经典空间滤波算子横向�
 # ---------------------------------------------------------------------------
 # Section 3: ViT 图块切片与 Token 化
 # ---------------------------------------------------------------------------
-render_section_heading("VISION TRANSFORMER (ViT) PATCHING // 图像切片与 Token 化流水线", icon_name="cpu")
+st.markdown(
+    f'<div id="region-e" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;margin-top:1.2rem;">'
+    f'{anchor_badge("E", "blue")} <span style="font-weight:800;color:#1e40af;font-size:0.86rem;">VISION TRANSFORMER (ViT) & CLIP // 图像切片与图文多模态对齐</span>'
+    f'</div>',
+    unsafe_allow_html=True,
+)
 
 col_vit_img, col_vit_info = st.columns([1.2, 1])
 
