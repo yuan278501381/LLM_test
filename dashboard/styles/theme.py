@@ -134,15 +134,16 @@ header {background-color: transparent !important;}
    - 当页面有超参数控制台时 (如 M01~M17)：自动展开为双栏（180px 课程罗盘 + 310px 参数微观控制台）！
 ------------------------------------------------------------------------- */
 /* 1. 单栏模式 (无超参数控件时，如 M00 / 首页) */
+/* 1. 单栏模式 (无超参数控件时，如 M00 / 首页) */
 section[data-testid="stSidebar"].nn-sidebar-single-col,
 section[data-testid="stSidebar"].nn-sidebar-single-col > div,
 [data-testid="stSidebar"].nn-sidebar-single-col,
 [data-testid="stSidebar"].nn-sidebar-single-col > div,
 section[data-testid="stSidebar"]:not(:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"])),
 [data-testid="stSidebar"]:not(:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"])) {
-    width: 250px !important;
-    min-width: 250px !important;
-    max-width: 270px !important;
+    width: 260px !important;
+    min-width: 240px !important;
+    max-width: 320px !important;
     background-color: #f8fafc !important;
 }
 
@@ -169,7 +170,7 @@ section[data-testid="stSidebar"]:not(:has([data-testid="stSidebarUserContent"] i
     display: none !important;
 }
 
-/* 2. 双栏模式 (有超参数控件时，且屏幕 >= 1260px) */
+/* 2. 双栏模式 (有超参数控件时，且屏幕 >= 1260px，支持全自由拖拽拉伸) */
 @media (min-width: 1260px) {
     section[data-testid="stSidebar"].nn-sidebar-dual-col,
     section[data-testid="stSidebar"].nn-sidebar-dual-col > div,
@@ -179,9 +180,9 @@ section[data-testid="stSidebar"]:not(:has([data-testid="stSidebarUserContent"] i
     section[data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"]) > div,
     [data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"]),
     [data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"]) > div {
-        width: 540px !important;
-        min-width: 540px !important;
-        max-width: 570px !important;
+        width: 580px !important;
+        min-width: 480px !important;
+        max-width: 1000px !important;
         background-color: #f8fafc !important;
         border-right: 1px solid #e2e8f0 !important;
     }
@@ -191,35 +192,35 @@ section[data-testid="stSidebar"]:not(:has([data-testid="stSidebarUserContent"] i
         display: flex !important;
         flex-direction: row !important;
         height: 100vh !important;
-        width: 540px !important;
-        min-width: 540px !important;
+        width: 100% !important;
+        min-width: 100% !important;
         padding: 0 !important;
         overflow: hidden !important;
     }
 
-    /* 栏位 1：主导航航母罗盘 (Master Rail, 170px 紧凑流线) */
+    /* 栏位 1：主导航航母罗盘 (Master Rail, 默认 190px，支持自由拖拽调节) */
     [data-testid="stSidebar"].nn-sidebar-dual-col [data-testid="stSidebarNav"],
     [data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"]) [data-testid="stSidebarNav"] {
-        width: 170px !important;
-        min-width: 170px !important;
-        max-width: 170px !important;
+        width: 190px !important;
+        min-width: 150px !important;
+        max-width: 380px !important;
         height: 100% !important;
         overflow-y: auto !important;
         border-right: 1px solid #e2e8f0 !important;
         padding: 2.8rem 0.4rem 1.5rem 0.4rem !important;
         background-color: #f8fafc !important;
         box-sizing: border-box !important;
+        flex-shrink: 0 !important;
     }
 
-    /* 栏位 2：微观超参数控制台 (Detail Parameter Deck, 360px 充裕舒展宽度，彻底杜绝内容被截断) */
+    /* 栏位 2：微观超参数控制台 (Detail Parameter Deck, 自适应铺满剩余宽度，横向纵向全自适应) */
     [data-testid="stSidebar"].nn-sidebar-dual-col [data-testid="stSidebarUserContent"],
     [data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"]) [data-testid="stSidebarUserContent"] {
-        flex: 1 1 360px !important;
-        min-width: 360px !important;
-        max-width: 380px !important;
+        flex: 1 1 auto !important;
+        min-width: 330px !important;
         height: 100% !important;
         overflow-y: auto !important;
-        overflow-x: hidden !important;
+        overflow-x: auto !important;
         padding: 2.8rem 1.1rem 1.5rem 1.1rem !important;
         background-color: #ffffff !important;
         box-sizing: border-box !important;
@@ -282,13 +283,34 @@ section[data-testid="stSidebar"]:not(:has([data-testid="stSidebarUserContent"] i
     display: none !important;
 }
 
-/* 绝对恒定几何尺寸：确保所有页面无论单双栏，菜单行高 100% 绝对一致 (36px) */
+/* 绝对恒定几何尺寸：确保所有页面无论单双栏，菜单容器与每一项高度 100% 绝对一致 (36px)，0 高度差 */
+[data-testid="stSidebarNav"],
+[data-testid="stSidebarNavItems"],
+[data-testid="stSidebarNav"] ul {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2px !important;
+    row-gap: 2px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    list-style: none !important;
+}
+
+[data-testid="stSidebarNav"] li {
+    padding: 0 !important;
+    margin: 0 !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    max-height: 36px !important;
+    box-sizing: border-box !important;
+}
+
 [data-testid="stSidebarNav"] a,
 [data-testid="stSidebarNavLink"] {
     min-height: 36px !important;
     max-height: 36px !important;
     height: 36px !important;
-    margin-bottom: 2px !important;
+    margin: 0 !important;
     padding: 0 0.5rem !important;
     display: flex !important;
     align-items: center !important;
@@ -962,11 +984,15 @@ g.updatemenu-button {
                 headStyle.id = 'nn-persistent-sidebar-style';
                 headStyle.textContent = `
                     /* 1. 单栏模式 (无超参数控件时，如 M00 / 首页) */
+                    section[data-testid="stSidebar"].nn-sidebar-single-col,
+                    section[data-testid="stSidebar"].nn-sidebar-single-col > div,
                     [data-testid="stSidebar"].nn-sidebar-single-col,
+                    [data-testid="stSidebar"].nn-sidebar-single-col > div,
+                    section[data-testid="stSidebar"]:not(:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"])),
                     [data-testid="stSidebar"]:not(:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"])) {
-                        width: 250px !important;
-                        min-width: 250px !important;
-                        max-width: 270px !important;
+                        width: 260px !important;
+                        min-width: 240px !important;
+                        max-width: 320px !important;
                         background-color: #f8fafc !important;
                     }
                     [data-testid="stSidebar"].nn-sidebar-single-col [data-testid="stSidebarContent"],
@@ -990,7 +1016,7 @@ g.updatemenu-button {
                         display: none !important;
                     }
 
-                    /* 2. 双栏模式 (有超参数控件时，且屏幕 >= 1260px) */
+                    /* 2. 双栏模式 (有超参数控件时，且屏幕 >= 1260px，支持全自由拖拽拉伸) */
                     @media (min-width: 1260px) {
                         section[data-testid="stSidebar"].nn-sidebar-dual-col,
                         section[data-testid="stSidebar"].nn-sidebar-dual-col > div,
@@ -1000,9 +1026,9 @@ g.updatemenu-button {
                         section[data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"]) > div,
                         [data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"]),
                         [data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"]) > div {
-                            width: 540px !important;
-                            min-width: 540px !important;
-                            max-width: 570px !important;
+                            width: 580px !important;
+                            min-width: 480px !important;
+                            max-width: 1000px !important;
                             background-color: #f8fafc !important;
                             border-right: 1px solid #e2e8f0 !important;
                         }
@@ -1011,31 +1037,31 @@ g.updatemenu-button {
                             display: flex !important;
                             flex-direction: row !important;
                             height: 100vh !important;
-                            width: 540px !important;
-                            min-width: 540px !important;
+                            width: 100% !important;
+                            min-width: 100% !important;
                             padding: 0 !important;
                             overflow: hidden !important;
                         }
                         [data-testid="stSidebar"].nn-sidebar-dual-col [data-testid="stSidebarNav"],
                         [data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"]) [data-testid="stSidebarNav"] {
-                            width: 170px !important;
-                            min-width: 170px !important;
-                            max-width: 170px !important;
+                            width: 190px !important;
+                            min-width: 150px !important;
+                            max-width: 380px !important;
                             height: 100% !important;
                             overflow-y: auto !important;
                             border-right: 1px solid #e2e8f0 !important;
                             padding: 2.8rem 0.4rem 1.5rem 0.4rem !important;
                             background-color: #f8fafc !important;
                             box-sizing: border-box !important;
+                            flex-shrink: 0 !important;
                         }
                         [data-testid="stSidebar"].nn-sidebar-dual-col [data-testid="stSidebarUserContent"],
                         [data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] input, [data-testid="stSidebarUserContent"] select, [data-testid="stSidebarUserContent"] [data-testid="stSlider"], [data-testid="stSidebarUserContent"] [data-testid="stRadio"], [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"]) [data-testid="stSidebarUserContent"] {
-                            flex: 1 1 360px !important;
-                            min-width: 360px !important;
-                            max-width: 380px !important;
+                            flex: 1 1 auto !important;
+                            min-width: 330px !important;
                             height: 100% !important;
                             overflow-y: auto !important;
-                            overflow-x: hidden !important;
+                            overflow-x: auto !important;
                             padding: 2.8rem 1.1rem 1.5rem 1.1rem !important;
                             background-color: #ffffff !important;
                             box-sizing: border-box !important;
@@ -1085,12 +1111,33 @@ g.updatemenu-button {
                     [data-testid="stSidebarNavSeparator"] {
                         display: none !important;
                     }
+
+                    /* 绝对恒定几何尺寸：确保所有页面无论单双栏，菜单容器与每一项高度 100% 绝对一致 (36px)，0 高度差 */
+                    [data-testid="stSidebarNav"],
+                    [data-testid="stSidebarNavItems"],
+                    [data-testid="stSidebarNav"] ul {
+                        display: flex !important;
+                        flex-direction: column !important;
+                        gap: 2px !important;
+                        row-gap: 2px !important;
+                        padding: 0 !important;
+                        margin: 0 !important;
+                        list-style: none !important;
+                    }
+                    [data-testid="stSidebarNav"] li {
+                        padding: 0 !important;
+                        margin: 0 !important;
+                        height: 36px !important;
+                        min-height: 36px !important;
+                        max-height: 36px !important;
+                        box-sizing: border-box !important;
+                    }
                     [data-testid="stSidebarNav"] a,
                     [data-testid="stSidebarNavLink"] {
                         min-height: 36px !important;
                         max-height: 36px !important;
                         height: 36px !important;
-                        margin-bottom: 2px !important;
+                        margin: 0 !important;
                         padding: 0 0.5rem !important;
                         display: flex !important;
                         align-items: center !important;
@@ -1153,8 +1200,144 @@ g.updatemenu-button {
                 doc.head.appendChild(headStyle);
             }
 
+            function initSidebarSplitters() {
+                var sidebar = doc.querySelector('section[data-testid="stSidebar"], [data-testid="stSidebar"]');
+                if (!sidebar) return;
+                var nav = sidebar.querySelector('[data-testid="stSidebarNav"]');
+                var userContent = sidebar.querySelector('[data-testid="stSidebarUserContent"]');
+
+                // 1. 中间两栏分割拖拽手柄 (Column Splitter)
+                if (nav && userContent && nav.parentNode) {
+                    var splitter = doc.getElementById('nn-sidebar-col-splitter');
+                    if (!splitter) {
+                        splitter = doc.createElement('div');
+                        splitter.id = 'nn-sidebar-col-splitter';
+                        splitter.title = '左右拖拽调整左侧菜单宽度';
+                        splitter.style.cssText = 'width: 6px; cursor: col-resize; background-color: #e2e8f0; height: 100vh; flex-shrink: 0; position: relative; z-index: 100; transition: background-color 0.15s ease;';
+
+                        splitter.addEventListener('mouseenter', function() { splitter.style.backgroundColor = '#3b82f6'; });
+                        splitter.addEventListener('mouseleave', function() { if (!window.parent.__nnDraggingCol) splitter.style.backgroundColor = '#e2e8f0'; });
+
+                        splitter.addEventListener('mousedown', function(e) {
+                            e.preventDefault();
+                            window.parent.__nnDraggingCol = true;
+                            var startX = e.clientX;
+                            var startW = nav.getBoundingClientRect().width;
+                            splitter.style.backgroundColor = '#2563eb';
+                            doc.body.style.cursor = 'col-resize';
+                            doc.body.style.userSelect = 'none';
+
+                            function onMouseMove(e) {
+                                var newW = Math.max(140, Math.min(380, startW + (e.clientX - startX)));
+                                nav.style.width = newW + 'px';
+                                nav.style.minWidth = newW + 'px';
+                                nav.style.maxWidth = newW + 'px';
+                                try { window.parent.localStorage.setItem('nn_col1_width', newW); } catch(err) {}
+                            }
+
+                            function onMouseUp() {
+                                window.parent.__nnDraggingCol = false;
+                                splitter.style.backgroundColor = '#e2e8f0';
+                                doc.body.style.cursor = '';
+                                doc.body.style.userSelect = '';
+                                window.parent.removeEventListener('mousemove', onMouseMove);
+                                window.parent.removeEventListener('mouseup', onMouseUp);
+                            }
+
+                            window.parent.addEventListener('mousemove', onMouseMove);
+                            window.parent.addEventListener('mouseup', onMouseUp);
+                        });
+
+                        nav.parentNode.insertBefore(splitter, userContent);
+                    }
+
+                    // 恢复用户自定义持久化宽度
+                    var savedCol1Width = 190;
+                    try {
+                        var val = window.parent.localStorage.getItem('nn_col1_width');
+                        if (val) savedCol1Width = parseInt(val, 10);
+                    } catch(err) {}
+
+                    if (sidebar.classList.contains('nn-sidebar-dual-col')) {
+                        nav.style.width = savedCol1Width + 'px';
+                        nav.style.minWidth = savedCol1Width + 'px';
+                        nav.style.maxWidth = savedCol1Width + 'px';
+                        if (splitter) splitter.style.display = 'block';
+                    } else {
+                        nav.style.width = '100%';
+                        nav.style.minWidth = '100%';
+                        nav.style.maxWidth = '100%';
+                        if (splitter) splitter.style.display = 'none';
+                    }
+                }
+
+                // 2. 整个侧边栏右侧全局拖拽手柄 (Outer Sidebar Resizer)
+                var rightResizer = doc.getElementById('nn-sidebar-right-resizer');
+                if (!rightResizer && sidebar.parentNode) {
+                    rightResizer = doc.createElement('div');
+                    rightResizer.id = 'nn-sidebar-right-resizer';
+                    rightResizer.title = '拖拽调整整个侧边栏宽度';
+                    rightResizer.style.cssText = 'position: absolute; right: 0; top: 0; width: 8px; height: 100vh; cursor: ew-resize; z-index: 999; background: transparent; transition: background 0.15s ease;';
+
+                    rightResizer.addEventListener('mouseenter', function() { rightResizer.style.background = 'rgba(59, 130, 246, 0.4)'; });
+                    rightResizer.addEventListener('mouseleave', function() { if (!window.parent.__nnRightDragging) rightResizer.style.background = 'transparent'; });
+
+                    rightResizer.addEventListener('mousedown', function(e) {
+                        e.preventDefault();
+                        window.parent.__nnRightDragging = true;
+                        var startX = e.clientX;
+                        var startW = sidebar.getBoundingClientRect().width;
+                        rightResizer.style.background = 'rgba(37, 99, 235, 0.8)';
+                        doc.body.style.cursor = 'ew-resize';
+                        doc.body.style.userSelect = 'none';
+
+                        function onMouseMove(e) {
+                            var newW = Math.max(480, Math.min(1100, startW + (e.clientX - startX)));
+                            sidebar.style.width = newW + 'px';
+                            sidebar.style.minWidth = newW + 'px';
+                            sidebar.style.maxWidth = newW + 'px';
+                            try { window.parent.localStorage.setItem('nn_sidebar_width', newW); } catch(err) {}
+                        }
+
+                        function onMouseUp() {
+                            window.parent.__nnRightDragging = false;
+                            rightResizer.style.background = 'transparent';
+                            doc.body.style.cursor = '';
+                            doc.body.style.userSelect = '';
+                            window.parent.removeEventListener('mousemove', onMouseMove);
+                            window.parent.removeEventListener('mouseup', onMouseUp);
+                        }
+
+                        window.parent.addEventListener('mousemove', onMouseMove);
+                        window.parent.addEventListener('mouseup', onMouseUp);
+                    });
+
+                    sidebar.appendChild(rightResizer);
+                }
+
+                // 恢复整体侧边栏持久化宽度
+                var savedSidebarWidth = 580;
+                try {
+                    var sVal = window.parent.localStorage.getItem('nn_sidebar_width');
+                    if (sVal) savedSidebarWidth = parseInt(sVal, 10);
+                } catch(err) {}
+
+                if (sidebar.classList.contains('nn-sidebar-dual-col')) {
+                    if (window.innerWidth >= 1260) {
+                        var targetW = Math.max(540, savedSidebarWidth);
+                        sidebar.style.width = targetW + 'px';
+                        sidebar.style.minWidth = targetW + 'px';
+                    }
+                    if (rightResizer) rightResizer.style.display = 'block';
+                } else {
+                    sidebar.style.width = '260px';
+                    sidebar.style.minWidth = '240px';
+                    if (rightResizer) rightResizer.style.display = 'none';
+                }
+            }
+
             function updateSidebarLayoutMode() {
-                var sidebar = doc.querySelector('[data-testid="stSidebar"]');
+                var sidebar = doc.querySelector('section[data-testid="stSidebar"], [data-testid="stSidebar"]');
                 if (!sidebar) return;
                 var userContent = sidebar.querySelector('[data-testid="stSidebarUserContent"]');
                 var hasControls = false;
@@ -1173,6 +1356,7 @@ g.updatemenu-button {
                         sidebar.classList.remove('nn-sidebar-dual-col');
                     }
                 }
+                initSidebarSplitters();
             }
 
             function formatSidebarNav() {
