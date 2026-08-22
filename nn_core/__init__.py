@@ -64,6 +64,7 @@ from nn_core.harness_traps import (
     AgentHarnessGuard,
     AttentionSinkSimulator,
     ClaudeCode2026PostmortemRunner,
+    LoopEngineeringEngine,
     LostInTheMiddleSimulator,
     ReversalCurseEngine,
     TokenizerTrapInspector,
@@ -151,6 +152,7 @@ __all__ = [
     "LayerNorm",
     "LeakyReLU",
     "LoRALayer",
+    "LoopEngineeringEngine",
     "LostInTheMiddleSimulator",
     "MaskedAutoEncoder",
     # 预训练与后训练对齐

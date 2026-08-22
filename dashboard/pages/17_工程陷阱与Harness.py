@@ -31,6 +31,7 @@ from nn_core.harness_traps import (
     AgentHarnessGuard,
     AttentionSinkSimulator,
     ClaudeCode2026PostmortemRunner,
+    LoopEngineeringEngine,
     LostInTheMiddleSimulator,
     ReversalCurseEngine,
     TokenizerTrapInspector,
@@ -55,7 +56,7 @@ render_floating_hud_navigator(
         {
             "id": "C",
             "name": "上下文压缩陷阱与最佳实践",
-            "desc": "对比简单截断、级联摘要与 AST 骨架保留压缩",
+            "desc": "对比滑动截断、级联摘要与 AST 骨架保留压缩",
         },
         {
             "id": "D",
@@ -64,11 +65,16 @@ render_floating_hud_navigator(
         },
         {
             "id": "E",
+            "name": "循环工程与智能体控制环",
+            "desc": "从 Prompt 到 Loop Engineering 范式跃迁与闭环仿真",
+        },
+        {
+            "id": "F",
             "name": "2026 Claude 事故与智能体熔断",
             "desc": "Anthropic 官方事故沙盘与工具死循环熔断器",
         },
         {
-            "id": "F",
+            "id": "G",
             "name": "形成性测验与知识契约",
             "desc": "自测系统级 Harness 防御原则与物理边界",
         },
@@ -78,7 +84,7 @@ render_floating_hud_navigator(
 # Hero 标题
 render_hero_header(
     title="M17: AI 真实工程陷阱、物理盲区与 Harness 防御体系",
-    subtitle="从注意力黑洞、迷失在中间、逆向诅咒到 2026 Claude Code 事故剖析与 Agent 控制环熔断：解密真实生产级 AI 的核心工程破局法",
+    subtitle="从注意力黑洞、迷失在中间、逆向诅咒到 2026 Claude Code 事故剖析、循环工程与 Agent 控制环熔断：解密真实生产级 AI 的核心工程破局法",
     badge_text="MILESTONE 17 // REAL-WORLD AI TRAPS & HARNESS ARCHITECTURE",
     badge_type="rose",
 )
@@ -94,7 +100,7 @@ blueprint_sections = [
     {
         "id": "A",
         "name": "教学指引与蓝图",
-        "desc": "掌握 Attention Sinks、U 型衰减、上下文压缩与 Harness 系统防线",
+        "desc": "掌握 Attention Sinks、U 型衰减、上下文压缩、循环工程与 Harness 防线",
         "color": "blue",
         "target_id": "region-a",
     },
@@ -121,17 +127,24 @@ blueprint_sections = [
     },
     {
         "id": "E",
-        "name": "Claude Code 事故与 Agent 熔断",
-        "desc": "沙盘推演 2026 Anthropic 事故复盘，体验工具调用死循环熔断",
-        "color": "rose",
+        "name": "循环工程与智能体控制环",
+        "desc": "推演 ReAct / Evaluator-Optimizer / Plan-Execute 循环与验证器回滚",
+        "color": "cyan",
         "target_id": "region-e",
     },
     {
         "id": "F",
+        "name": "Claude Code 事故与 Agent 熔断",
+        "desc": "沙盘推演 2026 Anthropic 事故复盘，体验工具调用死循环熔断",
+        "color": "rose",
+        "target_id": "region-f",
+    },
+    {
+        "id": "G",
         "name": "形成性小测验",
         "desc": "快速检验 Harness 系统控制环理解与工程防线设计直觉",
         "color": "blue",
-        "target_id": "region-f",
+        "target_id": "region-g",
     },
 ]
 
@@ -451,11 +464,184 @@ with col_rev:
     )
 
 # ---------------------------------------------------------------------------
-# [E] 2026 Claude Code 事故沙盘与 Agent 熔断 (Claude Code Postmortem & Circuit Breaker)
+# [E] 循环工程与智能体控制环 (Loop Engineering & Agent Control Loop)
 # ---------------------------------------------------------------------------
 st.markdown(
     f'<div id="region-e" class="interactive-region" style="margin-top:1.5rem;margin-bottom:0.6rem;padding:0.45rem 0.75rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">'
-    f"{anchor_badge('E', 'rose')} <b>CLAUDE CODE 2026 POSTMORTEM & CIRCUIT BREAKER // 事故沙盘与控制环熔断</b>"
+    f"{anchor_badge('E', 'cyan')} <b>LOOP ENGINEERING // 循环工程：从单次提示词到系统控制闭环</b>"
+    f"</div>",
+    unsafe_allow_html=True,
+)
+
+st.markdown(
+    """
+    **范式跃迁 (The Paradigm Shift)**：
+    2023 年业界聚焦于 **Prompt Engineering**（通过精心设计单次 Prompt 试图让模型一次性输出完美答案）；
+    2024 年演进至 **Context Engineering**（RAG 知识库、上下文压缩、Prompt Caching）；
+    2025~2026 年全面进入 **Loop Engineering（循环工程）**：通过构建具备**确定性外部验证器**、**失败原子状态回滚**与**收敛熔断器**的自动化控制闭环，让模型在自主迭代中稳定完成长程软件工程与复杂推理任务。
+    """
+)
+
+loop_col_ctrl, loop_col_sim = st.columns([1, 2])
+
+with loop_col_ctrl:
+    st.markdown("##### 1. 循环系统参数配置")
+    loop_pattern = st.selectbox(
+        "循环拓扑架构",
+        ["evaluator_optimizer", "plan_and_execute", "naive_react"],
+        format_func=lambda k: LoopEngineeringEngine.LOOP_PATTERNS[k]["name"],
+        help="不同循环拓扑决定了模型的任务拆解粒度与验证反馈链路",
+    )
+    loop_diff = st.selectbox(
+        "代码任务复杂度",
+        ["simple", "medium", "complex_refactor"],
+        index=1,
+        format_func=lambda k: {
+            "simple": "单文件语法修复 (Simple)",
+            "medium": "跨函数逻辑重构与单元测试断言 (Medium)",
+            "complex_refactor": "跨模块接口契约与依赖重构 (Complex)",
+        }[k],
+    )
+
+    col_v1, col_v2 = st.columns(2)
+    with col_v1:
+        enable_verifier = st.toggle(
+            "外部确定性验证器",
+            value=True,
+            help="使用编译/测试运行器真实输出反馈替代模型自我评价",
+        )
+    with col_v2:
+        enable_rollback = st.toggle(
+            "失败原子状态回滚",
+            value=True,
+            help="测试失败时执行 git restore 回滚脏代码，防止错误雪崩",
+        )
+
+    budget_cap = st.slider(
+        "Token 预算上限 (Budget Cap)",
+        min_value=4000,
+        max_value=25000,
+        value=15000,
+        step=1000,
+    )
+    loop_seed = st.number_input("仿真随机种子", min_value=1, max_value=9999, value=42, step=1)
+
+with loop_col_sim:
+    st.markdown("##### 2. 循环执行轨迹与收敛遥测")
+    loop_res = LoopEngineeringEngine.simulate_agent_loop(
+        pattern=loop_pattern,
+        task_difficulty=loop_diff,
+        has_deterministic_verifier=enable_verifier,
+        has_state_rollback=enable_rollback,
+        max_iterations=8,
+        budget_token_limit=budget_cap,
+        random_seed=int(loop_seed),
+    )
+
+    render_live_param_status_bar(
+        title=f"AGENT LOOP TELEMETRY // {loop_res['pattern_name']}",
+        badges=[
+            {
+                "label": "终态状态",
+                "value": loop_res["terminal_status"],
+                "color": "emerald" if loop_res["is_success"] else "rose",
+            },
+            {
+                "label": "迭代轮次",
+                "value": f"{loop_res['iterations_used']} 轮",
+                "color": "blue",
+            },
+            {
+                "label": "累计 Token",
+                "value": f"{loop_res['total_tokens']:,}",
+                "color": "amber" if loop_res["total_tokens"] > budget_cap * 0.8 else "slate",
+            },
+            {
+                "label": "回滚次数",
+                "value": f"{loop_res['rollback_count']} 次",
+                "color": "purple" if loop_res["rollback_count"] > 0 else "slate",
+            },
+        ],
+        metrics=[
+            ("最终测试通过率", f"{loop_res['final_pass_pct']:.0f}%"),
+            ("状态纯净度", "100% 隔离" if enable_rollback else "存在脏状态风险"),
+        ],
+        tag="CONVERGED" if loop_res["is_success"] else "FAILED",
+        tag_color="emerald" if loop_res["is_success"] else "rose",
+    )
+
+    # 绘制循环收敛曲线
+    steps_x = [s["step"] for s in loop_res["trace_steps"]]
+    pass_y = [s["test_pass_pct"] for s in loop_res["trace_steps"]]
+    tokens_y = [s["cumulative_tokens"] for s in loop_res["trace_steps"]]
+
+    fig_loop = go.Figure()
+    fig_loop.add_trace(
+        go.Scatter(
+            x=steps_x,
+            y=pass_y,
+            mode="lines+markers",
+            name="测试通过率 (%)",
+            line=dict(color="#059669", width=2.5),
+            marker=dict(size=8, color="#059669"),
+            yaxis="y1",
+        )
+    )
+    fig_loop.add_trace(
+        go.Scatter(
+            x=steps_x,
+            y=tokens_y,
+            mode="lines+markers",
+            name="累计 Token 消耗",
+            line=dict(color="#d97706", width=2, dash="dot"),
+            marker=dict(size=6, color="#d97706"),
+            yaxis="y2",
+        )
+    )
+    fig_loop.update_layout(
+        title="智能体循环收敛演进 (Step vs Test Pass Rate & Token Cost)",
+        xaxis=dict(title="循环迭代步数 (Iteration Step)", tickmode="linear", dtick=1),
+        yaxis=dict(title="测试通过率 (%)", range=[0, 105], side="left"),
+        yaxis2=dict(
+            title="累计 Token 消耗",
+            overlaying="y",
+            side="right",
+            range=[0, max([*tokens_y, budget_cap]) * 1.1],
+        ),
+        height=280,
+        margin=dict(l=30, r=40, t=35, b=35),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(248,250,252,0.8)",
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+    )
+    st.plotly_chart(fig_loop, width="stretch")
+
+st.markdown("##### 3. 循环逐步审计轨迹 (Execution Trace & State Audit)")
+trace_table = [
+    {
+        "步数": f"Step {s['step']}",
+        "阶段 (Phase)": s["phase"],
+        "执行行动 (Action)": s["action"],
+        "验证器状态 (Verifier)": s["verifier_status"],
+        "测试通过率": f"{s['test_pass_pct']:.0f}%",
+        "单步 Token": f"{s['step_tokens']:,}",
+        "累计 Token": f"{s['cumulative_tokens']:,}",
+        "工作区状态": "纯净 [CLEAN]" if s["state_clean"] else "污染 [DIRTY]",
+    }
+    for s in loop_res["trace_steps"]
+]
+st.dataframe(trace_table, width="stretch")
+
+st.info(
+    "【循环工程核心结论】当任务涉及跨模块与多文件修改时，单纯依赖 Prompt 调优的成功率低于 35%；引入确定性外部验证器（Test Verifier）与失败原子回滚（Rollback）后，成功率提升至 94%+，且 Token 成本收敛可控！"
+)
+
+# ---------------------------------------------------------------------------
+# [F] 2026 Claude Code 事故沙盘与 Agent 熔断 (Claude Code Postmortem & Circuit Breaker)
+# ---------------------------------------------------------------------------
+st.markdown(
+    f'<div id="region-f" class="interactive-region" style="margin-top:1.5rem;margin-bottom:0.6rem;padding:0.45rem 0.75rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">'
+    f"{anchor_badge('F', 'rose')} <b>CLAUDE CODE 2026 POSTMORTEM & CIRCUIT BREAKER // 事故沙盘与控制环熔断</b>"
     f"</div>",
     unsafe_allow_html=True,
 )
@@ -488,10 +674,14 @@ with col_claude:
             icon_name="check-circle",
         )
         + render_metric_card(
-            "BUGGY LATENCY // 事故期耗时", f"{inc_data['latency_buggy']}s", icon_name="clock"
+            "BUGGY LATENCY // 事故期耗时",
+            f"{inc_data['latency_buggy']}s",
+            icon_name="clock",
         )
         + render_metric_card(
-            "FIXED LATENCY // 修复后耗时", f"{inc_data['latency_fixed']}s", icon_name="cpu"
+            "FIXED LATENCY // 修复后耗时",
+            f"{inc_data['latency_fixed']}s",
+            icon_name="cpu",
         )
         + "</div>",
         unsafe_allow_html=True,
@@ -551,20 +741,20 @@ with col_guard:
     )
 
 # ---------------------------------------------------------------------------
-# [F] 形成性小测验与知识契约 (Formative Assessment)
+# [G] 形成性小测验与知识契约 (Formative Assessment)
 # ---------------------------------------------------------------------------
 st.markdown(
-    f'<div id="region-f" class="interactive-region" style="margin-top:1.5rem;margin-bottom:0.6rem;padding:0.45rem 0.75rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">'
-    f"{anchor_badge('F', 'blue')} <b>FORMATIVE ASSESSMENT & CONTRACT // 形成性小测验与教学契约</b>"
+    f'<div id="region-g" class="interactive-region" style="margin-top:1.5rem;margin-bottom:0.6rem;padding:0.45rem 0.75rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">'
+    f"{anchor_badge('G', 'blue')} <b>FORMATIVE ASSESSMENT & CONTRACT // 形成性小测验与教学契约</b>"
     f"</div>",
     unsafe_allow_html=True,
 )
 
 quiz_choice = st.radio(
-    "根据本页的实验与 2026 年真实事故复盘，哪一项关于 AI 工程系统防御的结论最符合物理事实？",
+    "根据本页的实验、循环工程体系与 2026 年真实事故复盘，哪一项关于 AI 工程系统防御的结论最符合物理事实？",
     (
-        "只要大模型底模足够强大（如 GPT-4o 或 Claude 3.7），即使外围脚本不做循环熔断与上下文重排，系统也能 100% 稳定运行。",
-        "AI 系统的最终表现 80% 取决于外围 Harness 控制环的严谨性；通过保留 Attention Sinks、Rerank 置顶重排、AST 骨架压缩与工具熔断，方可构建工业级高可用系统。",
+        "只要大模型底模足够强大（如 GPT-4o 或 Claude 3.7），即使外围脚手架不做确定性验证与循环回滚，系统也能 100% 稳定运行。",
+        "AI 系统的最终表现 80% 取决于外围 Harness 与循环工程 (Loop Engineering) 的严谨性；通过保留 Attention Sinks、Rerank 置顶重排、AST 骨架压缩、确定性验证器与原子回滚，方可构建工业级高可用系统。",
         "在长文本检索中，把检索到的 50 篇文档按任意随机顺序拼接输入给模型，模型的提取准确率在任何深度都完全一致。",
     ),
     index=None,
@@ -572,17 +762,17 @@ quiz_choice = st.radio(
 
 if (
     quiz_choice
-    == "AI 系统的最终表现 80% 取决于外围 Harness 控制环的严谨性；通过保留 Attention Sinks、Rerank 置顶重排、AST 骨架压缩与工具熔断，方可构建工业级高可用系统。"
+    == "AI 系统的最终表现 80% 取决于外围 Harness 与循环工程 (Loop Engineering) 的严谨性；通过保留 Attention Sinks、Rerank 置顶重排、AST 骨架压缩、确定性验证器与原子回滚，方可构建工业级高可用系统。"
 ):
     st.success(
-        "[PASS] 回答正确！AI 实际生产中必须依靠严密健全的 Agent Harness 控制环与确定性 Evaluation Harness 门禁，方能彻底防御注意力黑洞、中间遗忘、死循环与缓存雪崩。"
+        "[PASS] 回答正确！AI 实际生产中必须依靠严密健全的 Agent Harness、循环工程闭环与确定性 Evaluation Harness 门禁，方能彻底防御注意力黑洞、中间遗忘、死循环与脏状态雪崩。"
     )
 elif quiz_choice is not None:
     st.error(
-        "[FAIL] 不正确。请重新回顾 Section B 注意力 U 型衰减与 Section E Claude Code 2026 事故沙盘：底模再强也无法抗拒注意力稀释与外围脚手架失误！"
+        "[FAIL] 不正确。请重新回顾 Section B 注意力 U 型衰减、Section E 循环工程仿真与 Section F Claude Code 2026 事故沙盘：底模再强也无法抗拒注意力稀释与外围脚手架失误！"
     )
 
 render_lesson_contract("M17")
 st.caption(
-    "里程碑 M17 完成标准：掌握 Attention Sink 汇聚机理、长上下文 U 型衰减与 Rerank 优化、AST 骨架压缩与 Agent Harness 熔断防御体系。"
+    "里程碑 M17 完成标准：掌握 Attention Sink 汇聚机理、长上下文 U 型衰减与 Rerank 优化、AST 骨架压缩、循环工程闭环与 Agent Harness 熔断防御体系。"
 )

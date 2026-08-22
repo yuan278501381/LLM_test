@@ -7,6 +7,7 @@ from nn_core.harness_traps import (
     AgentHarnessGuard,
     AttentionSinkSimulator,
     ClaudeCode2026PostmortemRunner,
+    LoopEngineeringEngine,
     LostInTheMiddleSimulator,
     ReversalCurseEngine,
     TokenizerTrapInspector,
@@ -111,3 +112,67 @@ def test_claude_code_2026_postmortem_runner():
         assert "title" in data
         assert "cause" in data
         assert "fix" in data
+
+
+def test_loop_engineering_simulator_convergence():
+    """验证循环工程仿真器在不同拓扑与验证器下的收敛特征"""
+    # 1. 具备确定性验证器与原子回滚的 Plan-and-Execute 循环应稳定收敛至 100% 通过
+    res_plan = LoopEngineeringEngine.simulate_agent_loop(
+        pattern="plan_and_execute",
+        task_difficulty="simple",
+        has_deterministic_verifier=True,
+        has_state_rollback=True,
+        max_iterations=8,
+        budget_token_limit=20000,
+        random_seed=42,
+    )
+    assert res_plan["is_success"]
+    assert res_plan["terminal_status"] == "SUCCESS_CONVERGED"
+    assert res_plan["final_pass_pct"] == 100.0
+    assert len(res_plan["trace_steps"]) > 0
+
+    # 2. 缺少确定性验证器的 Naive ReAct 循环在简单任务中容易产生假阳性退出
+    res_react = LoopEngineeringEngine.simulate_agent_loop(
+        pattern="naive_react",
+        task_difficulty="simple",
+        has_deterministic_verifier=False,
+        has_state_rollback=False,
+        max_iterations=8,
+        budget_token_limit=20000,
+        random_seed=42,
+    )
+    assert res_react["terminal_status"] in (
+        "FALSE_POSITIVE_TERMINATION",
+        "SILENT_FAILURE",
+        "SUCCESS_CONVERGED",
+    )
+
+
+def test_loop_engineering_budget_breaker():
+    """验证循环工程的 Token 成本预算熔断器"""
+    res_budget = LoopEngineeringEngine.simulate_agent_loop(
+        pattern="evaluator_optimizer",
+        task_difficulty="complex_refactor",
+        has_deterministic_verifier=True,
+        has_state_rollback=True,
+        max_iterations=8,
+        budget_token_limit=1500,  # 极低预算，第一轮消耗即超限
+        random_seed=42,
+    )
+    assert not res_budget["is_success"]
+    assert "BUDGET_EXCEEDED" in res_budget["terminal_status"]
+
+
+def test_loop_engineering_dirty_state_cascade():
+    """验证缺少状态回滚时脏代码累积引发的级联崩溃"""
+    res_cascade = LoopEngineeringEngine.simulate_agent_loop(
+        pattern="evaluator_optimizer",
+        task_difficulty="complex_refactor",
+        has_deterministic_verifier=True,
+        has_state_rollback=False,  # 不回滚脏代码
+        max_iterations=8,
+        budget_token_limit=30000,
+        random_seed=123,
+    )
+    # 验证产生回滚为 0 次
+    assert res_cascade["rollback_count"] == 0

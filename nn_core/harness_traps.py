@@ -335,3 +335,211 @@ class ClaudeCode2026PostmortemRunner:
     def get_incident_data(cls, incident_key: str = "reasoning_downgrade") -> dict[str, Any]:
         """获取特定事故复盘数据。"""
         return cls.INCIDENTS.get(incident_key, cls.INCIDENTS["reasoning_downgrade"])
+
+
+# ---------------------------------------------------------------------------
+# 7. 循环工程 (Loop Engineering) 仿真推演引擎
+# ---------------------------------------------------------------------------
+class LoopEngineeringEngine:
+    """
+    智能体循环工程仿真引擎 (Loop Engineering Simulator):
+    推演从 Prompt Engineering -> Context Engineering -> Loop Engineering 的范式演进，
+    对比 Naive ReAct、Evaluator-Optimizer 与 Plan-Execute 循环在复杂软件工程中的行为特征。
+    """
+
+    LOOP_PATTERNS: ClassVar[dict[str, dict[str, Any]]] = {
+        "naive_react": {
+            "name": "朴素 ReAct 循环 (Naive ReAct Loop)",
+            "description": "Thought -> Action -> Observe -> Output。缺乏外部确定性验证器，模型易基于幻觉自判'已完成'导致假阳性。",
+            "base_success_rate": 0.35,
+            "avg_tokens_per_step": 1200,
+            "rollback_support": False,
+        },
+        "evaluator_optimizer": {
+            "name": "生成-评估器-优化器循环 (Evaluator-Optimizer Loop)",
+            "description": "Generator -> Deterministic Verifier (编译/测试) -> (Pass ? Done : Inject Error & Regenerate)。",
+            "base_success_rate": 0.82,
+            "avg_tokens_per_step": 1600,
+            "rollback_support": True,
+        },
+        "plan_and_execute": {
+            "name": "分层规划-执行-动态重排循环 (Plan-and-Execute with Rollback)",
+            "description": "Planner 拆解 DAG 任务 -> Step Executor 逐一执行 -> 确定性验证门禁 -> 遇阻原子回滚并动态重排任务图。",
+            "base_success_rate": 0.94,
+            "avg_tokens_per_step": 2100,
+            "rollback_support": True,
+        },
+    }
+
+    @classmethod
+    def simulate_agent_loop(
+        cls,
+        pattern: str = "evaluator_optimizer",
+        task_difficulty: str = "medium",
+        has_deterministic_verifier: bool = True,
+        has_state_rollback: bool = True,
+        max_iterations: int = 8,
+        budget_token_limit: int = 15000,
+        random_seed: int = 42,
+    ) -> dict[str, Any]:
+        """
+        推演一次智能体循环执行轨迹与收敛状态。
+
+        参数:
+            pattern: 循环拓扑 ("naive_react", "evaluator_optimizer", "plan_and_execute")
+            task_difficulty: 任务难度 ("simple", "medium", "complex_refactor")
+            has_deterministic_verifier: 是否接入外部确定性测试/编译器验证器
+            has_state_rollback: 失败时是否执行原子回滚 (git restore)
+            max_iterations: 最大循环步数限制
+            budget_token_limit: Token 预算硬上限 (成本熔断)
+            random_seed: 随机数种子 (保证教学可复现)
+        """
+        rng = np.random.RandomState(random_seed)
+
+        difficulty_target_steps = {
+            "simple": 2,
+            "medium": 4,
+            "complex_refactor": 6,
+        }
+        target_steps = difficulty_target_steps.get(task_difficulty, 4)
+
+        cfg = cls.LOOP_PATTERNS.get(pattern, cls.LOOP_PATTERNS["evaluator_optimizer"])
+        avg_tokens = cfg["avg_tokens_per_step"]
+
+        trace_steps: list[dict[str, Any]] = []
+        cumulative_tokens = 0
+        current_pass_pct = 0.0
+        dirty_states_count = 0
+        rollback_count = 0
+        is_success = False
+        terminal_status = "MAX_ITERATIONS_REACHED"
+
+        for step in range(1, max_iterations + 1):
+            # Token 消耗波动
+            step_token = int(avg_tokens * rng.uniform(0.85, 1.15))
+            cumulative_tokens += step_token
+
+            # 预算超限熔断
+            if cumulative_tokens > budget_token_limit:
+                terminal_status = "BUDGET_EXCEEDED [COST CIRCUIT BREAKER]"
+                trace_steps.append(
+                    {
+                        "step": step,
+                        "phase": "BUDGET_GUARD_TRIGGERED",
+                        "action": "Token 消耗突破设定预算上限，触发系统熔断中止空转！",
+                        "verifier_status": "BLOCKED",
+                        "test_pass_pct": current_pass_pct,
+                        "step_tokens": step_token,
+                        "cumulative_tokens": cumulative_tokens,
+                        "state_clean": dirty_states_count == 0,
+                    }
+                )
+                break
+
+            # 模拟行动进展与假阳性退出
+            if pattern == "naive_react" and not has_deterministic_verifier and step >= 2:
+                is_fake_pass = rng.rand() < 0.7
+                if is_fake_pass:
+                    terminal_status = "FALSE_POSITIVE_TERMINATION"
+                    current_pass_pct = 40.0 if task_difficulty == "simple" else 25.0
+                    trace_steps.append(
+                        {
+                            "step": step,
+                            "phase": "PREMATURE_EXIT",
+                            "action": "模型基于自我幻觉断言'所有修复已完成'，主动结束循环（实际测试未通过）。",
+                            "verifier_status": "UNVERIFIED [FALSE POSITIVE]",
+                            "test_pass_pct": current_pass_pct,
+                            "step_tokens": step_token,
+                            "cumulative_tokens": cumulative_tokens,
+                            "state_clean": True,
+                        }
+                    )
+                    break
+
+            # 正常执行推进
+            progress_delta = (100.0 / target_steps) * rng.uniform(0.7, 1.2)
+            if dirty_states_count > 0:
+                progress_delta -= dirty_states_count * 15.0
+
+            tentative_pass = min(100.0, current_pass_pct + max(0.0, progress_delta))
+
+            # 确定性验证器检查
+            if has_deterministic_verifier:
+                if tentative_pass >= 99.0:
+                    current_pass_pct = 100.0
+                    verifier_status = "PASS [ALL TESTS GREEN]"
+                    is_success = True
+                    terminal_status = "SUCCESS_CONVERGED"
+                    action_desc = "执行代码修改并运行测试套件，100% 验证通过！"
+                else:
+                    verifier_status = (
+                        f"FAIL [ASSERTION ERROR: {100.0 - tentative_pass:.0f}% REMAINING]"
+                    )
+                    current_pass_pct = tentative_pass
+                    if has_state_rollback:
+                        rollback_count += 1
+                        action_desc = (
+                            "外部测试门禁拦截到失败用例，执行 git restore "
+                            "原子回滚脏代码，并将失败堆栈转化为反思提示词。"
+                        )
+                    else:
+                        dirty_states_count += 1
+                        action_desc = (
+                            f"测试失败但未开启状态回滚，未通过的代码残留在工作区，"
+                            f"脏状态等级: {dirty_states_count}。"
+                        )
+            else:
+                current_pass_pct = tentative_pass
+                verifier_status = "SKIPPED [NO VERIFIER]"
+                action_desc = (
+                    f"智能体根据自身判断继续编辑代码，累计推进度 {current_pass_pct:.0f}%。"
+                )
+                if step >= target_steps:
+                    is_success = rng.rand() < cfg["base_success_rate"]
+                    terminal_status = "SUCCESS_CONVERGED" if is_success else "SILENT_FAILURE"
+
+            trace_steps.append(
+                {
+                    "step": step,
+                    "phase": f"ITERATION_{step}",
+                    "action": action_desc,
+                    "verifier_status": verifier_status,
+                    "test_pass_pct": current_pass_pct,
+                    "step_tokens": step_token,
+                    "cumulative_tokens": cumulative_tokens,
+                    "state_clean": dirty_states_count == 0,
+                }
+            )
+
+            if is_success:
+                break
+
+            # 脏状态过多崩溃
+            if dirty_states_count >= 3:
+                terminal_status = "CASCADE_ERROR_ABORT"
+                trace_steps.append(
+                    {
+                        "step": step + 1,
+                        "phase": "CASCADE_FAILURE",
+                        "action": "未回滚的脏代码导致依赖破坏与 SyntaxError 级联发散，智能体陷入死循环崩溃！",
+                        "verifier_status": "CRITICAL_ERROR",
+                        "test_pass_pct": current_pass_pct,
+                        "step_tokens": 0,
+                        "cumulative_tokens": cumulative_tokens,
+                        "state_clean": False,
+                    }
+                )
+                break
+
+        return {
+            "pattern": pattern,
+            "pattern_name": cfg["name"],
+            "task_difficulty": task_difficulty,
+            "is_success": is_success,
+            "terminal_status": terminal_status,
+            "iterations_used": len(trace_steps),
+            "total_tokens": cumulative_tokens,
+            "rollback_count": rollback_count,
+            "final_pass_pct": current_pass_pct,
+            "trace_steps": trace_steps,
+        }
