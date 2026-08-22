@@ -12,9 +12,18 @@ scripts/devops_ci_gate.py - 企业级 7 重 DevOps 质量门禁执行流水线 (
 7. Stage 7: 全量 250+ 算法与端到端核心测试套件 (Gate 6: Full Regression Suite)
 """
 
+import os
 import subprocess
 import sys
 import time
+
+if sys.stdout and hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if sys.stderr and hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
+os.environ["PYTHONIOENCODING"] = "utf-8"
+os.environ["PYTHONUTF8"] = "1"
 
 
 def run_step(step_name: str, cmd: list[str]) -> None:
@@ -24,7 +33,10 @@ def run_step(step_name: str, cmd: list[str]) -> None:
     print(f"{'='*70}")
 
     start_time = time.time()
-    result = subprocess.run(cmd, capture_output=False)
+    env = os.environ.copy()
+    env["PYTHONIOENCODING"] = "utf-8"
+    env["PYTHONUTF8"] = "1"
+    result = subprocess.run(cmd, capture_output=False, env=env)
     elapsed = time.time() - start_time
 
     if result.returncode != 0:
