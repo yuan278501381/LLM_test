@@ -19,6 +19,7 @@ import plotly.graph_objects as go
 from streamlit.testing.v1 import AppTest
 
 from dashboard.components.charts import (
+    add_chart_playback,
     plot_activation_heatmap,
     plot_attention_heatmap_nlp,
     plot_decision_boundary,
@@ -95,6 +96,39 @@ class TestThemeHtmlIntegrity:
         assert callable(render_vector_equation_card)
         assert callable(render_architecture_flow_card)
         assert callable(render_text_stream_box)
+
+    def test_course_navigation_is_self_contained_and_animates_focus(self):
+        theme_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "dashboard", "styles", "theme.py")
+        )
+        with open(theme_path, encoding="utf-8") as theme_file:
+            source = theme_file.read()
+
+        assert "doc.__nnFocusRegion = focusRegion" in source
+        assert "focusRegion(targetId)" in source
+        assert "data-nn-focus-bound" in source
+        assert "e.stopImmediatePropagation()" in source
+        assert '"region-b"' in source
+        assert "main.scrollTo" in source
+        focus_keyframes = source.split("@keyframes region-focus-enter", 1)[1].split(
+            ".nn-focus-chip", 1
+        )[0]
+        assert "!important" not in focus_keyframes
+
+    def test_every_guided_page_declares_all_content_targets(self):
+        pages_dir = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "dashboard", "pages")
+        )
+        for filename in os.listdir(pages_dir):
+            if not filename.endswith(".py"):
+                continue
+            page_path = os.path.join(pages_dir, filename)
+            with open(page_path, encoding="utf-8") as page_file:
+                source = page_file.read()
+            if "render_page_guide" not in source:
+                continue
+            for region in ("region-a", "region-c", "region-d", "region-e"):
+                assert region in source, f"{filename} is missing {region}"
 
 
 class TestAllDatasetsGeneration:
@@ -224,6 +258,31 @@ class TestChartFactory:
         fig = plot_token_probabilities(probs, vocab, top_k=3)
         assert isinstance(fig, go.Figure)
 
+    def test_global_chart_playback_preserves_static_result(self):
+        fig = go.Figure(go.Scatter(x=[1, 2, 3], y=[2, 4, 8], mode="lines+markers"))
+        original_x = tuple(fig.data[0].x)
+        animated = add_chart_playback(fig, frame_count=6)
+
+        assert tuple(animated.data[0].x) == original_x
+        assert len(animated.frames) == 7
+        assert len(animated.frames[0].data[0].x) == 0
+        assert tuple(animated.frames[-1].data[0].x) == original_x
+        assert animated.layout.updatemenus[0].buttons[1].label == "▶ 读图"
+
+    def test_global_chart_playback_supports_heatmap_and_bar(self):
+        fig = go.Figure(
+            data=[
+                go.Heatmap(z=[[0.1, 0.9], [0.4, 0.6]]),
+                go.Bar(x=["A", "B"], y=[2, 5]),
+            ]
+        )
+        animated = add_chart_playback(fig, frame_count=4)
+
+        assert animated.frames[0].data[0].opacity == 0
+        assert tuple(animated.frames[0].data[1].y) == (0.0, 0.0)
+        assert animated.frames[-1].data[0].opacity == 1
+        assert tuple(animated.frames[-1].data[1].y) == (2.0, 5.0)
+
 
 class TestNetworkTopologyViz:
     """测试网络拓扑与活性探针渲染"""
@@ -274,26 +333,22 @@ class TestStreamlitAppE2E:
         at = AppTest.from_file(page_path, default_timeout=20).run()
         assert not at.exception, f"Page 1 runtime error: {at.exception}"
 
-    def test_page1_player_can_pause_and_hold_step(self):
-        """连续演播可暂停，暂停后不会继续推进当前参数状态。"""
+    def test_page1_player_uses_client_side_animation(self):
+        """播放器必须在浏览器原位更新，禁止重新引入服务端定时片段。"""
         page_path = os.path.abspath(
             os.path.join(
                 os.path.dirname(__file__), "..", "dashboard", "pages", "1_单神经元感知器.py"
             )
         )
         at = AppTest.from_file(page_path, default_timeout=25).run()
-        play = next(button for button in at.button if "连续演播" in button.label)
-        play.click().run()
-        at.run()
+        assert not at.exception
 
-        pause = next(button for button in at.button if "暂停观察" in button.label)
-        pause.click().run()
-        at.run()
-        paused_step = at.session_state["m1_scrub_step"]
-
-        at.run()
-        assert at.session_state["m1_player_state"] == "paused"
-        assert at.session_state["m1_scrub_step"] == paused_step
+        with open(page_path, encoding="utf-8") as page_file:
+            source = page_file.read()
+        assert "@st.fragment" not in source
+        assert "render_player_controls(player_payload)" in source
+        assert "render_boundary_canvas(player_payload)" in source
+        assert "render_trajectory_canvas(player_payload)" in source
 
     def test_page2_deep_network_e2e(self):
         page_path = os.path.abspath(
@@ -301,6 +356,13 @@ class TestStreamlitAppE2E:
         )
         at = AppTest.from_file(page_path, default_timeout=20).run()
         assert not at.exception, f"Page 2 runtime error: {at.exception}"
+
+        with open(page_path, encoding="utf-8") as page_file:
+            source = page_file.read()
+        assert "TrainingTrajectoryRecorder" in source
+        assert 'event_name="nn:m2-train"' in source
+        assert "render_network_signal_canvas(training_payload)" in source
+        assert "render_probe_manifold_canvas(training_payload)" in source
 
     def test_page3_optimizer_arena_e2e(self):
         page_path = os.path.abspath(
@@ -405,6 +467,12 @@ class TestStreamlitAppE2E:
         )
         at = AppTest.from_file(page_path, default_timeout=25).run()
         assert not at.exception, f"Page 12 runtime error: {at.exception}"
+
+        with open(page_path, encoding="utf-8") as page_file:
+            source = page_file.read()
+        assert 'event_name="nn:m12-frame"' in source
+        assert "render_video_timeline(video_payload)" in source
+        assert "render_timeline_controls(" in source
 
     def test_page13_pretraining_paradigms_e2e(self):
         """测试 M13: 预训练范式全景页面"""

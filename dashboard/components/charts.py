@@ -44,6 +44,141 @@ LIGHT_PALETTE = {
 }
 
 
+def add_chart_playback(fig: go.Figure, frame_count: int = 18) -> go.Figure:
+    """为普通 Plotly 图表注入浏览器原位播放/暂停/首尾控制。
+
+    这是“读图构建动画”，不声称静态统计图具有训练时间含义；已经自带
+    真实 frames 的图表保持原样。所有动画均由 Plotly 在浏览器端执行。
+    """
+    if fig.frames or not fig.data or getattr(fig.layout, "updatemenus", None):
+        return fig
+
+    supported: list[tuple[int, str]] = []
+    for index, trace in enumerate(fig.data):
+        trace_type = str(trace.type)
+        if trace_type in {
+            "scatter",
+            "scattergl",
+            "scatter3d",
+            "scatterpolar",
+            "bar",
+            "histogram",
+            "heatmap",
+            "contour",
+            "pie",
+            "indicator",
+        }:
+            supported.append((index, trace_type))
+    if not supported:
+        return fig
+
+    frames: list[go.Frame] = []
+    for frame_index in range(frame_count + 1):
+        progress = frame_index / frame_count
+        updates: list[dict[str, Any]] = []
+        trace_indices: list[int] = []
+        for trace_index, trace_type in supported:
+            trace = fig.data[trace_index]
+            update: dict[str, Any] = {"type": trace_type}
+            if trace_type in {"scatter", "scattergl", "scatter3d", "scatterpolar"}:
+                sequence_fields = ["x", "y"]
+                if trace_type == "scatter3d":
+                    sequence_fields.append("z")
+                if trace_type == "scatterpolar":
+                    sequence_fields = ["r", "theta"]
+                lengths = [
+                    len(values) if values is not None else 0
+                    for field in sequence_fields
+                    for values in [getattr(trace, field)]
+                ]
+                total = max(lengths, default=0)
+                shown = 0 if frame_index == 0 else max(1, int(np.ceil(total * progress)))
+                for field in sequence_fields:
+                    values = getattr(trace, field)
+                    if values is not None:
+                        update[field] = list(values)[:shown]
+            elif trace_type == "bar":
+                field = "x" if getattr(trace, "orientation", None) == "h" else "y"
+                values = getattr(trace, field)
+                if values is not None:
+                    array = np.asarray(values)
+                    if np.issubdtype(array.dtype, np.number):
+                        update[field] = (array.astype(float) * progress).tolist()
+                    else:
+                        update["opacity"] = progress
+            elif trace_type == "histogram":
+                values = trace.x if trace.x is not None else trace.y
+                field = "x" if trace.x is not None else "y"
+                total = len(values) if values is not None else 0
+                shown = 0 if frame_index == 0 else max(1, int(np.ceil(total * progress)))
+                update[field] = list(values)[:shown] if values is not None else []
+            elif trace_type == "indicator" and getattr(trace, "value", None) is not None:
+                update["value"] = float(trace.value) * progress
+            else:
+                update["opacity"] = progress
+            updates.append(update)
+            trace_indices.append(trace_index)
+        frames.append(
+            go.Frame(data=updates, traces=trace_indices, name=f"chart-step-{frame_index}")
+        )
+
+    fig.frames = frames
+    controls = {
+        "type": "buttons",
+        "direction": "left",
+        "showactive": False,
+        "x": 0.99,
+        "xanchor": "right",
+        "y": 0.99,
+        "yanchor": "top",
+        "bgcolor": "rgba(255,255,255,0.9)",
+        "bordercolor": "#cbd5e1",
+        "borderwidth": 1,
+        "font": {"size": 10, "color": "#334155"},
+        "pad": {"r": 4, "t": 4},
+        "buttons": [
+            {
+                "label": "⏮",
+                "method": "animate",
+                "args": [
+                    ["chart-step-0"],
+                    {"mode": "immediate", "frame": {"duration": 0, "redraw": True}},
+                ],
+            },
+            {
+                "label": "▶ 读图",
+                "method": "animate",
+                "args": [
+                    None,
+                    {
+                        "fromcurrent": False,
+                        "frame": {"duration": 120, "redraw": True},
+                        "transition": {"duration": 100, "easing": "cubic-in-out"},
+                    },
+                ],
+            },
+            {
+                "label": "Ⅱ",
+                "method": "animate",
+                "args": [
+                    [None],
+                    {"mode": "immediate", "frame": {"duration": 0, "redraw": False}},
+                ],
+            },
+            {
+                "label": "⏭",
+                "method": "animate",
+                "args": [
+                    [f"chart-step-{frame_count}"],
+                    {"mode": "immediate", "frame": {"duration": 0, "redraw": True}},
+                ],
+            },
+        ],
+    }
+    fig.update_layout(updatemenus=[controls])
+    return fig
+
+
 def _apply_light_theme(fig: go.Figure, title: str | None = None) -> go.Figure:
     """统一注入现代极简亮色图表布局属性 (彻底杜绝文字与图例重叠)"""
     layout_update: dict[str, Any] = {

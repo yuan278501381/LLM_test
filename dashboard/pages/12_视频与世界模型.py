@@ -17,6 +17,11 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from dashboard.components.charts import _apply_light_theme
+from dashboard.components.client_player import (
+    build_video_payload,
+    render_timeline_controls,
+    render_video_timeline,
+)
 from dashboard.components.pedagogy import render_lesson_evidence
 from dashboard.styles.theme import (
     anchor_badge,
@@ -262,45 +267,18 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-col_frames = st.columns(len(sampled_indices))
-for idx, frame_idx in enumerate(sampled_indices):
-    with col_frames[idx]:
-        fig_f = go.Figure(
-            data=go.Heatmap(
-                z=sampled_video[idx, 0],
-                colorscale="Viridis",
-                showscale=False,
-            )
-        )
-        fig_f.update_layout(
-            xaxis=dict(showticklabels=False),
-            yaxis=dict(showticklabels=False, autorange="reversed"),
-            margin=dict(l=5, r=5, t=25, b=5),
-        )
-        fig_f = _apply_light_theme(fig_f, f"Frame #{frame_idx} (T={frame_idx})")
-        st.plotly_chart(fig_f, width="stretch")
-
-# 帧间运动能量折线图
-time_x = [f"F{i}->F{i + 1}" for i in range(len(frame_diffs))]
-fig_energy = go.Figure()
-fig_energy.add_trace(
-    go.Scatter(
-        x=time_x,
-        y=frame_diffs,
-        mode="lines+markers",
-        line=dict(color="#be123c", width=2.5),
-        marker=dict(size=8, color="#be123c"),
-        name="帧间差分 MSE",
-        hovertemplate="时间过渡: %{x}<br>像素差分能量: %{y:.4f}<extra></extra>",
-    )
+video_payload = build_video_payload(full_video, frame_diffs)
+render_timeline_controls(
+    total_steps=n_frames_val,
+    event_name="nn:m12-frame",
+    title="[VIDEO TIME PLAYER // 视频时空演播厅]",
+    badge="D",
+    caption="视频帧与运动能量在浏览器内同步原位更新；暂停后可逐帧检查碰撞、位移与能量峰值。",
+    interval_ms=620,
+    initial_step=1,
+    inspect_label="当前帧",
 )
-fig_energy.update_layout(
-    xaxis=dict(title="相邻帧间时序过渡"),
-    yaxis=dict(title="均方差像素能量 (MSE)"),
-    margin=dict(l=40, r=20, t=30, b=40),
-)
-fig_energy = _apply_light_theme(fig_energy, "视频时序动力学帧间差分能量曲线 (Motion Energy)")
-st.plotly_chart(fig_energy, width="stretch")
+render_video_timeline(video_payload)
 with st.expander("[HOW TO READ // 读图指南] 帧间运动差分能量曲线", expanded=False):
     st.markdown(
         """

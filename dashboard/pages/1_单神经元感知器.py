@@ -19,7 +19,12 @@ import streamlit as st
 from dashboard.components.charts import (
     plot_decision_boundary,
     plot_loss_curve,
-    plot_weight_trajectory,
+)
+from dashboard.components.client_player import (
+    build_perceptron_payload,
+    render_boundary_canvas,
+    render_player_controls,
+    render_trajectory_canvas,
 )
 from dashboard.components.param_panel import (
     render_dataset_selector,
@@ -488,6 +493,7 @@ def make_boundary_figure(step_num: int):
         plot_bgcolor="#ffffff",
         paper_bgcolor="rgba(0, 0, 0, 0)",
         height=400,
+        transition=dict(duration=480, easing="cubic-in-out"),
         margin=dict(l=40, r=20, t=10, b=35),
         uirevision="locked_view",
         showlegend=True,
@@ -557,123 +563,64 @@ def render_status_html(step_num: int, player_state: str = "idle"):
     )
 
 
-_player_refresh_interval = 0.65 if st.session_state["m1_player_state"] == "playing" else None
+player_payload = build_perceptron_payload(
+    weight_trajectory,
+    bias_trajectory,
+    X,
+    mask_0,
+    mask_1,
+    (x_min, x_max),
+    (y_min, y_max),
+)
+render_player_controls(player_payload)
 
-
-@st.fragment(run_every=_player_refresh_interval)
-def render_training_player() -> None:
-    """局部刷新播放器，让页面主体和滚动位置保持稳定。"""
-    player_state = st.session_state["m1_player_state"]
-    initial_player_state = player_state
-    current_step = int(st.session_state["m1_scrub_step"])
-
-    status_slot = st.empty()
-    p_c1, p_c2, p_c3, p_c4, p_c5 = st.columns([1, 1.1, 1.8, 1.1, 1])
-    btn_first = p_c1.button("⏮ 起点", key="btn_m1_first", width="stretch")
-    btn_prev = p_c2.button("◀ 上一步", key="btn_m1_prev", width="stretch")
-    if player_state == "playing":
-        btn_pause = p_c3.button(
-            "Ⅱ 暂停观察",
-            help="暂停后图表与参数保持在当前状态",
-            key="btn_m1_pause",
-            width="stretch",
-            type="primary",
-        )
-        btn_play = False
-    else:
-        btn_play = p_c3.button(
-            "▶ 连续演播",
-            help="从当前位置连续展示参数、分界线与权重轨迹的变化",
-            key="btn_m1_play",
-            width="stretch",
-            type="primary",
-        )
-        btn_pause = False
-    btn_next = p_c4.button("下一步 ▶", key="btn_m1_next", width="stretch")
-    btn_last = p_c5.button("终点 ⏭", key="btn_m1_last", width="stretch")
-
-    if btn_first:
-        current_step, player_state = 1, "paused"
-    elif btn_prev:
-        current_step, player_state = max(1, current_step - 1), "paused"
-    elif btn_pause:
-        player_state = "paused"
-    elif btn_play:
-        current_step = 1 if current_step >= total_steps else current_step
-        player_state = "playing"
-    elif btn_next:
-        current_step, player_state = min(total_steps, current_step + 1), "paused"
-    elif btn_last:
-        current_step, player_state = total_steps, "paused"
-    elif player_state == "playing":
-        current_step = min(total_steps, current_step + max(1, total_steps // 24))
-        if current_step >= total_steps:
-            player_state = "idle"
-
-    st.session_state["m1_scrub_step"] = current_step
-    st.session_state["m1_player_state"] = player_state
-    if btn_play or btn_pause or (initial_player_state == "playing" and player_state != "playing"):
-        st.rerun(scope="app")
-
-    st.progress(current_step / total_steps, text=f"训练演进 · Step {current_step}/{total_steps}")
-    st.caption("仅播放器区域会局部刷新；可随时暂停，并用上一步/下一步精确检查任意参数状态。")
-    status_slot.markdown(render_status_html(current_step, player_state), unsafe_allow_html=True)
-
-    col_left, col_right = st.columns([1, 1])
-    with col_left:
-        st.markdown(
-            f'<div id="region-d" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;">'
-            f'{anchor_badge("D", "purple")} <span style="font-weight:800;color:#5b21b6;font-size:0.86rem;">DECISION MANIFOLD // 空间决策流形与分界实线演进</span></div>',
-            unsafe_allow_html=True,
-        )
-        st.markdown(render_line_equation_html(current_step), unsafe_allow_html=True)
-        st.plotly_chart(
-            make_boundary_figure(current_step), width="stretch", key="m1_boundary_player"
-        )
-        with st.expander("[HOW TO READ // 读图指南] [D] 空间决策流形与分界实线"):
-            st.markdown(
-                """
-                * **红蓝圆点**是两类训练样本；**黑色实线**是预测概率 $P=0.5$ 的分界线。
-                * **背景淡色流形**表示各位置的预测概率。
-                * 暂停后对照上方方程，观察 $w_1$、$w_2$、$b$ 如何旋转和平移直线。
-                """
-            )
-
-    with col_right:
-        st.markdown(
-            f'<div id="region-e" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;">'
-            f'{anchor_badge("E", "blue")} <span style="font-weight:800;color:#1e40af;font-size:0.86rem;">LOSS & ACCURACY CONVERGENCE // 损失与准确率收敛曲线</span></div>',
-            unsafe_allow_html=True,
-        )
-        fig_loss = plot_loss_curve(history)
-        fig_loss.update_layout(height=428, margin=dict(l=40, r=20, t=25, b=35))
-        st.plotly_chart(fig_loss, width="stretch", key="m1_loss_player")
-        with st.expander("[HOW TO READ // 读图指南] [E] 损失与准确率曲线"):
-            st.markdown(
-                """
-                * **Loss** 是预测误差，越低越好；**Accuracy** 是答对比例，越高越好。
-                * 暂停后用当前 Step 对照曲线横轴，判断参数变化发生在收敛的哪个阶段。
-                """
-            )
-
+col_left, col_right = st.columns([1, 1])
+with col_left:
     st.markdown(
-        f'<div id="region-f" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-top:1.2rem;margin-bottom:0.5rem;">'
-        f'{anchor_badge("F", "rose")} <span style="font-weight:800;color:#9f1239;font-size:0.86rem;">WEIGHT TRAJECTORY // 权重参数空间寻优轨迹</span></div>',
+        f'<div id="region-d" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;">'
+        f'{anchor_badge("D", "purple")} <span style="font-weight:800;color:#5b21b6;font-size:0.86rem;">DECISION MANIFOLD // 空间决策流形与分界实线演进</span></div>',
         unsafe_allow_html=True,
     )
-    traj_fig = plot_weight_trajectory(weight_trajectory[:current_step])
-    traj_fig.update_layout(height=380, margin=dict(l=40, r=20, t=15, b=35))
-    st.plotly_chart(traj_fig, width="stretch", key="m1_trajectory_player")
-    with st.expander("[HOW TO READ // 读图指南] [F] 权重参数空间寻优轨迹图"):
+    render_boundary_canvas(player_payload)
+    with st.expander("[HOW TO READ // 读图指南] [D] 空间决策流形与分界实线"):
         st.markdown(
             """
-            * **横轴 $w_1$ 与纵轴 $w_2$**是两个核心权重；等高线表示损失盆地。
-            * 连续折线展示参数沿梯度下坡的过程，暂停可检查任意中间位置。
+            * **红蓝圆点**是两类训练样本；**黑色实线**是预测概率 $P=0.5$ 的分界线。
+            * **背景淡色流形**表示各位置的预测概率。
+            * 暂停后对照上方方程，观察 $w_1$、$w_2$、$b$ 如何旋转和平移直线。
             """
         )
 
+with col_right:
+    st.markdown(
+        f'<div id="region-e" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;">'
+        f'{anchor_badge("E", "blue")} <span style="font-weight:800;color:#1e40af;font-size:0.86rem;">LOSS & ACCURACY CONVERGENCE // 损失与准确率收敛曲线</span></div>',
+        unsafe_allow_html=True,
+    )
+    fig_loss = plot_loss_curve(history)
+    fig_loss.update_layout(height=432, margin=dict(l=40, r=20, t=25, b=35))
+    st.plotly_chart(fig_loss, width="stretch", key="m1_loss_player")
+    with st.expander("[HOW TO READ // 读图指南] [E] 损失与准确率曲线"):
+        st.markdown(
+            """
+            * **Loss** 是预测误差，越低越好；**Accuracy** 是答对比例，越高越好。
+            * 暂停后用当前 Step 对照曲线横轴，判断参数变化发生在收敛的哪个阶段。
+            """
+        )
 
-render_training_player()
+st.markdown(
+    f'<div id="region-f" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-top:1.2rem;margin-bottom:0.5rem;">'
+    f'{anchor_badge("F", "rose")} <span style="font-weight:800;color:#9f1239;font-size:0.86rem;">WEIGHT TRAJECTORY // 权重参数空间寻优轨迹</span></div>',
+    unsafe_allow_html=True,
+)
+render_trajectory_canvas(player_payload)
+with st.expander("[HOW TO READ // 读图指南] [F] 权重参数空间寻优轨迹图"):
+    st.markdown(
+        """
+        * **横轴 $w_1$ 与纵轴 $w_2$**是两个核心权重；等高线表示损失盆地。
+        * 连续折线展示参数沿梯度下坡的过程，暂停可检查任意中间位置。
+        """
+    )
 
 
 # 深度知识学习指南 (折叠微观原理解析)

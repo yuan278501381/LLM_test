@@ -12,6 +12,8 @@ dashboard.styles.theme - 统一的现代亮色视觉系统 (Light Mode Design Sy
 import importlib
 import json
 import sys
+from functools import wraps
+from typing import Any
 
 import streamlit as st
 from dashboard.styles.icons import svg_icon
@@ -29,12 +31,31 @@ def reload_nn_core_modules() -> None:
                     pass
 
 
+def _install_plotly_playback() -> None:
+    """让全站普通 Plotly 图表默认拥有无重跑的读图播放控制。"""
+    if getattr(st.plotly_chart, "_nn_playback_enabled", False):
+        return
+
+    from dashboard.components.charts import add_chart_playback
+
+    original_plotly_chart = st.plotly_chart
+
+    @wraps(original_plotly_chart)
+    def animated_plotly_chart(figure_or_data: Any, *args: Any, **kwargs: Any) -> Any:
+        if hasattr(figure_or_data, "data") and hasattr(figure_or_data, "layout"):
+            figure_or_data = add_chart_playback(figure_or_data)
+        return original_plotly_chart(figure_or_data, *args, **kwargs)
+
+    animated_plotly_chart._nn_playback_enabled = True  # type: ignore[attr-defined]
+    st.plotly_chart = animated_plotly_chart
+
+
 def apply_custom_theme() -> None:
     """
     注入全局现代极简高对比度亮色 CSS 样式表。
     全面适配 High-DPI / 4K 屏幕与全操作系统缩放（Windows / macOS / Linux）。
     """
-    reload_nn_core_modules()
+    _install_plotly_playback()
     st.markdown(
         """<style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
@@ -310,6 +331,23 @@ html {
     scroll-behavior: smooth !important;
 }
 
+/* 动态教学片段不得触发浏览器滚动锚定，否则播放时视口会被上下补偿。 */
+html,
+body,
+[data-testid="stAppViewContainer"],
+[data-testid="stMain"],
+[data-testid="stMainBlockContainer"] {
+    overflow-anchor: none !important;
+}
+
+.st-key-m1_player_controls,
+.st-key-m1_boundary_shell,
+.st-key-m1_loss_shell,
+.st-key-m1_trajectory_shell {
+    overflow-anchor: none !important;
+    contain: layout paint !important;
+}
+
 /* 全局图表抗闪烁与 GPU 硬件加速 */
 .stPlotlyChart {
     min-height: 380px !important;
@@ -342,29 +380,29 @@ html {
 @keyframes region-focus-enter {
     0% {
         opacity: 0.76;
-        background-color: #eff6ff !important;
-        box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.48), 0 8px 30px rgba(37, 99, 235, 0.18) !important;
-        border-color: #60a5fa !important;
-        transform: translateY(8px) !important;
+        background-color: #eff6ff;
+        box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.48), 0 8px 30px rgba(37, 99, 235, 0.18);
+        border-color: #60a5fa;
+        transform: translateY(8px);
     }
     28% {
         opacity: 1;
-        background-color: #dbeafe !important;
-        box-shadow: 0 0 0 7px rgba(37, 99, 235, 0.12), 0 12px 34px rgba(37, 99, 235, 0.16) !important;
-        border-color: #3b82f6 !important;
-        transform: translateY(0) !important;
+        background-color: #dbeafe;
+        box-shadow: 0 0 0 7px rgba(37, 99, 235, 0.12), 0 12px 34px rgba(37, 99, 235, 0.16);
+        border-color: #3b82f6;
+        transform: translateY(0);
     }
     68% {
-        background-color: #eff6ff !important;
-        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.07), 0 8px 24px rgba(37, 99, 235, 0.09) !important;
-        border-color: #93c5fd !important;
+        background-color: #eff6ff;
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.07), 0 8px 24px rgba(37, 99, 235, 0.09);
+        border-color: #93c5fd;
     }
     100% {
         opacity: 1;
-        background-color: #ffffff !important;
-        box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04) !important;
-        border-color: #e2e8f0 !important;
-        transform: translateY(0) !important;
+        background-color: #ffffff;
+        box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+        border-color: #e2e8f0;
+        transform: translateY(0);
     }
 }
 
@@ -565,70 +603,7 @@ html {
         unsafe_allow_html=True,
     )
 
-    # 注入穿透 iframe 的父窗口瞬移与聚焦闪烁监听器
-    js_teleport = """
-    <script>
-    (function() {
-        try {
-            var doc = window.parent.document;
-            if (!doc || doc.__spotlight_injected) return;
-            doc.__spotlight_injected = true;
-
-            function clearFocus() {
-                doc.querySelectorAll('.nn-focus-target').forEach(function(node) {
-                    node.classList.remove('nn-focus-target');
-                });
-                doc.querySelectorAll('.nn-focus-chip').forEach(function(node) {
-                    node.remove();
-                });
-            }
-
-            function focusRegion(target) {
-                var el = typeof target === 'string' ? doc.getElementById(target) : target;
-                if (!el) return;
-                clearFocus();
-
-                var reducedMotion = window.parent.matchMedia &&
-                    window.parent.matchMedia('(prefers-reduced-motion: reduce)').matches;
-                el.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'center' });
-                el.classList.remove('nn-focus-target');
-                void el.offsetWidth;
-                el.classList.add('nn-focus-target');
-
-                var chip = doc.createElement('span');
-                chip.className = 'nn-focus-chip';
-                chip.setAttribute('role', 'status');
-                chip.textContent = '正在查看这里';
-                el.appendChild(chip);
-
-                window.parent.clearTimeout(doc.__nnFocusTimer);
-                doc.__nnFocusTimer = window.parent.setTimeout(clearFocus, reducedMotion ? 1800 : 3000);
-            }
-            doc.__nnFocusRegion = focusRegion;
-
-            doc.addEventListener('click', function(e) {
-                var a = e.target.closest('a');
-                if (a && a.getAttribute('href') && a.getAttribute('href').includes('#region-')) {
-                    e.preventDefault();
-                    var targetId = a.getAttribute('href').substring(1);
-                    focusRegion(targetId);
-                }
-            }, true);
-
-            window.parent.addEventListener('hashchange', function() {
-                var hash = window.parent.location.hash;
-                if (hash && hash.includes('#region-')) {
-                    var el = doc.querySelector(hash);
-                    if (el) focusRegion(el);
-                }
-            });
-        } catch(e) {
-            console.error('Spotlight injection error:', e);
-        }
-    })();
-    </script>
-    """
-    st.iframe(js_teleport, height=1, width=1)
+    # 导航事件由页面空间 HUD 自身管理，避免跨 iframe 的陈旧全局监听器。
 
 
 def render_hero_header(
@@ -730,6 +705,13 @@ def render_page_guide(
     icon_terminal = svg_icon("terminal", size=14, color="#0f172a")
 
     with st.expander(f"[GROWTH GUIDE // 教学指引] {title}", expanded=True):
+        render_interactive_region_header(
+            "region-b",
+            "TEACHING GUIDE // 教学指引与实验路径",
+            "B",
+            "blue",
+            "从页面地图进入原理、参数、指标与结构化实验说明",
+        )
         # 1. 渲染空间微缩地图 (如果提供)
         if blueprint_sections:
             render_page_blueprint(blueprint_sections)
@@ -983,6 +965,54 @@ def render_floating_hud_navigator(sections: list[dict]) -> None:
             var sections = {sec_json};
             if (!sections || sections.length === 0) return;
 
+            function clearFocus() {{
+                doc.querySelectorAll('.nn-focus-target').forEach(function(node) {{
+                    node.classList.remove('nn-focus-target');
+                }});
+                doc.querySelectorAll('.nn-focus-chip').forEach(function(node) {{ node.remove(); }});
+            }}
+
+            function focusRegion(target) {{
+                var el = typeof target === 'string' ? doc.getElementById(target) : target;
+                if (!el) return false;
+                clearFocus();
+                var reducedMotion = window.parent.matchMedia &&
+                    window.parent.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                el.scrollIntoView({{ behavior: reducedMotion ? 'auto' : 'smooth', block: 'center' }});
+                el.classList.remove('nn-focus-target');
+                void el.offsetWidth;
+                el.classList.add('nn-focus-target');
+                var chip = doc.createElement('span');
+                chip.className = 'nn-focus-chip';
+                chip.setAttribute('role', 'status');
+                chip.textContent = '正在查看这里';
+                el.appendChild(chip);
+                window.parent.clearTimeout(doc.__nnFocusTimer);
+                doc.__nnFocusTimer = window.parent.setTimeout(
+                    clearFocus, reducedMotion ? 1800 : 3000
+                );
+                return true;
+            }}
+            doc.__nnFocusRegion = focusRegion;
+
+            function bindCourseAnchors() {{
+                doc.querySelectorAll('a[href*="#region-"]').forEach(function(anchor) {{
+                    if (anchor.getAttribute('data-nn-focus-bound') === '1') return;
+                    anchor.setAttribute('data-nn-focus-bound', '1');
+                    anchor.addEventListener('click', function(e) {{
+                        var href = anchor.getAttribute('href');
+                        if (!href) return;
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.stopImmediatePropagation();
+                        focusRegion(href.substring(href.indexOf('#') + 1));
+                    }}, true);
+                }});
+            }}
+            bindCourseAnchors();
+            window.parent.setTimeout(bindCourseAnchors, 300);
+            window.parent.setTimeout(bindCourseAnchors, 900);
+
             var hud = doc.createElement('div');
             hud.id = 'nn-floating-spatial-hud';
             hud.style.cssText = 'position:fixed;right:22px;top:130px;z-index:999999;background:rgba(255,255,255,0.92);backdrop-filter:blur(16px);border:1px solid #cbd5e1;border-radius:12px;box-shadow:0 10px 30px rgba(15,23,42,0.1);padding:0.65rem 0.75rem;width:175px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:0.75rem;transition:all 0.2s ease;';
@@ -1020,7 +1050,7 @@ def render_floating_hud_navigator(sections: list[dict]) -> None:
 
                 item.addEventListener('click', function(e) {{
                     e.preventDefault();
-                    if (doc.__nnFocusRegion) doc.__nnFocusRegion(targetId);
+                    focusRegion(targetId);
                 }});
 
                 list.appendChild(item);
@@ -1034,21 +1064,27 @@ def render_floating_hud_navigator(sections: list[dict]) -> None:
             topBtn.addEventListener('mouseenter', function() {{ this.style.color = '#2563eb'; }});
             topBtn.addEventListener('mouseleave', function() {{ this.style.color = '#64748b'; }});
             topBtn.addEventListener('click', function() {{
-                window.parent.scrollTo({{ top: 0, behavior: 'smooth' }});
+                var main = doc.querySelector('[data-testid="stMain"]');
+                var reducedMotion = window.parent.matchMedia &&
+                    window.parent.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                if (main) main.scrollTo({{ top: 0, behavior: reducedMotion ? 'auto' : 'smooth' }});
+                else window.parent.scrollTo({{ top: 0, behavior: reducedMotion ? 'auto' : 'smooth' }});
             }});
             hud.appendChild(topBtn);
 
             doc.body.appendChild(hud);
 
             function updateActiveSection() {{
-                var scrollPos = window.parent.scrollY + 220;
+                var main = doc.querySelector('[data-testid="stMain"]');
+                var scrollPos = (main ? main.scrollTop : window.parent.scrollY) + 220;
                 var currentActiveId = null;
 
                 sections.forEach(function(sec) {{
                     var targetId = sec.target_id || ('region-' + (sec.id || '').toLowerCase());
                     var el = doc.getElementById(targetId);
                     if (el) {{
-                        var top = el.getBoundingClientRect().top + window.parent.scrollY;
+                        var top = el.getBoundingClientRect().top +
+                            (main ? main.scrollTop : window.parent.scrollY);
                         if (scrollPos >= top) {{
                             currentActiveId = targetId;
                         }}
@@ -1072,7 +1108,8 @@ def render_floating_hud_navigator(sections: list[dict]) -> None:
                 }});
             }}
 
-            window.parent.addEventListener('scroll', updateActiveSection, {{ passive: true }});
+            var scrollContainer = doc.querySelector('[data-testid="stMain"]') || window.parent;
+            scrollContainer.addEventListener('scroll', updateActiveSection, {{ passive: true }});
             setTimeout(updateActiveSection, 300);
 
         }} catch(e) {{

@@ -17,10 +17,15 @@ import streamlit as st
 
 from dashboard.components.charts import (
     plot_activation_heatmap,
-    plot_decision_boundary,
     plot_gradient_histograms,
 )
-from dashboard.components.network_viz import plot_network_topology
+from dashboard.components.client_player import render_timeline_controls
+from dashboard.components.inference_player import (
+    TrainingTrajectoryRecorder,
+    build_training_payload,
+    render_network_signal_canvas,
+    render_probe_manifold_canvas,
+)
 from dashboard.components.param_panel import (
     render_dataset_selector,
     render_deep_dive_card,
@@ -207,9 +212,17 @@ model.add(resolve_activation("Sigmoid")())
 loss_fn = BinaryCrossEntropy()
 optimizer = opt_cls(learning_rate=float(lr))
 
-# 训练网络
+# 训练网络，并记录真实检查点供浏览器端原位播放
+trajectory_recorder = TrainingTrajectoryRecorder(X, probe_pt, int(epochs))
+trajectory_recorder.capture_initial(model)
 history = model.train(
-    X, y, loss_fn=loss_fn, optimizer=optimizer, epochs=int(epochs), batch_size=batch_size
+    X,
+    y,
+    loss_fn=loss_fn,
+    optimizer=optimizer,
+    epochs=int(epochs),
+    batch_size=batch_size,
+    callbacks=[trajectory_recorder],
 )
 
 final_loss = history["loss"][-1] if history["loss"] else 0.0
@@ -219,11 +232,9 @@ final_acc = history["accuracy"][-1] if history["accuracy"] else 0.0
 # 神经元动态活性探针 (Single-Sample Forward Telemetry)
 # ---------------------------------------------------------------------------
 probe_input = np.array([[probe_x, probe_y]])
-probe_activations: list[np.ndarray] = [probe_input]
 
 curr_signal = probe_input
 all_activations: list[np.ndarray] = []
-dense_weights: list[np.ndarray] = []
 dense_grads: list[np.ndarray] = []
 layer_names: list[str] = []
 
@@ -232,13 +243,11 @@ for layer in model.layers:
     if isinstance(layer, Dense):
         dense_count += 1
         curr_signal = layer.forward(curr_signal, training=False)
-        dense_weights.append(layer.weights)
         if layer.grad_weights is not None:
             dense_grads.append(layer.grad_weights)
             layer_names.append(f"Dense #{dense_count}")
     elif isinstance(layer, Activation):
         curr_signal = layer.forward(curr_signal)
-        probe_activations.append(curr_signal.copy())
         full_act = (
             layer.forward(layer.input_cache) if hasattr(layer, "input_cache") else curr_signal
         )
@@ -246,8 +255,6 @@ for layer in model.layers:
 
 probe_prob = float(curr_signal.ravel()[0])
 probe_pred_class = 1 if probe_prob >= 0.5 else 0
-
-layer_sizes = [2] + neurons_per_layer + [1]
 
 min_grad_norm = min([float(np.mean(np.abs(g))) for g in dense_grads]) if dense_grads else 0.0
 if min_grad_norm < 1e-4:
@@ -303,6 +310,18 @@ st.markdown(grid_html, unsafe_allow_html=True)
 # ---------------------------------------------------------------------------
 # 可视化布局 (双栏联动)
 # ---------------------------------------------------------------------------
+training_payload = build_training_payload(trajectory_recorder, X, y, probe_pt)
+render_timeline_controls(
+    total_steps=len(trajectory_recorder.frames),
+    event_name="nn:m2-train",
+    title="[LEARNING DYNAMICS PLAYER // 多层网络真实训练演化]",
+    badge="D",
+    caption="每一帧均来自真实 Epoch 检查点；决策色块、黑色边界、权重连线、激活与探针概率同步更新。",
+    progress_name="训练检查点",
+    inspect_label="当前 Epoch",
+    interval_ms=480,
+)
+
 col_topo, col_bound = st.columns([1.1, 1])
 
 with col_topo:
@@ -312,19 +331,14 @@ with col_topo:
         f"</div>",
         unsafe_allow_html=True,
     )
-    fig_topo = plot_network_topology(
-        layer_sizes=layer_sizes,
-        weights=dense_weights,
-        neuron_activations=probe_activations,
-        title=f"TOPOLOGY & PROBE // 激活探针响应 (x₁={probe_x:.2f}, x₂={probe_y:.2f})",
-    )
-    st.plotly_chart(fig_topo, width="stretch")
+    render_network_signal_canvas(training_payload)
     with st.expander("[HOW TO READ // 读图指南] 网络拓扑与激活点亮", expanded=False):
         st.markdown(
             """
             * **从左到右三层**：输入特征层 $(x_1, x_2) \\to$ 中间隐藏层 $\\to$ 输出层 $(\\hat{y})$。
             * **圆圈高亮**：当前探针点强力激活点亮了哪个神经元（深蓝代表高度兴奋）。
             * **连线粗细与颜色**：**蓝色**为正权重（兴奋），**红色**为负权重（抑制），**越粗**影响力越大。
+            * **播放时的变化**：每一步对应一个真实 Epoch 检查点；连线和节点变化来自当时的权重与探针激活，并非装饰动画。
             * **[OPTIMAL // 观察要点]**：切换不同探针位置，观察不同特征是如何通过不同神经元通路组合决策的。
             """
         )
@@ -336,15 +350,14 @@ with col_bound:
         f"</div>",
         unsafe_allow_html=True,
     )
-    fig_bound = plot_decision_boundary(
-        model, X, y, probe_point=probe_pt, title="DECISION MANIFOLD // 空间决策流形与探针定位"
-    )
-    st.plotly_chart(fig_bound, width="stretch")
+    render_probe_manifold_canvas(training_payload)
     with st.expander("[HOW TO READ // 读图指南] 空间非线性弯曲决策分界线", expanded=False):
         st.markdown(
             """
             * **横轴 $X_1$ 与纵轴 $X_2$**：样本二维特征坐标。
+            * **蓝红概率色块**：每个背景网格点都经过当前检查点的模型推理；蓝色倾向 Class 0、红色倾向 Class 1，颜色越深表示输出越接近 0 或 1，浅色表示接近 50%。
             * **黑色加粗实线 `[DECISION LINE]`**：多层网络折叠拼出的**弯曲分界线**（不再是单层死板的直线）。
+            * **严谨边界**：色带表达模型输出概率，不等同于经过校准的现实置信度；本页数据为合成教学数据。
             * **黄色十字交叉点 (PROBE)**：你在左侧拖动的探针定位点，右图显示它所在的分类概率区域。
             * **[OPTIMAL // 最优形态]**：弯曲的黑线完美环绕或切分非线性数据集（如月牙/双圈）。
             """

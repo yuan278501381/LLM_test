@@ -228,6 +228,12 @@ total_questions_count = sum([len(all_tasks_dict[name].questions) for name in sel
 # ---------------------------------------------------------------------------
 # 遥测指标卡
 # ---------------------------------------------------------------------------
+st.markdown(
+    f'<div id="region-c" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;">'
+    f'{anchor_badge("C", "emerald")} <span style="font-weight:800;color:#065f46;font-size:0.86rem;">EVALUATION TELEMETRY // 实时评估遥测</span>'
+    f"</div>",
+    unsafe_allow_html=True,
+)
 metric_grid_html = (
     '<div class="metric-grid">'
     + render_metric_card(
@@ -267,6 +273,12 @@ st.markdown(metric_grid_html, unsafe_allow_html=True)
 # ---------------------------------------------------------------------------
 # Section 1: 语言模型困惑度 (PPL) 仪表盘与训练演化
 # ---------------------------------------------------------------------------
+st.markdown(
+    f'<div id="region-d" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;margin-top:1rem;">'
+    f'{anchor_badge("D", "purple")} <span style="font-weight:800;color:#5b21b6;font-size:0.86rem;">PPL DASHBOARD & BENCHMARK EXAMS // 困惑度与标准化考场</span>'
+    f"</div>",
+    unsafe_allow_html=True,
+)
 render_section_heading("SIMULATED PERPLEXITY // 困惑度计算示意（非模型实测）", icon_name="activity")
 
 st.warning(
@@ -370,6 +382,12 @@ for t_name in selected_task_names:
 # ---------------------------------------------------------------------------
 # Section 3: 多维能力雷达图 (Radar Chart)
 # ---------------------------------------------------------------------------
+st.markdown(
+    f'<div id="region-e" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;margin-top:1.2rem;">'
+    f'{anchor_badge("E", "blue")} <span style="font-weight:800;color:#1e40af;font-size:0.86rem;">MODEL CAPABILITY PROFILE // 模拟能力画像</span>'
+    f"</div>",
+    unsafe_allow_html=True,
+)
 render_section_heading("MULTI-DIMENSIONAL RADAR // 大模型多维能力画像雷达对比", icon_name="cpu")
 
 col_radar_plot, col_radar_desc = st.columns([1.3, 1])
