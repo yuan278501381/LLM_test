@@ -55,14 +55,18 @@ class AttentionSinkSimulator:
             base_perplexity: 基础困惑度基线 (> 0)
             seed: 局部随机数发生器种子 (隔离全局随机状态)
         """
-        if seq_length <= 0:
+        if not (isinstance(seq_length, (int, np.integer)) and seq_length > 0):
             raise ValueError(f"seq_length 必须为正整数: {seq_length}")
-        if window_size <= 0:
+        if not (isinstance(window_size, (int, np.integer)) and window_size > 0):
             raise ValueError(f"window_size 必须为正整数: {window_size}")
-        if num_sink_tokens < 0:
-            raise ValueError(f"num_sink_tokens 不能为负数: {num_sink_tokens}")
-        if base_perplexity <= 0:
-            raise ValueError(f"base_perplexity 必须为正数: {base_perplexity}")
+        if not (isinstance(num_sink_tokens, (int, np.integer)) and num_sink_tokens >= 0):
+            raise ValueError(f"num_sink_tokens 必须为非负整数: {num_sink_tokens}")
+        if not (
+            isinstance(base_perplexity, (int, float, np.floating))
+            and np.isfinite(base_perplexity)
+            and base_perplexity > 0
+        ):
+            raise ValueError(f"base_perplexity 必须为有效正数 (非 NaN/Inf): {base_perplexity}")
 
         rng = np.random.default_rng(seed)
         steps = np.arange(1, seq_length + 1)
@@ -155,10 +159,14 @@ class LostInTheMiddleSimulator:
             num_points: 采样点数 (>= 3)
             seed: 局部随机数发生器种子
         """
-        if context_length_k <= 0:
-            raise ValueError(f"context_length_k 必须为正数: {context_length_k}")
-        if num_points < 3:
-            raise ValueError(f"num_points 至少为 3: {num_points}")
+        if not (
+            isinstance(context_length_k, (int, float, np.floating))
+            and np.isfinite(context_length_k)
+            and context_length_k > 0
+        ):
+            raise ValueError(f"context_length_k 必须为有效正数 (非 NaN/Inf): {context_length_k}")
+        if not (isinstance(num_points, (int, np.integer)) and num_points >= 3):
+            raise ValueError(f"num_points 至少为 3 的整数: {num_points}")
 
         rng = np.random.default_rng(seed)
         depths = np.linspace(0.0, 1.0, num_points)
@@ -262,7 +270,14 @@ class ReversalCurseEngine:
             item_index: 合成实体条目索引
             is_reverse_query: 是否执行逆向查询
         """
-        item = cls.SYNTHETIC_ENTITIES[item_index % len(cls.SYNTHETIC_ENTITIES)]
+        if not (
+            isinstance(item_index, (int, np.integer))
+            and 0 <= item_index < len(cls.SYNTHETIC_ENTITIES)
+        ):
+            raise ValueError(
+                f"item_index 超出合法范围 [0, {len(cls.SYNTHETIC_ENTITIES) - 1}]: {item_index}"
+            )
+        item = cls.SYNTHETIC_ENTITIES[item_index]
 
         if not is_reverse_query:
             prompt = f"问：{item['entity_a']} 的 {item['forward_rel']} 谁/什么？"
@@ -316,19 +331,19 @@ class TokenizerTrapInspector:
         - 机制解析: BPE (Byte-Pair Encoding) 等分词算法将文本贪心合并为子词 Token ID。
           模型在 Transformer 嵌入层接收的是离散的 Token 向量，而非每个字符的独立输入；
           因此在没有思维链 (Chain of Thought) 显式展开或字符级辅助任务时，直接在单步中统计字符较为困难。
-        - 澄清纠偏: 字符信息并未在物理层面彻底消失；通过思维链（如让模型逐字母输出并计数）或字符级嵌入，
-          模型可以稳定准确地完成字符级任务。
+        - 澄清纠偏: 字符信息并未在物理层面彻底消失；通过思维链（如让模型逐字母输出并计数）或字符级辅助表示，
+          通常有助于提升字符计数的准确率，但并不保证在所有模型与任务中 100% 消除误差。
     """
 
     @staticmethod
     def inspect_strawberry(word: str = "strawberry", target_char: str = "r") -> dict[str, Any]:
         """
-        分析草莓单词字符计数的 BPE 切分影响。
+        分析草莓单词字符计数的教学手工切分示例与注意力机制分析。
         """
         clean_word = str(word).strip() if word else "strawberry"
         clean_target = str(target_char).strip() if target_char else "r"
 
-        # 教学代表性 BPE 切分
+        # 教学手工示意分词（以常见子词切分模式为例）
         if clean_word.lower() == "strawberry":
             subwords = ["straw", "berry"]
         else:
@@ -340,16 +355,17 @@ class TokenizerTrapInspector:
 
         return {
             "evidence_level": "TEACHING_SCALE",
+            "is_toy_demonstration": True,
             "word": clean_word,
             "target_char": clean_target,
             "actual_count": actual_count,
             "subwords": subwords,
             "char_list": char_list,
             "explanation": (
-                f"在典型 BPE 分词器中，单词 '{clean_word}' 被压缩切分为子词单元：{subwords}。"
+                f"在教学手工示意中，单词 '{clean_word}' 被切分为子词单元：{subwords}。"
                 f"模型在注意力计算中接收的是这两个 Token 的向量嵌入，而非逐个字符的独立位置编码。"
-                f"当直接要求单步输出目标字符 '{clean_target}' 的出现次数时，模型容易产生幻觉偏差；"
-                "通过思维链（CoT）显式让模型逐字符拼写展开，即可准确完成计数。"
+                f"当直接要求单步输出目标字符 '{clean_target}' 的出现次数时，模型容易产生计数偏差；"
+                "通过思维链（CoT）显式让模型逐字符拼写展开，通常有助于提升字符计数的准确率，但并不保证在所有输入下 100% 消除计数误差。"
             ),
         }
 
@@ -482,9 +498,12 @@ class ClaudeCode2026PostmortemRunner:
           URL: https://www.anthropic.com/engineering/april-23-postmortem
         - 官方确认事实要点:
           1. 3 月 4 日: 默认 reasoning effort 调整导致部分长复杂编码任务推理深度不足；
-             Anthropic 内部在某一扩展编码评测中观察到性能下降约 3%（官方未发布全场景总体准确率或延迟绝对数值）；4 月 7 日回退为允许用户显式配置。
-          2. 3 月 26 日: 引入的闲置会话内存优化逻辑，在每轮执行中误清除了历史 thinking block；4 月 10 日发布 v2.1.101 修复。
-          3. 4 月 16 日: 在系统提示词中追加简短要求，导致复杂任务偶发截断；4 月 20 日回退；4 月 23 日在 v2.1.116 中全面修复。
+             4 月 7 日全面回退为允许用户在客户端显式配置 reasoning-effort。
+          2. 3 月 26 日: 引入的闲置会话内存优化逻辑，在每轮执行中误清除了历史 thinking block，破坏跨轮连贯性；
+             4 月 10 日发布 v2.1.101 修复。
+          3. 4 月 16 日: 在系统提示词中追加简短要求导致复杂长代码生成偶发截断；
+             Anthropic 官方复盘记录：在某一内部扩展编码评测集中观察到性能下降约 3%（官方未发布全场景总体准确率绝对数值）；
+             4 月 20 日全面回退并解决（4 月 23 日发布官方技术复盘文章）。
     """
 
     OFFICIAL_INCIDENTS: ClassVar[dict[str, dict[str, Any]]] = {
@@ -492,7 +511,7 @@ class ClaudeCode2026PostmortemRunner:
             "title": "事故 1: 思考预算默认值调整 (3月4日 ~ 4月7日)",
             "official_timeline": "3 月 4 日调整默认 reasoning effort；4 月 7 日回退为允许用户显式指定配置。",
             "root_cause": "为降低终端响应延迟调整了默认思考力度，导致复杂长逻辑架构重构场景下模型推理深度受限。",
-            "official_finding": "Anthropic 官方复盘记录：在某一内部扩展编码评测集中观察到性能下降约 3%（注：官方未公布全场景总体准确率或延迟数字）。",
+            "official_finding": "长复杂编码与架构重构任务因思考预算受限出现推理深度不足与逻辑不完备。",
             "resolution": "4 月 7 日全面回退默认设置，并在客户端增加 reasoning-effort 显式控制参数与回归测试。",
             "engineering_lesson": "Prompt 与推理参数调整必须在涵盖真实复杂工程任务的长周期评测集上进行严格验证与灰度发布。",
         },
@@ -506,10 +525,10 @@ class ClaudeCode2026PostmortemRunner:
         },
         "verbosity_clamp": {
             "title": "事故 3: 系统提示词过度约束导致代码截断 (4月16日 ~ 4月20日)",
-            "official_timeline": "4 月 16 日上线简短系统提示；4 月 20 日回退；4 月 23 日发布 v2.1.116 全面闭环。",
+            "official_timeline": "4 月 16 日上线简短系统提示；4 月 20 日全面回退并解决（4 月 23 日发布系统性复盘）。",
             "root_cause": "在系统提示词中追加了简洁度控制指令，与复杂长代码生成的完整性需求产生冲突，偶发导致输出截断。",
-            "official_finding": "部分复杂多文件修改输出出现不完整或骨架省略。",
-            "resolution": "4 月 20 日回退简短控制指令，并在 v2.1.116 中重构提示词层级，避免硬性控制干扰模型实现细节。",
+            "official_finding": "Anthropic 官方复盘记录：系统提示词简洁度改动在某一内部扩展编码评测集中观察到性能下降约 3%（注：官方未公布全场景总体准确率数字）。",
+            "resolution": "4 月 20 日回退简短控制指令，消除硬性简洁度对复杂代码实现的干扰，建立防截断与语法完整性自动化断言。",
             "engineering_lesson": "系统级提示词修改属于高风险全局干预，需设立防截断门禁与自动化语法/完整性断言。",
         },
     }
@@ -519,9 +538,11 @@ class ClaudeCode2026PostmortemRunner:
         """
         获取特定事故的官方复盘核验数据。
         """
-        data = cls.OFFICIAL_INCIDENTS.get(
-            incident_key, cls.OFFICIAL_INCIDENTS["reasoning_downgrade"]
-        )
+        if incident_key not in cls.OFFICIAL_INCIDENTS:
+            raise ValueError(
+                f"未知事故标识 '{incident_key}'。合法键值: {list(cls.OFFICIAL_INCIDENTS.keys())}"
+            )
+        data = cls.OFFICIAL_INCIDENTS[incident_key]
         return {
             "evidence_level": "OFFICIAL_DOCUMENTATION",
             "key": incident_key,
@@ -593,21 +614,27 @@ class LoopEngineeringEngine:
             budget_token_limit: Token 预算硬上限 (必须 > 0)
             random_seed: 局部随机种子
         """
-        if max_iterations <= 0:
-            raise ValueError(f"max_iterations 必须为正整数: {max_iterations}")
-        if budget_token_limit <= 0:
-            raise ValueError(f"budget_token_limit 必须为正整数: {budget_token_limit}")
-
-        rng = np.random.default_rng(random_seed)
-
+        if pattern not in cls.LOOP_PATTERNS:
+            raise ValueError(
+                f"未知循环拓扑 '{pattern}'。合法选项: {list(cls.LOOP_PATTERNS.keys())}"
+            )
         difficulty_target_steps = {
             "simple": 2,
             "medium": 4,
             "complex_refactor": 6,
         }
-        target_steps = difficulty_target_steps.get(task_difficulty, 4)
+        if task_difficulty not in difficulty_target_steps:
+            raise ValueError(
+                f"未知任务难度 '{task_difficulty}'。合法选项: {list(difficulty_target_steps.keys())}"
+            )
+        if not (isinstance(max_iterations, (int, np.integer)) and max_iterations > 0):
+            raise ValueError(f"max_iterations 必须为正整数: {max_iterations}")
+        if not (isinstance(budget_token_limit, (int, np.integer)) and budget_token_limit > 0):
+            raise ValueError(f"budget_token_limit 必须为正整数: {budget_token_limit}")
 
-        cfg = cls.LOOP_PATTERNS.get(pattern, cls.LOOP_PATTERNS["evaluator_optimizer"])
+        rng = np.random.default_rng(random_seed)
+        target_steps = difficulty_target_steps[task_difficulty]
+        cfg = cls.LOOP_PATTERNS[pattern]
         avg_tokens = cfg["avg_tokens_per_step"]
 
         trace_steps: list[dict[str, Any]] = []

@@ -259,12 +259,22 @@ probe_prob = float(curr_signal.ravel()[0])
 probe_pred_class = 1 if probe_prob >= 0.5 else 0
 
 min_grad_norm = min([float(np.mean(np.abs(g))) for g in dense_grads]) if dense_grads else 0.0
-if min_grad_norm < 1e-4:
+is_converged = final_acc >= 0.90 or final_loss < 0.15
+
+if is_converged:
+    grad_health_status = "HEALTHY (收敛平稳)"
+elif min_grad_norm < 1e-6:
     grad_health_status = "VANISHING (梯度消失)"
 elif min_grad_norm > 50.0:
     grad_health_status = "EXPLODING (梯度爆炸)"
 else:
     grad_health_status = "HEALTHY (梯度健康)"
+
+# 判断是否处于真正的梯度消失困境（仅在未收敛且浅层梯度归零，或显式激活了梯度消失复现预设时展示）
+preset_choice_current = st.session_state.get("m2_preset_choice", "")
+is_vanishing_scenario = "梯度消失困境复现" in str(preset_choice_current) or (
+    not is_converged and "VANISHING" in grad_health_status
+)
 
 # ---------------------------------------------------------------------------
 # 遥测指标卡 (中英双语标签)
@@ -309,11 +319,11 @@ grid_html = (
 )
 st.markdown(grid_html, unsafe_allow_html=True)
 
-if "VANISHING" in grad_health_status:
+if is_vanishing_scenario:
     st.warning(
         "**[SCIENTIFIC PHENOMENON // 深度学习经典现象复现]**\n\n"
         "您当前成功复现了著名的【梯度消失 (Vanishing Gradient)】困境！\n\n"
-        "• **为什么播放演练时变化很小？** 本实验采用了 4 层较深的 Sigmoid 网络与普通随机初始化。链式法则连乘导致浅层梯度急剧衰减至 $10^{-7}$ 数量级，前端权重几乎停止更新。\n\n"
+        "• **为什么播放演练时变化很小？** 本实验采用了 4 层较深的 Sigmoid 网络与普通随机初始化。链式法则连乘可能使浅层梯度急剧衰减至极小量级，前端权重更新减慢甚至停滞。\n\n"
         "• **如何设置并进行对照实验？**\n\n"
         "  **方式一（一键切换）**：点击下方【一键切换为 ReLU + He 对照组重跑】按钮，系统将自动配置并重跑；\n\n"
         "  **方式二（左侧侧边栏手动调参）**：\n"
@@ -322,8 +332,9 @@ if "VANISHING" in grad_health_status:
         "     - 将 **【网络隐藏层数】** 设为 **4**（保持深层对比）\n"
         "     - 将 **【激活函数 (Activation)】** 切换为 **`ReLU (线性整流函数)`**（消除正向饱和区）\n"
         "     - 将 **【权重初始化 (Initializer)】** 切换为 **`He / Kaiming (正态分布)`**（方差自适应缩放）\n"
-        "  3. 观察右侧 `GRADIENT NORM` 梯度范数指标恢复至健康绿灯（HEALTHY）且损失快速下降！"
+        "  3. 观察右侧 `GRADIENT NORM` 梯度范数指标通常能恢复至健康状态（HEALTHY）并促进损失下降。"
     )
+
     def _apply_remedy_callback() -> None:
         st.session_state["m2_preset_choice"] = "梯度消失拯救对照 (ReLU + He 对照组)"
 

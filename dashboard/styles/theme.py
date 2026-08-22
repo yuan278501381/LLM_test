@@ -1554,11 +1554,13 @@ def render_page_guide(
     icon_target = svg_icon("target", size=14, color="#047857")
     icon_terminal = svg_icon("terminal", size=14, color="#0f172a")
 
+    badge = guide_region_id.split("-")[-1].upper() if "-" in guide_region_id else "B"
+
     with st.expander(f"[GROWTH GUIDE // 教学指引] {title}", expanded=True):
         render_interactive_region_header(
             guide_region_id,
             "TEACHING GUIDE // 教学指引与实验路径",
-            "B",
+            badge,
             "blue",
             "从页面地图进入原理、参数、指标与结构化实验说明",
         )

@@ -130,6 +130,45 @@ class TestThemeHtmlIntegrity:
             for region in ("region-a", "region-c", "region-d", "region-e"):
                 assert region in source, f"{filename} is missing {region}"
 
+    def test_all_18_pages_region_ids_are_unique_and_not_duplicated(self):
+        """测试全站 18 个子页面的所有锚点区域 ID 均全局唯一且无重复定义"""
+        import re
+
+        pages_dir = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "dashboard", "pages")
+        )
+        for filename in os.listdir(pages_dir):
+            if not filename.endswith(".py"):
+                continue
+            page_path = os.path.join(pages_dir, filename)
+            with open(page_path, encoding="utf-8") as page_file:
+                source = page_file.read()
+
+            # 提取显式 HTML 标签属性 id="region-x"
+            explicit_regions = re.findall(
+                r'<[a-zA-Z0-9_-]+\s+[^>]*\bid=["\'](region-[a-z0-9_-]+)["\']', source
+            )
+            # 提取 render_interactive_region_header("region-x", ...)
+            header_regions = re.findall(
+                r'render_interactive_region_header\(\s*["\'](region-[a-z0-9_-]+)["\']',
+                source,
+            )
+
+            # 若有 render_page_guide，提取其 target region
+            guide_regions = re.findall(
+                r'guide_region_id\s*=\s*["\'](region-[a-z0-9_-]+)["\']', source
+            )
+            if "render_page_guide(" in source and not guide_regions:
+                # render_page_guide 默认注入 region-b
+                guide_regions = ["region-b"]
+
+            all_anchors = explicit_regions + header_regions + guide_regions
+            counts = {}
+            for r in all_anchors:
+                counts[r] = counts.get(r, 0) + 1
+            duplicates = [r for r, cnt in counts.items() if cnt > 1]
+            assert not duplicates, f"{filename} contains duplicate anchor definitions: {duplicates}"
+
 
 class TestAllDatasetsGeneration:
     """全量数据集生成矩阵校验"""

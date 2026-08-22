@@ -875,38 +875,38 @@ def _build_claims() -> dict[str, Claim]:
     claims: dict[str, Claim] = {}
     for lesson_id, lesson in LESSONS.items():
         if lesson_id == "M17":
-            # 为 M17 精准绑定每项主张与特定参考论文
+            # 为 M17 精准绑定每项主张与专属参考论文（严格一对一绑定）
             m17_rows = (
                 (
                     ClaimKind.CORE_FORMULA,
-                    "本页 Attention Sink 汇聚、长上下文 U 型衰减与控制环状态演化均为基于论文现象的规则模拟。",
+                    "本页 Attention Sink 汇聚模拟用于解析 Softmax 归一化背景下初始 Token 吸收冗余注意力的机制与流式 KV 缓存保留方案。",
                     "formula",
-                    "规则模拟不代表所有模型在所有输入长度下的真实 PPL；Softmax 归一化是注意力汇聚的背景而非全部充分条件。",
+                    "规则模拟展示流式生成机制，不代表真实模型的端到端实测日志；Softmax 归一化是注意力汇聚的背景而非全部充分条件，不同模型的最优 Sink 数量存在差异。",
                     lesson.references[0],
                     EvidenceLevel.SIMULATION,
                 ),
                 (
                     ClaimKind.CORE_RESULT,
-                    "页内图表用于观察长上下文多键值检索下的位置敏感性以及 Rerank 重排的权衡。",
+                    "页内图表用于观察长上下文多文档/键值检索下的 U 型位置敏感性以及 Rerank 重排对单点检索与时序因果的权衡。",
                     "result",
-                    "U 型现象在特定长文档 QA/检索评测中被观察到，不代表所有模型必为固定 U 型；重排可能破坏时序依赖与跨段证据。",
+                    "U 型衰减属于特定多段落检索评测协议下的经验现象，不代表所有模型在所有输入分布下必为固定 U 曲线；Rerank 重排可能破坏上下文的自然时序与跨段落证据引用。",
                     lesson.references[1],
                     EvidenceLevel.SIMULATION,
                 ),
                 (
                     ClaimKind.HISTORY,
-                    "从 2026 年 Anthropic 官方复盘中总结工程教训：外围系统需具备确定性验证门禁、受限沙箱与状态机回退能力。",
+                    "从 2026 年 Anthropic 官方复盘中审阅 Client/Harness 外围工程事故（推理预算调整、会话缓存清理缺陷与系统提示词过度约束）及其修复时间线。",
                     "history",
-                    "事故复盘基于特定产品版本；官方仅确认某一扩展评测性能下降 3% 及具体配置变更，未公布全场景总体准确率数字。",
+                    "事故复盘基于 Anthropic 官方公开报告；官方记录系统提示词简短改动在某一扩展编码评测集中观察到约 3% 性能下降，官方未公布全场景总体准确率绝对数值。",
                     lesson.references[3],
                     EvidenceLevel.TEACHING_SCALE,
                 ),
                 (
                     ClaimKind.FAILURE_MODE,
-                    "本页必须检查的失败模式：丢弃初始 Token 导致滑动窗口困惑度上升、分词器字符盲区及无验证器智能体死循环。",
+                    "本页必须检查的失败模式：自回归因果语言模型在无双向数据增强时面临的单向条件概率断裂（逆向诅咒）。",
                     "failure",
-                    "分词切分使字符操作在单步自回归中缺乏显式表征，但通过思维链展开可解；反向诅咒在提供上下文推导时并不成立。",
-                    lesson.references[0],
+                    "逆向诅咒指预训练权重中的单向泛化缺失；若在当前 In-Context 提示词中显式提供了实体双向关系定义，模型具备在上下文中推理反向关系的能力。",
+                    lesson.references[2],
                     EvidenceLevel.SIMULATION,
                 ),
             )

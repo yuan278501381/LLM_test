@@ -158,6 +158,7 @@ render_page_guide(
         "在 Section F 审阅 2026 Claude Code 官方复盘：查看 Anthropic 确认的事实、版本修复路线与工程启示！",
     ],
     blueprint_sections=blueprint_sections,
+    guide_region_id="region-a",
 )
 
 # ---------------------------------------------------------------------------
