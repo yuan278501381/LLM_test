@@ -128,9 +128,77 @@ header {background-color: transparent !important;}
 /* -------------------------------------------------------------------------
    侧边栏完全亮色化与导航条文字锐利化 (消除切页字重闪烁)
 ------------------------------------------------------------------------- */
-[data-testid="stSidebar"] {
-    background-color: var(--bg-sidebar) !important;
-    border-right: 1px solid var(--border-card) !important;
+/* -------------------------------------------------------------------------
+   世界级双栏响应式级联侧边栏 (Tier-1 课程罗盘 + Tier-2 参数微观控制台)
+------------------------------------------------------------------------- */
+@media (min-width: 1200px) {
+    [data-testid="stSidebar"] {
+        width: 520px !important;
+        min-width: 520px !important;
+        max-width: 560px !important;
+        background-color: #f8fafc !important;
+        border-right: 1px solid #e2e8f0 !important;
+    }
+
+    [data-testid="stSidebarContent"] {
+        display: flex !important;
+        flex-direction: row !important;
+        height: 100vh !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+    }
+
+    /* 栏位 1：主导航航母罗盘 (Master Rail) */
+    [data-testid="stSidebarNav"] {
+        width: 220px !important;
+        min-width: 220px !important;
+        max-width: 220px !important;
+        height: 100% !important;
+        overflow-y: auto !important;
+        border-right: 1px solid #e2e8f0 !important;
+        padding: 1.1rem 0.5rem !important;
+        background-color: #f8fafc !important;
+        box-sizing: border-box !important;
+    }
+
+    /* 栏位 2：微观超参数控制台 (Detail Parameter Deck) */
+    [data-testid="stSidebarUserContent"] {
+        flex: 1 !important;
+        min-width: 280px !important;
+        height: 100% !important;
+        overflow-y: auto !important;
+        padding: 1.1rem 0.9rem !important;
+        background-color: #ffffff !important;
+        box-sizing: border-box !important;
+    }
+}
+
+@media (max-width: 1199px) {
+    [data-testid="stSidebar"] {
+        width: 330px !important;
+        min-width: 330px !important;
+        max-width: 360px !important;
+        background-color: #f8fafc !important;
+    }
+
+    [data-testid="stSidebarContent"] {
+        display: flex !important;
+        flex-direction: column !important;
+        height: 100vh !important;
+        padding: 1rem !important;
+        overflow-y: auto !important;
+    }
+
+    [data-testid="stSidebarNav"] {
+        width: 100% !important;
+        margin-bottom: 1rem !important;
+        padding-bottom: 1rem !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+    }
+
+    [data-testid="stSidebarUserContent"] {
+        width: 100% !important;
+    }
 }
 
 [data-testid="stSidebar"] * {
@@ -180,6 +248,45 @@ header {background-color: transparent !important;}
 [data-testid="stSidebarNavLink"][aria-current="page"] span {
     color: var(--brand-blue) !important;
     font-weight: 600 !important;
+}
+
+/* Tier-2 参数微观控制台内部组件精致卡片化 */
+[data-testid="stSidebarUserContent"] .stMarkdown h3,
+[data-testid="stSidebarUserContent"] .stMarkdown h4 {
+    font-size: 0.78rem !important;
+    font-weight: 800 !important;
+    color: #1e40af !important;
+    letter-spacing: 0.06em !important;
+    text-transform: uppercase !important;
+    margin-top: 0.8rem !important;
+    margin-bottom: 0.4rem !important;
+}
+
+[data-testid="stSidebarUserContent"] [data-testid="stSlider"],
+[data-testid="stSidebarUserContent"] [data-testid="stSelectbox"],
+[data-testid="stSidebarUserContent"] [data-testid="stRadio"],
+[data-testid="stSidebarUserContent"] [data-testid="stNumberInput"] {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+    padding: 0.5rem 0.75rem !important;
+    margin-bottom: 0.6rem !important;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.02) !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+[data-testid="stSidebarUserContent"] [data-testid="stSlider"]:hover,
+[data-testid="stSidebarUserContent"] [data-testid="stSelectbox"]:hover,
+[data-testid="stSidebarUserContent"] [data-testid="stRadio"]:hover,
+[data-testid="stSidebarUserContent"] [data-testid="stNumberInput"]:hover {
+    border-color: #93c5fd !important;
+    box-shadow: 0 3px 8px rgba(37, 99, 235, 0.06) !important;
+}
+
+[data-testid="stSidebarUserContent"] label {
+    font-weight: 700 !important;
+    font-size: 0.82rem !important;
+    color: #1e293b !important;
 }
 
 [data-testid="stSidebar"] hr {
@@ -781,8 +888,65 @@ g.updatemenu-button {
                 headStyle = doc.createElement('style');
                 headStyle.id = 'nn-persistent-sidebar-style';
                 headStyle.textContent = `
-                    [data-testid="stSidebar"] {
-                        background-color: #f1f5f9 !important;
+                    @media (min-width: 1200px) {
+                        [data-testid="stSidebar"] {
+                            width: 520px !important;
+                            min-width: 520px !important;
+                            max-width: 560px !important;
+                            background-color: #f8fafc !important;
+                            border-right: 1px solid #e2e8f0 !important;
+                        }
+                        [data-testid="stSidebarContent"] {
+                            display: flex !important;
+                            flex-direction: row !important;
+                            height: 100vh !important;
+                            padding: 0 !important;
+                            overflow: hidden !important;
+                        }
+                        [data-testid="stSidebarNav"] {
+                            width: 220px !important;
+                            min-width: 220px !important;
+                            max-width: 220px !important;
+                            height: 100% !important;
+                            overflow-y: auto !important;
+                            border-right: 1px solid #e2e8f0 !important;
+                            padding: 1.1rem 0.5rem !important;
+                            background-color: #f8fafc !important;
+                            box-sizing: border-box !important;
+                        }
+                        [data-testid="stSidebarUserContent"] {
+                            flex: 1 !important;
+                            min-width: 280px !important;
+                            height: 100% !important;
+                            overflow-y: auto !important;
+                            padding: 1.1rem 0.9rem !important;
+                            background-color: #ffffff !important;
+                            box-sizing: border-box !important;
+                        }
+                    }
+                    @media (max-width: 1199px) {
+                        [data-testid="stSidebar"] {
+                            width: 330px !important;
+                            min-width: 330px !important;
+                            max-width: 360px !important;
+                            background-color: #f8fafc !important;
+                        }
+                        [data-testid="stSidebarContent"] {
+                            display: flex !important;
+                            flex-direction: column !important;
+                            height: 100vh !important;
+                            padding: 1rem !important;
+                            overflow-y: auto !important;
+                        }
+                        [data-testid="stSidebarNav"] {
+                            width: 100% !important;
+                            margin-bottom: 1rem !important;
+                            padding-bottom: 1rem !important;
+                            border-bottom: 1px solid #e2e8f0 !important;
+                        }
+                        [data-testid="stSidebarUserContent"] {
+                            width: 100% !important;
+                        }
                     }
                     [data-testid="stSidebarNavItems"] {
                         max-height: none !important;
@@ -822,6 +986,33 @@ g.updatemenu-button {
                     [data-testid="stSidebarNavLink"][aria-current="page"] span {
                         color: #1d4ed8 !important;
                         font-weight: 600 !important;
+                    }
+                    [data-testid="stSidebarUserContent"] .stMarkdown h3,
+                    [data-testid="stSidebarUserContent"] .stMarkdown h4 {
+                        font-size: 0.78rem !important;
+                        font-weight: 800 !important;
+                        color: #1e40af !important;
+                        letter-spacing: 0.06em !important;
+                        text-transform: uppercase !important;
+                        margin-top: 0.8rem !important;
+                        margin-bottom: 0.4rem !important;
+                    }
+                    [data-testid="stSidebarUserContent"] [data-testid="stSlider"],
+                    [data-testid="stSidebarUserContent"] [data-testid="stSelectbox"],
+                    [data-testid="stSidebarUserContent"] [data-testid="stRadio"],
+                    [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"] {
+                        background: #f8fafc !important;
+                        border: 1px solid #e2e8f0 !important;
+                        border-radius: 8px !important;
+                        padding: 0.5rem 0.75rem !important;
+                        margin-bottom: 0.6rem !important;
+                        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.02) !important;
+                        transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+                    }
+                    [data-testid="stSidebarUserContent"] label {
+                        font-weight: 700 !important;
+                        font-size: 0.82rem !important;
+                        color: #1e293b !important;
                     }
                 `;
                 doc.head.appendChild(headStyle);
