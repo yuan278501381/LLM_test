@@ -21,6 +21,7 @@ ENV/
 
 # 测试
 .pytest_cache/
+.pytest_tmp/
 htmlcov/
 .coverage
 

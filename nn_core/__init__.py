@@ -60,6 +60,14 @@ from nn_core.evaluation import (
 from nn_core.gelu import GELU
 from nn_core.gpt import TinyGPT
 from nn_core.gqa import GroupedQueryAttention, repeat_kv
+from nn_core.harness_traps import (
+    AgentHarnessGuard,
+    AttentionSinkSimulator,
+    ClaudeCode2026PostmortemRunner,
+    LostInTheMiddleSimulator,
+    ReversalCurseEngine,
+    TokenizerTrapInspector,
+)
 from nn_core.initializers import he_init, random_init, xavier_init, zeros_init
 from nn_core.kv_cache import KVCache
 from nn_core.layernorm import LayerNorm
@@ -111,7 +119,9 @@ __all__ = [
     "MSE",
     "SGD",
     "Adam",
+    "AgentHarnessGuard",
     "AlignmentPipeline",
+    "AttentionSinkSimulator",
     "AudioTokenizer",
     # 评测体系
     "BenchmarkQuestion",
@@ -121,6 +131,7 @@ __all__ = [
     "CLIPDualEncoder",
     "CategoricalCrossEntropy",
     "CausalLanguageModel",
+    "ClaudeCode2026PostmortemRunner",
     "ContrastiveLearning",
     # 视觉与音频
     "Conv2D",
@@ -140,6 +151,7 @@ __all__ = [
     "LayerNorm",
     "LeakyReLU",
     "LoRALayer",
+    "LostInTheMiddleSimulator",
     "MaskedAutoEncoder",
     # 预训练与后训练对齐
     "MaskedLanguageModel",
@@ -154,6 +166,7 @@ __all__ = [
     "RMSProp",
     "RNNCell",
     "ReLU",
+    "ReversalCurseEngine",
     "RewardModel",
     "RotaryPositionalEmbedding",
     "ScalingLawEngine",
@@ -166,6 +179,7 @@ __all__ = [
     "SwiGLU",
     "Tanh",
     "TinyGPT",
+    "TokenizerTrapInspector",
     "TrainingHistory",
     "TransformerBlock",
     "VideoFrameSampler",

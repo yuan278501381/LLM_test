@@ -61,6 +61,7 @@ def main():
             "--cov=datasets",
             "--cov-branch",
             "--cov-report=term-missing",
+            "--basetemp=.pytest_tmp",
             "-q",
         ],
     )

@@ -38,7 +38,7 @@ def _declared_string_args(page: Path, function_name: str) -> list[str]:
 
 
 def test_evidence_registry_is_complete_and_not_self_claimed_reproduction():
-    assert set(LESSONS) == {f"M{i:02d}" for i in range(17)}
+    assert set(LESSONS) == {f"M{i:02d}" for i in range(18)}
     assert set(EVIDENCE_DESCRIPTIONS) == set(EvidenceLevel)
     for lesson in LESSONS.values():
         assert lesson.evidence
@@ -52,7 +52,7 @@ def test_evidence_registry_is_complete_and_not_self_claimed_reproduction():
 
 
 def test_every_lesson_has_four_traceable_result_claims():
-    assert len(CLAIMS) == 17 * 4
+    assert len(CLAIMS) == 18 * 4
     assert len({claim.result_id for claim in CLAIMS.values()}) == len(CLAIMS)
     for lesson_id in LESSONS:
         lesson_claims = [claim for claim in CLAIMS.values() if claim.lesson_id == lesson_id]
@@ -132,7 +132,7 @@ def test_unknown_evidence_level_is_rejected():
 
 def test_every_page_declares_exactly_one_matching_lesson():
     pages = sorted(PAGES_DIR.glob("*.py"))
-    assert len(pages) == 17
+    assert len(pages) == 18
     for page in pages:
         lesson_number = int(page.name.split("_", maxsplit=1)[0])
         expected = f"M{lesson_number:02d}"

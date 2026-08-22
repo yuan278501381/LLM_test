@@ -783,6 +783,72 @@ LESSONS: dict[str, LessonMeta] = {
             ),
         ),
     ),
+    "M17": LessonMeta(
+        "M17",
+        "工程陷阱与Harness",
+        (EvidenceLevel.EXACT_COMPUTATION, EvidenceLevel.SIMULATION),
+        ("M07 注意力机制", "M08 Transformer", "M13 预训练范式", "M15 评估基准"),
+        (
+            "掌握 Attention Sink 与滑动窗口困惑度稳定方案",
+            "理解 Lost in the Middle U 型注意力衰减与 Rerank 优化",
+            "掌握上下文压缩成功/失败案例与 AST 骨架保留最佳实践",
+            "剖析 2026 Claude Code 事故根因与 Agent Harness 熔断防御",
+        ),
+        "误以为大模型具备全能泛化且外围脚手架无需架构设计，在长上下文、反向推理、分词或工具调用中频繁遭遇物理盲区与系统崩溃。",
+        (
+            "滑动窗口 Sink Token 数",
+            "目标信息相对深度",
+            "是否开启 Rerank",
+            "工具调用重复阈值",
+            "Claude Code 事故状态",
+        ),
+        (
+            "滑动窗口困惑度",
+            "U 型检索准确率",
+            "前向与逆向因果概率",
+            "工具死循环拦截状态",
+            "事故修复前后准确率与延迟",
+        ),
+        (
+            "丢弃初始 4 个 Sink Token 导致流式生成困惑度指数爆炸",
+            "关键证据置于 128K 上下文正中间且未作 Rerank 导致检索失败",
+            "上下文压缩采用简单滚动摘要导致关键行号与变量被幻觉抹杀",
+            "工具调用缺少幂等守卫陷入数十轮循环震荡烧光 Token",
+        ),
+        "AI 系统的最终表现 80% 取决于外围 Harness 控制环的严谨性；通过保留 Attention Sinks、Rerank 置顶重排、AST 骨架压缩、工具调用幂等熔断与确定性 Evaluation Harness，方可构建工业级高可用系统。",
+        "推动 AI 工程从单模型崇拜走向 Harness 系统级防御，奠定了 2026 智能体控制环、长文本检索与上下文压缩的工业级最佳实践。",
+        (
+            _ref(
+                "Efficient Streaming Language Models with Attention Sinks",
+                "https://arxiv.org/abs/2309.17453",
+                "StreamingLLM 与 Attention Sink 理论原始论文",
+                author_or_organization="Guangxuan Xiao et al.; MIT & Meta",
+                year=2023,
+            ),
+            _ref(
+                "Lost in the Middle: How Language Models Use Long Contexts",
+                "https://arxiv.org/abs/2307.03172",
+                "长上下文 U 型注意力衰减与位置偏置论文",
+                author_or_organization="Nelson F. Liu et al.; Stanford",
+                year=2023,
+            ),
+            _ref(
+                "The Reversal Curse: LLMs trained on 'A is B' fail to learn 'B is A'",
+                "https://arxiv.org/abs/2309.12288",
+                "自回归单向条件概率导致的逆向知识检索断裂",
+                author_or_organization="Lukas Berglund et al.; NYU",
+                year=2023,
+            ),
+            _ref(
+                "Claude Code Performance Postmortem and Systemic Improvements",
+                "https://www.anthropic.com/news/claude-code-postmortem-2026",
+                "Anthropic 官方对 2026 年 3~4 月 Claude Code 三大工程事故的深度复盘报告",
+                source_type=SourceType.OFFICIAL_DOCUMENTATION,
+                author_or_organization="Anthropic",
+                year=2026,
+            ),
+        ),
+    ),
 }
 
 
@@ -877,6 +943,7 @@ CURRICULUM_DAG: dict[str, tuple[str, ...]] = {
     "M14": ("M13",),
     "M15": ("M00", "M09"),
     "M16": ("M00", "M02"),
+    "M17": ("M07", "M08", "M13", "M15"),
 }
 
 
@@ -936,7 +1003,7 @@ FORMATIVE_QUIZZES: dict[str, FormativeQuiz] = _build_formative_quizzes()
 def validate_course_registry() -> None:
     """在导入和测试时快速发现缺页、空字段或不合法引用。"""
 
-    expected = {f"M{i:02d}" for i in range(17)}
+    expected = {f"M{i:02d}" for i in range(18)}
     if set(LESSONS) != expected:
         missing = sorted(expected - set(LESSONS))
         extra = sorted(set(LESSONS) - expected)
@@ -947,7 +1014,7 @@ def validate_course_registry() -> None:
         or set(LEARNING_LOOPS) != expected
         or set(FORMATIVE_QUIZZES) != expected
     ):
-        raise ValueError("课程依赖图、学习闭环或形成性测验未覆盖 M00-M16")
+        raise ValueError("课程依赖图、学习闭环或形成性测验未覆盖 M00-M17")
     visited: set[str] = set()
     visiting: set[str] = set()
 
@@ -1006,7 +1073,7 @@ def validate_course_registry() -> None:
             ):
                 raise ValueError(f"{lesson_id} 存在不完整的结构化引用: {ref.title}")
 
-    if len(CLAIMS) != 68:
+    if len(CLAIMS) != 72:
         raise ValueError("每个页面必须注册 4 类核心主张")
     if len(CLAIMS) != len(set(CLAIMS)):
         raise ValueError("claim ID 必须唯一")

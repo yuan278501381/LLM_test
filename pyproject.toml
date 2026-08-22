@@ -64,6 +64,7 @@ addopts = [
     "-ra",                   # 显示所有非 pass 的测试摘要
     "--strict-markers",       # 未注册的 marker 报错
     "--strict-config",        # 配置错误报错
+    "--basetemp=.pytest_tmp", # Windows 兼容：避免在 AppData\Local\Temp 发生符号链接权限冲突
 ]
 markers = [
     "slow: 标记慢速测试 (deselect with '-m \"not slow\"')",
