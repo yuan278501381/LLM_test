@@ -1,6 +1,6 @@
 # Copyright (c) 2026 Yy1 (yuan278501381) | MIT License
 """
-dashboard.components.param_panel - 世界级参数控制中枢 (Zero Hardcoding · 深度学习提示与案例解析)
+dashboard.components.param_panel - 参数控制与教学提示组件
 
 所有选项、标签、数学公式、详细含义与学习案例均由 dashboard.constants.knowledge 元数据驱动。
 为每个组件注入详尽的 Tooltip (`help`)，帮助用户透彻理解每个超参数的几何物理意义与实际训练影响。
@@ -25,7 +25,7 @@ PRESETS = PRESETS_REGISTRY
 
 DATASET_HINTS = {
     "双半月弯 (Moons)": "非线性交错流形 · 考验隐藏层非线性拟合能力",
-    "同心圆环 (Circles)": "完全对称嵌套流形 · 线性分类器彻底失效的试金石",
+    "同心圆环 (Circles)": "嵌套的非线性类别 · 单一仿射边界通常无法正确分开",
     "双螺旋线 (Spiral)": "高曲率混沌奇点 · 考验深层网络容量与局部感知",
     "高斯双簇 (Blobs)": "线性可分基准流形 · 检验单层感知器收敛速度",
 }
@@ -34,7 +34,7 @@ ACTIVATION_HINTS = {
     "ReLU (线性整流函数)": "正向恒等 / 负向截断 · 缓解深层梯度消失的工业界基石",
     "Sigmoid (S型激活函数)": "二分类概率压缩 (0, 1) · 易发生饱和与梯度消失",
     "Tanh (双曲正切函数)": "零中心化平滑映射 (-1, 1) · 梯度传播优于 Sigmoid",
-    "LeakyReLU (带泄露线性整流)": "负区间保留微小斜率 (0.01) · 彻底避免神经元坏死",
+    "LeakyReLU (带泄露线性整流)": "负区间保留微小斜率 (0.01) · 可降低持续零梯度风险",
     "GELU (高斯误差线性单元)": "概率随机正则化平滑门控 · Transformer 标配",
     "Linear (纯线性恒等变换)": "无非线性变换 · 多层网络将退化为单层仿射变换",
 }
@@ -128,7 +128,7 @@ def render_dataset_selector(
         0,
         9999,
         42,
-        help="控制伪随机数发生器起点，确保数据生成与实验结果可 100% 稳定复现。",
+        help="控制本实验的伪随机数起点；在代码、依赖、平台与确定性算子不变时支持复现。",
         key=f"{key_prefix}random_state",
     )
 

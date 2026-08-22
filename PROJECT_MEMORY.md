@@ -1,6 +1,6 @@
 # NN Playground 项目记忆
 
-> 记忆版本：2026-08-22 教学可信度审计基线
+> 记忆版本：2026-08-22 教学可信度验收基线
 >
 > 用途：为后续 Codex、Sol 和人工维护者保存不可丢失的项目目标、事实边界与验收规则。
 >
@@ -41,37 +41,35 @@
 
 ## 4. 2026-08-22 审计结论
 
-当前结论为：**可作为持续开发中的交互式教学原型，不可作为已经完成全面事实审校的正式教材发布。**
+当前结论为：**本版本已通过 2026-08-22 既定自动化门禁和 17 页浏览器抽查；仍须把教学准确性理解为可持续审计属性，而非永久认证。**
 
-已确认优势：
+本轮已关闭的原阻断项：
 
-- M00-M16 共 17 个页面均能被 Streamlit AppTest 启动；
-- 多数基础算子有性质测试或数值梯度测试；
-- 页面已有统一证据元数据、结论边界和原始资料入口；
-- 核心 NumPy 代码覆盖率达到 90.28%，基础层、注意力、RNN、Transformer、ViT 等模块覆盖较高；
-- 模拟评估、音频帧切片、扩散前向过程等部分已开始主动声明非工业复刻边界。
+- M00 已区分乘法次数与 FLOP 约定，收窄有限差分保证，补 shape/广播反例及概率、log-sum-exp、softmax、交叉熵最小链路。
+- M05-M09 已区分合成嵌入、投影失真、隐藏状态相似度、未训练注意力/Transformer/GPT 与真实语义或语言能力；temperature/top-k 不再代称创造力或相关性。
+- M10-M14 已标注合成 CLIP 示例、未训练下一帧头、DDPM 残余信号、Chinchilla 经验适用范围、模板回答模拟及 PPO/DPO/LoRA 省略项。
+- M15 自建题已改为 `*-style 教学题`，metric 调度与 PPL/Accuracy/F1 契约已实现，并保证同一区域分数与逐题答案来自同一次抽样。
+- M16 已区分 R1-Zero 与 R1 多阶段流程；规则曲线不再称 GRPO 训练或能力涌现；Q-Learning 报告到达状态、Bellman residual 与多 seed 回报差距。
+- Attention、RoPE、CLIP、world model、evaluation、reinforcement、回调和训练随机源的关键输入/失败路径已有行为契约。
+- 17 页各有 4 个结果级证据 ID；课程注册表含结构化来源、M00-M16 无环 DAG 和每课学习闭环。
 
-阻断“教学级认证”的主要问题：
-
-- M00 对有限差分的保证、FLOPs 计数和“从零数学”覆盖不准确或不完整；
-- M05-M09 仍混有手工数据/随机权重被解释为学到语义或创造力的措辞；
-- M12 的随机预测头、余弦扩散端点和“纯噪声”解释需要严格收窄；
-- M13 把 Chinchilla 的经验关系说成普适严格证明；
-- M15 的自建题目沿用 MMLU/HellaSwag/GSM8K 名称，且 `BenchmarkTask.metric` 当前未被执行器使用；
-- M16 混淆 2025 年 DeepSeek-R1、R1-Zero 与纯 RL，`GRPORunner` 只生成预设曲线而非执行 GRPO；页面还会把未验证的贪心路径称为最优路径；
-- RoPE 同时支持两种四维布局的自动推断存在歧义，且“相对距离越远必然单调衰减”不是普适性质；
-- 测试和 CI 文案存在“全组合、100%、零缺陷、世界级”等与实际断言不符的宣传性描述。
+仍然明确不宣称：已穷举所有 AI 架构、已复现原论文、模拟结果代表模型能力、测试覆盖等于知识正确、或不存在尚未发现的问题。
 
 ## 5. 当前可复现工程基线
 
 ```text
-pytest + branch coverage: 271 passed, total 90.28%
-ruff check:              PASS，但 dashboard/ 被排除
-ruff format --check:     FAIL，8 files would be reformatted
-pyright:                 FAIL，nn_core/reinforcement.py 有 3 个错误
+pytest full run:         322 passed
+branch coverage:         nn_core + datasets 95.08%
+ruff check/format:       PASS，dashboard 已纳入检查
+pyright:                 PASS（核心、数据、公共组件、课程常量）
+browser audit:           17/17 页面无 Streamlit 页面异常；导航聚焦、重复点击、播放/暂停与尺寸稳定已抽查
 ```
 
-覆盖率不是充分条件。当前尤其需要补强 `callbacks.py`、`clip.py`、`model.py`、`video.py`，以及所有涉及输入校验、失败路径、统计波动和跨实现对照的测试。
+引用注册表共 43 个去重链接：自动 GET 核验为 36 个 `200`、3 个 `202`、3 个 DOI 站点 `403`、1 个站点 TLS 失败。`403/TLS` 仅记为“站点拒绝或自动访问受限”，不判作失效；LSTM DOI 另由 PubMed 记录核对，Sutton & Barto 教材由作者出版物页/书稿入口核对。链接可达仍不等于它能支持任意延伸结论，因此 claim 继续绑定 `supports` 与结论边界。
+
+覆盖率不是充分条件。本轮完整运行中 `callbacks.py 95.49%`、`clip.py 95.24%`、`model.py 95.98%`、`video.py 97.22%`。后续新增功能仍必须优先测试失败路径、统计波动和跨实现对照。
+
+浏览器控制台在含 `st.iframe`/组件的页面上仍可能记录 Streamlit 自动尺寸脚本的 `MutationObserver.observe(document.body, …)` 日志；该日志无项目源码 URL 或应用堆栈，页面与交互未抛出 Streamlit 异常。它作为框架层升级/回归观察项保留，不能被描述成“控制台永久零错误”。
 
 ## 6. 测试设计记忆
 
@@ -86,7 +84,7 @@ pyright:                 FAIL，nn_core/reinforcement.py 有 3 个错误
 
 ## 7. 版本化验收规则
 
-Sol 实施以 `HANDOFF_SOL.md` 为唯一任务清单。完成后 Codex 必须独立执行：
+每次教学内容或核心实现变更后必须执行：
 
 ```powershell
 uv run ruff check .
@@ -96,7 +94,7 @@ uv run pytest --cov=nn_core --cov=datasets --cov-branch --cov-report=term-missin
 git diff --check
 ```
 
-此外必须人工抽查所有页面的结论边界、引用映射、图表证据标签和零基础教学路径。只有 P0 阻断项全部关闭，才能使用“本版本通过教学可信度审计”；仍不得使用“永久完全正确”或“零缺陷”。
+此外必须人工抽查结论边界、引用映射、图表证据标签和零基础教学路径。浏览器门禁至少验证导航目标、聚焦清理、重复点击、reduced-motion CSS、播放/暂停、暂停状态与布局稳定。通过后只能说“本版本通过既定教学可信度审计”；仍不得使用“永久完全正确”或“零缺陷”。
 
 ## 8. 权威核验锚点
 

@@ -9,6 +9,7 @@ from dashboard.constants.course import (
     CLAIMS,
     CURRICULUM_DAG,
     EVIDENCE_DESCRIPTIONS,
+    FORMATIVE_QUIZZES,
     LEARNING_LOOPS,
     LESSONS,
     Claim,
@@ -74,6 +75,7 @@ def render_lesson_evidence(lesson_id: str, *, show_contract: bool = False) -> No
                 f"{escape(claim.limitations)}｜<strong>核验：</strong>{escape(claim.last_verified)}</small>",
                 unsafe_allow_html=True,
             )
+    render_formative_quiz(lesson_id)
 
 
 def get_result_claim(lesson_id: str, result_id: str) -> Claim:
@@ -108,6 +110,28 @@ def render_core_result_evidence(lesson_id: str) -> None:
     st.markdown("#### RESULT EVIDENCE // 本页四类核心结论的证据与边界")
     for suffix in ("formula", "result", "history", "failure"):
         render_result_evidence(lesson_id, f"{lesson_id.lower()}-{suffix}")
+
+
+def render_formative_quiz(lesson_id: str) -> None:
+    """渲染不默认选答案、带诊断反馈且可再次提交的形成性测验。"""
+    if lesson_id not in FORMATIVE_QUIZZES:
+        raise ValueError(f"未知课程编号: {lesson_id}")
+    quiz = FORMATIVE_QUIZZES[lesson_id]
+    st.markdown("#### FORMATIVE CHECK // 先判断，再查看反馈")
+    selected = st.radio(
+        quiz.question,
+        quiz.options,
+        index=None,
+        key=f"formative_quiz_{lesson_id}",
+    )
+    if st.button("提交判断", key=f"formative_quiz_submit_{lesson_id}"):
+        if selected is None:
+            st.warning("请先选择一项；答案与解释不会在作答前显示。")
+        elif selected == quiz.options[quiz.correct_index]:
+            st.success(quiz.correct_explanation)
+        else:
+            st.error(quiz.diagnostic_feedback)
+            st.caption("可修改选择后再次提交。")
 
 
 def render_lesson_contract(lesson_id: str) -> None:

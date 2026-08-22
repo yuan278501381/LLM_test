@@ -67,7 +67,7 @@ def test_simple_bpe_training_and_tokenize():
 def test_data_mixture_and_pipeline():
     """测试预训练语料配比与清洗流水线数据完整性"""
     mixtures = DataMixtureEngine.get_mixtures()
-    assert "LLaMA-3 (Meta 2024, 15T)" in mixtures
+    assert "教学示意 A：通用均衡型" in mixtures
     for _name, mix in mixtures.items():
         total_pct = sum(mix.values())
         assert abs(total_pct - 100.0) < 1e-3  # 配比总和为 100%

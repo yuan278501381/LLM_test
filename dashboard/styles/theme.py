@@ -17,6 +17,7 @@ from functools import wraps
 from typing import Any
 
 import streamlit as st
+import streamlit.components.v1 as components
 
 from dashboard.styles.icons import svg_icon
 
@@ -687,7 +688,7 @@ body,
         } catch(e) {}
     })();
     </script></body></html>"""
-    st.iframe(sidebar_nav_js, height=1, width=1)
+    components.html(sidebar_nav_js, height=1, width=1)
 
 
 def render_hero_header(
@@ -1083,7 +1084,7 @@ def render_page_blueprint(sections: list[dict]) -> None:
 
         block = (
             f'<a href="#{target_id}" style="text-decoration:none;color:inherit;flex:1 1 180px;min-width:150px;">'
-            f"<div style=\"background:{bg_c};border:1px solid {border_c};border-radius:8px;padding:0.6rem 0.8rem;transition:all 0.2s cubic-bezier(0.4,0,0.2,1);cursor:pointer;\" onmouseover=\"this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.06)';\" onmouseout=\"this.style.transform='none';this.style.boxShadow='none';\">"
+            f'<div style="background:{bg_c};border:1px solid {border_c};border-radius:8px;padding:0.6rem 0.8rem;cursor:pointer;">'
             f'<div style="display:flex;align-items:center;gap:0.35rem;margin-bottom:0.25rem;">'
             f'<span class="anchor-badge anchor-badge-{sec_color}" style="font-size:0.72rem;padding:0.1rem 0.35rem;">[{sec_id}]</span>'
             f'<span style="font-weight:800;font-size:0.82rem;color:{text_c};">{sec_name}</span>'
@@ -1349,7 +1350,7 @@ def render_floating_hud_navigator(sections: list[dict]) -> None:
     }})();
     </script></body></html>
     """
-    st.iframe(js, height=1, width=1)
+    components.html(js, height=1, width=1)
 
 
 def render_formula_breakdown_card(

@@ -4,8 +4,7 @@ tests/test_devops_smoke_pages.py - 全站多页面无死角动态自动发现冒
 
 自动扫描 `dashboard/pages/*.py` 和 `dashboard/app.py`，
 利用 Streamlit 官方 AppTest 无头沙盒框架对全站每一个页面执行端到端仿真渲染。
-无论项目如何扩展（新增页面、重命名页面），无需人工维护测试列表，自动 100% 覆盖。
-一旦有任何页面产生运行时异常、未捕获错误或组件崩溃，毫秒级熔断拦截！
+测试按当前页面目录自动收集并验证启动无未捕获异常；它不证明内容或交互正确。
 """
 
 from pathlib import Path
@@ -27,8 +26,8 @@ def get_all_page_scripts() -> list[Path]:
 
 
 @pytest.mark.parametrize("page_script", get_all_page_scripts(), ids=lambda p: p.name)
-def test_page_renders_with_zero_exceptions(page_script: Path):
-    """DevOps Gate 2: 页面必须 100% 渲染成功且无任何未捕获异常"""
+def test_page_starts_without_uncaught_exceptions(page_script: Path):
+    """DevOps Gate 2: 当前收集到的页面应启动且无未捕获异常。"""
     assert page_script.exists(), f"页面脚本不存在: {page_script}"
 
     at = AppTest.from_file(str(page_script), default_timeout=25).run()

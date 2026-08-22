@@ -8,7 +8,7 @@ on:
 
 jobs:
   quality-gate:
-    name: 9-Stage Quality Gate Matrix (${{ matrix.os }}, ${{ matrix.python-version }})
+    name: Quality Gate Matrix (${{ matrix.os }}, ${{ matrix.python-version }})
     strategy:
       fail-fast: false
       matrix:
@@ -36,5 +36,5 @@ jobs:
       - name: Install Project Dependencies
         run: uv sync --all-extras --dev
 
-      - name: Execute Enterprise DevOps 9-Stage Gate Pipeline
+      - name: Execute Reproducible Quality Gate Pipeline
         run: uv run python scripts/devops_ci_gate.py

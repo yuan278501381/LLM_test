@@ -17,7 +17,7 @@
 5. 每完成一个任务，补测试、权威来源和结论边界；不要先批量改文案、最后再猜测试。
 6. 不删除失败测试、不放宽正确性阈值、不扩大 lint/type 排除范围、不输出“ZERO-DEFECT CERTIFIED”。
 
-## 1. 当前审计基线
+## 1. 整改前审计基线（保留用于前后对照）
 
 ```text
 pytest + branch coverage: 271 passed, total 90.28%
@@ -277,3 +277,23 @@ git diff --check
 - 是否为通过门禁而隐藏问题、扩大排除、降低阈值或删除测试。
 
 P0 全部关闭、自动化与人工审校同时通过后，只能声明“该版本通过既定教学可信度审计”，不能声明“所有知识永久完全正确”。
+
+## 7. 2026-08-22 执行记录
+
+| 清单 | 状态 | 可复核交付 |
+|---|---|---|
+| P0-1 主张—证据—来源 | 已完成 | 68 个结构化 claim/result ID；17 页各 4 个常显结果证据卡；形成条件、局限、日期、直接来源 |
+| P0-2 M00 | 已完成 | 乘法次数/FLOP 边界、有限差分限制、shape/广播反例、概率/log-sum-exp/softmax/CE、小测 |
+| P0-3 M05-M09 | 已完成 | 合成嵌入与投影边界、RNN 状态相似度、未训练注意力/Transformer/GPT、temperature/top-k 限定 |
+| P0-4 M10-M16 | 已完成 | synthetic CLIP、未训练世界模型头、DDPM SNR、Chinchilla/PPO/DPO/LoRA、style 题集、R1/R1-Zero/GRPO 边界 |
+| P0-5 核心契约 | 已完成 | attention、RoPE、CLIP、world model、evaluation、reinforcement、训练与回调失败路径/局部 RNG |
+| P0-6 引用 | 已完成 | 43 个去重直接来源；自动访问分类与受限项替代锚点记录见项目记忆 |
+| P0-7 质量门禁 | 已完成 | dashboard 纳入 Ruff；format、Pyright、diff、分支覆盖率统一进脚本；删除夸大门禁文案 |
+| P1 数学/训练/评估 | 已完成 | 数值梯度、性质、sklearn 交叉核对、多 seed RL、扩散统计、尾批/验证/早停恢复、失败路径 |
+| P1 UI/内容 | 已完成 | 控件代表值而非伪称穷举；结构化 claim 测试；形成性测验未答/错答/改答；浏览器导航与播放器审计 |
+| P1 覆盖率 | 已完成 | 322 passed；`nn_core + datasets` 分支覆盖率 95.08%；`model.py` 95.98% |
+| P2 知识架构 | 已完成当前 17 课范围 | 机器可读无环 DAG；每课诊断、最小实验、反例、形成性评价、通关标准；未实现主题继续标为部分实现/仅规划 |
+
+不宣称项：并未把“仅规划”的架构包装成可运行课程；没有任何页面标记 `PAPER_REPRODUCTION`；自动化门禁不等于永久知识正确或专家共识终审。
+
+框架观察项：浏览器控制台可记录 Streamlit iframe 自动尺寸脚本的无应用堆栈 `MutationObserver` 日志；页面无 Streamlit 异常，导航与播放器行为通过抽查。后续升级 Streamlit 时应重新核验，不能将当前状态宣传为“控制台永久零错误”。

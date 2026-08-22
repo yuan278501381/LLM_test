@@ -299,7 +299,7 @@ for idx in sorted_indices:
                 "排名 (Rank)": f"#{len(top_candidates) + 1}",
                 "候选词汇 (Candidate)": CN_LABEL_MAP.get(candidate_w, candidate_w),
                 "余弦相似度 (Cosine Sim)": f"{sim_val * 100:.2f}%",
-                "状态 (Status)": "[OPTIMAL // 最优匹配]"
+                "状态 (Status)": "[CURRENT BEST // 当前候选最高]"
                 if candidate_w == best_match_word
                 else "[CANDIDATE // 候选]",
             }

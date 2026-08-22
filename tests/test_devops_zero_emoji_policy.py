@@ -1,11 +1,10 @@
 # Copyright (c) 2026 Yy1 (yuan278501381) | MIT License
 """
-tests/test_devops_zero_emoji_policy.py - 全局 0-Emoji 物理硬门禁校验 (DevOps Gate)
+tests/test_devops_zero_emoji_policy.py - Python 源文件 Emoji 规则检查
 
 根据用户全局规范 RULE[user_global]：
 代码库、文档字符串、UI 标签、图表标题及注释中严禁出现任何 Emoji 表情字符。
-统一采用专业技术标签或 100% 矢量 SVG 图标替代。
-本测试遍历全站所有 Python 源码文件，0.1 秒内严密监控并杜绝任何 Emoji 字符渗入。
+统一采用技术标签或 SVG 图标替代。本测试扫描当前仓库中的 Python 源文件。
 """
 
 import re
@@ -19,8 +18,8 @@ EMOJI_REGEX = re.compile(
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 
-def test_zero_emoji_policy_across_entire_repo():
-    """DevOps Gate: 全项目 Python 源码必须 100% 零 Emoji 违规"""
+def test_zero_emoji_policy_across_python_sources():
+    """DevOps Gate: 当前收集到的 Python 源文件不应包含规则覆盖的 Emoji。"""
     violations = []
 
     for p in _PROJECT_ROOT.rglob("*.py"):

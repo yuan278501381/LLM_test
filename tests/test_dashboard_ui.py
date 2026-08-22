@@ -1,6 +1,6 @@
 # Copyright (c) 2026 Yy1 (yuan278501381) | MIT License
 """
-tests/test_dashboard_ui.py - 工业级 Dashboard UI、组件、SVG 与 E2E 全自动化回归测试矩阵
+tests/test_dashboard_ui.py - Dashboard 组件、SVG 与 AppTest 回归测试
 
 覆盖范围：
 1. SVG 矢量图标引擎完整性与容错机制

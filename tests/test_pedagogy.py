@@ -5,12 +5,14 @@ import ast
 from pathlib import Path
 
 import pytest
+from streamlit.testing.v1 import AppTest
 
 from dashboard.components.pedagogy import evidence_badge, get_result_claim
 from dashboard.constants.course import (
     CLAIMS,
     CURRICULUM_DAG,
     EVIDENCE_DESCRIPTIONS,
+    FORMATIVE_QUIZZES,
     LEARNING_LOOPS,
     LESSONS,
     ClaimKind,
@@ -83,6 +85,32 @@ def test_curriculum_dag_and_learning_loops_cover_every_lesson_without_cycles():
         assert loop.counterexample_experiment
         assert loop.formative_assessment
         assert "适用条件" in loop.pass_criteria
+
+
+def test_formative_quiz_registry_and_feedback_retry_flow():
+    assert set(FORMATIVE_QUIZZES) == set(LESSONS)
+    for quiz in FORMATIVE_QUIZZES.values():
+        assert len(quiz.options) == 3
+        assert len(set(quiz.options)) == 3
+        assert 0 <= quiz.correct_index < 3
+
+    at = AppTest.from_string(
+        "from dashboard.components.pedagogy import render_formative_quiz\n"
+        "render_formative_quiz('M01')\n"
+    ).run()
+    assert not at.exception
+    assert not at.warning and not at.error and not at.success
+
+    at.button[0].click().run()
+    assert at.warning and "不会在作答前显示" in at.warning[0].value
+    quiz = FORMATIVE_QUIZZES["M01"]
+    wrong_index = next(i for i in range(3) if i != quiz.correct_index)
+    at.radio[0].set_value(quiz.options[wrong_index]).run()
+    at.button[0].click().run()
+    assert at.error and quiz.diagnostic_feedback in at.error[0].value
+    at.radio[0].set_value(quiz.options[quiz.correct_index]).run()
+    at.button[0].click().run()
+    assert at.success and quiz.correct_explanation in at.success[0].value
 
 
 def test_unknown_result_claim_is_rejected():

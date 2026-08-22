@@ -2,9 +2,10 @@
 """
 tests/test_devops_api_contracts.py - 公共基础组件库符号契约守卫 (DevOps Gate 3)
 
-严格锁定关键公共模块的公开 API 导出清单。
-杜绝在重构或性能优化时不慎误删、遗漏或重命名公共函数，确保全站契约高度稳定。
+检查关键公共模块的函数存在性和代表性签名；具体行为由组件测试覆盖。
 """
+
+import inspect
 
 from dashboard.components import param_panel, pedagogy
 from dashboard.styles import theme
@@ -53,8 +54,38 @@ def test_pedagogy_api_contract():
         "render_core_result_evidence",
         "render_result_evidence",
         "render_lesson_contract",
+        "render_formative_quiz",
         "evidence_badge",
     ]
     for fn_name in required_functions:
         assert hasattr(pedagogy, fn_name), f"pedagogy 缺少必需的公共接口: {fn_name}"
         assert callable(getattr(pedagogy, fn_name)), f"pedagogy.{fn_name} 必须为可调用函数"
+
+    expected_parameters = {
+        "render_lesson_evidence": ["lesson_id", "show_contract"],
+        "render_core_result_evidence": ["lesson_id"],
+        "render_result_evidence": ["lesson_id", "result_id"],
+        "render_lesson_contract": ["lesson_id"],
+        "render_formative_quiz": ["lesson_id"],
+        "evidence_badge": ["level"],
+    }
+    for function_name, parameter_names in expected_parameters.items():
+        function = getattr(pedagogy, function_name)
+        assert list(inspect.signature(function).parameters) == parameter_names
+
+
+def test_navigation_api_signatures_are_stable():
+    assert list(inspect.signature(theme.anchor_badge).parameters) == [
+        "text",
+        "color_type",
+        "target_id",
+    ]
+    assert list(inspect.signature(theme.render_page_guide).parameters) == [
+        "title",
+        "plain_intro",
+        "hyperparams_desc",
+        "telemetry_desc",
+        "experiments",
+        "blueprint_sections",
+        "guide_region_id",
+    ]

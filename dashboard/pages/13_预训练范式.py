@@ -81,8 +81,8 @@ render_floating_hud_navigator(
         },
         {
             "id": "D",
-            "name": "MLM vs CLM 真实训练",
-            "desc": "完形填空与因果接龙对比互动及纯 NumPy 真实梯度反向传播收敛",
+            "name": "MLM vs CLM 教学训练",
+            "desc": "完形填空与因果接龙对比，以及教学规模 NumPy 分类头的梯度更新",
             "color": "purple",
             "target_id": "region-d",
         },
@@ -125,8 +125,8 @@ render_page_guide(
         },
         {
             "id": "D",
-            "name": "MLM vs CLM 真实训练",
-            "desc": "完形填空与因果接龙对比互动及纯 NumPy 真实梯度反向传播收敛",
+            "name": "MLM vs CLM 教学训练",
+            "desc": "完形填空与因果接龙对比，以及教学规模 NumPy 分类头的梯度更新",
             "color": "purple",
             "target_id": "region-d",
         },
@@ -153,15 +153,15 @@ render_page_guide(
         f"• <b>迷你训练 Epochs</b>：在笔记本 CPU 上体验纯 NumPy 真实梯度反向传播损失收敛。"
     ),
     telemetry_desc=(
-        f"• <b>在 {anchor_badge('[D. 真实训练]', 'purple', target_id='region-d')} 观测</b>：解析梯度驱动下的损失单调收敛曲线。<br>"
+        f"• <b>在 {anchor_badge('[D. 教学训练]', 'purple', target_id='region-d')} 观测</b>：解析小型分类头的梯度更新与损失曲线；损失不保证每步单调。<br>"
         f"• <b>在 {anchor_badge('[E. Scaling Laws]', 'blue', target_id='region-e')} 计算</b>：最优参数规模 $N_{{\\text{{opt}}}}$、最优 Token 数 $D_{{\\text{{opt}}}}$ 与 H100 训练工期。<br>"
         f"• <b>在 {anchor_badge('[C. 预训练遥测]', 'emerald', target_id='region-c')} 评估</b>：核心范式迁移优势与损失。"
     ),
     experiments=[
-        f"<b>第 1 步【对比完形填空与接龙】</b>：在 {anchor_badge('[D. 真实训练]', 'purple', target_id='region-d')} 观察同一句话在 MLM 与 CLM 下的真实梯度训练收敛！",
+        f"<b>第 1 步【对比完形填空与接龙】</b>：在 {anchor_badge('[D. 教学训练]', 'purple', target_id='region-d')} 观察同一句话在 MLM 与 CLM 教学任务下的小型分类头梯度更新。",
         f"<b>第 2 步【探索 Chinchilla 扩展定律】</b>：在 {anchor_badge('[E. Scaling Laws]', 'blue', target_id='region-e')} 拖动算力预算滑块，观察为什么 70B 模型需要喂 1.4T Token，以及 GPT-3 175B 为何欠训练！",
         "<b>第 3 步【动手训练 BPE 分词器】</b>：在 Section 6 输入自定义句子并点击【训练 BPE 分词规则】，亲眼见证常见词是如何一步步被合并诞生的！",
-        "<b>第 4 步【拆解工业级数据流水线】</b>：在 Section 7 观察 LLaMA-3 与 DeepSeek-V3 的真实语料配比与 4 阶段清洗过滤规则！",
+        "<b>第 4 步【拆解数据流水线】</b>：在 Section 7 比较公开材料概括的语料类别，并检查教学版 4 阶段清洗示意；它不是生产配方复现。",
     ],
 )
 
@@ -220,7 +220,7 @@ train_epochs = st.sidebar.slider(
     help="在笔记本 CPU 上秒级完成",
 )
 
-start_train_btn = st.sidebar.button("[EXECUTE] 开始纯 NumPy 真实训练", width="stretch")
+start_train_btn = st.sidebar.button("[EXECUTE] 开始 NumPy 教学训练", width="stretch")
 
 # ---------------------------------------------------------------------------
 # 数据与模型运算
@@ -241,7 +241,7 @@ clm_model = CausalLanguageModel(vocab_size=vocab_size, d_model=32)
 contrastive_model = ContrastiveLearning(d_model=32)
 mae_train_engine = MaskedAutoEncoder(num_patches=16, d_model=64, mask_ratio=mae_ratio)
 
-# 真实训练与损失跟踪
+# 教学规模分类头训练与损失跟踪
 loss_history = []
 if start_train_btn or "train_loss_hist" not in st.session_state:
     hist = []
@@ -373,7 +373,7 @@ with col_p4, st.container(border=True):
     )
 
 # ---------------------------------------------------------------------------
-# Section 2: MLM 完形填空 vs CLM 因果接龙互动对比与真实训练
+# Section 2: MLM 完形填空 vs CLM 因果接龙互动与教学规模训练
 # ---------------------------------------------------------------------------
 st.markdown(
     f'<div id="region-d" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;margin-top:1rem;">'
@@ -757,10 +757,10 @@ with col_bpe_out:
             st.markdown(table_md)
 
 # ---------------------------------------------------------------------------
-# Section 7: 工业级预训练语料配比与清洗流水线
+# Section 7: 公开语料类别概览与教学版清洗流水线
 # ---------------------------------------------------------------------------
 render_section_heading(
-    "PRE-TRAINING DATA MIXTURE & PIPELINE // 工业级语料配比与清洗流水线", icon_name="layers"
+    "PRE-TRAINING DATA MIXTURE & PIPELINE // 语料类别与教学版清洗流水线", icon_name="layers"
 )
 
 st.markdown(
@@ -773,21 +773,21 @@ col_d_mix, col_d_pipe = st.columns([1, 1])
 
 with col_d_mix:
     with st.container(border=True):
-        st.markdown("#### [前沿大模型语料配比全景 (Data Mixture)]")
+        st.markdown("#### [教学假设语料配比 (Data Mixture)]")
         mixtures_dict = DataMixtureEngine.get_mixtures()
         mix_card_options = [
             (
-                "LLaMA-3 (Meta 2024, 15T)",
-                "通用高质量网页 50% + 源码 25% + 学术 10% + 多语言 10% + 数学 5%",
+                "教学示意 A：通用均衡型",
+                "通用网页 50% + 代码 20% + 学术 10% + 多语言 15% + 数学推理 5%",
             ),
             (
-                "DeepSeek-V3 (2024/2025, 14.8T)",
-                "通用网页 45% + 代码 25% + 中文高质量 15% + 数学推理 10%",
+                "教学示意 B：代码推理侧重型",
+                "通用网页 40% + 代码 30% + 多语言 10% + 数学推理 15% + 图书学术 5%",
             ),
-            ("FineWeb-Edu (HuggingFace 2024)", "高教育价值网页 60% + STEM 理工 20% + 人文学科 15%"),
+            ("教学示意 C：教育文本侧重型", "教育网页 60% + STEM 20% + 人文社会 15% + 问答教材 5%"),
         ]
         selected_mix_card = st.radio(
-            "选择前沿大模型语料分布",
+            "选择教学假设语料分布（非真实模型配方）",
             options=mix_card_options,
             format_func=lambda o: f"**{o[0]}**\n\n↳ *{o[1]}*",
             index=0,
@@ -813,7 +813,7 @@ with col_d_mix:
 
 with col_d_pipe:
     with st.container(border=True):
-        st.markdown("#### [工业级四阶段数据清洗过滤流水线]")
+        st.markdown("#### [教学版四阶段数据清洗过滤示意]")
         stages = DataMixtureEngine.get_cleaning_pipeline()
         for s in stages:
             st.markdown(

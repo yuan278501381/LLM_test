@@ -92,6 +92,17 @@ class LearningLoop:
     pass_criteria: str
 
 
+@dataclass(frozen=True)
+class FormativeQuiz:
+    """不预先泄露反馈、支持诊断与重试的单题形成性测验。"""
+
+    question: str
+    options: tuple[str, ...]
+    correct_index: int
+    correct_explanation: str
+    diagnostic_feedback: str
+
+
 EVIDENCE_DESCRIPTIONS: dict[EvidenceLevel, str] = {
     EvidenceLevel.EXACT_COMPUTATION: "页面结果由当前代码按照展示公式实际计算。",
     EvidenceLevel.TEACHING_SCALE: "机制保真，但模型、数据或训练规模为便于观察而缩小。",
@@ -825,7 +836,11 @@ def _build_claims() -> dict[str, Claim]:
         )
         for kind, statement, suffix, limitations in rows:
             claim_id = f"{lesson_id.lower()}-{suffix}"
-            source = lesson.references[-1] if kind in {ClaimKind.HISTORY, ClaimKind.FAILURE_MODE} else lesson.references[0]
+            source = (
+                lesson.references[-1]
+                if kind in {ClaimKind.HISTORY, ClaimKind.FAILURE_MODE}
+                else lesson.references[0]
+            )
             claims[claim_id] = Claim(
                 claim_id=claim_id,
                 lesson_id=lesson_id,
@@ -892,6 +907,32 @@ def _build_learning_loops() -> dict[str, LearningLoop]:
 LEARNING_LOOPS: dict[str, LearningLoop] = _build_learning_loops()
 
 
+def _build_formative_quizzes() -> dict[str, FormativeQuiz]:
+    quizzes: dict[str, FormativeQuiz] = {}
+    for lesson_id, lesson in LESSONS.items():
+        correct = lesson.conclusion_boundary
+        distractors = (
+            "当前页面已经证明该方法在所有任务、数据和参数下都最优。",
+            "页面中的合成数据、规则模拟和架构示意都可视为生产模型的真实能力。",
+        )
+        correct_index = int(lesson_id[1:]) % 3
+        options: list[str] = list(distractors)
+        options.insert(correct_index, correct)
+        quizzes[lesson_id] = FormativeQuiz(
+            question=f"根据 {lesson.title} 的实验，哪一项结论最符合本页证据边界？",
+            options=tuple(options),
+            correct_index=correct_index,
+            correct_explanation=f"正确。页面能够支持的边界是：{correct}",
+            diagnostic_feedback=(
+                f"请区分本页证据等级，并用失败案例“{lesson.failure_cases[0]}”检查这个结论。"
+            ),
+        )
+    return quizzes
+
+
+FORMATIVE_QUIZZES: dict[str, FormativeQuiz] = _build_formative_quizzes()
+
+
 def validate_course_registry() -> None:
     """在导入和测试时快速发现缺页、空字段或不合法引用。"""
 
@@ -901,8 +942,12 @@ def validate_course_registry() -> None:
         extra = sorted(set(LESSONS) - expected)
         raise ValueError(f"课程注册表不完整: missing={missing}, extra={extra}")
 
-    if set(CURRICULUM_DAG) != expected or set(LEARNING_LOOPS) != expected:
-        raise ValueError("课程依赖图或学习闭环未覆盖 M00-M16")
+    if (
+        set(CURRICULUM_DAG) != expected
+        or set(LEARNING_LOOPS) != expected
+        or set(FORMATIVE_QUIZZES) != expected
+    ):
+        raise ValueError("课程依赖图、学习闭环或形成性测验未覆盖 M00-M16")
     visited: set[str] = set()
     visiting: set[str] = set()
 
@@ -932,6 +977,16 @@ def validate_course_registry() -> None:
             )
         ):
             raise ValueError(f"{lesson_id} 的学习闭环不完整")
+        quiz = FORMATIVE_QUIZZES[lesson_id]
+        if (
+            len(quiz.options) < 3
+            or not 0 <= quiz.correct_index < len(quiz.options)
+            or len(set(quiz.options)) != len(quiz.options)
+            or not quiz.question
+            or not quiz.correct_explanation
+            or not quiz.diagnostic_feedback
+        ):
+            raise ValueError(f"{lesson_id} 的形成性测验不完整")
 
     for lesson_id, lesson in LESSONS.items():
         if lesson.lesson_id != lesson_id or not lesson.evidence:

@@ -2,7 +2,7 @@
 """
 scripts/devops_ci_gate.py - 可复现的静态检查、分层测试与差异卫生门禁
 
-统一执行格式、静态分析、差异卫生、契约、页面启动、控件采样、性能与覆盖率门禁。
+统一执行格式、静态分析、差异卫生，以及一次不重复的全量测试与覆盖率门禁。
 """
 
 import os
@@ -50,51 +50,9 @@ def main():
     run_step("Stage 3: Pyright 类型检查", ["uv", "run", "pyright"])
     run_step("Stage 4: Git 差异空白卫生", ["git", "diff", "--check"])
 
-    # 2. 静态导入与符号契约
+    # 契约、页面、控件、性能与数值测试均由这一次全量运行收集，避免重复执行。
     run_step(
-        "Stage 5: AST 静态跨模块 Import 完整性校验 (Gate 5)",
-        ["uv", "run", "pytest", "tests/test_devops_import_integrity.py", "-v"],
-    )
-
-    # 3. 公共 API 契约锁
-    run_step(
-        "Stage 6: 公共组件库 API 符号契约守卫 (Gate 6)",
-        ["uv", "run", "pytest", "tests/test_devops_api_contracts.py", "-v"],
-    )
-
-    # 4. 全局 0-Emoji 物理硬门禁
-    run_step(
-        "Stage 7: 全局 Emoji 规范门禁 (Gate 7)",
-        ["uv", "run", "pytest", "tests/test_devops_zero_emoji_policy.py", "-v"],
-    )
-
-    # 5. 页面 HUD 罗盘与蓝图契约
-    run_step(
-        "Stage 8: 页面空间 HUD 与导航契约 (Gate 8)",
-        ["uv", "run", "pytest", "tests/test_devops_hud_navigator.py", "-v"],
-    )
-
-    # 6. 全页面动态沙盒冒烟
-    run_step(
-        "Stage 9: 全站 17 页面启动无异常测试 (Gate 9)",
-        ["uv", "run", "pytest", "tests/test_devops_smoke_pages.py", "-v"],
-    )
-
-    # 7. UI 控件代表值与边界值采样
-    run_step(
-        "Stage 10: UI 控件代表值与边界值采样 (Gate 10)",
-        ["uv", "run", "pytest", "tests/test_devops_widget_fuzzing.py", "-v"],
-    )
-
-    # 8. 算法性能预算守卫
-    run_step(
-        "Stage 11: 核心算子性能预算与延迟守卫 (Gate 11)",
-        ["uv", "run", "pytest", "tests/test_devops_performance_budget.py", "-v"],
-    )
-
-    # 9. 全量核心回归测试套件 (包含 80% 覆盖率门禁)
-    run_step(
-        "Stage 12: 全量回归与分支覆盖率门禁 (Gate 12)",
+        "Stage 5: 全量回归与分支覆盖率门禁",
         [
             "uv",
             "run",

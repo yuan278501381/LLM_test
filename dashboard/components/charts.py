@@ -1,6 +1,6 @@
 # Copyright (c) 2026 Yy1 (yuan278501381) | MIT License
 """
-dashboard.components.charts - 世界级 Plotly 可视化图表引擎 (2026 工业级设计标准 · 零重叠防碰撞)
+dashboard.components.charts - 项目统一的 Plotly 可视化图表组件
 
 提供高对比度、清晰透亮、无重叠排版的 Plotly 亮色图表系统（plotly_white）：
 - 连续平滑概率场决策边界（支持探针样本点发光环）

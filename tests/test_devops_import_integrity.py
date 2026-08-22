@@ -34,7 +34,7 @@ def get_all_python_files() -> list[Path]:
 
 
 def test_cross_module_import_integrity():
-    """DevOps Gate 1: 全站所有 Python 文件的 import 语句 100% 静态符号解析验证"""
+    """DevOps Gate 1: 对当前收集到的 Python 文件执行静态 import 符号解析。"""
     py_files = get_all_python_files()
     assert len(py_files) >= 20, f"发现的 Python 源码文件数量异常: {len(py_files)}"
 

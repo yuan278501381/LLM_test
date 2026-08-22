@@ -261,7 +261,7 @@ DATASETS: dict[str, DatasetMeta] = {
         label="Circles (同心圆径向分布)",
         desc="内圆与外圆呈嵌套同心环状分布，类别完全依赖于到原点的径向欧氏距离。",
         difficulty="⭐⭐⭐ (中等径向非线性)",
-        example="线性超平面彻底失效，需要至少两个隐藏层或足够的神经元构建闭合环形决策面。",
+        example="单一仿射超平面通常不能分开嵌套圆环；带非线性且容量足够的网络可学习闭合边界。",
     ),
     "xor": DatasetMeta(
         id="xor",
@@ -275,7 +275,7 @@ DATASETS: dict[str, DatasetMeta] = {
         label="Spiral (双螺旋高曲率分布)",
         desc="两条互相缠绕延伸的高曲率阿基米德螺旋臂，数据流形在 2D 空间高度密集缠绕。",
         difficulty="⭐⭐⭐⭐⭐ (极难高曲率流形)",
-        example="检验多层深度网络非线性特征扭曲能力的终极基准，通常需要 3 层以上深度才能完全拟合。",
+        example="用于观察网络容量、激活函数与优化如何影响高曲率边界；所需深度和拟合程度取决于宽度、噪声与训练设置。",
     ),
     "blobs": DatasetMeta(
         id="blobs",
@@ -335,7 +335,7 @@ PRESETS_REGISTRY: dict[str, dict[str, Any]] = {
         "epochs": 150,
     },
     "线性可分基准 (Linear Baseline)": {
-        "desc": "单层感知机即可完美求解的经典线性分类问题，理解超平面 WX+b=0",
+        "desc": "在无噪、线性可分设定下可由单层感知机求解，用于理解超平面 WX+b=0",
         "dataset": "blobs",
         "n_samples": 200,
         "noise": 0.10,
@@ -496,7 +496,7 @@ MULTIMODAL_ARCH: dict[str, ArchitectureMeta] = {
         label="Mel Spectrogram (梅尔刻度声学频谱图)",
         formula="m = 2595 \\log_{10}(1 + f / 700)",
         desc="利用模拟人耳对低频敏感、对高频迟钝的非线性耳蜗临界频带滤波器组，将 STFT 功率谱压缩为 2D 听觉声学热力图。",
-        impact="将一维声波完美转化为类似于 2D 图像的对数特征图，使得语音可以无缝接入 CNN 与 Transformer 视觉骨干。",
+        impact="将分帧声波映射为时频特征，便于 CNN 或 Transformer 处理；窗函数、Mel 压缩和相位省略都会丢失或改变信息。",
         example="OpenAI Whisper, Google AudioPaLM 等语音大模型的前端声学特征输入。",
     ),
     "Diffusion": ArchitectureMeta(
@@ -512,7 +512,7 @@ MULTIMODAL_ARCH: dict[str, ArchitectureMeta] = {
         label="World Model (世界模型与自回归未来推演)",
         formula="\\hat{x}_{t+1} = f_{\\theta}(z_{\\le t}, a_t)",
         desc="在潜在表征空间中模拟物理世界的连续动力学演化，预测给定历史观测与动作后的下一帧物理画面与环境状态。",
-        impact="赋予大模型类似人类'在脑海中做思想实验'的想象力与因果推理能力，是具身智能与通用人工智能 (AGI) 的终极拼图。",
+        impact="可支持规划、预测和控制，但预测表征不自动等于因果理解，也不是通用智能的充分条件。",
         example="OpenAI Sora, Google Genie, DeepMind DreamerV3。",
     ),
 }

@@ -29,15 +29,17 @@
 
 ### 教学可信度审计状态（2026-08-22）
 
-> **当前状态：尚未达到“教学内容完全审校通过”或“零缺陷认证”。** 项目已有较强的可运行实验基础，但审计仍发现知识表述过强、模拟边界不够贴近结果、部分核心实现契约不完整、引用无法覆盖全部教学结论，以及测试名称/注释夸大实际覆盖的问题。通过测试只能证明被断言的行为成立，不能自动证明所有教学解释都正确。
+> **当前状态：本版本已通过 2026-08-22 既定自动化门禁与 17 页浏览器行为抽查。** 这表示注册主张、受测实现和已抽查页面在当前版本未发现阻断错误；不表示知识永久无误、主题已经穷举，或自动化测试能够替代教师/领域专家复核。
 
-本次可复现基线：
+本次整改建立了以下可审计基础：
 
-- `uv run pytest --cov=nn_core --cov=datasets --cov-branch -q`：`271 passed`，总覆盖率 `90.28%`；低覆盖模块包括 `callbacks.py 22.47%`、`clip.py 73.02%`、`model.py 75.36%`、`video.py 76.85%`。
-- `uv run ruff check .`：通过，但当前配置排除了整个 `dashboard/`，因此不能代表教学页面通过静态检查。
-- `uv run ruff format --check .`：失败，当前有 8 个文件未格式化。
-- `uv run pyright`：失败，`nn_core/reinforcement.py` 有 3 个返回类型错误；当前 Pyright 也未覆盖 `dashboard/` 与 `tests/`。
-- 22 个课程注册表链接中，19 个经 HTTP HEAD 返回 200；3 个因 DOI 站点策略、403 或本机 TLS 无法由自动检查确认，需要浏览器人工复核。链接可访问不等于引用直接支持页面中的每一句结论。
+- M00-M16 具有机器可读无环课程依赖图；每课公开诊断题、最小实验、反例实验、形成性评价和通过标准。
+- 17 页各登记公式、结果、历史与失败模式四类主张，共 68 个唯一 result ID；具体结果常显证据等级、适用条件、局限、核验日期与直接来源。
+- 核心契约补强了 attention/mask、RoPE 显式布局、PPL/Accuracy/F1、CLIP 对比损失、扩散调度、Q-Learning/GRPO 模拟边界、局部随机源与早停恢复最佳权重。
+- Ruff 覆盖 dashboard（仅保留有理由的最小页面级 ignore），Pyright 覆盖核心、数据、公共组件和课程常量；CI 同时执行 format、lint、type、diff 与分支覆盖率门禁。
+- 浏览器抽查确认 17 页无 Streamlit 页面异常、课程导航聚焦与自动清理、重复点击、播放器连续播放/暂停、暂停状态保持，以及播放器三态尺寸稳定。浏览器控制台仍可见 Streamlit iframe 自动尺寸脚本产生的无应用堆栈 `MutationObserver` 日志，列为框架层观察项，不计作知识或数值正确性证据。
+
+本轮完整验收为 **322 passed**，`nn_core + datasets` 分支覆盖率 **95.08%**。数字仍以仓库当前命令输出为准，详见下方验收命令和 [项目记忆](PROJECT_MEMORY.md)。覆盖率只表示受执行代码比例，不能代替断言质量与教学事实审校。
 
 因此，README、页面和发布物不得使用“完全正确”“全部架构”“100% 覆盖”“零缺陷”“工业级复刻”等未经证据支持的认证性措辞。教学质量是按版本持续审计的属性，不是一次测试后永久成立的标签。
 
@@ -54,17 +56,17 @@
 | | M02 | 多层网络 (MLP) | 网络拓扑图、神经元活性探针、梯度弥散/爆炸诊断 |
 | | M03 | 优化器竞速对比 | SGD / Momentum / RMSProp / Adam 同屏竞速对比 |
 | **微观篇** | M04 | 参数实验室 | 四宫格全维度监控、Step-by-Step 单步调试 |
-| | M05 | 词嵌入空间 | 3D 语义流形、余弦相似度、国王-女王向量平行四边形 |
+| | M05 | 词嵌入空间 | 合成展示向量、原空间余弦相似度、PCA 投影失真与经典类比现象边界 |
 | | M06 | 序列记忆 (RNN) | 记忆衰减热力图、长短程遗忘瓶颈对比 |
 | **LLM 篇** | M07 | 注意力机制 | QKV 矩阵分解、缩放因子开关实验、因果掩码 |
 | | M08 | Transformer Block | Pre-LN 残差流、GELU/SwiGLU 门控 FFN、多层堆叠 |
 | | M09 | Mini-GPT | 自回归接龙生成、Temperature/Top-K 采样、打字机 |
-| **多模态篇** | M10 | 卷积与视觉感知 | 2D 卷积滑动计算、特征图热力图、ViT Patch 切片、CLIP 图文对齐 |
+| **多模态篇** | M10 | 卷积与视觉感知 | 2D 卷积、ViT Patch、随机双塔前向与合成相似度示例（非已训练 CLIP 对齐） |
 | | M11 | 音频信号与语音 | 实时波形示波器、FFT 频谱分解、Mel 滤波器组、连续音频帧切片（非 Whisper 复刻） |
-| | M12 | 视频与世界模型 | 32×32 合成视频采样、时空相关性、教学级下一帧预测、DDPM 前向加噪调度 |
-| **训练篇** | M13 | 预训练与扩展定律 | MLM/CLM/Contrastive/MAE、Chinchilla 扩展定律计算器、BPE 分词演练、语料配比 |
-| | M14 | 后训练对齐工程 | SFT、RLHF、DPO、LoRA 矩阵分解、同一问题三阶段回答质变实录 |
-| **评估篇** | M15 | 评估基准框架 | Perplexity (PPL) 计算、Mini-MMLU / Mini-GSM8K 教学题集、模拟能力对比与雷达图 |
+| | M12 | 视频与世界模型 | 合成视频、时空 Patch、未训练输出头结构示意、DDPM 前向加噪及残余信号/SNR |
+| **训练篇** | M13 | 预训练与扩展定律 | 教学规模 MLM/CLM、Contrastive/MAE、Chinchilla 条件化经验关系、BPE 与数据流程 |
+| | M14 | 后训练对齐工程 | SFT/RLHF/DPO/LoRA 目标片段、预置模板案例与被省略的完整训练协议 |
+| **评估篇** | M15 | 评估基准框架 | PPL 契约、MMLU/HellaSwag/GSM8K-style 自建教学题、一次采样一致的模拟结果 |
 | **强化学习篇** | M16 | MDP、Q-Learning 与推理 RL 边界 | GridWorld、值迭代、Q-Learning；GRPO/R1 部分当前仅为规则曲线模拟，尚非真实语言模型训练 |
 
 ## 🚀 快速开始与启停最佳实践
@@ -107,7 +109,7 @@ uv run streamlit run dashboard/app.py --server.port 8501
 ## 📁 项目拓扑结构
 
 ```
-├── nn_core/                  # 🔧 核心底层引擎（纯 NumPy 100% 白盒实现）
+├── nn_core/                  # 🔧 核心底层引擎（纯 NumPy 教学实现）
 │   ├── tensor.py             # 数值稳定性工具 (safe_log, safe_exp, clip_gradients)
 │   ├── activations.py        # Sigmoid, ReLU, Tanh, LeakyReLU, Softmax, SiLU
 │   ├── gelu.py               # GELU 激活函数
@@ -136,7 +138,7 @@ uv run streamlit run dashboard/app.py --server.port 8501
 │   ├── pretraining.py        # 预训练四大范式：MLM (BERT), CLM (GPT), 对比 (CLIP), MAE
 │   ├── rlhf.py               # 奖励模型 (RewardModel), PPO-Clip 策略梯度, DPO 隐式损失
 │   ├── lora.py               # LoRA 低秩旁路矩阵分解与权重合并
-│   ├── posttraining.py       # 后训练全生命周期流水线与真实案例实录
+│   ├── posttraining.py       # 后训练阶段与模板案例（非模型训练结果）
 │   ├── evaluation.py         # Perplexity 困惑度, Evaluation Harness 自动化考试框架
 │   ├── model.py              # Sequential 模型容器 + Mini-batch 训练循环
 │   └── callbacks.py          # 训练历史、早停机制、实验追踪
@@ -166,13 +168,13 @@ uv run streamlit run dashboard/app.py --server.port 8501
 └── scripts/                  # 🚀 跨平台自动化运维与启动脚本
 ```
 
-## 🧮 数学正确性保证与梯度校验
+## 🧮 数学核验范围与梯度校验
 
-所有核心算子的反向传播梯度均通过**双侧中心差分法**严格校验：
+多个关键反向传播算子在受控、可导、有限输入上通过**双侧中心差分法**交叉核对：
 
 $$\frac{\partial L}{\partial \theta} \approx \frac{L(\theta + \epsilon) - L(\theta - \epsilon)}{2\epsilon}, \quad \text{相对误差} < 10^{-4}$$
 
-覆盖校验：Dense 全连接层、Conv2D 卷积权重与输入特征图、MaxPool2D 梯度路由、激活函数导数链、L1/L2 正则化项、LoRA 旁路微分、LayerNorm 全微分反向链。
+当前覆盖 Dense、Conv2D、激活函数、L1/L2、LoRA、LayerNorm 与 SwiGLU 等路径。一次数值梯度通过只表示当前输入、步长、精度和容差下近似一致；不可导点、近零梯度、随机算子和未覆盖路径仍需分别处理。
 
 ## 📜 开源许可证与版权声明
 

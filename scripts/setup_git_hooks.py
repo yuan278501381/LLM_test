@@ -4,7 +4,7 @@ scripts/setup_git_hooks.py - 本地 Git Pre-Commit / Pre-Push 移情左移门禁
 
 在本地 `.git/hooks/pre-commit` 中注入自动化门禁脚本：
 在开发者执行 `git commit` 的瞬间，毫秒级执行 AST 静态导入校验与 API 契约扫描。
-坏代码在本地被物理拦截，彻底无法提交进入版本库！
+在本地提交前运行可复现检查；钩子可被绕过，因此 CI 仍是必要门禁。
 """
 
 import os
