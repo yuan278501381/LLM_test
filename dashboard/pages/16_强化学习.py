@@ -375,7 +375,7 @@ with col_grid:
         plot_bgcolor="#ffffff",
         paper_bgcolor="#ffffff",
     )
-    st.plotly_chart(fig_grid, use_container_width=True)
+    st.plotly_chart(fig_grid, width="stretch")
 
 with col_curves:
     # 绘制训练回报与 TD-Error 曲线
@@ -412,7 +412,7 @@ with col_curves:
         paper_bgcolor="#ffffff",
         legend=dict(x=0.05, y=0.95),
     )
-    st.plotly_chart(fig_train, use_container_width=True)
+    st.plotly_chart(fig_train, width="stretch")
 
 # ---------------------------------------------------------------------------
 # [E] 核心可视化 2: 贝尔曼状态价值曲面 V(s)
@@ -452,7 +452,7 @@ with col_val2d:
         plot_bgcolor="#ffffff",
         paper_bgcolor="#ffffff",
     )
-    st.plotly_chart(fig_v2d, use_container_width=True)
+    st.plotly_chart(fig_v2d, width="stretch")
 
 with col_val3d:
     # 3D 价值曲面
@@ -479,7 +479,7 @@ with col_val3d:
         height=320,
         paper_bgcolor="#ffffff",
     )
-    st.plotly_chart(fig_v3d, use_container_width=True)
+    st.plotly_chart(fig_v3d, width="stretch")
 
 # ---------------------------------------------------------------------------
 # [F] 核心可视化 3: 策略箭头场与 Q 值矩阵
@@ -544,7 +544,7 @@ fig_quiver.update_layout(
     plot_bgcolor="#ffffff",
     paper_bgcolor="#ffffff",
 )
-st.plotly_chart(fig_quiver, use_container_width=True)
+st.plotly_chart(fig_quiver, width="stretch")
 
 # ---------------------------------------------------------------------------
 # [G] 核心可视化 4: 2026 DeepSeek-R1 GRPO 推理涌现演化
@@ -613,7 +613,7 @@ with col_r1_left:
         paper_bgcolor="#ffffff",
         legend=dict(x=0.05, y=0.95),
     )
-    st.plotly_chart(fig_r1, use_container_width=True)
+    st.plotly_chart(fig_r1, width="stretch")
 
 with col_r1_right:
     st.markdown("##### [REASONING TRACE // 推理轨迹]  演化阶段输出对比 (Reasoning Traces)")
