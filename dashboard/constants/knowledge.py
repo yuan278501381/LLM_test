@@ -452,3 +452,144 @@ MODERN_LLM_ARCH: dict[str, ArchitectureMeta] = {
         example="vLLM, TensorRT-LLM, TGI 等工业级高性能推理引擎中的核心 PagedAttention 显存池化管理对象。",
     ),
 }
+
+# ---------------------------------------------------------------------------
+# 多模态感知与世界模型知识库 (2026 前沿多模态大模型标准)
+# ---------------------------------------------------------------------------
+MULTIMODAL_ARCH: dict[str, ArchitectureMeta] = {
+    "Conv2D": ArchitectureMeta(
+        id="Conv2D",
+        label="Conv2D (二维卷积空间滑动滤波)",
+        formula="Y_{i,j} = \\sum_{m} \\sum_{n} X_{i+m, j+n} W_{m,n} + b",
+        desc="通过小尺寸滑动窗口在二维空间图像上局部相乘求和，具备平移不变性与局部特征聚集能力。",
+        impact="计算机视觉的经典奠基算子，能以极少的参数高效提取边缘、纹理等底层与中层空间几何特征。",
+        example="ResNet, VGG, ConvNeXt 等经典卷积骨干网络。",
+    ),
+    "ViT": ArchitectureMeta(
+        id="ViT",
+        label="ViT (Vision Transformer / 图像切片自注意力)",
+        formula="Z_0 = [x_{\\text{cls}}; x_p^1 E; \\dots; x_p^N E] + E_{\\text{pos}}",
+        desc="将整幅图像切分为不重叠的小图块 (Patches)，将每个 Patch 视为一个 Token 送入标准 Transformer Encoder 处理全局自注意力。",
+        impact="彻底打破了 CV 与 NLP 的模态鸿沟，消除了卷积的归纳偏置，在大规模数据预训练下展现出强大的表征上限。",
+        example="ViT-H/14, DINOv2, MAE 等视觉基础大模型。",
+    ),
+    "CLIP": ArchitectureMeta(
+        id="CLIP",
+        label="CLIP (对比语言-图像预训练双塔对齐)",
+        formula="L = -\\frac{1}{2N} \\sum_{i=1}^N \\left( \\log \\frac{e^{S_{ii}/\\tau}}{\\sum_j e^{S_{ij}/\\tau}} + \\log \\frac{e^{S_{ii}/\\tau}}{\\sum_j e^{S_{ji}/\\tau}} \\right)",
+        desc="分别使用文本塔与图像塔对图文对进行特征提取，通过 InfoNCE 对称对比损失将同一概念的文本和图片投影到同一超球面。",
+        impact="实现了真正的跨模态零样本分类 (Zero-Shot) 与文搜图能力，是 Stable Diffusion, Midjourney 等文生图大模型的语义导航器。",
+        example="OpenAI CLIP (ViT-L/14), OpenCLIP, SigLIP。",
+    ),
+    "FFT": ArchitectureMeta(
+        id="FFT",
+        label="FFT / STFT (快速与短时傅里叶变换)",
+        formula="X(m, \\omega) = \\sum_{n=0}^{N-1} x(m H + n) w(n) e^{-j \\omega n}",
+        desc="将一维时域连续振动声波分解为频域各正弦分量的幅度与相位，STFT 则通过加窗滑动提取动态时频谱。",
+        impact="数字音频信号处理的数学基石，将不可解析的连续时间压力波形转化为计算机可处理的频域矩阵。",
+        example="所有现代声学与语音识别前端信号处理流程。",
+    ),
+    "MelSpec": ArchitectureMeta(
+        id="MelSpec",
+        label="Mel Spectrogram (梅尔刻度声学频谱图)",
+        formula="m = 2595 \\log_{10}(1 + f / 700)",
+        desc="利用模拟人耳对低频敏感、对高频迟钝的非线性耳蜗临界频带滤波器组，将 STFT 功率谱压缩为 2D 听觉声学热力图。",
+        impact="将一维声波完美转化为类似于 2D 图像的对数特征图，使得语音可以无缝接入 CNN 与 Transformer 视觉骨干。",
+        example="OpenAI Whisper, Google AudioPaLM 等语音大模型的前端声学特征输入。",
+    ),
+    "Diffusion": ArchitectureMeta(
+        id="Diffusion",
+        label="Diffusion (扩散去噪生成模型)",
+        formula="x_t = \\sqrt{\\bar{\\alpha}_t} x_0 + \\sqrt{1 - \\bar{\\alpha}_t} \\epsilon, \\quad L = \\mathbb{E}[\\|\\epsilon - \\epsilon_\\theta(x_t, t)\\|^2]",
+        desc="通过马尔可夫链在前向过程中逐步向真实数据注入高斯白噪声，训练神经网络逆向预测并剔除噪声以恢复清晰样本。",
+        impact="在图像、音频、视频生成领域全面超越传统 GAN，具有极高的生成多样性与稳定的训练动态特性。",
+        example="Stable Diffusion, DDPM, DiT (Diffusion Transformer)。",
+    ),
+    "WorldModel": ArchitectureMeta(
+        id="WorldModel",
+        label="World Model (世界模型与自回归未来推演)",
+        formula="\\hat{x}_{t+1} = f_{\\theta}(z_{\\le t}, a_t)",
+        desc="在潜在表征空间中模拟物理世界的连续动力学演化，预测给定历史观测与动作后的下一帧物理画面与环境状态。",
+        impact="赋予大模型类似人类'在脑海中做思想实验'的想象力与因果推理能力，是具身智能与通用人工智能 (AGI) 的终极拼图。",
+        example="OpenAI Sora, Google Genie, DeepMind DreamerV3。",
+    ),
+}
+
+# ---------------------------------------------------------------------------
+# 训练全生命周期与对齐评估知识库 (2026 前沿 LLM 训练标准)
+# ---------------------------------------------------------------------------
+TRAINING_ARCH: dict[str, ArchitectureMeta] = {
+    "MLM": ArchitectureMeta(
+        id="MLM",
+        label="MLM (Masked Language Model / 掩码完形填空)",
+        formula="L_{\\text{MLM}} = -\\sum_{i \\in \\text{Masked}} \\log p(w_i | w_{\\setminus i})",
+        desc="随机遮蔽句子中 15% 的词汇，使用双向全量上下文注意力机制预测被遮蔽位置的真实词。",
+        impact="赋予模型极强的双向句法与深层语义理解能力，擅长文本分类、实体命名与语义相似度计算。",
+        example="BERT, RoBERTa, DeBERTa 等理解类底座。",
+    ),
+    "CLM": ArchitectureMeta(
+        id="CLM",
+        label="CLM (Causal Language Model / 自回归因果接龙)",
+        formula="L_{\\text{CLM}} = -\\sum_{t=1}^T \\log p(w_t | w_{<t})",
+        desc="利用下三角因果掩码强制模型仅能依赖左侧前文预测下一个 Token，从左到右自回归生成。",
+        impact="赋予模型强大的开放式生成、上下文学习 (In-Context Learning) 与思维链 (CoT) 推理能力。",
+        example="GPT-4, LLaMA-3, Qwen-2.5, DeepSeek 等主流生成式大模型。",
+    ),
+    "MAE": ArchitectureMeta(
+        id="MAE",
+        label="MAE (Masked Autoencoders / 视觉高比例掩码自编码)",
+        formula="L_{\\text{MAE}} = \\text{MSE}(\\hat{P}_{\\text{mask}}, P_{\\text{mask}})",
+        desc="随机遮蔽图像中 75% 的 Patch，仅将剩余 25% 的可见 Patch 送入 Encoder，再由轻量 Decoder 预测缺失像素。",
+        impact="以极高的训练效率迫使模型学习全局视觉场景的拓扑几何与语义补全能力。",
+        example="Kaiming He 的 MAE 论文及其在视频/音频领域的衍生预训练模型。",
+    ),
+    "SFT": ArchitectureMeta(
+        id="SFT",
+        label="SFT (Supervised Fine-Tuning / 监督指令微调)",
+        formula="L_{\\text{SFT}} = -\\sum_{t \\in \\text{Response}} \\log p(y_t | x, y_{<t})",
+        desc="在高质量人类标注的 Prompt-Response 指令问答对上进行有监督微调，仅对回答部分计算交叉熵损失。",
+        impact="将'只会续写废话'的预训练基座模型转化为能够准确理解并遵循人类意图的助手型模型。",
+        example="ChatGPT 早期 InstructGPT 阶段、Alpaca, Vicuna 微调技术。",
+    ),
+    "RLHF": ArchitectureMeta(
+        id="RLHF",
+        label="RLHF (Reinforcement Learning from Human Feedback / 强化学习对齐)",
+        formula="\\max_\\theta \\mathbb{E}\\left[ r_\\phi(x, y) - \\beta \\mathbb{D}_{\\text{KL}}(\\pi_\\theta || \\pi_{\\text{ref}}) \\right]",
+        desc="先利用人类偏好对训练奖励模型 (Reward Model)，再通过 PPO 算法优化策略模型以最大化人类认可得分并约束 KL 散度。",
+        impact="赋予大模型价值观对齐、有用性、无害性与主动拒绝危险请求的能力，有效缓解大模型胡言乱语与恶意诱导。",
+        example="OpenAI InstructGPT / GPT-4 对齐流程、Anthropic Claude Constitutional AI。",
+    ),
+    "DPO": ArchitectureMeta(
+        id="DPO",
+        label="DPO (Direct Preference Optimization / 直接偏好优化)",
+        formula="L_{\\text{DPO}} = -\\mathbb{E}\\left[ \\log \\sigma\\left( \\beta \\log \\frac{\\pi_\\theta(y_w|x)}{\\pi_{\\text{ref}}(y_w|x)} - \\beta \\log \\frac{\\pi_\\theta(y_l|x)}{\\pi_{\\text{ref}}(y_l|x)} \\right) \\right]",
+        desc="通过数学变换将奖励模型的最优闭式解直接代入损失函数，彻底摆脱了复杂的强化学习 PPO 训练循环。",
+        impact="训练极其稳定，显存消耗减少一半，已成为 2024~2026 年工业界最主流的大模型偏好微调方案。",
+        example="LLaMA-3, Qwen-2.5, Mistral 等现代开源模型对齐的默认标准。",
+    ),
+    "LoRA": ArchitectureMeta(
+        id="LoRA",
+        label="LoRA (Low-Rank Adaptation / 低秩自适应微调)",
+        formula="W = W_0 + \\Delta W = W_0 + \\frac{\\alpha}{r} B A, \\quad A \\in \\mathbb{R}^{d \\times r}, B \\in \\mathbb{R}^{r \\times k}",
+        desc="冻结预训练主干权重，在矩阵旁路引入两个极小秩的分解矩阵 A 和 B 进行梯度更新，推理时可直接合并消除延迟。",
+        impact="将显存需求降低 3~5 倍，训练参数量压缩 95% 以上，使得个人电脑或单卡即可微调百亿参数大模型。",
+        example="开源社区微调大模型与 Diffusion 风格权重的绝对标准协议。",
+    ),
+    "Perplexity": ArchitectureMeta(
+        id="Perplexity",
+        label="Perplexity (PPL / 序列困惑度)",
+        formula="\\text{PPL} = \\exp\\left(-\\frac{1}{N} \\sum_{i=1}^N \\log p(x_i | x_{<i})\\right)",
+        desc="衡量自回归语言模型在预测测试集文本时的不确定性，数值越低代表模型对真实人类语言概率分布拟合得越好。",
+        impact="大语言模型预训练阶段最基础、最通用的内在无偏评价指标。",
+        example="用于监控预训练 Loss 收敛状态与评估模型语言建模纯度。",
+    ),
+    "EvalHarness": ArchitectureMeta(
+        id="EvalHarness",
+        label="Evaluation Harness (标准化自动化综合评测框架)",
+        formula="\\text{Score} = \\frac{1}{|\\mathcal{T}|} \\sum_{t \\in \\mathcal{T}} \\text{Metric}_t(\\mathcal{M}(x_t), y_t)",
+        desc="通过集成 MMLU (学科知识)、HellaSwag (常识推理)、GSM8K (数学推理)、HumanEval (代码) 等基准套件进行全自动客观考试。",
+        impact="杜绝主观经验偏差，为大模型能力天梯排行榜 (Leaderboard) 提供公认的标准化量化依据。",
+        example="lm-evaluation-harness (EleutherAI), Open LLM Leaderboard (HuggingFace)。",
+    ),
+}
+

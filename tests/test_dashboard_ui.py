@@ -348,3 +348,52 @@ class TestStreamlitAppE2E:
         if gen_btn:
             gen_btn.click().run()
             assert not at.exception, f"Page 9 generate button error: {at.exception}"
+
+    def test_page10_vision_perception_e2e(self):
+        """测试 M10: 卷积与视觉感知页面"""
+        page_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "dashboard", "pages", "10_视觉感知.py")
+        )
+        at = AppTest.from_file(page_path, default_timeout=25).run()
+        assert not at.exception, f"Page 10 runtime error: {at.exception}"
+
+    def test_page11_audio_perception_e2e(self):
+        """测试 M11: 音频信号与语音理解页面"""
+        page_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "dashboard", "pages", "11_音频感知.py")
+        )
+        at = AppTest.from_file(page_path, default_timeout=25).run()
+        assert not at.exception, f"Page 11 runtime error: {at.exception}"
+
+    def test_page12_video_world_model_e2e(self):
+        """测试 M12: 视频理解与世界模型页面"""
+        page_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "dashboard", "pages", "12_视频与世界模型.py")
+        )
+        at = AppTest.from_file(page_path, default_timeout=25).run()
+        assert not at.exception, f"Page 12 runtime error: {at.exception}"
+
+    def test_page13_pretraining_paradigms_e2e(self):
+        """测试 M13: 预训练范式全景页面"""
+        page_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "dashboard", "pages", "13_预训练范式.py")
+        )
+        at = AppTest.from_file(page_path, default_timeout=25).run()
+        assert not at.exception, f"Page 13 runtime error: {at.exception}"
+
+    def test_page14_posttraining_alignment_e2e(self):
+        """测试 M14: 后训练对齐与轻量微调页面"""
+        page_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "dashboard", "pages", "14_后训练工程.py")
+        )
+        at = AppTest.from_file(page_path, default_timeout=25).run()
+        assert not at.exception, f"Page 14 runtime error: {at.exception}"
+
+    def test_page15_evaluation_harness_e2e(self):
+        """测试 M15: 评估基准框架页面"""
+        page_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "dashboard", "pages", "15_评估基准.py")
+        )
+        at = AppTest.from_file(page_path, default_timeout=25).run()
+        assert not at.exception, f"Page 15 runtime error: {at.exception}"
+

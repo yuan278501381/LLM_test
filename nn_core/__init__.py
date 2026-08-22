@@ -1,22 +1,14 @@
 # Copyright (c) 2026 Yy1 (yuan278501381) | MIT License
 """
-nn_core - 手搓神经网络核心引擎 (2026 现代 LLM 全栈版)
+nn_core - 手搓神经网络核心引擎 (2026 现代 LLM、多模态与世界模型全生命周期版)
 
-纯 NumPy 实现的神经网络与现代 LLM 框架，包含：
-    - 激活函数：Sigmoid, ReLU, Tanh, LeakyReLU, Softmax, GELU, SiLU
-    - 损失函数：MSE, BinaryCrossEntropy, CategoricalCrossEntropy
-    - 网络层：Dense, Dropout, LayerNorm, SwiGLU
-    - 优化器：SGD, Momentum, RMSProp, Adam (支持通用参数协议)
-    - 初始化：zeros, random, xavier, he
-    - 正则化：L1, L2
-    - 模型：Sequential
-    - 现代 LLM 扩展：
-        - BPE 分词器 (BytePairEncoder)
-        - 词嵌入与正弦编码 (Embedding, PositionalEncoding)
-        - 旋转位置编码 (RotaryPositionalEmbedding / RoPE)
-        - 注意力机制 (MultiHeadAttention, GroupedQueryAttention / GQA, CausalMask)
-        - 门控前馈网络 (SwiGLU, FeedForward)
-        - 结构块与生成模型 (TransformerBlock, TinyGPT, KVCache)
+纯 NumPy 实现的神经网络、现代 LLM、多模态感知与对齐评估框架，包含：
+    - 基础篇：激活函数、损失函数、全连接层、Dropout、正则化、优化器、Sequential 训练容器
+    - 语言篇：BPE 分词器、词嵌入、正弦位置编码、RoPE 旋转位置编码、MHA、GQA、SwiGLU、TransformerBlock、TinyGPT、KV-Cache
+    - 视觉与音频篇：Conv2D (im2col)、MaxPool2D、ViT (PatchEmbedding)、CLIP (双塔对齐)、STFT、MelFilterbank、AudioTokenizer
+    - 视频与世界模型篇：SpatioTemporalPatchEmbed、视频帧采样、NextFramePredictor (世界模型)、DiffusionScheduler (Sora 扩散)
+    - 预训练与对齐篇：MLM (BERT)、CLM (GPT)、MAE (视觉自编码)、NT-Xent (对比学习)、RewardModel、PPO-Clip、DPO、LoRA (低秩微调)
+    - 评估体系篇：Perplexity、EvaluationHarness、MMLU / HellaSwag / GSM8K / Safety 基准考场
 """
 
 from nn_core.activations import LeakyReLU, ReLU, Sigmoid, Softmax, Tanh
@@ -36,14 +28,68 @@ from nn_core.gelu import GELU
 from nn_core.transformer import FeedForward, TransformerBlock
 from nn_core.gpt import TinyGPT
 
-# 2026 现代 LLM 新特性导入
+# 现代 LLM 基础算子
 from nn_core.bpe import BytePairEncoder
 from nn_core.rope import RotaryPositionalEmbedding, apply_rope, precompute_freqs_cis
 from nn_core.gqa import GroupedQueryAttention, repeat_kv
 from nn_core.swiglu import SwiGLU, silu
 from nn_core.kv_cache import KVCache
 
+# 进阶多模态感知与世界模型
+from nn_core.conv2d import Conv2D, MaxPool2D, col2im, im2col
+from nn_core.vit import PatchEmbedding, VisionTransformer
+from nn_core.clip import CLIPDualEncoder, contrastive_loss, get_pretrained_clip_data
+from nn_core.audio import (
+    AudioTokenizer,
+    compute_mel_spectrogram,
+    generate_chord,
+    generate_waveform,
+    hz_to_mel,
+    mel_filterbank,
+    mel_to_hz,
+    numpy_to_wav_bytes,
+    stft,
+)
+from nn_core.video import (
+    SpatioTemporalPatchEmbed,
+    VideoFrameSampler,
+    compute_frame_change_magnitude,
+    compute_frame_difference,
+    compute_motion_vector,
+    generate_synthetic_video,
+)
+from nn_core.world_model import (
+    DiffusionScheduler,
+    NextFramePredictor,
+    visualize_diffusion_process,
+)
+
+# 预训练范式、后训练对齐与评测体系
+from nn_core.pretraining import (
+    CausalLanguageModel,
+    ContrastiveLearning,
+    MaskedAutoEncoder,
+    MaskedLanguageModel,
+    PretrainingComparator,
+)
+from nn_core.rlhf import DPOLoss, PPOClipObjective, RewardModel
+from nn_core.lora import LoRALayer, compute_param_savings
+from nn_core.posttraining import AlignmentPipeline, generate_before_after_examples
+from nn_core.evaluation import (
+    BenchmarkQuestion,
+    BenchmarkTask,
+    EvaluationHarness,
+    compute_accuracy,
+    compute_f1,
+    compute_perplexity,
+    get_mini_gsm8k,
+    get_mini_hellaswag,
+    get_mini_mmlu,
+    get_mini_safety,
+)
+
 __all__ = [
+    # 基础
     "L1",
     "L2",
     "MSE",
@@ -72,6 +118,7 @@ __all__ = [
     "set_seed",
     "xavier_init",
     "zeros_init",
+    # 序列与 Transformer
     "Embedding",
     "PositionalEncoding",
     "get_mini_vocab",
@@ -94,7 +141,60 @@ __all__ = [
     "SwiGLU",
     "silu",
     "KVCache",
+    # 视觉与音频
+    "Conv2D",
+    "MaxPool2D",
+    "im2col",
+    "col2im",
+    "PatchEmbedding",
+    "VisionTransformer",
+    "CLIPDualEncoder",
+    "contrastive_loss",
+    "get_pretrained_clip_data",
+    "generate_waveform",
+    "generate_chord",
+    "stft",
+    "hz_to_mel",
+    "mel_to_hz",
+    "mel_filterbank",
+    "compute_mel_spectrogram",
+    "AudioTokenizer",
+    "numpy_to_wav_bytes",
+    # 视频与世界模型
+    "generate_synthetic_video",
+    "compute_frame_difference",
+    "compute_frame_change_magnitude",
+    "compute_motion_vector",
+    "VideoFrameSampler",
+    "SpatioTemporalPatchEmbed",
+    "NextFramePredictor",
+    "DiffusionScheduler",
+    "visualize_diffusion_process",
+    # 预训练与后训练对齐
+    "MaskedLanguageModel",
+    "CausalLanguageModel",
+    "ContrastiveLearning",
+    "MaskedAutoEncoder",
+    "PretrainingComparator",
+    "RewardModel",
+    "PPOClipObjective",
+    "DPOLoss",
+    "LoRALayer",
+    "compute_param_savings",
+    "AlignmentPipeline",
+    "generate_before_after_examples",
+    # 评测体系
+    "BenchmarkQuestion",
+    "BenchmarkTask",
+    "compute_perplexity",
+    "compute_accuracy",
+    "compute_f1",
+    "EvaluationHarness",
+    "get_mini_mmlu",
+    "get_mini_hellaswag",
+    "get_mini_gsm8k",
+    "get_mini_safety",
 ]
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 __author__ = "Yy1 (yuan278501381)"

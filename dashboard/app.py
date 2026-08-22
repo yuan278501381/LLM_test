@@ -1,7 +1,7 @@
 # Copyright (c) 2026 Yy1 (yuan278501381) | MIT License
 """
 NN Playground - 手搓神经网络可视化实验平台
-Streamlit 主入口 (现代极简高精 Bento 导航中枢)
+Streamlit 主入口 (现代极简高精 15 里程碑 Bento 导航中枢)
 """
 
 import os
@@ -13,7 +13,11 @@ if _PROJECT_ROOT not in sys.path:
 
 import streamlit as st
 from dashboard.styles.icons import svg_icon
-from dashboard.styles.theme import apply_custom_theme, render_hero_header
+from dashboard.styles.theme import (
+    apply_custom_theme,
+    render_hero_header,
+    render_section_heading,
+)
 
 st.set_page_config(
     page_title="NN Playground · Neural Research Lab",
@@ -27,14 +31,16 @@ apply_custom_theme()
 # Hero 区域
 render_hero_header(
     title="NN Playground",
-    subtitle="零框架手搓神经网络 · 全参数透明可视化实验平台 · 彻底击碎深度学习黑盒",
-    badge_text="WORLD-CLASS ARCHITECTURE · PURE NUMPY CORE",
+    subtitle="零框架手搓神经网络 · 纯 NumPy 全白盒实现 · 覆盖从单个感知器、Transformer、多模态视觉音频到世界模型与对齐工程全生命周期",
+    badge_text="WORLD-CLASS ARCHITECTURE · PURE NUMPY CORE · 15 MILESTONES",
     badge_type="blue",
 )
 
 # ---------------------------------------------------------------------------
-# 首页 Bento 卡片矩阵 (3x3 原生容器网格)
+# 板块 1: 核心语言与网络基础 (3x3 原生容器网格)
 # ---------------------------------------------------------------------------
+render_section_heading("CORE FOUNDATIONS & LLM // 神经网络底层基础与大语言模型核心", icon_name="cpu")
+
 col1, col2, col3 = st.columns(3)
 
 with col1:
@@ -43,7 +49,7 @@ with col1:
         icon_target = svg_icon("target", size=22, color="#1d4ed8")
         st.markdown(
             '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;">'
-            f'<div style="display:flex;align-items:center;gap:0.5rem;">{icon_target}<span style="font-size:1.24rem;font-weight:800;color:#0f172a;">单神经元感知器</span></div>'
+            f'<div style="display:flex;align-items:center;gap:0.5rem;">{icon_target}<span style="font-size:1.2rem;font-weight:800;color:#0f172a;">单神经元感知器</span></div>'
             '<span class="pill-badge pill-blue">M01</span>'
             '</div>',
             unsafe_allow_html=True,
@@ -55,7 +61,7 @@ with col1:
         icon_terminal = svg_icon("terminal", size=22, color="#047857")
         st.markdown(
             '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;">'
-            f'<div style="display:flex;align-items:center;gap:0.5rem;">{icon_terminal}<span style="font-size:1.24rem;font-weight:800;color:#0f172a;">全参数微观实验室</span></div>'
+            f'<div style="display:flex;align-items:center;gap:0.5rem;">{icon_terminal}<span style="font-size:1.2rem;font-weight:800;color:#0f172a;">全参数微观实验室</span></div>'
             '<span class="pill-badge pill-emerald">M04</span>'
             '</div>',
             unsafe_allow_html=True,
@@ -67,7 +73,7 @@ with col1:
         icon_eye = svg_icon("eye", size=22, color="#047857")
         st.markdown(
             '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;">'
-            f'<div style="display:flex;align-items:center;gap:0.5rem;">{icon_eye}<span style="font-size:1.24rem;font-weight:800;color:#0f172a;">注意力机制</span></div>'
+            f'<div style="display:flex;align-items:center;gap:0.5rem;">{icon_eye}<span style="font-size:1.2rem;font-weight:800;color:#0f172a;">注意力机制</span></div>'
             '<span class="pill-badge pill-emerald">M07</span>'
             '</div>',
             unsafe_allow_html=True,
@@ -80,7 +86,7 @@ with col2:
         icon_layers = svg_icon("layers", size=22, color="#6d28d9")
         st.markdown(
             '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;">'
-            f'<div style="display:flex;align-items:center;gap:0.5rem;">{icon_layers}<span style="font-size:1.24rem;font-weight:800;color:#0f172a;">多层网络与活性探针</span></div>'
+            f'<div style="display:flex;align-items:center;gap:0.5rem;">{icon_layers}<span style="font-size:1.2rem;font-weight:800;color:#0f172a;">多层网络与活性探针</span></div>'
             '<span class="pill-badge pill-purple">M02</span>'
             '</div>',
             unsafe_allow_html=True,
@@ -92,7 +98,7 @@ with col2:
         icon_hash = svg_icon("hash", size=22, color="#1d4ed8")
         st.markdown(
             '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;">'
-            f'<div style="display:flex;align-items:center;gap:0.5rem;">{icon_hash}<span style="font-size:1.24rem;font-weight:800;color:#0f172a;">词嵌入空间</span></div>'
+            f'<div style="display:flex;align-items:center;gap:0.5rem;">{icon_hash}<span style="font-size:1.2rem;font-weight:800;color:#0f172a;">词嵌入空间</span></div>'
             '<span class="pill-badge pill-blue">M05</span>'
             '</div>',
             unsafe_allow_html=True,
@@ -104,7 +110,7 @@ with col2:
         icon_box = svg_icon("box", size=22, color="#b45309")
         st.markdown(
             '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;">'
-            f'<div style="display:flex;align-items:center;gap:0.5rem;">{icon_box}<span style="font-size:1.24rem;font-weight:800;color:#0f172a;">Transformer</span></div>'
+            f'<div style="display:flex;align-items:center;gap:0.5rem;">{icon_box}<span style="font-size:1.2rem;font-weight:800;color:#0f172a;">Transformer</span></div>'
             '<span class="pill-badge pill-amber">M08</span>'
             '</div>',
             unsafe_allow_html=True,
@@ -117,7 +123,7 @@ with col3:
         icon_zap = svg_icon("zap", size=22, color="#b45309")
         st.markdown(
             '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;">'
-            f'<div style="display:flex;align-items:center;gap:0.5rem;">{icon_zap}<span style="font-size:1.24rem;font-weight:800;color:#0f172a;">优化器同屏竞速</span></div>'
+            f'<div style="display:flex;align-items:center;gap:0.5rem;">{icon_zap}<span style="font-size:1.2rem;font-weight:800;color:#0f172a;">优化器同屏竞速</span></div>'
             '<span class="pill-badge pill-amber">M03</span>'
             '</div>',
             unsafe_allow_html=True,
@@ -129,7 +135,7 @@ with col3:
         icon_activity = svg_icon("activity", size=22, color="#6d28d9")
         st.markdown(
             '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;">'
-            f'<div style="display:flex;align-items:center;gap:0.5rem;">{icon_activity}<span style="font-size:1.24rem;font-weight:800;color:#0f172a;">序列记忆与遗忘瓶颈</span></div>'
+            f'<div style="display:flex;align-items:center;gap:0.5rem;">{icon_activity}<span style="font-size:1.2rem;font-weight:800;color:#0f172a;">序列记忆与遗忘瓶颈</span></div>'
             '<span class="pill-badge pill-purple">M06</span>'
             '</div>',
             unsafe_allow_html=True,
@@ -141,12 +147,94 @@ with col3:
         icon_cpu = svg_icon("cpu", size=22, color="#1d4ed8")
         st.markdown(
             '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;">'
-            f'<div style="display:flex;align-items:center;gap:0.5rem;">{icon_cpu}<span style="font-size:1.24rem;font-weight:800;color:#0f172a;">Mini-GPT 文本生成</span></div>'
+            f'<div style="display:flex;align-items:center;gap:0.5rem;">{icon_cpu}<span style="font-size:1.2rem;font-weight:800;color:#0f172a;">Mini-GPT 文本生成</span></div>'
             '<span class="pill-badge pill-blue">M09</span>'
             '</div>',
             unsafe_allow_html=True,
         )
         st.page_link("pages/9_Mini_GPT.py", label="进入实验 // LAUNCH →", use_container_width=True)
+
+# ---------------------------------------------------------------------------
+# 板块 2: 多模态感知、世界模型与训练全生命周期 (3x2 网格)
+# ---------------------------------------------------------------------------
+render_section_heading("ADVANCED MULTIMODAL & TRAINING // 进阶多模态、世界模型与全生命周期", icon_name="activity")
+
+col_a1, col_a2, col_a3 = st.columns(3)
+
+with col_a1:
+    # ---- 卡片 10: 视觉感知 ----
+    with st.container(border=True):
+        icon_eye10 = svg_icon("eye", size=22, color="#047857")
+        st.markdown(
+            '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;">'
+            f'<div style="display:flex;align-items:center;gap:0.5rem;">{icon_eye10}<span style="font-size:1.2rem;font-weight:800;color:#0f172a;">卷积与视觉感知</span></div>'
+            '<span class="pill-badge pill-emerald">M10</span>'
+            '</div>',
+            unsafe_allow_html=True,
+        )
+        st.page_link("pages/10_视觉感知.py", label="进入实验 // LAUNCH →", use_container_width=True)
+
+    # ---- 卡片 13: 预训练范式 ----
+    with st.container(border=True):
+        icon_hash13 = svg_icon("hash", size=22, color="#1d4ed8")
+        st.markdown(
+            '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;">'
+            f'<div style="display:flex;align-items:center;gap:0.5rem;">{icon_hash13}<span style="font-size:1.2rem;font-weight:800;color:#0f172a;">预训练范式全景</span></div>'
+            '<span class="pill-badge pill-blue">M13</span>'
+            '</div>',
+            unsafe_allow_html=True,
+        )
+        st.page_link("pages/13_预训练范式.py", label="进入实验 // LAUNCH →", use_container_width=True)
+
+with col_a2:
+    # ---- 卡片 11: 音频感知 ----
+    with st.container(border=True):
+        icon_act11 = svg_icon("activity", size=22, color="#6d28d9")
+        st.markdown(
+            '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;">'
+            f'<div style="display:flex;align-items:center;gap:0.5rem;">{icon_act11}<span style="font-size:1.2rem;font-weight:800;color:#0f172a;">音频信号与语音</span></div>'
+            '<span class="pill-badge pill-purple">M11</span>'
+            '</div>',
+            unsafe_allow_html=True,
+        )
+        st.page_link("pages/11_音频感知.py", label="进入实验 // LAUNCH →", use_container_width=True)
+
+    # ---- 卡片 14: 后训练工程 ----
+    with st.container(border=True):
+        icon_target14 = svg_icon("target", size=22, color="#b45309")
+        st.markdown(
+            '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;">'
+            f'<div style="display:flex;align-items:center;gap:0.5rem;">{icon_target14}<span style="font-size:1.2rem;font-weight:800;color:#0f172a;">后训练与对齐工程</span></div>'
+            '<span class="pill-badge pill-amber">M14</span>'
+            '</div>',
+            unsafe_allow_html=True,
+        )
+        st.page_link("pages/14_后训练工程.py", label="进入实验 // LAUNCH →", use_container_width=True)
+
+with col_a3:
+    # ---- 卡片 12: 视频与世界模型 ----
+    with st.container(border=True):
+        icon_cpu12 = svg_icon("cpu", size=22, color="#be123c")
+        st.markdown(
+            '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;">'
+            f'<div style="display:flex;align-items:center;gap:0.5rem;">{icon_cpu12}<span style="font-size:1.2rem;font-weight:800;color:#0f172a;">视频与世界模型</span></div>'
+            '<span class="pill-badge pill-amber">M12</span>'
+            '</div>',
+            unsafe_allow_html=True,
+        )
+        st.page_link("pages/12_视频与世界模型.py", label="进入实验 // LAUNCH →", use_container_width=True)
+
+    # ---- 卡片 15: 评估基准框架 ----
+    with st.container(border=True):
+        icon_term15 = svg_icon("terminal", size=22, color="#047857")
+        st.markdown(
+            '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;">'
+            f'<div style="display:flex;align-items:center;gap:0.5rem;">{icon_term15}<span style="font-size:1.2rem;font-weight:800;color:#0f172a;">评估基准框架</span></div>'
+            '<span class="pill-badge pill-emerald">M15</span>'
+            '</div>',
+            unsafe_allow_html=True,
+        )
+        st.page_link("pages/15_评估基准.py", label="进入实验 // LAUNCH →", use_container_width=True)
 
 # ---------------------------------------------------------------------------
 # 系统技术架构与工程标准
@@ -165,10 +253,10 @@ with col_arch:
         )
         st.markdown(
             """
-            - **纯 NumPy 底层**: 零 PyTorch/TF 依赖，前向计算与反向传播 100% 纯手写矩阵运算
-            - **数学严谨性**: 梯度校验通过中心差分法 (Central Difference)，解析误差严格 < 1e-5
-            - **模块化解耦**: `Activations`, `Losses`, `Layers`, `Optimizers`, `Callbacks` 遵循高内聚原则
-            - **工业级 DevOps**: GitHub Actions 矩阵测试 (Linux/macOS/Windows × Py3.11/12/13)、多阶段 Docker 容器化
+            - **纯 NumPy 底层**: 零 PyTorch/TF/Scipy 外部库，前向与反向微分 100% 纯手写矩阵运算
+            - **全生命周期闭环**: 涵盖感知器、MLP、Transformer、多模态、世界模型、预训练与后训练对齐
+            - **数学严谨性**: 核心算子梯度通过双侧中心差分法严格检验，相对误差 < 1e-4
+            - **工业级 DevOps**: 覆盖跨平台测试 (Windows/Linux/macOS)、Docker 容器化与优雅启停规范
             """
         )
 
@@ -186,15 +274,15 @@ with col_stats:
             """
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;margin-top:0.6rem;">
                 <div style="background:#f8fafc;border:1px solid #e2e8f0;padding:0.8rem;border-radius:8px;text-align:center;">
-                    <div style="font-size:1.45rem;font-weight:800;color:#1d4ed8;font-family:'JetBrains Mono';">162 / 162</div>
+                    <div style="font-size:1.45rem;font-weight:800;color:#1d4ed8;font-family:'JetBrains Mono';">187 / 187</div>
                     <div style="font-size:0.72rem;color:#64748b;font-weight:700;text-transform:uppercase;">UNIT & E2E TESTS</div>
                 </div>
                 <div style="background:#f8fafc;border:1px solid #e2e8f0;padding:0.8rem;border-radius:8px;text-align:center;">
-                    <div style="font-size:1.45rem;font-weight:800;color:#047857;font-family:'JetBrains Mono';">&lt; 1e-5</div>
+                    <div style="font-size:1.45rem;font-weight:800;color:#047857;font-family:'JetBrains Mono';">&lt; 1e-4</div>
                     <div style="font-size:0.72rem;color:#64748b;font-weight:700;text-transform:uppercase;">GRAD ERROR</div>
                 </div>
                 <div style="background:#f8fafc;border:1px solid #e2e8f0;padding:0.8rem;border-radius:8px;text-align:center;">
-                    <div style="font-size:1.45rem;font-weight:800;color:#b45309;font-family:'JetBrains Mono';">9 STAGES</div>
+                    <div style="font-size:1.45rem;font-weight:800;color:#b45309;font-family:'JetBrains Mono';">15 STAGES</div>
                     <div style="font-size:0.72rem;color:#64748b;font-weight:700;text-transform:uppercase;">MILESTONES</div>
                 </div>
                 <div style="background:#f8fafc;border:1px solid #e2e8f0;padding:0.8rem;border-radius:8px;text-align:center;">
