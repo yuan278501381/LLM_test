@@ -4,10 +4,10 @@ tests/test_audio.py - 音频信号与语音感知模块单元测试
 """
 
 import numpy as np
-import pytest
 
 from nn_core.audio import (
     AudioTokenizer,
+    SpectrogramFramePatcher,
     compute_mel_spectrogram,
     generate_chord,
     generate_waveform,
@@ -39,7 +39,7 @@ def test_stft_and_frequency_detection():
     sr = 16000
     freq = 440.0
     signal = generate_waveform(freq=freq, duration=1.0, sr=sr)
-    
+
     n_fft = 512
     stft_mat = stft(signal, n_fft=n_fft, hop_length=256)
     assert stft_mat.shape[0] == n_fft // 2 + 1
@@ -76,9 +76,13 @@ def test_mel_spectrogram_and_tokenizer():
     mel_spec = compute_mel_spectrogram(signal, sr=sr, n_fft=512, hop_length=256, n_mels=80)
     assert mel_spec.shape[0] == 80
 
-    tokenizer = AudioTokenizer(n_mels=80, frame_width=4)
+    tokenizer = SpectrogramFramePatcher(n_mels=80, frame_width=4)
     tokens = tokenizer.tokenize(mel_spec)
     assert tokens.shape[1] == 80 * 4
+
+    # 旧名称仅为兼容别名，行为保持一致。
+    legacy_tokens = AudioTokenizer(n_mels=80, frame_width=4).tokenize(mel_spec)
+    np.testing.assert_array_equal(tokens, legacy_tokens)
     assert tokens.shape[0] == mel_spec.shape[1] // 4
 
 

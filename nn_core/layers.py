@@ -12,6 +12,7 @@ nn_core.layers - 网络层模块
 
 import logging
 import uuid
+from collections.abc import Callable
 
 import numpy as np
 
@@ -23,7 +24,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # 初始化策略注册表 — 通过字符串名称查找初始化函数
 # ---------------------------------------------------------------------------
-_INITIALIZER_REGISTRY: dict[str, callable] = {
+_INITIALIZER_REGISTRY: dict[str, Callable[[tuple[int, int]], np.ndarray]] = {
     "zeros": zeros_init,
     "random": random_init,
     "xavier": xavier_init,
@@ -134,7 +135,10 @@ class Dense:
             传给前一层的梯度，shape (batch_size, n_inputs)
         """
         # 计算参数梯度
-        self.grad_weights = self.input_cache.T @ dout
+        input_cache = self.input_cache
+        if input_cache is None:
+            raise RuntimeError("Dense.backward() 必须在 forward() 之后调用")
+        self.grad_weights = input_cache.T @ dout
         self.grad_biases = np.sum(dout, axis=0, keepdims=True)
 
         # 叠加正则化梯度

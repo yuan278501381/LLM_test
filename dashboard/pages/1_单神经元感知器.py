@@ -26,6 +26,7 @@ from dashboard.components.param_panel import (
     render_deep_dive_card,
 )
 from dashboard.constants.knowledge import ACTIVATIONS, OPTIMIZERS
+from dashboard.components.pedagogy import render_lesson_evidence
 from dashboard.styles.theme import (
     anchor_badge,
     apply_custom_theme,
@@ -47,6 +48,7 @@ st.set_page_config(
 )
 
 apply_custom_theme()
+render_lesson_evidence("M01")
 
 render_hero_header(
     title="单神经元感知器",
@@ -61,12 +63,48 @@ render_hero_header(
 render_page_guide(
     title="单神经元感知器入门与空间交互地图",
     blueprint_sections=[
-        {"id": "A", "name": "控制台面板", "desc": "在左侧侧边栏切换数据集、调节学习率与训练轮数", "color": "amber", "target_id": "region-a"},
-        {"id": "B", "name": "教学指引", "desc": "当前卡片：通俗理解单神经元画直线分界线的物理机理", "color": "blue", "target_id": "region-b"},
-        {"id": "C", "name": "实时遥测指标", "desc": "观察模型自主训练后的 Loss 扣分与 100% 准确率", "color": "emerald", "target_id": "region-c"},
-        {"id": "D", "name": "空间决策流形", "desc": "观察特征平面上那根黑色分界实线如何精准切分红蓝点", "color": "purple", "target_id": "region-d"},
-        {"id": "E", "name": "损失收敛曲线", "desc": "验证做错题扣分 (Loss) 是否如大滑梯般平滑下降至 0", "color": "blue", "target_id": "region-e"},
-        {"id": "F", "name": "权重寻优轨迹", "desc": "俯瞰参数 (w₁, w₂) 沿损失坡度滚入盆地最低点的路径", "color": "rose", "target_id": "region-f"},
+        {
+            "id": "A",
+            "name": "控制台面板",
+            "desc": "在左侧侧边栏切换数据集、调节学习率与训练轮数",
+            "color": "amber",
+            "target_id": "region-a",
+        },
+        {
+            "id": "B",
+            "name": "教学指引",
+            "desc": "当前卡片：通俗理解单神经元画直线分界线的物理机理",
+            "color": "blue",
+            "target_id": "region-b",
+        },
+        {
+            "id": "C",
+            "name": "实时遥测指标",
+            "desc": "观察模型自主训练后的 Loss 扣分与 100% 准确率",
+            "color": "emerald",
+            "target_id": "region-c",
+        },
+        {
+            "id": "D",
+            "name": "空间决策流形",
+            "desc": "观察特征平面上那根黑色分界实线如何精准切分红蓝点",
+            "color": "purple",
+            "target_id": "region-d",
+        },
+        {
+            "id": "E",
+            "name": "损失收敛曲线",
+            "desc": "验证做错题扣分 (Loss) 是否如大滑梯般平滑下降至 0",
+            "color": "blue",
+            "target_id": "region-e",
+        },
+        {
+            "id": "F",
+            "name": "权重寻优轨迹",
+            "desc": "俯瞰参数 (w₁, w₂) 沿损失坡度滚入盆地最低点的路径",
+            "color": "rose",
+            "target_id": "region-f",
+        },
     ],
     plain_intro=(
         f"<b>1. 单神经元像一个拿尺子画直线的机器人</b>：输入特征 $(x_1, x_2)$ 是数据在地图上的横纵坐标。<br>"
@@ -98,29 +136,77 @@ render_page_guide(
     ],
 )
 
-render_floating_hud_navigator([
-    {"id": "A", "name": "控制台面板", "desc": "在左侧侧边栏切换数据集、调节学习率与训练轮数", "color": "amber", "target_id": "region-a"},
-    {"id": "B", "name": "教学指引", "desc": "当前卡片：通俗理解单神经元画直线分界线的物理机理", "color": "blue", "target_id": "region-b"},
-    {"id": "C", "name": "实时遥测指标", "desc": "观察模型自主训练后的 Loss 扣分与 100% 准确率", "color": "emerald", "target_id": "region-c"},
-    {"id": "D", "name": "空间决策流形", "desc": "观察特征平面上那根黑色分界实线如何精准切分红蓝点", "color": "purple", "target_id": "region-d"},
-    {"id": "E", "name": "损失收敛曲线", "desc": "验证做错题扣分 (Loss) 是否如大滑梯般平滑下降至 0", "color": "blue", "target_id": "region-e"},
-    {"id": "F", "name": "权重寻优轨迹", "desc": "俯瞰参数 (w₁, w₂) 沿损失坡度滚入盆地最低点的路径", "color": "rose", "target_id": "region-f"},
-])
+render_floating_hud_navigator(
+    [
+        {
+            "id": "A",
+            "name": "控制台面板",
+            "desc": "在左侧侧边栏切换数据集、调节学习率与训练轮数",
+            "color": "amber",
+            "target_id": "region-a",
+        },
+        {
+            "id": "B",
+            "name": "教学指引",
+            "desc": "当前卡片：通俗理解单神经元画直线分界线的物理机理",
+            "color": "blue",
+            "target_id": "region-b",
+        },
+        {
+            "id": "C",
+            "name": "实时遥测指标",
+            "desc": "观察模型自主训练后的 Loss 扣分与 100% 准确率",
+            "color": "emerald",
+            "target_id": "region-c",
+        },
+        {
+            "id": "D",
+            "name": "空间决策流形",
+            "desc": "观察特征平面上那根黑色分界实线如何精准切分红蓝点",
+            "color": "purple",
+            "target_id": "region-d",
+        },
+        {
+            "id": "E",
+            "name": "损失收敛曲线",
+            "desc": "验证做错题扣分 (Loss) 是否如大滑梯般平滑下降至 0",
+            "color": "blue",
+            "target_id": "region-e",
+        },
+        {
+            "id": "F",
+            "name": "权重寻优轨迹",
+            "desc": "俯瞰参数 (w₁, w₂) 沿损失坡度滚入盆地最低点的路径",
+            "color": "rose",
+            "target_id": "region-f",
+        },
+    ]
+)
 
 # ---------------------------------------------------------------------------
 # 侧边栏参数面板 (由 knowledge 元数据驱动，带丰富 Tooltip 与剧情化一键关卡)
 # ---------------------------------------------------------------------------
-st.sidebar.markdown(f'<div id="region-a" class="interactive-region" style="margin-bottom:0.6rem;padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">{anchor_badge("A", "amber")} <b>NARRATIVE QUESTS // 剧情化探索关卡</b></div>', unsafe_allow_html=True)
+st.sidebar.markdown(
+    f'<div id="region-a" class="interactive-region" style="margin-bottom:0.6rem;padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">{anchor_badge("A", "amber")} <b>NARRATIVE QUESTS // 剧情化探索关卡</b></div>',
+    unsafe_allow_html=True,
+)
 c_q1, c_q2, c_q3 = st.sidebar.columns(3)
-if c_q1.button("关卡 1\n初出茅庐", help="Blobs 线性可分简单题，见证单神经元一枪干掉分类 (100% 准确率)"):
+if c_q1.button(
+    "关卡 1\n初出茅庐", help="Blobs 线性可分简单题，见证单神经元一枪干掉分类 (100% 准确率)"
+):
     st.session_state["m1_dataset"] = "blobs"
     st.session_state["m1_lr"] = 0.1
     st.session_state["m1_epochs"] = 100
-if c_q2.button("关卡 2\n调参翻车", help="超大学习率 LR=1.8，步子太大扯到蛋，见证直线剧烈翻滚与损失震荡！"):
+if c_q2.button(
+    "关卡 2\n调参翻车", help="超大学习率 LR=1.8，步子太大扯到蛋，见证直线剧烈翻滚与损失震荡！"
+):
     st.session_state["m1_dataset"] = "blobs"
     st.session_state["m1_lr"] = 1.8
     st.session_state["m1_epochs"] = 60
-if c_q3.button("关卡 3\n绝望困境", help="XOR 异或难题，直线转到天荒地老也只能瞎猜 50%，见证单神经元的物理极限！"):
+if c_q3.button(
+    "关卡 3\n绝望困境",
+    help="XOR 异或难题，直线转到天荒地老也只能瞎猜 50%，见证单神经元的物理极限！",
+):
     st.session_state["m1_dataset"] = "xor"
     st.session_state["m1_lr"] = 0.2
     st.session_state["m1_epochs"] = 150
@@ -131,7 +217,10 @@ dataset_name, n_samples, noise, random_state = render_dataset_selector(
     key_prefix="m1_", default_dataset=st.session_state.get("m1_dataset", "blobs")
 )
 
-st.sidebar.markdown(f'<div style="margin-top:0.6rem;margin-bottom:0.4rem;">{anchor_badge("A", "amber")} <span style="font-size:0.85rem;font-weight:700;color:#0f172a;">HYPERPARAMETERS // 超参数配置</span></div>', unsafe_allow_html=True)
+st.sidebar.markdown(
+    f'<div style="margin-top:0.6rem;margin-bottom:0.4rem;">{anchor_badge("A", "amber")} <span style="font-size:0.85rem;font-weight:700;color:#0f172a;">HYPERPARAMETERS // 超参数配置</span></div>',
+    unsafe_allow_html=True,
+)
 
 act_list = [m for m in ACTIVATIONS.values() if m.id != "Softmax"]
 act_labels = [m.label for m in act_list]
@@ -157,14 +246,21 @@ col1, col2 = st.sidebar.columns(2)
 with col1:
     lr = st.number_input(
         "学习率 (LR)",
-        0.001, 2.0, float(st.session_state.get("m1_lr", 0.1)), step=0.01, format="%.3f",
+        0.001,
+        2.0,
+        float(st.session_state.get("m1_lr", 0.1)),
+        step=0.01,
+        format="%.3f",
         help="参数更新步长 $\\eta$。过大导致跳过最优点剧烈震荡，过小导致收敛缓慢。",
         key="m1_lr",
     )
 with col2:
     epochs = st.slider(
         "训练轮数",
-        10, 500, int(st.session_state.get("m1_epochs", 100)), step=10,
+        10,
+        500,
+        int(st.session_state.get("m1_epochs", 100)),
+        step=10,
         help="全量数据集迭代轮数。",
         key="m1_epochs",
     )
@@ -223,13 +319,37 @@ hyperplane_str = f"{w_final[0]:.2f}x₁ + {w_final[1]:.2f}x₂ {sign_b} {abs_b:.
 grid_html = (
     f'<div id="region-c" class="interactive-region" style="margin-bottom:0.5rem;padding:0.4rem 0.6rem;border-radius:8px;border:1px solid #e2e8f0;background:#ffffff;">'
     f'{anchor_badge("C", "emerald")} <span style="font-size:0.82rem;font-weight:800;color:#047857;letter-spacing:0.04em;text-transform:uppercase;">TELEMETRY BENCHMARK // 实时模型自学习遥测成果</span>'
-    f'</div>'
+    f"</div>"
     f'<div class="metric-grid">'
-    + render_metric_card("FINAL LOSS // 最终训练损失", f"{final_loss:.4f}", delta="已收敛 (CONVERGED)" if final_loss < 0.2 else "训练中 (TRAINING)", delta_type="positive" if final_loss < 0.2 else "neutral", icon_name="trending-down")
-    + render_metric_card("ACCURACY // 分类准确率", f"{final_acc:.1%}", delta="达标 (OPTIMAL)" if final_acc >= 0.95 else "收敛中", delta_type="positive" if final_acc >= 0.9 else "neutral", icon_name="target")
-    + render_metric_card("LEARNED WEIGHTS // 模型自主学得权重", f"[{w_final[0]:.2f}, {w_final[1]:.2f}]", delta=f"偏置截距 b = {b_final:.2f}", delta_type="neutral", icon_name="sliders")
-    + render_metric_card("DECISION LINE // 学得的直线方程", f'<span style="font-size:1.02rem;">{hyperplane_str}</span>', delta="模型自动求解的决策分界面", delta_type="positive", icon_name="activity")
-    + '</div>'
+    + render_metric_card(
+        "FINAL LOSS // 最终训练损失",
+        f"{final_loss:.4f}",
+        delta="已收敛 (CONVERGED)" if final_loss < 0.2 else "训练中 (TRAINING)",
+        delta_type="positive" if final_loss < 0.2 else "neutral",
+        icon_name="trending-down",
+    )
+    + render_metric_card(
+        "ACCURACY // 分类准确率",
+        f"{final_acc:.1%}",
+        delta="达标 (OPTIMAL)" if final_acc >= 0.95 else "收敛中",
+        delta_type="positive" if final_acc >= 0.9 else "neutral",
+        icon_name="target",
+    )
+    + render_metric_card(
+        "LEARNED WEIGHTS // 模型自主学得权重",
+        f"[{w_final[0]:.2f}, {w_final[1]:.2f}]",
+        delta=f"偏置截距 b = {b_final:.2f}",
+        delta_type="neutral",
+        icon_name="sliders",
+    )
+    + render_metric_card(
+        "DECISION LINE // 学得的直线方程",
+        f'<span style="font-size:1.02rem;">{hyperplane_str}</span>',
+        delta="模型自动求解的决策分界面",
+        delta_type="positive",
+        icon_name="activity",
+    )
+    + "</div>"
 )
 st.markdown(grid_html, unsafe_allow_html=True)
 
@@ -239,6 +359,8 @@ st.markdown(grid_html, unsafe_allow_html=True)
 total_steps = len(weight_trajectory)
 if "m1_scrub_step" not in st.session_state or st.session_state["m1_scrub_step"] > total_steps:
     st.session_state["m1_scrub_step"] = total_steps
+if "m1_player_state" not in st.session_state:
+    st.session_state["m1_player_state"] = "idle"
 
 # 计算全局特征范围 (固定坐标轴，永不自适应缩放抖动)
 x_margin = 0.3
@@ -257,6 +379,7 @@ grid_static = np.c_[xx_static.ravel(), yy_static.ravel()]
 labels_static = y.ravel()
 mask_0 = labels_static == 0
 mask_1 = labels_static == 1
+
 
 def get_analytical_line_points(w1: float, w2: float, b: float):
     """计算直线 w1*x1 + w2*x2 + b = 0 在显示范围内的精确两个端点"""
@@ -278,11 +401,12 @@ def get_analytical_line_points(w1: float, w2: float, b: float):
 
     uniq = []
     for p in pts:
-        if not any(abs(p[0]-u[0]) < 1e-4 and abs(p[1]-u[1]) < 1e-4 for u in uniq):
+        if not any(abs(p[0] - u[0]) < 1e-4 and abs(p[1] - u[1]) < 1e-4 for u in uniq):
             uniq.append(p)
     if len(uniq) >= 2:
         return [uniq[0][0], uniq[1][0]], [uniq[0][1], uniq[1][1]]
     return None, None
+
 
 def make_boundary_figure(step_num: int):
     cur_w = weight_trajectory[step_num - 1]
@@ -296,55 +420,67 @@ def make_boundary_figure(step_num: int):
     zz = probs.reshape(xx_static.shape)
 
     colorscale = [
-        [0.0, "rgba(29, 78, 216, 0.25)"],   # 类别 0 (蓝)
-        [0.5, "rgba(241, 245, 249, 0.5)"],   # 决策临界线
-        [1.0, "rgba(190, 18, 60, 0.25)"],    # 类别 1 (红)
+        [0.0, "rgba(29, 78, 216, 0.25)"],  # 类别 0 (蓝)
+        [0.5, "rgba(241, 245, 249, 0.5)"],  # 决策临界线
+        [1.0, "rgba(190, 18, 60, 0.25)"],  # 类别 1 (红)
     ]
 
     fig = go.Figure()
 
     # 概率等高填充 (无轮廓线，零 SVG 重绘抖动)
-    fig.add_trace(go.Contour(
-        x=np.linspace(x_min, x_max, grid_res),
-        y=np.linspace(y_min, y_max, grid_res),
-        z=zz,
-        colorscale=colorscale,
-        showscale=False,
-        contours=dict(showlines=False, coloring="fill"),
-        hoverinfo="skip",
-        showlegend=False,
-    ))
+    fig.add_trace(
+        go.Contour(
+            x=np.linspace(x_min, x_max, grid_res),
+            y=np.linspace(y_min, y_max, grid_res),
+            z=zz,
+            colorscale=colorscale,
+            showscale=False,
+            contours=dict(showlines=False, coloring="fill"),
+            hoverinfo="skip",
+            showlegend=False,
+        )
+    )
 
     # 解析几何直线 (GPU 级毫秒渲染)
     lx, ly = get_analytical_line_points(w1, w2, b)
     if lx is not None:
-        fig.add_trace(go.Scatter(
-            x=lx,
-            y=ly,
-            mode="lines",
-            line=dict(color="#0f172a", width=3.5),
-            name="决策分界线 (Line: P=0.5)",
-            showlegend=True,
-            hoverinfo="skip",
-        ))
+        fig.add_trace(
+            go.Scatter(
+                x=lx,
+                y=ly,
+                mode="lines",
+                line=dict(color="#0f172a", width=3.5),
+                name="决策分界线 (Line: P=0.5)",
+                showlegend=True,
+                hoverinfo="skip",
+            )
+        )
 
     # 散点
-    fig.add_trace(go.Scatter(
-        x=X[mask_0, 0],
-        y=X[mask_0, 1],
-        mode="markers",
-        name="Class 0 (蓝)",
-        marker=dict(size=8, color="#1d4ed8", line=dict(width=1.5, color="#ffffff"), opacity=0.9),
-        hoverinfo="skip",
-    ))
-    fig.add_trace(go.Scatter(
-        x=X[mask_1, 0],
-        y=X[mask_1, 1],
-        mode="markers",
-        name="Class 1 (红)",
-        marker=dict(size=8, color="#be123c", line=dict(width=1.5, color="#ffffff"), opacity=0.9),
-        hoverinfo="skip",
-    ))
+    fig.add_trace(
+        go.Scatter(
+            x=X[mask_0, 0],
+            y=X[mask_0, 1],
+            mode="markers",
+            name="Class 0 (蓝)",
+            marker=dict(
+                size=8, color="#1d4ed8", line=dict(width=1.5, color="#ffffff"), opacity=0.9
+            ),
+            hoverinfo="skip",
+        )
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=X[mask_1, 0],
+            y=X[mask_1, 1],
+            mode="markers",
+            name="Class 1 (红)",
+            marker=dict(
+                size=8, color="#be123c", line=dict(width=1.5, color="#ffffff"), opacity=0.9
+            ),
+            hoverinfo="skip",
+        )
+    )
 
     # 彻底固化布局与坐标轴 (禁止任何边距抖动与自适应缩放)
     fig.update_layout(
@@ -382,6 +518,7 @@ def make_boundary_figure(step_num: int):
     )
     return fig
 
+
 def render_line_equation_html(step_num: int):
     cur_w = weight_trajectory[step_num - 1]
     cur_b = bias_trajectory[step_num - 1]
@@ -391,157 +528,152 @@ def render_line_equation_html(step_num: int):
     cur_line_eq = f"{w1:.2f}x₁ + {w2:.2f}x₂ {cur_sign} {abs(b):.2f} = 0"
 
     return (
-        f"<div style=\"font-family: monospace; font-size: 0.82rem; font-weight: 700; color: #1e40af; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.3rem 0.6rem; margin-bottom: 0.4rem; height: 28px; line-height: 20px; box-sizing: border-box;\">"
-        f"分界实线方程: <span style=\"color: #0f172a; font-weight: 800;\">{cur_line_eq}</span>"
+        f'<div style="font-family: monospace; font-size: 0.82rem; font-weight: 700; color: #1e40af; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.3rem 0.6rem; margin-bottom: 0.4rem; height: 28px; line-height: 20px; box-sizing: border-box;">'
+        f'分界实线方程: <span style="color: #0f172a; font-weight: 800;">{cur_line_eq}</span>'
         f"</div>"
     )
 
-def render_status_html(step_num: int, is_playing: bool = False):
-    badge_color = "#b91c1c" if is_playing else "#047857"
-    badge_bg = "#fef2f2" if is_playing else "#ecfdf5"
-    badge_border = "#fecaca" if is_playing else "#a7f3d0"
-    play_status = f"▶ 演播中 (PLAYING: STEP {step_num}/{total_steps})" if is_playing else f"REPLAY STEP {step_num} / {total_steps}"
+
+def render_status_html(step_num: int, player_state: str = "idle"):
+    status_styles = {
+        "playing": ("#1d4ed8", "#eff6ff", "#bfdbfe", "▶ 演播中"),
+        "paused": ("#92400e", "#fffbeb", "#fde68a", "Ⅱ 已暂停 · 可观察当前参数"),
+        "idle": ("#047857", "#ecfdf5", "#a7f3d0", "准备就绪"),
+    }
+    badge_color, badge_bg, badge_border, label = status_styles.get(
+        player_state, status_styles["idle"]
+    )
+    play_status = f"{label} · STEP {step_num}/{total_steps}"
 
     return (
         f'<div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:0.75rem 1rem;margin-bottom:0.8rem;box-shadow:0 2px 8px rgba(15,23,42,0.03);">'
         f'<div style="display:flex;align-items:center;justify-content:space-between;">'
         f'<div style="display:flex;align-items:center;gap:0.4rem;font-size:0.78rem;font-weight:800;color:#1e40af;text-transform:uppercase;letter-spacing:0.04em;">'
-        f'{anchor_badge("D", "purple")} [TIME-TRAVEL PLAYER // 训练时空演播厅]'
-        f'</div>'
+        f"{anchor_badge('D', 'purple')} [TIME-TRAVEL PLAYER // 训练时空演播厅]"
+        f"</div>"
         f'<span style="font-size:0.75rem;font-weight:700;color:{badge_color};font-family:monospace;background:{badge_bg};border:1px solid {badge_border};padding:0.12rem 0.5rem;border-radius:4px;">{play_status}</span>'
-        f'</div>'
-        f'</div>'
+        f"</div>"
+        f"</div>"
     )
 
-# 1. 顶部状态指示槽位 (动态更新)
-status_slot = st.empty()
 
-# 2. 控制按钮栏 (静态常驻)
-p_c1, p_c2, p_c3, p_c4, p_c5 = st.columns([1, 1.1, 1.8, 1.1, 1])
+_player_refresh_interval = 0.65 if st.session_state["m1_player_state"] == "playing" else None
 
-btn_first = p_c1.button("⏮ 起点", help="瞬移回初始随机状态 (Step 1)", key="btn_m1_first", use_container_width=True)
-btn_prev = p_c2.button("◀ 上一步", help="单步回退 1 轮", key="btn_m1_prev", use_container_width=True)
-btn_play = p_c3.button("▶ 连续演播", help="自动慢速回放直线由乱画到画准的演变过程", key="btn_m1_play", use_container_width=True)
-btn_next = p_c4.button("下一步 ▶", help="单步推进 1 轮", key="btn_m1_next", use_container_width=True)
-btn_last = p_c5.button("终点 ⏭", help="瞬移到最终收敛状态 (Final Step)", key="btn_m1_last", use_container_width=True)
 
-if btn_first:
-    st.session_state["m1_scrub_step"] = 1
-elif btn_prev:
-    st.session_state["m1_scrub_step"] = max(1, st.session_state["m1_scrub_step"] - 1)
-elif btn_next:
-    st.session_state["m1_scrub_step"] = min(total_steps, st.session_state["m1_scrub_step"] + 1)
-elif btn_last:
-    st.session_state["m1_scrub_step"] = total_steps
+@st.fragment(run_every=_player_refresh_interval)
+def render_training_player() -> None:
+    """局部刷新播放器，让页面主体和滚动位置保持稳定。"""
+    player_state = st.session_state["m1_player_state"]
+    initial_player_state = player_state
+    current_step = int(st.session_state["m1_scrub_step"])
 
-def _on_scrub_change():
-    st.session_state["m1_scrub_step"] = st.session_state["m1_slider_scrub"]
+    status_slot = st.empty()
+    p_c1, p_c2, p_c3, p_c4, p_c5 = st.columns([1, 1.1, 1.8, 1.1, 1])
+    btn_first = p_c1.button("⏮ 起点", key="btn_m1_first", width="stretch")
+    btn_prev = p_c2.button("◀ 上一步", key="btn_m1_prev", width="stretch")
+    if player_state == "playing":
+        btn_pause = p_c3.button(
+            "Ⅱ 暂停观察",
+            help="暂停后图表与参数保持在当前状态",
+            key="btn_m1_pause",
+            width="stretch",
+            type="primary",
+        )
+        btn_play = False
+    else:
+        btn_play = p_c3.button(
+            "▶ 连续演播",
+            help="从当前位置连续展示参数、分界线与权重轨迹的变化",
+            key="btn_m1_play",
+            width="stretch",
+            type="primary",
+        )
+        btn_pause = False
+    btn_next = p_c4.button("下一步 ▶", key="btn_m1_next", width="stretch")
+    btn_last = p_c5.button("终点 ⏭", key="btn_m1_last", width="stretch")
 
-st.slider(
-    "时间轴位置调节",
-    min_value=1,
-    max_value=total_steps,
-    value=int(st.session_state["m1_scrub_step"]),
-    step=1,
-    label_visibility="collapsed",
-    key="m1_slider_scrub",
-    on_change=_on_scrub_change,
-    help="拖动进度条，回放直线在第 k 轮训练时的旋转角度与分类状态！",
-)
+    if btn_first:
+        current_step, player_state = 1, "paused"
+    elif btn_prev:
+        current_step, player_state = max(1, current_step - 1), "paused"
+    elif btn_pause:
+        player_state = "paused"
+    elif btn_play:
+        current_step = 1 if current_step >= total_steps else current_step
+        player_state = "playing"
+    elif btn_next:
+        current_step, player_state = min(total_steps, current_step + 1), "paused"
+    elif btn_last:
+        current_step, player_state = total_steps, "paused"
+    elif player_state == "playing":
+        current_step = min(total_steps, current_step + max(1, total_steps // 24))
+        if current_step >= total_steps:
+            player_state = "idle"
 
-# 3. 左右分栏固定外壳 (Static Layout Shell · 结构永不重绘)
-col_left, col_right = st.columns([1, 1])
+    st.session_state["m1_scrub_step"] = current_step
+    st.session_state["m1_player_state"] = player_state
+    if btn_play or btn_pause or (initial_player_state == "playing" and player_state != "playing"):
+        st.rerun(scope="app")
 
-with col_left:
+    st.progress(current_step / total_steps, text=f"训练演进 · Step {current_step}/{total_steps}")
+    st.caption("仅播放器区域会局部刷新；可随时暂停，并用上一步/下一步精确检查任意参数状态。")
+    status_slot.markdown(render_status_html(current_step, player_state), unsafe_allow_html=True)
+
+    col_left, col_right = st.columns([1, 1])
+    with col_left:
+        st.markdown(
+            f'<div id="region-d" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;">'
+            f'{anchor_badge("D", "purple")} <span style="font-weight:800;color:#5b21b6;font-size:0.86rem;">DECISION MANIFOLD // 空间决策流形与分界实线演进</span></div>',
+            unsafe_allow_html=True,
+        )
+        st.markdown(render_line_equation_html(current_step), unsafe_allow_html=True)
+        st.plotly_chart(
+            make_boundary_figure(current_step), width="stretch", key="m1_boundary_player"
+        )
+        with st.expander("[HOW TO READ // 读图指南] [D] 空间决策流形与分界实线"):
+            st.markdown(
+                """
+                * **红蓝圆点**是两类训练样本；**黑色实线**是预测概率 $P=0.5$ 的分界线。
+                * **背景淡色流形**表示各位置的预测概率。
+                * 暂停后对照上方方程，观察 $w_1$、$w_2$、$b$ 如何旋转和平移直线。
+                """
+            )
+
+    with col_right:
+        st.markdown(
+            f'<div id="region-e" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;">'
+            f'{anchor_badge("E", "blue")} <span style="font-weight:800;color:#1e40af;font-size:0.86rem;">LOSS & ACCURACY CONVERGENCE // 损失与准确率收敛曲线</span></div>',
+            unsafe_allow_html=True,
+        )
+        fig_loss = plot_loss_curve(history)
+        fig_loss.update_layout(height=428, margin=dict(l=40, r=20, t=25, b=35))
+        st.plotly_chart(fig_loss, width="stretch", key="m1_loss_player")
+        with st.expander("[HOW TO READ // 读图指南] [E] 损失与准确率曲线"):
+            st.markdown(
+                """
+                * **Loss** 是预测误差，越低越好；**Accuracy** 是答对比例，越高越好。
+                * 暂停后用当前 Step 对照曲线横轴，判断参数变化发生在收敛的哪个阶段。
+                """
+            )
+
     st.markdown(
-        f'<div id="region-d" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;">'
-        f'{anchor_badge("D", "purple")} <span style="font-weight:800;color:#5b21b6;font-size:0.86rem;">DECISION MANIFOLD // 空间决策流形与分界实线演进</span>'
-        f'</div>',
+        f'<div id="region-f" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-top:1.2rem;margin-bottom:0.5rem;">'
+        f'{anchor_badge("F", "rose")} <span style="font-weight:800;color:#9f1239;font-size:0.86rem;">WEIGHT TRAJECTORY // 权重参数空间寻优轨迹</span></div>',
         unsafe_allow_html=True,
     )
-    # 直线方程槽位 (高度固定，绝不挤压图表)
-    line_eq_slot = st.empty()
-    boundary_chart_slot = st.empty()
-    with st.expander("[HOW TO READ // 读图指南] [D] 空间决策流形与分界实线", expanded=False):
-        st.markdown(
-            """
-            * **横轴 $X_1$ 与纵轴 $X_2$**：样本的两个特征坐标（例如身高与体重、温度与湿度）。
-            * **红蓝圆点**：两类真实的训练样本点（红色代表类别 0，蓝色代表类别 1）。
-            * **加粗黑色实线 `[DECISION LINE]`**：模型画出的分类决策分界线（满足预测概率 $P=0.5$ 的分水岭）。
-            * **背景淡色流形**：模型对全平面每一个坐标点的预测概率（越红说明模型越有把握判定为类别 0，越蓝越有把握为类别 1）。
-            * **[OPTIMAL // 最优形态]**：黑色实线稳健地横穿在红蓝两堆点正中央，没有任何错分点。
-            """
-        )
-
-with col_right:
-    st.markdown(
-        f'<div id="region-e" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;">'
-        f'{anchor_badge("E", "blue")} <span style="font-weight:800;color:#1e40af;font-size:0.86rem;">LOSS & ACCURACY CONVERGENCE // 损失与准确率收敛曲线</span>'
-        f'</div>',
-        unsafe_allow_html=True,
-    )
-    fig_loss = plot_loss_curve(history)
-    fig_loss.update_layout(height=428, margin=dict(l=40, r=20, t=25, b=35))
-    st.plotly_chart(fig_loss, use_container_width=True)
-    with st.expander("[HOW TO READ // 读图指南] [E] 损失收敛 (Loss) 与准确率 (Accuracy) 曲线", expanded=False):
-        st.markdown(
-            r"""
-            * **两图横轴【训练轮数 (Epoch)】**：
-              - 模型把全部训练样本**从头到尾完整做过几遍试卷**（100 轮代表重温并反思了 100 遍错题）。
-            * **左子图纵轴【损失误差 (Loss)】**：
-              - **模型做错题目的扣分罚分**。Loss 越小，说明预测概率与真实答案越接近（0 代表完全没有误差）。
-              - **[OPTIMAL // 最优形态]**：呈现**"大滑梯型"**，从最初的高误差急剧下跌并平稳贴近 0。绿色菱形标出全过程最低损失点。
-            * **右子图纵轴【分类准确率 (Accuracy)】**：
-              - **模型答对题目的百分比**（$0.0 \sim 1.0$，即 $0\% \sim 100\%$）。
-              - **[OPTIMAL // 最优形态]**：从初始约 $0.5$（$50\%$ 随机瞎猜）迅速爬坡，最终平稳锁定在 $1.0$（$100\%$ 全对）。
-            """
-        )
-
-# 底部权重轨迹图静态外壳
-st.markdown(
-    f'<div id="region-f" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-top:1.2rem;margin-bottom:0.5rem;">'
-    f'{anchor_badge("F", "rose")} <span style="font-weight:800;color:#9f1239;font-size:0.86rem;">WEIGHT TRAJECTORY // 权重参数空间寻优轨迹</span>'
-    f'</div>',
-    unsafe_allow_html=True,
-)
-traj_chart_slot = st.empty()
-with st.expander("[HOW TO READ // 读图指南] [F] 权重参数空间寻优轨迹图", expanded=False):
-    st.markdown(
-        """
-        * **横轴 $w_1$ 与纵轴 $w_2$**：单神经元的两个核心权重参数。
-        * **等高线椭圆**：损失函数在地表形成的盆地地形（越靠中央，损失 Loss 越低）。
-        * **连续折线轨迹**：参数从随机出发点（小圆圈）顺着梯度下坡滚入盆地最低点（全局最优解）的过程。
-        """
-    )
-
-# 4. 执行动态就地更新 (In-Place Dynamic Slot Population · 零跳动)
-if btn_play:
-    import time
-    start_step = 1 if st.session_state["m1_scrub_step"] >= total_steps else st.session_state["m1_scrub_step"]
-    step_stride = max(1, total_steps // 22)
-    steps_to_play = list(range(start_step, total_steps + 1, step_stride))
-    if steps_to_play[-1] != total_steps:
-        steps_to_play.append(total_steps)
-
-    for s in steps_to_play:
-        st.session_state["m1_scrub_step"] = s
-        status_slot.markdown(render_status_html(s, is_playing=True), unsafe_allow_html=True)
-        line_eq_slot.markdown(render_line_equation_html(s), unsafe_allow_html=True)
-        boundary_chart_slot.plotly_chart(make_boundary_figure(s), use_container_width=True)
-        traj_fig = plot_weight_trajectory(weight_trajectory[:s])
-        traj_fig.update_layout(height=380, margin=dict(l=40, r=20, t=15, b=35))
-        traj_chart_slot.plotly_chart(traj_fig, use_container_width=True)
-        time.sleep(0.045)
-
-    status_slot.markdown(render_status_html(total_steps, is_playing=False), unsafe_allow_html=True)
-else:
-    cur_s = int(st.session_state["m1_scrub_step"])
-    status_slot.markdown(render_status_html(cur_s, is_playing=False), unsafe_allow_html=True)
-    line_eq_slot.markdown(render_line_equation_html(cur_s), unsafe_allow_html=True)
-    boundary_chart_slot.plotly_chart(make_boundary_figure(cur_s), use_container_width=True)
-    traj_fig = plot_weight_trajectory(weight_trajectory[:cur_s])
+    traj_fig = plot_weight_trajectory(weight_trajectory[:current_step])
     traj_fig.update_layout(height=380, margin=dict(l=40, r=20, t=15, b=35))
-    traj_chart_slot.plotly_chart(traj_fig, use_container_width=True)
+    st.plotly_chart(traj_fig, width="stretch", key="m1_trajectory_player")
+    with st.expander("[HOW TO READ // 读图指南] [F] 权重参数空间寻优轨迹图"):
+        st.markdown(
+            """
+            * **横轴 $w_1$ 与纵轴 $w_2$**是两个核心权重；等高线表示损失盆地。
+            * 连续折线展示参数沿梯度下坡的过程，暂停可检查任意中间位置。
+            """
+        )
+
+
+render_training_player()
 
 
 # 深度知识学习指南 (折叠微观原理解析)
@@ -550,7 +682,9 @@ render_deep_dive_card("单神经元感知器核心参数与激活函数", [act_m
 # ---------------------------------------------------------------------------
 # 零基础进阶专家必读：深度学习核心名词通俗速查
 # ---------------------------------------------------------------------------
-with st.expander("[GROWTH GUIDE // 成长指南] 核心公式逐字拆解与深度学习名词通俗全解", expanded=True):
+with st.expander(
+    "[GROWTH GUIDE // 成长指南] 核心公式逐字拆解与深度学习名词通俗全解", expanded=True
+):
     st.markdown(
         """
         ### 0. 核心公式逐字拆解：$Z = XW + b$ 与 $\\hat{y} = \\sigma(Z)$
@@ -601,4 +735,3 @@ with st.expander("[GROWTH GUIDE // 成长指南] 核心公式逐字拆解与深�
         * **参数更新 (Step)**：根据梯度，真正把 $w$ 和 $b$ 往正确方向微调一步。
         """
     )
-

@@ -72,13 +72,16 @@ def plot_network_topology(
                 else:
                     width, color = 0.6, "rgba(203, 213, 225, 0.4)"
 
-                fig.add_trace(go.Scatter(
-                    x=[x1, x2], y=[y1, y2],
-                    mode="lines",
-                    line=dict(width=width, color=color),
-                    hoverinfo="skip",
-                    showlegend=False,
-                ))
+                fig.add_trace(
+                    go.Scatter(
+                        x=[x1, x2],
+                        y=[y1, y2],
+                        mode="lines",
+                        line=dict(width=width, color=color),
+                        hoverinfo="skip",
+                        showlegend=False,
+                    )
+                )
 
     # -------------------------------------------------------------------------
     # 2. 绘制神经元节点与活性探针 (Neuron Activation Nodes)
@@ -130,31 +133,42 @@ def plot_network_topology(
                     status = "[DORMANT // 休眠]"
 
                 hover_texts.append(
-                    f"<b>{layer_labels[layer_idx]} · Node #{i+1}</b><br>"
+                    f"<b>{layer_labels[layer_idx]} · Node #{i + 1}</b><br>"
                     + f"Activation: <code>a={act_val:.4f}</code><br>"
                     + f"Status: {status}"
                 )
             else:
                 node_colors.append("#ffffff")
-                node_border_colors.append("#2563eb" if layer_idx == 0 or layer_idx == n_layers - 1 else "#7c3aed")
+                node_border_colors.append(
+                    "#2563eb" if layer_idx == 0 or layer_idx == n_layers - 1 else "#7c3aed"
+                )
                 node_text_colors.append("#0f172a")
                 node_sizes.append(24)
-                hover_texts.append(f"<b>{layer_labels[layer_idx]} · Node #{i+1}/{actual_n}</b>")
+                hover_texts.append(f"<b>{layer_labels[layer_idx]} · Node #{i + 1}/{actual_n}</b>")
 
-        fig.add_trace(go.Scatter(
-            x=xs, y=ys,
-            mode="markers+text",
-            marker=dict(
-                size=node_sizes,
-                color=node_colors,
-                line=dict(width=2, color=node_border_colors),
-            ),
-            text=[str(i + 1) for i in range(show_n)],
-            textfont=dict(size=9, color=node_text_colors if any(c == "#ffffff" for c in node_text_colors) else "#0f172a", family="JetBrains Mono"),
-            hovertext=hover_texts,
-            hoverinfo="text",
-            showlegend=False,
-        ))
+        fig.add_trace(
+            go.Scatter(
+                x=xs,
+                y=ys,
+                mode="markers+text",
+                marker=dict(
+                    size=node_sizes,
+                    color=node_colors,
+                    line=dict(width=2, color=node_border_colors),
+                ),
+                text=[str(i + 1) for i in range(show_n)],
+                textfont=dict(
+                    size=9,
+                    color=node_text_colors
+                    if any(c == "#ffffff" for c in node_text_colors)
+                    else "#0f172a",
+                    family="JetBrains Mono",
+                ),
+                hovertext=hover_texts,
+                hoverinfo="text",
+                showlegend=False,
+            )
+        )
 
         if actual_n > display_limit:
             fig.add_annotation(

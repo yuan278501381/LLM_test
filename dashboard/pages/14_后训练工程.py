@@ -17,6 +17,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from dashboard.components.charts import _apply_light_theme
+from dashboard.components.pedagogy import render_lesson_evidence
 from dashboard.styles.theme import (
     anchor_badge,
     apply_custom_theme,
@@ -36,6 +37,7 @@ st.set_page_config(
 )
 
 apply_custom_theme()
+render_lesson_evidence("M14")
 
 render_hero_header(
     title="后训练对齐与轻量微调架构",
@@ -44,13 +46,45 @@ render_hero_header(
     badge_type="amber",
 )
 
-render_floating_hud_navigator([
-        {"id": "A", "name": "对齐参数控制台", "desc": "在左侧侧边栏调节 PPO Clip 阈值、DPO 奖励系数与 LoRA Rank", "color": "amber", "target_id": "region-a"},
-        {"id": "B", "name": "教学指引", "desc": "当前卡片：通俗理解从基座接龙到 SFT 听话学徒与 RLHF/DPO 对齐助手", "color": "blue", "target_id": "region-b"},
-        {"id": "C", "name": "实时对齐遥测", "desc": "显示 LoRA 参数节约比例、微调后总显存节省与当前对齐状态", "color": "emerald", "target_id": "region-c"},
-        {"id": "D", "name": "三阶段回答实录", "desc": "同一提示词在 Pre-training、SFT 与 RLHF 三代下的回答质量质变", "color": "purple", "target_id": "region-d"},
-        {"id": "E", "name": "六维雷达画像", "desc": "有用性、无害性、诚实性与安全性等全方位能力画像演进雷达图", "color": "blue", "target_id": "region-e"},
-    ])
+render_floating_hud_navigator(
+    [
+        {
+            "id": "A",
+            "name": "对齐参数控制台",
+            "desc": "在左侧侧边栏调节 PPO Clip 阈值、DPO 奖励系数与 LoRA Rank",
+            "color": "amber",
+            "target_id": "region-a",
+        },
+        {
+            "id": "B",
+            "name": "教学指引",
+            "desc": "当前卡片：通俗理解从基座接龙到 SFT 听话学徒与 RLHF/DPO 对齐助手",
+            "color": "blue",
+            "target_id": "region-b",
+        },
+        {
+            "id": "C",
+            "name": "实时对齐遥测",
+            "desc": "显示 LoRA 参数节约比例、微调后总显存节省与当前对齐状态",
+            "color": "emerald",
+            "target_id": "region-c",
+        },
+        {
+            "id": "D",
+            "name": "三阶段回答实录",
+            "desc": "同一提示词在 Pre-training、SFT 与 RLHF 三代下的回答质量质变",
+            "color": "purple",
+            "target_id": "region-d",
+        },
+        {
+            "id": "E",
+            "name": "六维雷达画像",
+            "desc": "有用性、无害性、诚实性与安全性等全方位能力画像演进雷达图",
+            "color": "blue",
+            "target_id": "region-e",
+        },
+    ]
+)
 
 # ---------------------------------------------------------------------------
 # 零基础保姆级指引 (Zero-Barrier Beginner Guide)
@@ -58,11 +92,41 @@ render_floating_hud_navigator([
 render_page_guide(
     title="后训练对齐与空间交互地图",
     blueprint_sections=[
-        {"id": "A", "name": "对齐参数控制台", "desc": "在左侧侧边栏调节 PPO Clip 阈值、DPO 奖励系数与 LoRA Rank", "color": "amber", "target_id": "region-a"},
-        {"id": "B", "name": "教学指引", "desc": "当前卡片：通俗理解从基座接龙到 SFT 听话学徒与 RLHF/DPO 对齐助手", "color": "blue", "target_id": "region-b"},
-        {"id": "C", "name": "实时对齐遥测", "desc": "显示 LoRA 参数节约比例、微调后总显存节省与当前对齐状态", "color": "emerald", "target_id": "region-c"},
-        {"id": "D", "name": "三阶段回答实录", "desc": "同一提示词在 Pre-training、SFT 与 RLHF 三代下的回答质量质变", "color": "purple", "target_id": "region-d"},
-        {"id": "E", "name": "六维雷达画像", "desc": "有用性、无害性、诚实性与安全性等全方位能力画像演进雷达图", "color": "blue", "target_id": "region-e"},
+        {
+            "id": "A",
+            "name": "对齐参数控制台",
+            "desc": "在左侧侧边栏调节 PPO Clip 阈值、DPO 奖励系数与 LoRA Rank",
+            "color": "amber",
+            "target_id": "region-a",
+        },
+        {
+            "id": "B",
+            "name": "教学指引",
+            "desc": "当前卡片：通俗理解从基座接龙到 SFT 听话学徒与 RLHF/DPO 对齐助手",
+            "color": "blue",
+            "target_id": "region-b",
+        },
+        {
+            "id": "C",
+            "name": "实时对齐遥测",
+            "desc": "显示 LoRA 参数节约比例、微调后总显存节省与当前对齐状态",
+            "color": "emerald",
+            "target_id": "region-c",
+        },
+        {
+            "id": "D",
+            "name": "三阶段回答实录",
+            "desc": "同一提示词在 Pre-training、SFT 与 RLHF 三代下的回答质量质变",
+            "color": "purple",
+            "target_id": "region-d",
+        },
+        {
+            "id": "E",
+            "name": "六维雷达画像",
+            "desc": "有用性、无害性、诚实性与安全性等全方位能力画像演进雷达图",
+            "color": "blue",
+            "target_id": "region-e",
+        },
     ],
     plain_intro=(
         f"<b>为什么预训练完的 GPT 还不能直接当 ChatGPT 用？</b><br>"
@@ -94,7 +158,10 @@ render_page_guide(
 # ---------------------------------------------------------------------------
 # 侧边栏参数控制
 # ---------------------------------------------------------------------------
-st.sidebar.markdown(f'<div id="region-a" class="interactive-region" style="margin-bottom:0.6rem;padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">{anchor_badge("A", "amber")} <b>ALIGNMENT CONTROLS // 对齐控制台</b></div>', unsafe_allow_html=True)
+st.sidebar.markdown(
+    f'<div id="region-a" class="interactive-region" style="margin-bottom:0.6rem;padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">{anchor_badge("A", "amber")} <b>ALIGNMENT CONTROLS // 对齐控制台</b></div>',
+    unsafe_allow_html=True,
+)
 
 # ---------------------------------------------------------------------------
 # 侧边栏参数控制
@@ -182,7 +249,7 @@ metric_grid_html = (
 st.markdown(
     f'<div id="region-c" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;">'
     f'{anchor_badge("C", "emerald")} <span style="font-weight:800;color:#065f46;font-size:0.86rem;">POST-TRAINING TELEMETRY // 对齐收益与显存压缩遥测</span>'
-    f'</div>',
+    f"</div>",
     unsafe_allow_html=True,
 )
 st.markdown(metric_grid_html, unsafe_allow_html=True)
@@ -248,14 +315,17 @@ with col_s4:
 st.markdown(
     f'<div id="region-d" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;margin-top:1rem;">'
     f'{anchor_badge("D", "purple")} <span style="font-weight:800;color:#5b21b6;font-size:0.86rem;">BEFORE VS AFTER CASE STUDY // 同一指令在不同阶段下的回答质变实录</span>'
-    f'</div>',
+    f"</div>",
     unsafe_allow_html=True,
 )
 
 cases = generate_before_after_examples()
 
 for case_idx, case_data in enumerate(cases):
-    with st.expander(f"[CASE] 案例 {case_idx + 1}：【{case_data['category']}】— \"{case_data['prompt']}\"", expanded=(case_idx == 0)):
+    with st.expander(
+        f'[CASE] 案例 {case_idx + 1}：【{case_data["category"]}】— "{case_data["prompt"]}"',
+        expanded=(case_idx == 0),
+    ):
         c_pre, c_sft, c_rlhf = st.columns(3)
         with c_pre:
             with st.container(border=True):
@@ -279,7 +349,7 @@ for case_idx, case_data in enumerate(cases):
 st.markdown(
     f'<div id="region-e" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;margin-top:1.2rem;">'
     f'{anchor_badge("E", "blue")} <span style="font-weight:800;color:#1e40af;font-size:0.86rem;">6D RADAR EVOLUTION // 模型能力画像六维雷达演进图</span>'
-    f'</div>',
+    f"</div>",
     unsafe_allow_html=True,
 )
 
@@ -319,7 +389,7 @@ fig_radar.update_layout(
     margin=dict(l=40, r=40, t=40, b=40),
 )
 fig_radar = _apply_light_theme(fig_radar, "大模型各训练阶段六维能力画像雷达对比")
-st.plotly_chart(fig_radar, use_container_width=True)
+st.plotly_chart(fig_radar, width="stretch")
 with st.expander("[HOW TO READ // 读图指南] 六维对齐能力雷达图", expanded=False):
     st.markdown(
         """
@@ -331,7 +401,9 @@ with st.expander("[HOW TO READ // 读图指南] 六维对齐能力雷达图", ex
 # ---------------------------------------------------------------------------
 # Section 4: RLHF PPO 轨迹 vs DPO 直接偏好机制
 # ---------------------------------------------------------------------------
-render_section_heading("RLHF VS DPO DYNAMICS // PPO 训练收敛轨迹与 DPO 隐式偏好代换", icon_name="activity")
+render_section_heading(
+    "RLHF VS DPO DYNAMICS // PPO 训练收敛轨迹与 DPO 隐式偏好代换", icon_name="activity"
+)
 
 col_ppo_plot, col_dpo_card = st.columns([1.3, 1])
 
@@ -361,7 +433,7 @@ with col_ppo_plot:
         margin=dict(l=40, r=20, t=30, b=40),
     )
     fig_ppo = _apply_light_theme(fig_ppo, f"RLHF PPO 策略训练轨迹 (Clip={ppo_eps})")
-    st.plotly_chart(fig_ppo, use_container_width=True)
+    st.plotly_chart(fig_ppo, width="stretch")
     with st.expander("[HOW TO READ // 读图指南] RLHF PPO 策略强化学习轨迹", expanded=False):
         st.markdown(
             """
@@ -384,7 +456,9 @@ with col_dpo_card:
 # ---------------------------------------------------------------------------
 # Section 5: LoRA 低秩矩阵分解参数可视化
 # ---------------------------------------------------------------------------
-render_section_heading("LORA LOW-RANK DECOMPOSITION // LoRA 旁路低秩矩阵分解与参数量对比", icon_name="layers")
+render_section_heading(
+    "LORA LOW-RANK DECOMPOSITION // LoRA 旁路低秩矩阵分解与参数量对比", icon_name="layers"
+)
 
 ranks_cmp = [1, 2, 4, 8, 16, 32]
 params_list = [compute_param_savings(lora_dmodel, r)["lora_params"] for r in ranks_cmp]
@@ -412,8 +486,10 @@ fig_lora.update_layout(
     yaxis=dict(title="参数量 (Parameters)"),
     margin=dict(l=40, r=20, t=30, b=40),
 )
-fig_lora = _apply_light_theme(fig_lora, f"LoRA 不同 Rank 下与全量微调参数量对比 (d_model={lora_dmodel})")
-st.plotly_chart(fig_lora, use_container_width=True)
+fig_lora = _apply_light_theme(
+    fig_lora, f"LoRA 不同 Rank 下与全量微调参数量对比 (d_model={lora_dmodel})"
+)
+st.plotly_chart(fig_lora, width="stretch")
 with st.expander("[HOW TO READ // 读图指南] LoRA 参数量削减对比柱状图", expanded=False):
     st.markdown(
         """
@@ -424,7 +500,9 @@ with st.expander("[HOW TO READ // 读图指南] LoRA 参数量削减对比柱状
 # ---------------------------------------------------------------------------
 # 零基础进阶：后训练对齐与 LoRA 核心公式拆解
 # ---------------------------------------------------------------------------
-with st.expander("[GROWTH GUIDE // 成长指南] 后训练对齐 (RLHF/DPO) 与 LoRA 微调核心公式全解", expanded=True):
+with st.expander(
+    "[GROWTH GUIDE // 成长指南] 后训练对齐 (RLHF/DPO) 与 LoRA 微调核心公式全解", expanded=True
+):
     st.markdown(
         """
         ### 0. 核心公式逐字拆解：LoRA 低秩矩阵分解
@@ -460,4 +538,3 @@ with st.expander("[GROWTH GUIDE // 成长指南] 后训练对齐 (RLHF/DPO) 与 
         | **$\\min(\\cdot, \\cdot)$** | **悲观下界选择** | 在"原始目标"与"裁剪后目标"中取更小值，确保永远不会过度乐观更新。 |
         """
     )
-

@@ -1,0 +1,420 @@
+# Copyright (c) 2026 Yy1 (yuan278501381) | MIT License
+"""课程教学元数据、证据等级与权威参考资料的单一数据源。"""
+
+from dataclasses import dataclass
+from enum import Enum
+
+
+class EvidenceLevel(str, Enum):
+    """页面结果的证据性质；它描述证据，不评价内容难度。"""
+
+    EXACT_COMPUTATION = "真实计算"
+    TEACHING_SCALE = "教学缩小版"
+    SYNTHETIC_DATA = "合成数据"
+    SIMULATION = "概率模拟"
+    ARCHITECTURE_ONLY = "架构示意"
+    PAPER_REPRODUCTION = "论文复现"
+
+
+@dataclass(frozen=True)
+class Reference:
+    """直接支持课程结论的原始论文或权威资料。"""
+
+    title: str
+    url: str
+    note: str
+
+
+@dataclass(frozen=True)
+class LessonMeta:
+    """一个课程页面必须公开的教学契约。"""
+
+    lesson_id: str
+    title: str
+    evidence: tuple[EvidenceLevel, ...]
+    prerequisites: tuple[str, ...]
+    objectives: tuple[str, ...]
+    predecessor_problem: str
+    controllable_parameters: tuple[str, ...]
+    observations: tuple[str, ...]
+    failure_cases: tuple[str, ...]
+    conclusion_boundary: str
+    historical_impact: str
+    references: tuple[Reference, ...]
+
+
+EVIDENCE_DESCRIPTIONS: dict[EvidenceLevel, str] = {
+    EvidenceLevel.EXACT_COMPUTATION: "页面结果由当前代码按照展示公式实际计算。",
+    EvidenceLevel.TEACHING_SCALE: "机制保真，但模型、数据或训练规模为便于观察而缩小。",
+    EvidenceLevel.SYNTHETIC_DATA: "输入或标签由程序构造，不代表真实世界数据分布。",
+    EvidenceLevel.SIMULATION: "结果由预设规则或概率生成，不代表模型真实推理或正式成绩。",
+    EvidenceLevel.ARCHITECTURE_ONLY: "用于解释结构或数据流，未实现或训练完整工业模型。",
+    EvidenceLevel.PAPER_REPRODUCTION: "按论文协议复现实验；必须同时公开数据、配置与指标。",
+}
+
+
+def _ref(title: str, url: str, note: str) -> Reference:
+    return Reference(title=title, url=url, note=note)
+
+
+LESSONS: dict[str, LessonMeta] = {
+    "M00": LessonMeta(
+        "M00",
+        "数学与计算基础",
+        (EvidenceLevel.EXACT_COMPUTATION, EvidenceLevel.TEACHING_SCALE),
+        ("会使用 Python 基本语法",),
+        ("理解 shape、矩阵乘法与广播", "用链式法则和有限差分核对梯度"),
+        "直接记忆神经网络公式会掩盖维度、求导与数值稳定性错误。",
+        ("有限差分步长", "输入值", "矩阵形状"),
+        ("解析梯度与数值梯度相对误差", "中间张量 shape"),
+        ("步长过大会产生截断误差", "步长过小会放大浮点舍入误差"),
+        "有限差分是局部数值校验工具，不是训练网络的高效求导方法。",
+        "线性代数、链式法则和概率建模构成后续所有里程碑的共同语言。",
+        (
+            _ref(
+                "The Matrix Calculus You Need For Deep Learning",
+                "https://arxiv.org/abs/1802.01528",
+                "矩阵微积分教程",
+            ),
+            _ref(
+                "Numerical Optimization",
+                "https://doi.org/10.1007/978-0-387-40065-5",
+                "数值优化权威教材",
+            ),
+        ),
+    ),
+    "M01": LessonMeta(
+        "M01",
+        "单神经元感知器",
+        (EvidenceLevel.EXACT_COMPUTATION, EvidenceLevel.SYNTHETIC_DATA),
+        ("M00 的向量点积与导数",),
+        ("解释线性决策边界", "观察学习率对优化轨迹的影响"),
+        "固定规则无法从样本误差中自动调整决策边界。",
+        ("学习率", "激活函数", "数据噪声"),
+        ("损失", "权重轨迹", "决策边界"),
+        ("线性不可分数据", "学习率过大导致震荡"),
+        "单神经元只能表达线性边界；非线性激活不会单独创造弯曲边界。",
+        "感知器把可学习参数与误差驱动更新结合，奠定监督学习基础。",
+        (_ref("The Perceptron", "https://doi.org/10.1037/h0042519", "Rosenblatt 1958 原始论文"),),
+    ),
+    "M02": LessonMeta(
+        "M02",
+        "多层网络",
+        (EvidenceLevel.EXACT_COMPUTATION, EvidenceLevel.SYNTHETIC_DATA),
+        ("M01", "链式法则"),
+        ("理解隐藏层如何组合非线性", "诊断梯度消失与爆炸"),
+        "线性模型不能拟合 XOR、双月等非线性决策边界。",
+        ("深度", "宽度", "初始化", "激活函数"),
+        ("逐层激活", "梯度分布", "泛化误差"),
+        ("全零初始化的对称性", "饱和激活导致梯度衰减"),
+        "更深或更宽会增加容量，但不保证优化更容易或测试性能更好。",
+        "反向传播使多层表示能够端到端学习。",
+        (
+            _ref(
+                "Learning representations by back-propagating errors",
+                "https://doi.org/10.1038/323533a0",
+                "Rumelhart 等 1986",
+            ),
+        ),
+    ),
+    "M03": LessonMeta(
+        "M03",
+        "优化器对比",
+        (EvidenceLevel.EXACT_COMPUTATION, EvidenceLevel.SYNTHETIC_DATA),
+        ("梯度下降",),
+        ("区分动量与自适应缩放", "用控制变量比较收敛轨迹"),
+        "固定步长 SGD 在高曲率方向可能震荡，在平坦方向进展缓慢。",
+        ("学习率", "动量系数", "二阶矩衰减"),
+        ("损失曲线", "参数路径", "收敛稳定性"),
+        ("Adam 不一定获得最佳泛化", "不同默认学习率使比较失真"),
+        "单个合成任务的胜负不能证明某优化器普遍优于其他优化器。",
+        "动量与自适应矩估计改变了深度网络训练动力学。",
+        (
+            _ref(
+                "Adam: A Method for Stochastic Optimization",
+                "https://arxiv.org/abs/1412.6980",
+                "Adam 原始论文",
+            ),
+        ),
+    ),
+    "M04": LessonMeta(
+        "M04",
+        "参数实验室",
+        (EvidenceLevel.EXACT_COMPUTATION, EvidenceLevel.SYNTHETIC_DATA),
+        ("M01-M03",),
+        ("执行控制变量实验", "把训练异常映射到参数设置"),
+        "只观察最终准确率无法解释训练过程为何成功或失败。",
+        ("网络结构", "学习率", "正则化", "批大小"),
+        ("损失", "梯度", "权重", "决策边界"),
+        ("同时改变多个变量", "只报告单次随机运行"),
+        "页面用于形成假设；可靠结论需要多随机种子与独立测试集。",
+        "实验追踪与消融分析成为现代机器学习的基本研究方法。",
+        (_ref("Deep Learning", "https://www.deeplearningbook.org/", "Goodfellow 等开放教材"),),
+    ),
+    "M05": LessonMeta(
+        "M05",
+        "词嵌入空间",
+        (EvidenceLevel.EXACT_COMPUTATION, EvidenceLevel.TEACHING_SCALE),
+        ("向量与余弦相似度",),
+        ("理解离散 token 的连续表示", "区分展示用嵌入与语料训练嵌入"),
+        "one-hot 向量不能直接表达词之间的相似关系。",
+        ("嵌入维度", "BPE 词表大小"),
+        ("余弦相似度", "降维投影"),
+        ("把低维投影距离当作原空间精确距离", "把手工示例当作普遍语义规律"),
+        "页面的小词表与预置向量用于说明几何关系，不代表大语料训练结果。",
+        "分布式表示让语义关系可以通过向量运算被模型利用。",
+        (
+            _ref(
+                "Efficient Estimation of Word Representations",
+                "https://arxiv.org/abs/1301.3781",
+                "word2vec 原始论文",
+            ),
+        ),
+    ),
+    "M06": LessonMeta(
+        "M06",
+        "序列记忆",
+        (EvidenceLevel.EXACT_COMPUTATION, EvidenceLevel.TEACHING_SCALE),
+        ("M02", "时间序列"),
+        ("追踪循环状态", "解释长程梯度衰减"),
+        "前馈网络没有跨时间步共享的内部状态。",
+        ("序列长度", "隐藏维度", "循环权重尺度"),
+        ("隐藏状态", "记忆衰减", "梯度路径长度"),
+        ("长序列梯度消失/爆炸", "状态容量不足"),
+        "Vanilla RNN 演示不能代表 LSTM/GRU 的门控记忆能力。",
+        "LSTM 等门控结构针对普通 RNN 的长程依赖瓶颈提出改进。",
+        (
+            _ref(
+                "Long Short-Term Memory",
+                "https://doi.org/10.1162/neco.1997.9.8.1735",
+                "LSTM 原始论文",
+            ),
+        ),
+    ),
+    "M07": LessonMeta(
+        "M07",
+        "注意力机制",
+        (EvidenceLevel.EXACT_COMPUTATION, EvidenceLevel.TEACHING_SCALE),
+        ("矩阵乘法", "softmax", "序列表示"),
+        ("逐步计算 QKᵀ/√d", "验证掩码与权重归一化"),
+        "固定长度循环状态会成为长序列信息瓶颈。",
+        ("缩放因子", "因果掩码", "头数"),
+        ("注意力 logits", "softmax 权重", "输出混合"),
+        ("把注意力权重直接等同于因果解释", "忘记遮蔽未来 token"),
+        "随机或教学权重只能解释计算机制，不能证明模型学到了语言关系。",
+        "可微分内容寻址改善了序列对齐，并成为 Transformer 的核心算子。",
+        (
+            _ref(
+                "Neural Machine Translation by Jointly Learning to Align and Translate",
+                "https://arxiv.org/abs/1409.0473",
+                "神经注意力早期代表论文",
+            ),
+        ),
+    ),
+    "M08": LessonMeta(
+        "M08",
+        "Transformer Block",
+        (EvidenceLevel.EXACT_COMPUTATION, EvidenceLevel.ARCHITECTURE_ONLY),
+        ("M07", "残差连接", "归一化"),
+        ("追踪 Pre-LN 残差流", "区分结构计算与训练后语义"),
+        "循环计算限制并行性，且长路径不利于远距离信息交互。",
+        ("层数", "头数", "前馈维度"),
+        ("张量 shape", "残差范数", "未训练注意力权重"),
+        ("把随机权重图解释成语义分工", "把残差连接视为稳定性保证"),
+        "当前 Block 未经语料训练；图表展示结构与数值流，不能作为语义学习证据。",
+        "Transformer 以自注意力和并行计算重塑了序列建模。",
+        (
+            _ref(
+                "Attention Is All You Need",
+                "https://arxiv.org/abs/1706.03762",
+                "Transformer 原始论文",
+            ),
+        ),
+    ),
+    "M09": LessonMeta(
+        "M09",
+        "Mini-GPT",
+        (EvidenceLevel.EXACT_COMPUTATION, EvidenceLevel.TEACHING_SCALE),
+        ("M08", "自回归概率"),
+        ("理解因果生成循环", "比较 temperature 与 top-k"),
+        "固定输出规则无法根据上下文形成下一个 token 分布。",
+        ("temperature", "top-k", "最大长度"),
+        ("token 概率", "采样序列"),
+        ("随机权重产生无意义文本", "把流畅度等同于事实正确性"),
+        "TinyGPT 的规模与训练语料不能代表生产级大语言模型能力。",
+        "decoder-only Transformer 与规模化预训练推动了通用生成模型。",
+        (
+            _ref(
+                "Language Models are Unsupervised Multitask Learners",
+                "https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf",
+                "GPT-2 技术报告",
+            ),
+        ),
+    ),
+    "M10": LessonMeta(
+        "M10",
+        "视觉感知",
+        (
+            EvidenceLevel.EXACT_COMPUTATION,
+            EvidenceLevel.TEACHING_SCALE,
+            EvidenceLevel.SYNTHETIC_DATA,
+        ),
+        ("二维卷积", "M07-M08"),
+        ("理解局部卷积与图块 token", "比较 CNN 与 ViT 归纳偏置"),
+        "全连接网络忽略图像局部结构且参数量随分辨率快速增长。",
+        ("卷积核", "步幅", "patch 大小"),
+        ("特征图", "patch token", "相似度"),
+        ("未训练滤波器不等于语义特征", "小样本下忽略架构先验"),
+        "页面展示核心算子和微型双塔，不是完整训练的视觉基础模型。",
+        "CNN、ViT 与对比学习先后扩展了视觉和图文表示能力。",
+        (
+            _ref(
+                "An Image is Worth 16x16 Words", "https://arxiv.org/abs/2010.11929", "ViT 原始论文"
+            ),
+            _ref(
+                "Learning Transferable Visual Models From Natural Language Supervision",
+                "https://arxiv.org/abs/2103.00020",
+                "CLIP 原始论文",
+            ),
+        ),
+    ),
+    "M11": LessonMeta(
+        "M11",
+        "音频感知",
+        (
+            EvidenceLevel.EXACT_COMPUTATION,
+            EvidenceLevel.SYNTHETIC_DATA,
+            EvidenceLevel.ARCHITECTURE_ONLY,
+        ),
+        ("傅里叶变换", "矩阵表示"),
+        ("从波形计算 log-Mel 特征", "区分连续帧切片与离散 tokenizer"),
+        "原始波形难以直接呈现随时间变化的频率结构。",
+        ("采样率", "FFT 窗长", "hop length", "Mel 频带数"),
+        ("波形", "频谱", "log-Mel 特征"),
+        ("混叠", "窗口泄漏", "把帧切片称为 Whisper tokenizer"),
+        "当前实现不包含 Whisper 的卷积前端、Encoder-Decoder、文本 tokenizer 或训练权重。",
+        "时频表示与 Transformer 让大规模弱监督语音识别成为可能。",
+        (
+            _ref(
+                "Robust Speech Recognition via Large-Scale Weak Supervision",
+                "https://arxiv.org/abs/2212.04356",
+                "Whisper 论文",
+            ),
+        ),
+    ),
+    "M12": LessonMeta(
+        "M12",
+        "视频与世界模型",
+        (
+            EvidenceLevel.EXACT_COMPUTATION,
+            EvidenceLevel.SYNTHETIC_DATA,
+            EvidenceLevel.ARCHITECTURE_ONLY,
+        ),
+        ("M08", "视频张量", "高斯噪声"),
+        ("理解时空 patch", "验证 DDPM 前向加噪公式"),
+        "逐帧独立处理会丢失运动与时间依赖。",
+        ("帧数", "patch 大小", "扩散步数"),
+        ("帧差", "时空相关性", "信号保留率"),
+        ("把前向加噪误认为完整生成", "把两层预测头称为物理世界模拟器"),
+        "当前实现没有反向去噪网络、视频生成训练或 Sora/DiT 复现。",
+        "扩散模型和时空 token 化为视频生成及世界建模提供了通用组件。",
+        (
+            _ref(
+                "Denoising Diffusion Probabilistic Models",
+                "https://arxiv.org/abs/2006.11239",
+                "DDPM 原始论文",
+            ),
+            _ref(
+                "Scalable Diffusion Models with Transformers",
+                "https://arxiv.org/abs/2212.09748",
+                "DiT 原始论文",
+            ),
+        ),
+    ),
+    "M13": LessonMeta(
+        "M13",
+        "预训练范式",
+        (EvidenceLevel.EXACT_COMPUTATION, EvidenceLevel.TEACHING_SCALE, EvidenceLevel.SIMULATION),
+        ("M09-M12",),
+        ("比较 MLM/CLM/对比学习/MAE 目标", "理解计算与数据规模的关系"),
+        "针对单一标注任务训练难以利用海量未标注数据。",
+        ("mask ratio", "数据配比", "token 预算"),
+        ("目标函数", "重建误差", "规模计算器"),
+        ("把经验 scaling law 外推到任意范围", "忽略数据质量与重复"),
+        "规模定律计算器用于解释论文关系，不构成对未来模型性能的保证。",
+        "自监督预训练把统一底座迁移到大量下游任务。",
+        (
+            _ref(
+                "Training Compute-Optimal Large Language Models",
+                "https://arxiv.org/abs/2203.15556",
+                "Chinchilla 规模定律论文",
+            ),
+        ),
+    ),
+    "M14": LessonMeta(
+        "M14",
+        "后训练与对齐",
+        (EvidenceLevel.EXACT_COMPUTATION, EvidenceLevel.TEACHING_SCALE, EvidenceLevel.SIMULATION),
+        ("概率模型", "策略优化", "M13"),
+        ("区分 SFT、偏好建模、PPO 与 DPO", "理解 LoRA 低秩更新"),
+        "预训练目标不直接编码用户意图、帮助性与安全偏好。",
+        ("KL 系数", "DPO beta", "LoRA rank"),
+        ("偏好损失", "隐式奖励", "参数节省"),
+        ("reward hacking", "偏好数据偏差", "把模板回答当作真实模型质变"),
+        "页面计算教学目标并模拟部分轨迹，不是大模型 RLHF 训练复现。",
+        "指令微调和偏好优化显著改变了基础模型的人机交互行为。",
+        (
+            _ref(
+                "Training language models to follow instructions with human feedback",
+                "https://arxiv.org/abs/2203.02155",
+                "InstructGPT 论文",
+            ),
+            _ref(
+                "Direct Preference Optimization", "https://arxiv.org/abs/2305.18290", "DPO 原始论文"
+            ),
+        ),
+    ),
+    "M15": LessonMeta(
+        "M15",
+        "评估基准",
+        (EvidenceLevel.EXACT_COMPUTATION, EvidenceLevel.SIMULATION),
+        ("分类指标", "语言模型概率"),
+        ("计算 PPL、accuracy 与 macro-F1", "区分教学题集和正式 benchmark"),
+        "主观样例不能稳定比较模型能力。",
+        ("模拟答对概率", "教学题集组合"),
+        ("计算指标", "模拟得分", "模拟 PPL"),
+        ("数据污染", "提示格式敏感", "把概率模拟当作模型成绩"),
+        "Mini 题集、mock predictor、模拟 PPL 和能力画像均不是正式评测结果。",
+        "标准化评估促进模型比较，也暴露了覆盖度、污染与可复现性问题。",
+        (
+            _ref(
+                "Holistic Evaluation of Language Models",
+                "https://arxiv.org/abs/2211.09110",
+                "HELM 评估框架论文",
+            ),
+        ),
+    ),
+}
+
+
+def validate_course_registry() -> None:
+    """在导入和测试时快速发现缺页、空字段或不合法引用。"""
+
+    expected = {f"M{i:02d}" for i in range(16)}
+    if set(LESSONS) != expected:
+        missing = sorted(expected - set(LESSONS))
+        extra = sorted(set(LESSONS) - expected)
+        raise ValueError(f"课程注册表不完整: missing={missing}, extra={extra}")
+
+    for lesson_id, lesson in LESSONS.items():
+        if lesson.lesson_id != lesson_id or not lesson.evidence:
+            raise ValueError(f"{lesson_id} 的标识或证据等级无效")
+        if EvidenceLevel.PAPER_REPRODUCTION in lesson.evidence:
+            raise ValueError(f"{lesson_id} 尚无资格标注为论文复现")
+        if not lesson.references:
+            raise ValueError(f"{lesson_id} 缺少权威参考资料")
+        if any(not ref.url.startswith("https://") for ref in lesson.references):
+            raise ValueError(f"{lesson_id} 存在非 HTTPS 参考链接")
+
+
+validate_course_registry()

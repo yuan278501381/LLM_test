@@ -10,6 +10,7 @@ nn_core.swiglu - 门控线性单元前馈网络模块 (SwiGLU FFN)
 
 import logging
 import uuid
+
 import numpy as np
 
 from nn_core.tensor import safe_exp
@@ -20,7 +21,7 @@ logger = logging.getLogger(__name__)
 def silu(x: np.ndarray) -> np.ndarray:
     r"""
     SiLU (Sigmoid Linear Unit / Swish-1) 激活函数。
-    
+
     数学公式:
         $SiLU(x) = x \cdot \sigma(x) = \frac{x}{1 + e^{-x}}$
     """
@@ -31,10 +32,10 @@ def silu(x: np.ndarray) -> np.ndarray:
 class SwiGLU:
     r"""
     SwiGLU 门控前馈网络层 (Swish Gated Linear Unit)。
-    
+
     相较于标准两层 MLP，SwiGLU 引入了 Gate 矩阵进行元素级门控相乘，
     具有更强的表达能力和更平滑的梯度流。
-    
+
     数学公式:
         $h_{gate} = SiLU(x \cdot W_{gate} + b_{gate})$
         $h_{up}   = x \cdot W_{up} + b_{up}$
@@ -71,7 +72,7 @@ class SwiGLU:
     def forward(self, x: np.ndarray) -> np.ndarray:
         """
         前向传播。
-        
+
         Args:
             x: 形状 (batch_size, seq_len, d_model) 或 (batch_size, d_model)
         """

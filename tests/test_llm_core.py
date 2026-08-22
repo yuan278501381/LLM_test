@@ -19,14 +19,19 @@ tests.test_llm_core - LLM 核心模块单元测试与数值梯度检验
 import numpy as np
 import pytest
 
-from nn_core.embeddings import Embedding, PositionalEncoding, get_mini_vocab, get_pretrained_embeddings
-from nn_core.rnn import RNNCell
-from nn_core.attention import causal_mask, scaled_dot_product_attention, MultiHeadAttention
-from nn_core.layernorm import LayerNorm
+from nn_core.attention import MultiHeadAttention, causal_mask, scaled_dot_product_attention
+from nn_core.embeddings import (
+    Embedding,
+    PositionalEncoding,
+    get_mini_vocab,
+    get_pretrained_embeddings,
+)
 from nn_core.gelu import GELU
-from nn_core.transformer import FeedForward, TransformerBlock
 from nn_core.gpt import TinyGPT
+from nn_core.layernorm import LayerNorm
+from nn_core.rnn import RNNCell
 from nn_core.tensor import set_seed
+from nn_core.transformer import FeedForward, TransformerBlock
 
 
 # ========================== 固定随机种子 ==========================
@@ -366,6 +371,7 @@ class TestSoftmaxGradient:
     def test_softmax_数值梯度检验(self):
         """Softmax Jacobian 向量化实现与中心差分对比"""
         from nn_core.activations import Softmax
+
         sm = Softmax()
         x = np.random.randn(2, 5)
         eps = 1e-5
@@ -525,6 +531,7 @@ class TestL1Regularizer:
     def test_损失计算(self):
         """L1 损失 = lambda * sum(|W|)"""
         from nn_core.regularizers import L1
+
         reg = L1(lambda_=0.1)
         W = np.array([[1.0, -2.0], [3.0, -4.0]])
         loss = reg.loss(W)
@@ -534,6 +541,7 @@ class TestL1Regularizer:
     def test_次梯度正确(self):
         """L1 梯度 = lambda * sign(W)"""
         from nn_core.regularizers import L1
+
         reg = L1(lambda_=0.5)
         W = np.array([[1.0, -2.0], [0.0, 3.0]])
         grad = reg.gradient(W)
@@ -548,6 +556,7 @@ class TestTensorUtils:
     def test_safe_log_防零(self):
         """safe_log(0) 不应产生 -inf"""
         from nn_core.tensor import safe_log
+
         result = safe_log(np.array([0.0, 1e-15, 1.0]))
         assert not np.any(np.isinf(result)), "safe_log 应防止 -inf"
         assert not np.any(np.isnan(result)), "safe_log 应防止 NaN"
@@ -555,6 +564,7 @@ class TestTensorUtils:
     def test_safe_exp_防溢出(self):
         """safe_exp(1000) 不应产生 inf"""
         from nn_core.tensor import safe_exp
+
         result = safe_exp(np.array([1000.0, -1000.0, 0.0]))
         assert not np.any(np.isinf(result)), "safe_exp 应防止 inf"
         assert not np.any(np.isnan(result)), "safe_exp 应防止 NaN"
@@ -562,6 +572,7 @@ class TestTensorUtils:
     def test_clip_gradients_裁剪(self):
         """梯度范数超限时应按比例缩放"""
         from nn_core.tensor import clip_gradients
+
         grads = np.array([3.0, 4.0])  # norm = 5
         clipped = clip_gradients(grads, max_norm=1.0)
         assert abs(np.linalg.norm(clipped) - 1.0) < 1e-10, "裁剪后范数应为 max_norm"
@@ -569,6 +580,7 @@ class TestTensorUtils:
     def test_clip_gradients_不超限原样返回(self):
         """梯度范数未超限时应原样返回"""
         from nn_core.tensor import clip_gradients
+
         grads = np.array([0.1, 0.1])
         clipped = clip_gradients(grads, max_norm=5.0)
         np.testing.assert_array_equal(clipped, grads)

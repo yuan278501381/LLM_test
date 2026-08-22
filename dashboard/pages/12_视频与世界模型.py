@@ -1,8 +1,8 @@
 # Copyright (c) 2026 Yy1 (yuan278501381) | MIT License
 """
-里程碑 12: 视频理解与世界模型 (Video -> Sora) - 零基础入门保姆级教学平台
+里程碑 12: 视频张量、教学级预测头与 DDPM 前向加噪 - 零基础入门教学平台
 
-解剖 3D 视频帧时空切片、空间 vs 时间多头注意力、自回归下一帧物理世界推演与 Sora/DiT 扩散去噪调度。
+解剖 3D 视频时空切片、时空相关性、教学级下一帧预测头与 DDPM 前向加噪；不实现视频去噪生成网络。
 """
 
 import os
@@ -17,6 +17,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from dashboard.components.charts import _apply_light_theme
+from dashboard.components.pedagogy import render_lesson_evidence
 from dashboard.styles.theme import (
     anchor_badge,
     apply_custom_theme,
@@ -45,10 +46,11 @@ st.set_page_config(
 )
 
 apply_custom_theme()
+render_lesson_evidence("M12", show_contract=True)
 
 render_hero_header(
     title="视频理解与世界模型架构",
-    subtitle="从像素序列到物理规律推演：解剖 3D 时空图块、空间与时间双轨注意力、世界模型下一帧预测与 Sora 扩散调度",
+    subtitle="从像素序列到时间结构：解剖 3D 时空图块、相关性、教学级下一帧预测与 DDPM 前向加噪",
     badge_text="MILESTONE 12 // VIDEO & WORLD MODEL",
     badge_type="rose",
 )
@@ -59,18 +61,48 @@ render_hero_header(
 render_page_guide(
     title="视频理解与世界模型空间交互地图",
     blueprint_sections=[
-        {"id": "A", "name": "动力学控制台", "desc": "在左侧侧边栏切换合成动力学模式、视频总帧数与 Patch 尺寸", "color": "amber", "target_id": "region-a"},
-        {"id": "B", "name": "教学指引", "desc": "当前卡片：通俗理解 3D 时空图块、时空双轨注意力与 Sora 扩散去噪", "color": "blue", "target_id": "region-b"},
-        {"id": "C", "name": "实时时空遥测", "desc": "显示 3D 时空 Token 规模、帧间运动能量与世界模型推演误差", "color": "emerald", "target_id": "region-c"},
-        {"id": "D", "name": "时序采样与能量", "desc": "32x32 视频连续帧序列展示与相邻帧间差分运动能量折线", "color": "purple", "target_id": "region-d"},
-        {"id": "E", "name": "时空注意力与 Sora", "desc": "空间与时间注意力热力图解耦与 Sora 扩散去噪多步时间表", "color": "blue", "target_id": "region-e"},
+        {
+            "id": "A",
+            "name": "动力学控制台",
+            "desc": "在左侧侧边栏切换合成动力学模式、视频总帧数与 Patch 尺寸",
+            "color": "amber",
+            "target_id": "region-a",
+        },
+        {
+            "id": "B",
+            "name": "教学指引",
+            "desc": "理解 3D 时空图块、相关性与 DDPM 前向加噪，并区分未实现的逆过程",
+            "color": "blue",
+            "target_id": "region-b",
+        },
+        {
+            "id": "C",
+            "name": "实时时空遥测",
+            "desc": "显示 3D 时空 Token 规模、帧间运动能量与世界模型推演误差",
+            "color": "emerald",
+            "target_id": "region-c",
+        },
+        {
+            "id": "D",
+            "name": "时序采样与能量",
+            "desc": "32x32 视频连续帧序列展示与相邻帧间差分运动能量折线",
+            "color": "purple",
+            "target_id": "region-d",
+        },
+        {
+            "id": "E",
+            "name": "时空相关与前向扩散",
+            "desc": "时空相关性热力图与 DDPM 前向加噪时间表；不含逆向生成",
+            "color": "blue",
+            "target_id": "region-e",
+        },
     ],
     plain_intro=(
         f"<b>视频不仅是图片的集合，更是物理世界在时间轴上的因果连续流！</b><br>"
         f"大模型理解视频的核心技巧是 <b>3D 时空图块 (Spatio-Temporal Patches)</b>：把视频切成时空小方块，"
         f"并用<b>空间注意力</b>看'这一刻画面里发生了什么'，用<b>时间注意力</b>追踪'这个物体运动到了哪里'；<br>"
-        f"更进一步的 <b>世界模型 (World Model)</b> 像人类的大脑一样，具备在脑海中推演未来画面的能力；<br>"
-        f"而 <b>Sora</b> 则在 {anchor_badge('[E. 扩散实验室]', 'blue', target_id='region-e')} 中，在纯高斯白噪声的泥土中，一步步雕刻出符合物理规律的高清动态视频！"
+        f"本页的 <b>NextFramePredictor</b> 是未训练的两层教学预测头，用于说明接口，不代表已学会物理规律；<br>"
+        f"{anchor_badge('[E. 扩散实验室]', 'blue', target_id='region-e')} 只计算 DDPM 前向加噪。DiT 流程图是架构背景，不是已实现的生成器。"
     ),
     hyperparams_desc=(
         f"• <b>在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 调节</b>：<br>"
@@ -81,20 +113,23 @@ render_page_guide(
     ),
     telemetry_desc=(
         f"• <b>在 {anchor_badge('[D. 时序采样]', 'purple', target_id='region-d')} 观测</b>：视频序列帧与运动能量折线。<br>"
-        f"• <b>在 {anchor_badge('[E. 时空注意力与扩散]', 'blue', target_id='region-e')} 观测</b>：空间与时间双轨热力图与去噪轨迹。<br>"
+        f"• <b>在 {anchor_badge('[E. 时空相关与扩散]', 'blue', target_id='region-e')} 观测</b>：时空相关性热力图与前向加噪轨迹。<br>"
         f"• <b>在 {anchor_badge('[C. 时空遥测]', 'emerald', target_id='region-c')} 评估</b>：时空 Token 规模与世界模型推演误差。"
     ),
     experiments=[
         f"<b>第 1 步【观察时空采样】</b>：在 {anchor_badge('[D. 采样与能量]', 'purple', target_id='region-d')} 中观察 32x32 视频连续帧及下方的帧间运动能量曲线！",
         f"<b>第 2 步【对比空间与时间注意力】</b>：在 {anchor_badge('[E. 双轨注意力]', 'blue', target_id='region-e')} 中对比两组热力图，体会模型如何将空间特征与时间轨迹解耦！",
-        f"<b>第 3 步【观测 Sora 噪声雕刻】</b>：在 {anchor_badge('[E. 扩散实验室]', 'blue', target_id='region-e')} 观察清晰视频帧如何一步步衰减为纯高斯白噪声，并理解去噪逆过程！",
+        f"<b>第 3 步【验证前向加噪】</b>：观察清晰帧如何随 t 增大而丢失信号；注意本页没有计算逆向去噪。",
     ],
 )
 
 # ---------------------------------------------------------------------------
 # 侧边栏参数控制
 # ---------------------------------------------------------------------------
-st.sidebar.markdown(f'<div id="region-a" class="interactive-region" style="margin-bottom:0.6rem;padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">{anchor_badge("A", "amber")} <b>WORLD MODEL CONTROLS // 动力学控制台</b></div>', unsafe_allow_html=True)
+st.sidebar.markdown(
+    f'<div id="region-a" class="interactive-region" style="margin-bottom:0.6rem;padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">{anchor_badge("A", "amber")} <b>WORLD MODEL CONTROLS // 动力学控制台</b></div>',
+    unsafe_allow_html=True,
+)
 
 # ---------------------------------------------------------------------------
 # 侧边栏参数控制
@@ -212,7 +247,7 @@ metric_grid_html = (
 st.markdown(
     f'<div id="region-c" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;">'
     f'{anchor_badge("C", "emerald")} <span style="font-weight:800;color:#065f46;font-size:0.86rem;">SPATIO-TEMPORAL TELEMETRY // 时空动力学与世界模型遥测</span>'
-    f'</div>',
+    f"</div>",
     unsafe_allow_html=True,
 )
 st.markdown(metric_grid_html, unsafe_allow_html=True)
@@ -223,7 +258,7 @@ st.markdown(metric_grid_html, unsafe_allow_html=True)
 st.markdown(
     f'<div id="region-d" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;margin-top:1rem;">'
     f'{anchor_badge("D", "purple")} <span style="font-weight:800;color:#5b21b6;font-size:0.86rem;">VIDEO FRAME SEQUENCE // 32×32 视频时序采样与帧间动力学能量</span>'
-    f'</div>',
+    f"</div>",
     unsafe_allow_html=True,
 )
 
@@ -243,10 +278,10 @@ for idx, frame_idx in enumerate(sampled_indices):
             margin=dict(l=5, r=5, t=25, b=5),
         )
         fig_f = _apply_light_theme(fig_f, f"Frame #{frame_idx} (T={frame_idx})")
-        st.plotly_chart(fig_f, use_container_width=True)
+        st.plotly_chart(fig_f, width="stretch")
 
 # 帧间运动能量折线图
-time_x = [f"F{i}->F{i+1}" for i in range(len(frame_diffs))]
+time_x = [f"F{i}->F{i + 1}" for i in range(len(frame_diffs))]
 fig_energy = go.Figure()
 fig_energy.add_trace(
     go.Scatter(
@@ -265,7 +300,7 @@ fig_energy.update_layout(
     margin=dict(l=40, r=20, t=30, b=40),
 )
 fig_energy = _apply_light_theme(fig_energy, "视频时序动力学帧间差分能量曲线 (Motion Energy)")
-st.plotly_chart(fig_energy, use_container_width=True)
+st.plotly_chart(fig_energy, width="stretch")
 with st.expander("[HOW TO READ // 读图指南] 帧间运动差分能量曲线", expanded=False):
     st.markdown(
         """
@@ -279,8 +314,8 @@ with st.expander("[HOW TO READ // 读图指南] 帧间运动差分能量曲线",
 # ---------------------------------------------------------------------------
 st.markdown(
     f'<div id="region-e" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;margin-top:1.2rem;">'
-    f'{anchor_badge("E", "blue")} <span style="font-weight:800;color:#1e40af;font-size:0.86rem;">SPATIO-TEMPORAL ATTENTION & SORA // 空间时间双轨注意力与扩散去噪</span>'
-    f'</div>',
+    f'{anchor_badge("E", "blue")} <span style="font-weight:800;color:#1e40af;font-size:0.86rem;">SPATIO-TEMPORAL CORRELATION // 时空相关性与前向扩散</span>'
+    f"</div>",
     unsafe_allow_html=True,
 )
 
@@ -302,7 +337,7 @@ with col_sp_attn:
         margin=dict(l=30, r=30, t=30, b=40),
     )
     fig_sp = _apply_light_theme(fig_sp, "空间注意力 (Spatial Attention: 同一时刻全局画面)")
-    st.plotly_chart(fig_sp, use_container_width=True)
+    st.plotly_chart(fig_sp, width="stretch")
     with st.expander("[HOW TO READ // 读图指南] 空间注意力热力矩阵", expanded=False):
         st.markdown(
             """
@@ -326,7 +361,7 @@ with col_tp_attn:
         margin=dict(l=30, r=30, t=30, b=40),
     )
     fig_tp = _apply_light_theme(fig_tp, "时间注意力 (Temporal Attention: 同一位置历史运动)")
-    st.plotly_chart(fig_tp, use_container_width=True)
+    st.plotly_chart(fig_tp, width="stretch")
     with st.expander("[HOW TO READ // 读图指南] 时间注意力时序追踪矩阵", expanded=False):
         st.markdown(
             """
@@ -337,7 +372,9 @@ with col_tp_attn:
 # ---------------------------------------------------------------------------
 # Section 3: 世界模型自回归下一帧物理预测
 # ---------------------------------------------------------------------------
-render_section_heading("WORLD MODEL FUTURE PREDICTION // 世界模型自回归下一帧物理规律推演", icon_name="cpu")
+render_section_heading(
+    "WORLD MODEL FUTURE PREDICTION // 世界模型自回归下一帧物理规律推演", icon_name="cpu"
+)
 
 col_pred_view, col_true_view, col_world_info = st.columns([1.1, 1.1, 1.2])
 
@@ -355,8 +392,8 @@ with col_pred_view:
         yaxis=dict(showticklabels=False, autorange="reversed"),
         margin=dict(l=10, r=10, t=30, b=10),
     )
-    fig_p = _apply_light_theme(fig_p, f"模型推演预测画面 (T={n_frames_val-1})")
-    st.plotly_chart(fig_p, use_container_width=True)
+    fig_p = _apply_light_theme(fig_p, f"模型推演预测画面 (T={n_frames_val - 1})")
+    st.plotly_chart(fig_p, width="stretch")
 
 with col_true_view:
     fig_t = go.Figure(
@@ -372,8 +409,8 @@ with col_true_view:
         yaxis=dict(showticklabels=False, autorange="reversed"),
         margin=dict(l=10, r=10, t=30, b=10),
     )
-    fig_t = _apply_light_theme(fig_t, f"物理世界真实画面 (T={n_frames_val-1})")
-    st.plotly_chart(fig_t, use_container_width=True)
+    fig_t = _apply_light_theme(fig_t, f"物理世界真实画面 (T={n_frames_val - 1})")
+    st.plotly_chart(fig_t, width="stretch")
 
 with col_world_info:
     with st.container(border=True):
@@ -396,12 +433,18 @@ with st.expander("[HOW TO READ // 读图指南] 物理世界下一帧推演预�
     )
 
 # ---------------------------------------------------------------------------
-# Section 4: Diffusion 噪声调度与 Sora 架构
+# Section 4: DDPM 前向加噪与未实现的生成架构背景
 # ---------------------------------------------------------------------------
-render_section_heading("DIFFUSION NOISE SCHEDULE // 扩散加噪轨迹与 Sora 架构全景", icon_name="activity")
+render_section_heading("DDPM FORWARD PROCESS // 扩散前向加噪（非视频生成）", icon_name="activity")
+
+st.warning(
+    "证据边界：以下快照和曲线仅由 DDPM 闭式前向加噪公式计算；项目没有实现或训练反向去噪网络、DiT 或 Sora。"
+)
 
 scheduler = DiffusionScheduler(num_steps=diffusion_steps)
-snapshots = visualize_diffusion_process(raw_image_0 := full_video[0, 0], scheduler=scheduler, steps_to_show=5)
+snapshots = visualize_diffusion_process(
+    raw_image_0 := full_video[0, 0], scheduler=scheduler, steps_to_show=5
+)
 
 col_diff_shots = st.columns(5)
 for idx, (step_t, noisy_img) in enumerate(snapshots):
@@ -418,17 +461,32 @@ for idx, (step_t, noisy_img) in enumerate(snapshots):
             yaxis=dict(showticklabels=False, autorange="reversed"),
             margin=dict(l=5, r=5, t=25, b=5),
         )
-        fig_ns = _apply_light_theme(fig_ns, f"Step t={step_t} ({'原图' if step_t==0 else ('纯噪声' if step_t==diffusion_steps-1 else '加噪中')})")
-        st.plotly_chart(fig_ns, use_container_width=True)
+        fig_ns = _apply_light_theme(
+            fig_ns,
+            f"Step t={step_t} ({'原图' if step_t == 0 else ('纯噪声' if step_t == diffusion_steps - 1 else '加噪中')})",
+        )
+        st.plotly_chart(fig_ns, width="stretch")
 
 # 调度曲线图
 sched_data = scheduler.get_schedule()
 fig_sched = go.Figure()
 fig_sched.add_trace(
-    go.Scatter(x=sched_data["steps"], y=sched_data["betas"], mode="lines", name="β_t (加噪率)", line=dict(color="#be123c", width=2))
+    go.Scatter(
+        x=sched_data["steps"],
+        y=sched_data["betas"],
+        mode="lines",
+        name="β_t (加噪率)",
+        line=dict(color="#be123c", width=2),
+    )
 )
 fig_sched.add_trace(
-    go.Scatter(x=sched_data["steps"], y=sched_data["alphas_cumprod"], mode="lines", name="ᾱ_t (信号保留率)", line=dict(color="#1d4ed8", width=2))
+    go.Scatter(
+        x=sched_data["steps"],
+        y=sched_data["alphas_cumprod"],
+        mode="lines",
+        name="ᾱ_t (信号保留率)",
+        line=dict(color="#1d4ed8", width=2),
+    )
 )
 fig_sched.update_layout(
     xaxis=dict(title="扩散时间步 (Diffusion Steps t)"),
@@ -436,7 +494,7 @@ fig_sched.update_layout(
     margin=dict(l=40, r=20, t=30, b=40),
 )
 fig_sched = _apply_light_theme(fig_sched, "Diffusion 前向方差与信号保留率调度曲线")
-st.plotly_chart(fig_sched, use_container_width=True)
+st.plotly_chart(fig_sched, width="stretch")
 with st.expander("[HOW TO READ // 读图指南] 扩散加噪与方差调度曲线", expanded=False):
     st.markdown(
         """
@@ -449,7 +507,7 @@ with st.expander("[HOW TO READ // 读图指南] 扩散加噪与方差调度曲�
 with st.container(border=True):
     st.markdown(
         """
-        #### [SORA GENERATIVE PIPELINE // 文本到视频生成全景]
+        #### [ARCHITECTURE CONTEXT ONLY // 文本到视频生成背景（未实现）]
         ```
         [用户 Prompt 提示词] ──> [T5/CLIP 文本编码]
                                          │
@@ -457,14 +515,14 @@ with st.container(border=True):
         [3D 高斯白噪声视频] ──> [Diffusion Transformer (DiT)] ──> [逐步去噪迭代 (T 步)] ──> [高清 3D 物理视频]
         ```
         - **时空统一**：将视频帧切片为 3D Patches，直接送入 Transformer 进行时空全注意力建模；
-        - **逆向雕塑**：训练模型预测每一步注入的噪声 $\\epsilon_\\theta(x_t, t, c)$，在推理时从纯噪声中雕刻出符合物理定律的世界！
+        - **未实现部分**：完整系统需要训练 $\\epsilon_\\theta(x_t,t,c)$ 或其他预测器并运行逆向采样；本页没有执行这一步。
         """
     )
 
 # ---------------------------------------------------------------------------
 # 零基础进阶：视频生成与世界模型核心公式拆解
 # ---------------------------------------------------------------------------
-with st.expander("[GROWTH GUIDE // 成长指南] 扩散模型与 Sora 视频生成核心公式全解", expanded=True):
+with st.expander("[GROWTH GUIDE // 成长指南] DDPM 前向加噪公式与逆过程边界", expanded=True):
     st.markdown(
         """
         ### 0. 核心公式逐字拆解：扩散模型 (DDPM) 前向一步加噪
@@ -481,9 +539,8 @@ with st.expander("[GROWTH GUIDE // 成长指南] 扩散模型与 Sora 视频生�
         
         ---
         
-        ### 1. 什么是【Sora / DiT 逆向去噪】？—— “大理石雕塑”
-        * **训练阶段（砸碎雕像）**：我们给高清照片不断加噪，教神经网络学会识别“当前画面里哪部分是噪声”。
-        * **生成阶段（雕刻成型）**：给模型一段纯高斯白噪声（一块未开垦的粗糙大理石）和一段文字 Prompt，模型像米开朗基罗一样，一步步削去多余的噪声，最终涌现出一张完全符合物理常识的高清视频！
+        ### 1. 完整逆向去噪还缺少什么？
+        * **训练阶段**：需要可学习的噪声或速度预测网络、时间步条件、真实视频数据和反向传播训练。
+        * **生成阶段**：需要选择采样器并反复调用训练后的网络。本页没有这些组件，因此不能从噪声生成视频，也不能据此评价物理一致性。
         """
     )
-

@@ -13,11 +13,11 @@ if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
 import numpy as np
-import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
 from dashboard.components.charts import _apply_light_theme
+from dashboard.components.pedagogy import render_lesson_evidence
 from dashboard.styles.theme import (
     anchor_badge,
     apply_custom_theme,
@@ -42,21 +42,54 @@ st.set_page_config(
 )
 
 apply_custom_theme()
+render_lesson_evidence("M15", show_contract=True)
 
 render_hero_header(
     title="大模型评估基准框架 (Harness)",
-    subtitle="从语言困惑度到高阶推理大考：解剖 Perplexity $\\text{PPL} = e^{-\\frac{1}{N}\\sum \\log p(x_i)}$、MMLU / GSM8K 客观考场、多维能力雷达图与排行榜",
+    subtitle="从困惑度计算到评估协议：区分 Mini 教学题集、概率模拟与正式 benchmark，并理解指标边界",
     badge_text="MILESTONE 15 // EVALUATION HARNESS",
     badge_type="blue",
 )
 
-render_floating_hud_navigator([
-        {"id": "A", "name": "考场配置控制台", "desc": "在左侧侧边栏切换模拟模型智力等级与参加评测的基准考卷", "color": "amber", "target_id": "region-a"},
-        {"id": "B", "name": "教学指引", "desc": "当前卡片：通俗理解困惑度 PPL 吃惊程度、MMLU/GSM8K 考场与排行榜", "color": "blue", "target_id": "region-b"},
-        {"id": "C", "name": "实时评估遥测", "desc": "显示当前综合得分率、困惑度 PPL、总答题数与胜率统计", "color": "emerald", "target_id": "region-c"},
-        {"id": "D", "name": "PPL 仪表盘与考场", "desc": "PPL 困惑度仪表盘与四大基准考卷逐题答题透视判分", "color": "purple", "target_id": "region-d"},
-        {"id": "E", "name": "多维雷达与天梯榜", "desc": "学科/推理/安全多维能力雷达图与 Open LLM 全球天梯排行榜", "color": "blue", "target_id": "region-e"},
-    ])
+render_floating_hud_navigator(
+    [
+        {
+            "id": "A",
+            "name": "考场配置控制台",
+            "desc": "在左侧侧边栏切换模拟模型智力等级与参加评测的基准考卷",
+            "color": "amber",
+            "target_id": "region-a",
+        },
+        {
+            "id": "B",
+            "name": "教学指引",
+            "desc": "当前卡片：通俗理解困惑度 PPL 吃惊程度、MMLU/GSM8K 考场与排行榜",
+            "color": "blue",
+            "target_id": "region-b",
+        },
+        {
+            "id": "C",
+            "name": "实时评估遥测",
+            "desc": "显示当前综合得分率、困惑度 PPL、总答题数与胜率统计",
+            "color": "emerald",
+            "target_id": "region-c",
+        },
+        {
+            "id": "D",
+            "name": "PPL 仪表盘与考场",
+            "desc": "PPL 困惑度仪表盘与四大基准考卷逐题答题透视判分",
+            "color": "purple",
+            "target_id": "region-d",
+        },
+        {
+            "id": "E",
+            "name": "模拟能力画像",
+            "desc": "基于预设答对概率的教学雷达图与重复采样对比",
+            "color": "blue",
+            "target_id": "region-e",
+        },
+    ]
+)
 
 # ---------------------------------------------------------------------------
 # 零基础保姆级指引 (Zero-Barrier Beginner Guide)
@@ -64,16 +97,46 @@ render_floating_hud_navigator([
 render_page_guide(
     title="大模型评估框架与空间交互地图",
     blueprint_sections=[
-        {"id": "A", "name": "考场配置控制台", "desc": "在左侧侧边栏切换模拟模型智力等级与参加评测的基准考卷", "color": "amber", "target_id": "region-a"},
-        {"id": "B", "name": "教学指引", "desc": "当前卡片：通俗理解困惑度 PPL 吃惊程度、MMLU/GSM8K 考场与排行榜", "color": "blue", "target_id": "region-b"},
-        {"id": "C", "name": "实时评估遥测", "desc": "显示当前综合得分率、困惑度 PPL、总答题数与胜率统计", "color": "emerald", "target_id": "region-c"},
-        {"id": "D", "name": "PPL 仪表盘与考场", "desc": "PPL 困惑度仪表盘与四大基准考卷逐题答题透视判分", "color": "purple", "target_id": "region-d"},
-        {"id": "E", "name": "多维雷达与天梯榜", "desc": "学科/推理/安全多维能力雷达图与 Open LLM 全球天梯排行榜", "color": "blue", "target_id": "region-e"},
+        {
+            "id": "A",
+            "name": "考场配置控制台",
+            "desc": "在左侧侧边栏切换模拟模型智力等级与参加评测的基准考卷",
+            "color": "amber",
+            "target_id": "region-a",
+        },
+        {
+            "id": "B",
+            "name": "教学指引",
+            "desc": "当前卡片：通俗理解困惑度 PPL 吃惊程度、MMLU/GSM8K 考场与排行榜",
+            "color": "blue",
+            "target_id": "region-b",
+        },
+        {
+            "id": "C",
+            "name": "实时评估遥测",
+            "desc": "显示当前综合得分率、困惑度 PPL、总答题数与胜率统计",
+            "color": "emerald",
+            "target_id": "region-c",
+        },
+        {
+            "id": "D",
+            "name": "PPL 仪表盘与考场",
+            "desc": "PPL 困惑度仪表盘与四大基准考卷逐题答题透视判分",
+            "color": "purple",
+            "target_id": "region-d",
+        },
+        {
+            "id": "E",
+            "name": "模拟能力画像",
+            "desc": "基于预设答对概率的教学雷达图与重复采样对比",
+            "color": "blue",
+            "target_id": "region-e",
+        },
     ],
     plain_intro=(
         f"<b>大模型训练完了，怎么客观证明它比别的模型更聪明？</b><br>"
-        f"在学术界和工业界，我们绝不靠主观感觉，而是依赖一套严密的<b>标准化考试评估体系 (Evaluation Harness)</b>：<br>"
-        f"• <b>困惑度 (Perplexity / PPL)</b>：衡量模型在阅读文本时的'吃惊程度'。PPL 越低，说明模型对人类语言越胸有成竹；<br>"
+        f"可靠评估需要公开任务、数据、提示模板、评分规则和不确定性，而不能只看主观样例。<br>"
+        f"• <b>困惑度 (Perplexity / PPL)</b>：在固定 tokenizer、数据和协议下度量平均负对数似然；跨协议数值通常不可直接比较；<br>"
         f"• <b>Mini-MMLU (通识学科)</b>：覆盖数理化、文史哲的大综合单选题；<br>"
         f"• <b>Mini-HellaSwag (常识推理)</b>：考察模型能否识破荒谬的常识陷阱；<br>"
         f"• <b>Mini-GSM8K (小学数学)</b>：考验多步思维链推理能力；<br>"
@@ -87,19 +150,22 @@ render_page_guide(
     telemetry_desc=(
         f"• <b>在 {anchor_badge('[C. 评估遥测]', 'emerald', target_id='region-c')} 评估</b>：综合得分率与 PPL 困惑度。<br>"
         f"• <b>在 {anchor_badge('[D. 客观考场]', 'purple', target_id='region-d')} 透视</b>：逐题答题比对与 PPL 收敛曲线。<br>"
-        f"• <b>在 {anchor_badge('[E. 天梯排行榜]', 'blue', target_id='region-e')} 查阅</b>：Open LLM Leaderboard 全球排行榜。"
+        f"• <b>在 {anchor_badge('[E. 模拟能力画像]', 'blue', target_id='region-e')} 查阅</b>：预设答对概率下的随机采样结果。"
     ),
     experiments=[
         f"<b>第 1 步【体验全自动考试】</b>：在 {anchor_badge('[D. 客观考场]', 'purple', target_id='region-d')} 展开具体的试卷题目，观察模型是如何选出答案并与标准答案比对判分的！",
         f"<b>第 2 步【观察雷达能力画像】</b>：在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 切换【模拟模型等级】为'强模型 (Expert)'，观察 {anchor_badge('[E. 能力雷达]', 'blue', target_id='region-e')} 雷达图面积如何全面膨胀！",
-        f"<b>第 3 步【查阅工业级排行榜】</b>：在 {anchor_badge('[E. 天梯排行榜]', 'blue', target_id='region-e')} 查阅模拟的 Open LLM Leaderboard，理解模型参数量与综合得分的正相关规律！",
+        f"<b>第 3 步【观察采样方差】</b>：比较预设能力概率与有限题量实测分数，理解小题集成绩会随随机样本波动。",
     ],
 )
 
 # ---------------------------------------------------------------------------
 # 侧边栏参数控制
 # ---------------------------------------------------------------------------
-st.sidebar.markdown(f'<div id="region-a" class="interactive-region" style="margin-bottom:0.6rem;padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">{anchor_badge("A", "amber")} <b>EVALUATION CONTROLS // 评估控制台</b></div>', unsafe_allow_html=True)
+st.sidebar.markdown(
+    f'<div id="region-a" class="interactive-region" style="margin-bottom:0.6rem;padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">{anchor_badge("A", "amber")} <b>EVALUATION CONTROLS // 评估控制台</b></div>',
+    unsafe_allow_html=True,
+)
 
 # ---------------------------------------------------------------------------
 # 侧边栏参数控制
@@ -108,7 +174,11 @@ st.sidebar.markdown("#### HYPERPARAMETERS // 超参数与配置")
 
 model_tier = st.sidebar.radio(
     "模拟待测模型能力等级",
-    options=["弱模型 (Base TinyGPT · 30% 准确率)", "中等模型 (SFT 7B · 65% 准确率)", "强模型 (Aligned 70B · 90% 准确率)"],
+    options=[
+        "弱模型 (Base TinyGPT · 30% 准确率)",
+        "中等模型 (SFT 7B · 65% 准确率)",
+        "强模型 (Aligned 70B · 90% 准确率)",
+    ],
     index=2,
 )
 
@@ -164,11 +234,13 @@ metric_grid_html = (
         "OVERALL BENCHMARK SCORE // 综合得分",
         f"{avg_score:.1f} / 100",
         delta="多维加权总评",
-        delta_type="positive" if avg_score >= 80 else ("neutral" if avg_score >= 60 else "negative"),
+        delta_type="positive"
+        if avg_score >= 80
+        else ("neutral" if avg_score >= 60 else "negative"),
         icon_name="target",
     )
     + render_metric_card(
-        "PERPLEXITY (PPL) // 困惑度",
+        "SIMULATED PPL // 模拟困惑度",
         f"{sim_ppl:.1f}",
         delta="越低预测越笃定 (↓)",
         delta_type="positive" if sim_ppl < 20 else "neutral",
@@ -195,7 +267,11 @@ st.markdown(metric_grid_html, unsafe_allow_html=True)
 # ---------------------------------------------------------------------------
 # Section 1: 语言模型困惑度 (PPL) 仪表盘与训练演化
 # ---------------------------------------------------------------------------
-render_section_heading("LANGUAGE MODEL PERPLEXITY (PPL) // 困惑度仪表盘与收敛演化", icon_name="activity")
+render_section_heading("SIMULATED PERPLEXITY // 困惑度计算示意（非模型实测）", icon_name="activity")
+
+st.warning(
+    "本页的答题结果由预设答对概率驱动，PPL 与训练曲线也由公式曲线模拟；所有数值均不是任何真实模型或正式 benchmark 的成绩。"
+)
 
 col_ppl_gauge, col_ppl_curve = st.columns([1, 1.4])
 
@@ -223,7 +299,7 @@ with col_ppl_gauge:
     )
     fig_gauge.update_layout(margin=dict(l=20, r=20, t=40, b=20), height=280)
     fig_gauge = _apply_light_theme(fig_gauge, "当前模型 Perplexity 仪表盘")
-    st.plotly_chart(fig_gauge, use_container_width=True)
+    st.plotly_chart(fig_gauge, width="stretch")
 
 with col_ppl_curve:
     # 模拟训练过程中 PPL 从 200 指数衰减至 10 的曲线
@@ -246,8 +322,8 @@ with col_ppl_curve:
         margin=dict(l=40, r=20, t=30, b=40),
         height=280,
     )
-    fig_ppl = _apply_light_theme(fig_ppl, "预训练全周期困惑度 (PPL) 下降收敛曲线")
-    st.plotly_chart(fig_ppl, use_container_width=True)
+    fig_ppl = _apply_light_theme(fig_ppl, "模拟 PPL 下降曲线（非训练日志）")
+    st.plotly_chart(fig_ppl, width="stretch")
 
 with st.expander("[HOW TO READ // 读图指南] 困惑度 (PPL) 仪表盘与收敛曲线", expanded=False):
     st.markdown(
@@ -260,19 +336,24 @@ with st.expander("[HOW TO READ // 读图指南] 困惑度 (PPL) 仪表盘与收�
 # ---------------------------------------------------------------------------
 # Section 2: Mini 客观基准模拟考场
 # ---------------------------------------------------------------------------
-render_section_heading("STANDARDIZED BENCHMARK EXAMS // 标准化客观基准模拟考场逐题透视", icon_name="target")
+render_section_heading(
+    "STANDARDIZED BENCHMARK EXAMS // 标准化客观基准模拟考场逐题透视", icon_name="target"
+)
 
 for t_name in selected_task_names:
     cur_task = all_tasks_dict[t_name]
     score = scores_dict.get(t_name, 0.0)
-    with st.expander(f"[EVAL] 考卷：【{t_name}】— 当前得分：{score:.1f}% ({cur_task.description})", expanded=False):
+    with st.expander(
+        f"[EVAL] 考卷：【{t_name}】— 当前得分：{score:.1f}% ({cur_task.description})",
+        expanded=False,
+    ):
         for q_idx, q in enumerate(cur_task.questions):
             pred_idx = mock_predict_fn(q.question, q.choices)
-            is_correct = (pred_idx == q.answer_idx)
-            
+            is_correct = pred_idx == q.answer_idx
+
             status_badge = "[PASSED] 正确 (PASSED)" if is_correct else "[FAILED] 错误 (FAILED)"
             st.markdown(f"**第 {q_idx + 1} 题【{q.category}】**：{q.question}　`{status_badge}`")
-            
+
             c_cols = st.columns(4)
             for c_i, c_text in enumerate(q.choices):
                 with c_cols[c_i]:
@@ -320,7 +401,7 @@ with col_radar_plot:
         margin=dict(l=40, r=40, t=40, b=40),
     )
     radar_fig = _apply_light_theme(radar_fig, "大模型基准考试能力画像雷达图")
-    st.plotly_chart(radar_fig, use_container_width=True)
+    st.plotly_chart(radar_fig, width="stretch")
     with st.expander("[HOW TO READ // 读图指南] 多维基准考试雷达图", expanded=False):
         st.markdown(
             """
@@ -337,47 +418,42 @@ with col_radar_desc:
             - **MMLU**：综合通识考场，检验模型是否具备大学本科级别的跨学科知识储备；
             - **HellaSwag**：常识推理大考，杜绝模型在显而易见的物理常识面前'产生幻觉'；
             - **GSM8K**：小学多步数学应用题，衡量模型链式思考 (CoT) 与精确计算能力；
-            - **Safety**：红线越狱与对齐检测，确保模型绝不输出危害人类安全的内容！
+            - **Safety**：用有限测试样例探测部分安全风险；通过题集不能保证模型在所有输入下安全。
             """
         )
 
 # ---------------------------------------------------------------------------
-# Section 4: 开放模型排行榜模拟 (Open LLM Leaderboard)
+# Section 4: 预设概率与有限样本得分
 # ---------------------------------------------------------------------------
-render_section_heading("OPEN LLM LEADERBOARD // 2026 开放大语言模型权威天梯排行榜", icon_name="layers")
-
-leaderboard_data = {
-    "Rank": ["#1", "#2", "#3", "#4", "#5", "[CURRENT]"],
-    "Model Name": [
-        "Claude 3.5 Sonnet / Opus 4.6",
-        "GPT-4o / GPT-5 Omni",
-        "LLaMA-3.3-70B-Instruct",
-        "DeepSeek-V3 / R1",
-        "Qwen-2.5-72B-Chat",
-        f"NN-Playground ({model_tier.split(' ')[0]})",
-    ],
-    "Params": ["Unknown", "Unknown", "70B", "671B (37B Act)", "72B", "Pure NumPy"],
-    "MMLU": [88.7, 88.5, 82.3, 88.5, 85.0, scores_dict.get("Mini-MMLU (学科通识)", 0.0)],
-    "HellaSwag": [90.2, 89.6, 88.0, 88.9, 87.5, scores_dict.get("Mini-HellaSwag (常识推理)", 0.0)],
-    "GSM8K": [96.4, 95.8, 86.5, 95.2, 91.0, scores_dict.get("Mini-GSM8K (数学推理)", 0.0)],
-    "Safety": [98.5, 98.2, 94.0, 96.0, 93.5, scores_dict.get("Mini-Safety (安全合规)", 0.0)],
-}
-
-df_lb = pd.DataFrame(leaderboard_data)
-# 计算综合均分
-numeric_cols = ["MMLU", "HellaSwag", "GSM8K", "Safety"]
-df_lb["Average Score"] = df_lb[numeric_cols].mean(axis=1).round(1)
+render_section_heading("SAMPLING VARIANCE // 预设答对概率与有限题集得分", icon_name="layers")
 
 st.dataframe(
-    df_lb.sort_values(by="Average Score", ascending=False).reset_index(drop=True),
-    use_container_width=True,
+    {
+        "项目": ["预设答对概率", "本次 Mini 题集综合得分", "总题数", "证据性质"],
+        "数值": [
+            f"{accuracy_prob * 100:.0f}%",
+            f"{avg_score:.1f}%",
+            str(total_questions_count),
+            "概率模拟",
+        ],
+        "可以说明": [
+            "mock predictor 的生成规则",
+            "本次随机样本结果",
+            "有限样本规模",
+            "评估流程教学",
+        ],
+        "不能说明": ["真实模型能力", "正式 benchmark 成绩", "总体能力置信区间", "任一生产模型排名"],
+    },
+    width="stretch",
     hide_index=True,
 )
 
 # ---------------------------------------------------------------------------
 # 零基础进阶：大模型评估基准核心公式拆解
 # ---------------------------------------------------------------------------
-with st.expander("[GROWTH GUIDE // 成长指南] 困惑度 (PPL) 与 Elo 竞技场核心公式全解", expanded=True):
+with st.expander(
+    "[GROWTH GUIDE // 成长指南] 困惑度 (PPL) 与 Elo 竞技场核心公式全解", expanded=True
+):
     st.markdown(
         r"""
         ### 0. 核心公式逐字拆解：语言模型困惑度 (Perplexity / PPL)
@@ -387,13 +463,12 @@ with st.expander("[GROWTH GUIDE // 成长指南] 困惑度 (PPL) 与 Elo 竞技�
         |:---:|:---:|:---:|:---|
         | **$P(w_i \| w_{<i})$** | **模型猜对真实单词的置信概率** | $0.0 \\sim 1.0$ | 模型每走一步接龙时，给人类真实标准答案打出的预测概率。 |
         | **$-\\log P$** | **单步交叉熵罚分** | $\\ge 0$ | 猜得越准罚分越少；猜得越离谱罚分越大。 |
-        | **$\\text{PPL}$** | **困惑度数值 (Perplexity)** | $1.0 \\sim +\\infty$ | **“模型在选词时有多纠结、相当于几选一”**：<br>• $\\text{PPL} = 1.0$：完全成竹在胸（绝对神准）；<br>• $\\text{PPL} = 15$：相当于在 15 个等概率候选词里掷骰子（很聪明）；<br>• $\\text{PPL} = 50000$：完全懵圈，相当于在全词表盲猜（彻底失智）。 |
+        | **$\\text{PPL}$** | **困惑度数值 (Perplexity)** | $1.0 \\sim +\\infty$ | 在固定 tokenizer、语料和计算协议下，PPL 是平均负对数似然的指数。较低通常表示对该数据分布赋予更高概率，但不直接衡量事实正确性、推理、安全或综合智能。 |
         
         ---
         
         ### 1. 为什么评测不能只看 MMLU 单项分？
         * **数据污染 (Data Contamination)**：很多模型在预训练时偷偷“背过了”MMLU 题库（泄题作弊）；
-        * **Chatbot Arena (盲测竞技场)**：让人类真实用户盲测双盲对话并用 Elo 积分实时打分，是当前公认最难作弊、最权威的真实综合能力试金石！
+        * **人类偏好盲测**：可以补充静态题集，但会受到参与者、提示分布、位置偏差和统计方法影响，也不是单一“权威真值”。
         """
     )
-

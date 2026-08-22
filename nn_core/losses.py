@@ -77,8 +77,11 @@ class MSE(Loss):
         """
         计算 MSE 梯度: dL/dy_pred = 2(y_pred - y_true) / n
         """
-        n = self.y_pred.size  # 总元素数 = 样本数 × 特征维度
-        return 2.0 * (self.y_pred - self.y_true) / n
+        y_pred, y_true = self.y_pred, self.y_true
+        if y_pred is None or y_true is None:
+            raise RuntimeError("MSE.backward() 必须在 forward() 之后调用")
+        n = y_pred.size  # 总元素数 = 样本数 × 特征维度
+        return 2.0 * (y_pred - y_true) / n
 
 
 class BinaryCrossEntropy(Loss):
@@ -116,10 +119,13 @@ class BinaryCrossEntropy(Loss):
 
         添加 epsilon 防止除以零。
         """
-        n = self.y_pred.shape[0]
+        y_pred, y_true = self.y_pred, self.y_true
+        if y_pred is None or y_true is None:
+            raise RuntimeError("BinaryCrossEntropy.backward() 必须在 forward() 之后调用")
+        n = y_pred.shape[0]
         eps = 1e-12
-        denominator = self.y_pred * (1.0 - self.y_pred) + eps
-        return (self.y_pred - self.y_true) / denominator / n
+        denominator = y_pred * (1.0 - y_pred) + eps
+        return (y_pred - y_true) / denominator / n
 
 
 class CategoricalCrossEntropy(Loss):
@@ -157,6 +163,9 @@ class CategoricalCrossEntropy(Loss):
         """
         计算 CCE 梯度: dL/dŷ = -y_true / (ŷ + ε) / n
         """
-        n = self.y_pred.shape[0]
+        y_pred, y_true = self.y_pred, self.y_true
+        if y_pred is None or y_true is None:
+            raise RuntimeError("CategoricalCrossEntropy.backward() 必须在 forward() 之后调用")
+        n = y_pred.shape[0]
         eps = 1e-12
-        return -self.y_true / (self.y_pred + eps) / n
+        return -y_true / (y_pred + eps) / n

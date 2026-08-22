@@ -52,8 +52,12 @@ class Optimizer(ABC):
                     uid = hash((layer_idx, sub_idx, id(p)))
                     tuples.append((p, g, uid))
             elif isinstance(layer, Dense):
-                tuples.append((layer.weights, layer.grad_weights, hash((layer_idx, 0, id(layer.weights)))))
-                tuples.append((layer.biases, layer.grad_biases, hash((layer_idx, 1, id(layer.biases)))))
+                tuples.append(
+                    (layer.weights, layer.grad_weights, hash((layer_idx, 0, id(layer.weights))))
+                )
+                tuples.append(
+                    (layer.biases, layer.grad_biases, hash((layer_idx, 1, id(layer.biases))))
+                )
         return tuples
 
     def _dense_layers(self, layers: list) -> list[Dense]:
@@ -147,7 +151,7 @@ class RMSProp(Optimizer):
     def step(self, layers: list) -> None:
         for p, g, uid in self._extract_param_tuples(layers):
             s = self._get_s(p, uid)
-            s[:] = self.beta * s + (1.0 - self.beta) * (g ** 2)
+            s[:] = self.beta * s + (1.0 - self.beta) * (g**2)
             p -= self.learning_rate * g / (np.sqrt(s) + self.epsilon)
 
     def __repr__(self) -> str:
@@ -197,8 +201,8 @@ class Adam(Optimizer):
 
     def step(self, layers: list) -> None:
         self._t += 1
-        bc1 = 1.0 - self.beta1 ** self._t
-        bc2 = 1.0 - self.beta2 ** self._t
+        bc1 = 1.0 - self.beta1**self._t
+        bc2 = 1.0 - self.beta2**self._t
 
         for p, g, uid in self._extract_param_tuples(layers):
             m, v = self._get_mv(p, uid)
@@ -206,7 +210,7 @@ class Adam(Optimizer):
             # 一阶矩
             m[:] = self.beta1 * m + (1.0 - self.beta1) * g
             # 二阶矩
-            v[:] = self.beta2 * v + (1.0 - self.beta2) * (g ** 2)
+            v[:] = self.beta2 * v + (1.0 - self.beta2) * (g**2)
 
             m_hat = m / bc1
             v_hat = v / bc2

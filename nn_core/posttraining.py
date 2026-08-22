@@ -8,8 +8,7 @@ nn_core.posttraining - 后训练全生命周期 (SFT -> RLHF -> DPO) 对齐工�
 """
 
 import logging
-from typing import Any
-import numpy as np
+from typing import ClassVar
 
 logger = logging.getLogger("nn_core.posttraining")
 
@@ -20,7 +19,7 @@ class AlignmentPipeline:
     涵盖：有用性 (Helpfulness)、无害性 (Harmlessness)、诚实性 (Honesty)、指令跟随 (Instruction Following)、创造力 (Creativity)、安全性 (Safety)。
     """
 
-    STAGE_SCORES: dict[str, dict[str, int]] = {
+    STAGE_SCORES: ClassVar[dict[str, dict[str, int]]] = {
         "Pre-training (基座接龙)": {
             "有用性": 30,
             "无害性": 35,
@@ -84,7 +83,7 @@ def generate_before_after_examples() -> list[dict[str, str]]:
             "prompt": "用 Python 写一个快速排序函数，并指出其时间复杂度。",
             "pretrain": "def quicksort(arr): return arr if len(arr)<=1 else quicksort([x for x in arr[1:] if x<arr[0]]) + [arr[0]] + quicksort([x for x in arr[1:] if x>=arr[0]]) 时间复杂度为O(nlogn) 另外还有堆排序和归并排序也是常见算法...",
             "sft": "```python\ndef quick_sort(arr):\n    if len(arr) <= 1:\n        return arr\n    pivot = arr[len(arr) // 2]\n    left = [x for x in arr if x < pivot]\n    middle = [x for x in arr if x == pivot]\n    right = [x for x in arr if x > pivot]\n    return quick_sort(left) + middle + quick_sort(right)\n```\n平均时间复杂度为 O(N log N)，最坏情况下为 O(N^2)。",
-            "rlhf": "以下是优化实现的经典快速排序算法：\n\n```python\ndef quick_sort(arr: list[int]) -> list[int]:\n    \"\"\"基于三向切分的快速排序算法\"\"\"\n    if len(arr) <= 1:\n        return arr\n    pivot = arr[len(arr) // 2]\n    left = [x for x in arr if x < pivot]\n    middle = [x for x in arr if x == pivot]\n    right = [x for x in arr if x > pivot]\n    return quick_sort(left) + middle + quick_sort(right)\n```\n\n### 复杂度深度分析：\n- **平均时间复杂度**：$\\mathcal{O}(N \\log N)$，分治策略的高效体现；\n- **最坏时间复杂度**：$\\mathcal{O}(N^2)$（当数组完全逆序且选到极值基准时）；\n- **空间复杂度**：$\\mathcal{O}(N)$（列表切片实现），若采用原地指针交换可优化至 $\\mathcal{O}(\\log N)$ 递归栈空间。",
+            "rlhf": '以下是优化实现的经典快速排序算法：\n\n```python\ndef quick_sort(arr: list[int]) -> list[int]:\n    """基于三向切分的快速排序算法"""\n    if len(arr) <= 1:\n        return arr\n    pivot = arr[len(arr) // 2]\n    left = [x for x in arr if x < pivot]\n    middle = [x for x in arr if x == pivot]\n    right = [x for x in arr if x > pivot]\n    return quick_sort(left) + middle + quick_sort(right)\n```\n\n### 复杂度深度分析：\n- **平均时间复杂度**：$\\mathcal{O}(N \\log N)$，分治策略的高效体现；\n- **最坏时间复杂度**：$\\mathcal{O}(N^2)$（当数组完全逆序且选到极值基准时）；\n- **空间复杂度**：$\\mathcal{O}(N)$（列表切片实现），若采用原地指针交换可优化至 $\\mathcal{O}(\\log N)$ 递归栈空间。',
         },
         {
             "category": "安全合规与拒绝越狱",

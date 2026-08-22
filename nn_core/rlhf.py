@@ -9,7 +9,7 @@ nn_core.rlhf - 人类反馈强化学习 (RLHF) 奖励模型、PPO-Clip 策略梯
 """
 
 import logging
-from typing import Optional, Tuple
+
 import numpy as np
 
 logger = logging.getLogger("nn_core.rlhf")
@@ -43,7 +43,9 @@ class RewardModel:
         return score
 
     @staticmethod
-    def preference_loss(reward_chosen: float | np.ndarray, reward_rejected: float | np.ndarray) -> float:
+    def preference_loss(
+        reward_chosen: float | np.ndarray, reward_rejected: float | np.ndarray
+    ) -> float:
         """计算 Bradley-Terry 对比偏好损失"""
         diff = np.asarray(reward_chosen) - np.asarray(reward_rejected)
         # 避免溢出: log(1 + exp(-diff))
@@ -68,10 +70,7 @@ class PPOClipObjective:
         return np.exp(np.clip(log_probs_new - log_probs_old, -10.0, 10.0))
 
     def clip_objective(
-        self,
-        ratio: np.ndarray,
-        advantages: np.ndarray,
-        epsilon: Optional[float] = None
+        self, ratio: np.ndarray, advantages: np.ndarray, epsilon: float | None = None
     ) -> np.ndarray:
         """计算带截断保护的策略梯度目标"""
         eps = self.epsilon if epsilon is None else epsilon
@@ -84,15 +83,15 @@ class PPOClipObjective:
     def simulate_rlhf_trajectory(n_steps: int = 20, seed: int = 42) -> dict[str, list[float]]:
         """模拟 RLHF 训练全过程中的 Reward 上升与 KL 散度约束轨迹"""
         np.random.seed(seed)
-        steps = list(range(n_steps))
-        
+        steps = [float(step) for step in range(n_steps)]
+
         # 奖励逐步上升并平稳收敛
         t = np.linspace(0, 1, n_steps)
         rewards = (1.2 / (1.0 + np.exp(-6 * (t - 0.3))) + np.random.randn(n_steps) * 0.03).tolist()
-        
+
         # KL 散度被 KL 控制器约束在适度范围
         kl_divs = (0.05 + 0.3 * (1.0 - np.exp(-3 * t)) + np.random.randn(n_steps) * 0.015).tolist()
-        
+
         # 策略截断触发比例 (维持在 10%~20%)
         clip_fracs = (0.12 + 0.08 * np.sin(np.pi * t) + np.random.randn(n_steps) * 0.01).tolist()
 
@@ -125,9 +124,13 @@ class DPOLoss:
     ) -> float:
         """计算 DPO 隐式偏好损失"""
         # 隐式奖励差：beta * ( (pi_w - ref_w) - (pi_l - ref_l) )
-        implicit_reward_chosen = self.beta * (np.asarray(pi_logprobs_w) - np.asarray(ref_logprobs_w))
-        implicit_reward_rejected = self.beta * (np.asarray(pi_logprobs_l) - np.asarray(ref_logprobs_l))
-        
+        implicit_reward_chosen = self.beta * (
+            np.asarray(pi_logprobs_w) - np.asarray(ref_logprobs_w)
+        )
+        implicit_reward_rejected = self.beta * (
+            np.asarray(pi_logprobs_l) - np.asarray(ref_logprobs_l)
+        )
+
         diff = implicit_reward_chosen - implicit_reward_rejected
         loss = np.log(1.0 + np.exp(-np.clip(diff, -20.0, 20.0)))
         return float(np.mean(loss))

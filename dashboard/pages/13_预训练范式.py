@@ -17,6 +17,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from dashboard.components.charts import _apply_light_theme
+from dashboard.components.pedagogy import render_lesson_evidence
 from dashboard.styles.theme import (
     anchor_badge,
     apply_custom_theme,
@@ -44,6 +45,7 @@ st.set_page_config(
 )
 
 apply_custom_theme()
+render_lesson_evidence("M13")
 
 render_hero_header(
     title="预训练范式全景与大模型扩展定律",
@@ -52,13 +54,45 @@ render_hero_header(
     badge_type="blue",
 )
 
-render_floating_hud_navigator([
-        {"id": "A", "name": "预训练控制台", "desc": "在左侧侧边栏切换核心预训练目标、掩码比例与学习率", "color": "amber", "target_id": "region-a"},
-        {"id": "B", "name": "教学指引", "desc": "当前卡片：通俗理解自监督预训练基因、Scaling Laws 与数据清洗工程", "color": "blue", "target_id": "region-b"},
-        {"id": "C", "name": "实时预训练遥测", "desc": "显示当前范式、梯度收敛损失、掩码遮蔽率与最优迁移领域", "color": "emerald", "target_id": "region-c"},
-        {"id": "D", "name": "MLM vs CLM 真实训练", "desc": "完形填空与因果接龙对比互动及纯 NumPy 真实梯度反向传播收敛", "color": "purple", "target_id": "region-d"},
-        {"id": "E", "name": "Scaling Laws 实验", "desc": "Chinchilla 扩展定律算力计算器、历史模型散点与 BPE 演化", "color": "blue", "target_id": "region-e"},
-    ])
+render_floating_hud_navigator(
+    [
+        {
+            "id": "A",
+            "name": "预训练控制台",
+            "desc": "在左侧侧边栏切换核心预训练目标、掩码比例与学习率",
+            "color": "amber",
+            "target_id": "region-a",
+        },
+        {
+            "id": "B",
+            "name": "教学指引",
+            "desc": "当前卡片：通俗理解自监督预训练基因、Scaling Laws 与数据清洗工程",
+            "color": "blue",
+            "target_id": "region-b",
+        },
+        {
+            "id": "C",
+            "name": "实时预训练遥测",
+            "desc": "显示当前范式、梯度收敛损失、掩码遮蔽率与最优迁移领域",
+            "color": "emerald",
+            "target_id": "region-c",
+        },
+        {
+            "id": "D",
+            "name": "MLM vs CLM 真实训练",
+            "desc": "完形填空与因果接龙对比互动及纯 NumPy 真实梯度反向传播收敛",
+            "color": "purple",
+            "target_id": "region-d",
+        },
+        {
+            "id": "E",
+            "name": "Scaling Laws 实验",
+            "desc": "Chinchilla 扩展定律算力计算器、历史模型散点与 BPE 演化",
+            "color": "blue",
+            "target_id": "region-e",
+        },
+    ]
+)
 
 # ---------------------------------------------------------------------------
 # 零基础保姆级指引 (Zero-Barrier Beginner Guide)
@@ -66,11 +100,41 @@ render_floating_hud_navigator([
 render_page_guide(
     title="预训练范式全景与空间交互地图",
     blueprint_sections=[
-        {"id": "A", "name": "预训练控制台", "desc": "在左侧侧边栏切换核心预训练目标、掩码比例与学习率", "color": "amber", "target_id": "region-a"},
-        {"id": "B", "name": "教学指引", "desc": "当前卡片：通俗理解自监督预训练基因、Scaling Laws 与数据清洗工程", "color": "blue", "target_id": "region-b"},
-        {"id": "C", "name": "实时预训练遥测", "desc": "显示当前范式、梯度收敛损失、掩码遮蔽率与最优迁移领域", "color": "emerald", "target_id": "region-c"},
-        {"id": "D", "name": "MLM vs CLM 真实训练", "desc": "完形填空与因果接龙对比互动及纯 NumPy 真实梯度反向传播收敛", "color": "purple", "target_id": "region-d"},
-        {"id": "E", "name": "Scaling Laws 实验", "desc": "Chinchilla 扩展定律算力计算器、历史模型散点与 BPE 演化", "color": "blue", "target_id": "region-e"},
+        {
+            "id": "A",
+            "name": "预训练控制台",
+            "desc": "在左侧侧边栏切换核心预训练目标、掩码比例与学习率",
+            "color": "amber",
+            "target_id": "region-a",
+        },
+        {
+            "id": "B",
+            "name": "教学指引",
+            "desc": "当前卡片：通俗理解自监督预训练基因、Scaling Laws 与数据清洗工程",
+            "color": "blue",
+            "target_id": "region-b",
+        },
+        {
+            "id": "C",
+            "name": "实时预训练遥测",
+            "desc": "显示当前范式、梯度收敛损失、掩码遮蔽率与最优迁移领域",
+            "color": "emerald",
+            "target_id": "region-c",
+        },
+        {
+            "id": "D",
+            "name": "MLM vs CLM 真实训练",
+            "desc": "完形填空与因果接龙对比互动及纯 NumPy 真实梯度反向传播收敛",
+            "color": "purple",
+            "target_id": "region-d",
+        },
+        {
+            "id": "E",
+            "name": "Scaling Laws 实验",
+            "desc": "Chinchilla 扩展定律算力计算器、历史模型散点与 BPE 演化",
+            "color": "blue",
+            "target_id": "region-e",
+        },
     ],
     plain_intro=(
         f"<b>大模型的底座智能究竟是从哪里来的？</b><br>"
@@ -102,7 +166,10 @@ render_page_guide(
 # ---------------------------------------------------------------------------
 # 侧边栏参数控制
 # ---------------------------------------------------------------------------
-st.sidebar.markdown(f'<div id="region-a" class="interactive-region" style="margin-bottom:0.6rem;padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">{anchor_badge("A", "amber")} <b>PRE-TRAINING CONTROLS // 预训练控制台</b></div>', unsafe_allow_html=True)
+st.sidebar.markdown(
+    f'<div id="region-a" class="interactive-region" style="margin-bottom:0.6rem;padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">{anchor_badge("A", "amber")} <b>PRE-TRAINING CONTROLS // 预训练控制台</b></div>',
+    unsafe_allow_html=True,
+)
 
 # ---------------------------------------------------------------------------
 # 侧边栏参数控制
@@ -147,7 +214,7 @@ train_epochs = st.sidebar.slider(
     help="在笔记本 CPU 上秒级完成",
 )
 
-start_train_btn = st.sidebar.button("[EXECUTE] 开始纯 NumPy 真实训练", use_container_width=True)
+start_train_btn = st.sidebar.button("[EXECUTE] 开始纯 NumPy 真实训练", width="stretch")
 
 # ---------------------------------------------------------------------------
 # 数据与模型运算
@@ -181,7 +248,9 @@ if start_train_btn or "train_loss_hist" not in st.session_state:
             # 真实 NT-Xent 对比损失计算
             np.random.seed(42 + ep)
             dummy_embeds = np.random.randn(8, 32)
-            z_i, z_j = contrastive_model.create_positive_pairs(dummy_embeds, noise_std=max(0.01, 0.2 - 0.02 * ep))
+            z_i, z_j = contrastive_model.create_positive_pairs(
+                dummy_embeds, noise_std=max(0.01, 0.2 - 0.02 * ep)
+            )
             l = contrastive_model.nt_xent_loss(z_i, z_j, temperature=0.5)
         else:  # MAE
             np.random.seed(42 + ep)
@@ -215,14 +284,18 @@ metric_grid_html = (
     )
     + render_metric_card(
         "MASK RATIO // 掩码遮蔽率",
-        f"{mlm_ratio * 100:.0f}%" if "MLM" in paradigm_choice else (f"{mae_ratio * 100:.0f}%" if "MAE" in paradigm_choice else "N/A"),
+        f"{mlm_ratio * 100:.0f}%"
+        if "MLM" in paradigm_choice
+        else (f"{mae_ratio * 100:.0f}%" if "MAE" in paradigm_choice else "N/A"),
         delta="自监督信息瓶颈",
         delta_type="positive",
         icon_name="target",
     )
     + render_metric_card(
         "TRANSFER ADVANTAGE // 最强迁移领域",
-        "自回归创作" if "CLM" in paradigm_choice else ("理解与问答" if "MLM" in paradigm_choice else "跨模态检索"),
+        "自回归创作"
+        if "CLM" in paradigm_choice
+        else ("理解与问答" if "MLM" in paradigm_choice else "跨模态检索"),
         delta="基因决定能力",
         delta_type="positive",
         icon_name="layers",
@@ -232,7 +305,7 @@ metric_grid_html = (
 st.markdown(
     f'<div id="region-c" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;">'
     f'{anchor_badge("C", "emerald")} <span style="font-weight:800;color:#065f46;font-size:0.86rem;">PRE-TRAINING TELEMETRY // 预训练损失与能力基因遥测</span>'
-    f'</div>',
+    f"</div>",
     unsafe_allow_html=True,
 )
 st.markdown(metric_grid_html, unsafe_allow_html=True)
@@ -302,7 +375,7 @@ with col_p4:
 st.markdown(
     f'<div id="region-d" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;margin-top:1rem;">'
     f'{anchor_badge("D", "purple")} <span style="font-weight:800;color:#5b21b6;font-size:0.86rem;">MLM VS CLM TRAINING // 完形填空与接龙对比及真实梯度反向传播收敛</span>'
-    f'</div>',
+    f"</div>",
     unsafe_allow_html=True,
 )
 
@@ -312,10 +385,15 @@ with col_mlm_view:
     with st.container(border=True):
         st.markdown("#### [BERT 式 MLM 完形填空演示]")
         masked_ids, labels, mask_pos = mlm_model.create_mlm_batch(sample_tensor)
-        masked_words = [inv_vocab.get(i, "[?]") if m else inv_vocab.get(i, "") for i, m in zip(sample_tokens, mask_pos)]
+        masked_words = [
+            inv_vocab.get(i, "[?]") if m else inv_vocab.get(i, "")
+            for i, m in zip(sample_tokens, mask_pos)
+        ]
         st.markdown(f"**原始文本**：`{' '.join([inv_vocab.get(i, '') for i in sample_tokens])}`")
-        st.markdown(f"**掩码输入**：`{' '.join(['**[MASK]**' if m else w for w, m in zip(masked_words, mask_pos)])}`")
-        
+        st.markdown(
+            f"**掩码输入**：`{' '.join(['**[MASK]**' if m else w for w, m in zip(masked_words, mask_pos)])}`"
+        )
+
         logits_mlm = mlm_model.forward(masked_ids)
         # 获取掩码位置的 Top-3 预测
         pred_top3_html = "<ul>"
@@ -333,7 +411,7 @@ with col_clm_view:
         x_clm, y_clm = clm_model.create_clm_batch(sample_tensor)
         st.markdown(f"**上下文 Prefix**：`{' '.join([inv_vocab.get(i, '') for i in x_clm[0]])}`")
         st.markdown(f"**自回归 Targets**：`{' '.join([inv_vocab.get(i, '') for i in y_clm[0]])}`")
-        
+
         logits_clm = clm_model.forward(x_clm)
         last_logits = logits_clm[0, -1]
         top_clm_ids = np.argsort(last_logits)[::-1][:3]
@@ -360,7 +438,7 @@ fig_loss.update_layout(
     margin=dict(l=40, r=20, t=30, b=40),
 )
 fig_loss = _apply_light_theme(fig_loss, "纯 NumPy 真实梯度反向传播损失收敛曲线")
-st.plotly_chart(fig_loss, use_container_width=True)
+st.plotly_chart(fig_loss, width="stretch")
 with st.expander("[HOW TO READ // 读图指南] 预训练损失单调收敛曲线", expanded=False):
     st.markdown(
         """
@@ -372,9 +450,12 @@ with st.expander("[HOW TO READ // 读图指南] 预训练损失单调收敛曲�
 # ---------------------------------------------------------------------------
 # Section 3: MAE 75% 视觉高比例图块掩码与自编码重建
 # ---------------------------------------------------------------------------
-render_section_heading("MAE HIGH-RATIO MASKING // 视觉掩码自编码器 (75% 超高遮蔽率)", icon_name="layers")
+render_section_heading(
+    "MAE HIGH-RATIO MASKING // 视觉掩码自编码器 (75% 超高遮蔽率)", icon_name="layers"
+)
 
 from nn_core.video import generate_synthetic_video
+
 raw_patch_img = generate_synthetic_video(1, 32, "bounce")[0, 0]
 
 # 切为 16 个 Patch (4x4)
@@ -393,21 +474,33 @@ recon_img_view = recon_p[0].reshape(gh, gw, P, P).transpose(0, 2, 1, 3).reshape(
 col_mae1, col_mae2, col_mae3 = st.columns(3)
 with col_mae1:
     fig_m1 = go.Figure(data=go.Heatmap(z=raw_patch_img, colorscale="Viridis", showscale=False))
-    fig_m1.update_layout(xaxis=dict(showticklabels=False), yaxis=dict(showticklabels=False, autorange="reversed"), margin=dict(l=5, r=5, t=25, b=5))
+    fig_m1.update_layout(
+        xaxis=dict(showticklabels=False),
+        yaxis=dict(showticklabels=False, autorange="reversed"),
+        margin=dict(l=5, r=5, t=25, b=5),
+    )
     fig_m1 = _apply_light_theme(fig_m1, "原始完整图像 (100%)")
-    st.plotly_chart(fig_m1, use_container_width=True)
+    st.plotly_chart(fig_m1, width="stretch")
 
 with col_mae2:
     fig_m2 = go.Figure(data=go.Heatmap(z=masked_img_view, colorscale="Viridis", showscale=False))
-    fig_m2.update_layout(xaxis=dict(showticklabels=False), yaxis=dict(showticklabels=False, autorange="reversed"), margin=dict(l=5, r=5, t=25, b=5))
-    fig_m2 = _apply_light_theme(fig_m2, f"随机掩码遮蔽 ({int(mae_ratio*100)}% 消失)")
-    st.plotly_chart(fig_m2, use_container_width=True)
+    fig_m2.update_layout(
+        xaxis=dict(showticklabels=False),
+        yaxis=dict(showticklabels=False, autorange="reversed"),
+        margin=dict(l=5, r=5, t=25, b=5),
+    )
+    fig_m2 = _apply_light_theme(fig_m2, f"随机掩码遮蔽 ({int(mae_ratio * 100)}% 消失)")
+    st.plotly_chart(fig_m2, width="stretch")
 
 with col_mae3:
     fig_m3 = go.Figure(data=go.Heatmap(z=recon_img_view, colorscale="Viridis", showscale=False))
-    fig_m3.update_layout(xaxis=dict(showticklabels=False), yaxis=dict(showticklabels=False, autorange="reversed"), margin=dict(l=5, r=5, t=25, b=5))
+    fig_m3.update_layout(
+        xaxis=dict(showticklabels=False),
+        yaxis=dict(showticklabels=False, autorange="reversed"),
+        margin=dict(l=5, r=5, t=25, b=5),
+    )
     fig_m3 = _apply_light_theme(fig_m3, "MAE 自编码注意力重建")
-    st.plotly_chart(fig_m3, use_container_width=True)
+    st.plotly_chart(fig_m3, width="stretch")
 
 with st.expander("[HOW TO READ // 读图指南] MAE 高比例遮蔽重建三联图", expanded=False):
     st.markdown(
@@ -420,7 +513,9 @@ with st.expander("[HOW TO READ // 读图指南] MAE 高比例遮蔽重建三联�
 # ---------------------------------------------------------------------------
 # Section 4: 预训练范式向下游任务迁移效果对比图
 # ---------------------------------------------------------------------------
-render_section_heading("DOWNSTREAM TASK TRANSFER // 预训练范式向下游任务迁移能力画像", icon_name="activity")
+render_section_heading(
+    "DOWNSTREAM TASK TRANSFER // 预训练范式向下游任务迁移能力画像", icon_name="activity"
+)
 
 transfer_data = PretrainingComparator.get_transfer_scores()
 tasks = ["文本分类", "阅读理解", "自回归生成", "跨模态检索"]
@@ -445,8 +540,10 @@ fig_trans.update_layout(
     margin=dict(l=40, r=20, t=30, b=40),
 )
 fig_trans = _apply_light_theme(fig_trans, "四大预训练范式向各类下游任务迁移得分全景对比")
-st.plotly_chart(fig_trans, use_container_width=True)
-with st.expander("[HOW TO READ // 读图指南] 预训练基因与下游任务迁移能力雷达/柱状图", expanded=False):
+st.plotly_chart(fig_trans, width="stretch")
+with st.expander(
+    "[HOW TO READ // 读图指南] 预训练基因与下游任务迁移能力雷达/柱状图", expanded=False
+):
     st.markdown(
         """
         * **横轴【4 种典型下游任务】** 与 **纵轴【迁移能力得分 (0~100)】**。
@@ -461,7 +558,7 @@ with st.expander("[HOW TO READ // 读图指南] 预训练基因与下游任务�
 st.markdown(
     f'<div id="region-e" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;margin-top:1.2rem;">'
     f'{anchor_badge("E", "blue")} <span style="font-weight:800;color:#1e40af;font-size:0.86rem;">SCALING LAWS & BPE // 大模型扩展定律 (Chinchilla) 与 BPE 分词演化</span>'
-    f'</div>',
+    f"</div>",
     unsafe_allow_html=True,
 )
 
@@ -485,17 +582,17 @@ with col_s_ctrl:
             step=0.2,
             help="10^23 FLOPs 约相当于训练一个 7B~13B 模型所消耗的算力",
         )
-        current_flops = 10.0 ** log_flops
+        current_flops = 10.0**log_flops
         opt_res = ScalingLawEngine.compute_optimal_allocation(current_flops)
 
         st.markdown(
             f"""
             - **算力预算 $C$**：`{current_flops:.2e}` FLOPs
-            - **最优参数量 $N_{{\\text{{opt}}}}$**：`{opt_res['optimal_params_N'] / 1e9:.2f} B` (十亿参数)
-            - **最优 Token 数 $D_{{\\text{{opt}}}}$**：`{opt_res['optimal_tokens_D'] / 1e9:.2f} B` ({opt_res['optimal_tokens_D'] / 1e12:.3f} T Tokens)
-            - **数据/参数比例**：`{opt_res['token_param_ratio']:.1f} : 1` (符合 Chinchilla ~20:1)
-            - **理论预估损失 $L$**：`{opt_res['predicted_loss']:.4f}`
-            - **H100 训练工期**：`{opt_res['h100_gpu_days']:.1f}` GPU-Days (MFU=45%)
+            - **最优参数量 $N_{{\\text{{opt}}}}$**：`{opt_res["optimal_params_N"] / 1e9:.2f} B` (十亿参数)
+            - **最优 Token 数 $D_{{\\text{{opt}}}}$**：`{opt_res["optimal_tokens_D"] / 1e9:.2f} B` ({opt_res["optimal_tokens_D"] / 1e12:.3f} T Tokens)
+            - **数据/参数比例**：`{opt_res["token_param_ratio"]:.1f} : 1` (符合 Chinchilla ~20:1)
+            - **理论预估损失 $L$**：`{opt_res["predicted_loss"]:.4f}`
+            - **H100 训练工期**：`{opt_res["h100_gpu_days"]:.1f}` GPU-Days (MFU=45%)
             """
         )
 
@@ -503,15 +600,19 @@ with col_s_res:
     with st.container(border=True):
         st.markdown("#### [前沿大模型在 Scaling 曲线上的实际分布]")
         bench_data = ScalingLawEngine.get_historical_benchmarks()
-        
+
         # 绘制历史模型与当前预算对比散点图
         fig_scale = go.Figure()
-        
+
         # 绘制最优 Chinchilla 理论线
         synth_flops = np.logspace(18, 25, 50)
-        synth_n = [ScalingLawEngine.compute_optimal_allocation(f)["optimal_params_N"] for f in synth_flops]
-        synth_d = [ScalingLawEngine.compute_optimal_allocation(f)["optimal_tokens_D"] for f in synth_flops]
-        
+        synth_n = [
+            ScalingLawEngine.compute_optimal_allocation(f)["optimal_params_N"] for f in synth_flops
+        ]
+        synth_d = [
+            ScalingLawEngine.compute_optimal_allocation(f)["optimal_tokens_D"] for f in synth_flops
+        ]
+
         fig_scale.add_trace(
             go.Scatter(
                 x=[n / 1e9 for n in synth_n],
@@ -522,7 +623,7 @@ with col_s_res:
                 hovertemplate="最优参数: %{x:.2f}B<br>最优数据: %{y:.2f}T Tokens<extra></extra>",
             )
         )
-        
+
         # 绘制历史真实模型散点
         for b in bench_data:
             fig_scale.add_trace(
@@ -534,10 +635,10 @@ with col_s_res:
                     name=b["name"],
                     text=[b["name"]],
                     textposition="top center",
-                    hovertemplate=f"<b>{b['name']}</b><br>参数量: {b['params']/1e9:.1f}B<br>训练 Token: {b['tokens']/1e12:.1f}T<br>状态: {b['status']}<extra></extra>",
+                    hovertemplate=f"<b>{b['name']}</b><br>参数量: {b['params'] / 1e9:.1f}B<br>训练 Token: {b['tokens'] / 1e12:.1f}T<br>状态: {b['status']}<extra></extra>",
                 )
             )
-            
+
         # 当前滑动条用户选择的最优点
         fig_scale.add_trace(
             go.Scatter(
@@ -546,10 +647,10 @@ with col_s_res:
                 mode="markers",
                 marker=dict(size=16, color="#dc2626", symbol="star"),
                 name="当前算力最优解",
-                hovertemplate=f"当前选择算力最优:<br>参数: {opt_res['optimal_params_N']/1e9:.2f}B<br>数据: {opt_res['optimal_tokens_D']/1e12:.2f}T<extra></extra>",
+                hovertemplate=f"当前选择算力最优:<br>参数: {opt_res['optimal_params_N'] / 1e9:.2f}B<br>数据: {opt_res['optimal_tokens_D'] / 1e12:.2f}T<extra></extra>",
             )
         )
-        
+
         fig_scale.update_layout(
             xaxis=dict(title="模型参数量 N (Billion / 十亿)", type="log"),
             yaxis=dict(title="训练 Token 数 D (Trillion / 万亿)", type="log"),
@@ -557,8 +658,10 @@ with col_s_res:
             legend=dict(orientation="h", yanchor="bottom", y=-0.3),
         )
         fig_scale = _apply_light_theme(fig_scale, "大模型算力扩展定律与前沿工业界模型位置")
-        st.plotly_chart(fig_scale, use_container_width=True)
-        with st.expander("[HOW TO READ // 读图指南] Chinchilla 对数双轴扩展定律散点图", expanded=False):
+        st.plotly_chart(fig_scale, width="stretch")
+        with st.expander(
+            "[HOW TO READ // 读图指南] Chinchilla 对数双轴扩展定律散点图", expanded=False
+        ):
             st.markdown(
                 """
                 * **双对数坐标轴**：横轴【参数量 N (十亿 / B)】，纵轴【训练数据量 D (万亿 / T)】。
@@ -592,31 +695,40 @@ with col_bpe_in:
             "the queen loves the small cat"
         )
         bpe_corpus_input = st.text_area("训练语料库", value=default_bpe_corpus, height=120)
-        target_vocab_k = st.slider("目标词表容量 (Vocab Size)", min_value=15, max_value=50, value=30, step=1)
+        target_vocab_k = st.slider(
+            "目标词表容量 (Vocab Size)", min_value=15, max_value=50, value=30, step=1
+        )
         test_sentence_bpe = st.text_input("待切分测试文本", value="the queen sleep on the cat")
 
 with col_bpe_out:
     with st.container(border=True):
         bpe_engine = SimpleBPE(vocab_size=target_vocab_k)
-        corpus_list = [line.strip() for line in bpe_corpus_input.strip().split("\n") if line.strip()]
+        corpus_list = [
+            line.strip() for line in bpe_corpus_input.strip().split("\n") if line.strip()
+        ]
         merge_records = bpe_engine.train(corpus_list)
-        
+
         stats_res = bpe_engine.get_compression_stats(test_sentence_bpe)
-        
+
         st.markdown(
             f"""
             - **基础单字符数**：`{len(bpe_engine.vocab) - len(merge_records)}` 个字符
             - **迭代合并次数**：`{len(merge_records)}` 轮
             - **最终词表大小**：`{len(bpe_engine.vocab)}` 个 Tokens
-            - **文本压缩倍率**：`{stats_res['compression_ratio']:.2f}x` ({stats_res['raw_characters']} 字符 $\\to$ {stats_res['token_count']} Tokens)
+            - **文本压缩倍率**：`{stats_res["compression_ratio"]:.2f}x` ({stats_res["raw_characters"]} 字符 $\\to$ {stats_res["token_count"]} Tokens)
             """
         )
-        
+
         # 可视化切分结果
         st.markdown("**BPE 子词切分可视化**：")
-        token_badges_html = " ".join([f"<code style='background:#dbeafe;color:#1e40af;padding:3px 6px;border-radius:4px;'>{t}</code>" for t in stats_res['tokens']])
+        token_badges_html = " ".join(
+            [
+                f"<code style='background:#dbeafe;color:#1e40af;padding:3px 6px;border-radius:4px;'>{t}</code>"
+                for t in stats_res["tokens"]
+            ]
+        )
         st.markdown(token_badges_html, unsafe_allow_html=True)
-        
+
         # 展示 Top-5 合并规则
         if merge_records:
             st.markdown("<br>**前 5 轮高频字符对合并日志**：", unsafe_allow_html=True)
@@ -628,7 +740,9 @@ with col_bpe_out:
 # ---------------------------------------------------------------------------
 # Section 7: 工业级预训练语料配比与清洗流水线
 # ---------------------------------------------------------------------------
-render_section_heading("PRE-TRAINING DATA MIXTURE & PIPELINE // 工业级语料配比与清洗流水线", icon_name="layers")
+render_section_heading(
+    "PRE-TRAINING DATA MIXTURE & PIPELINE // 工业级语料配比与清洗流水线", icon_name="layers"
+)
 
 st.markdown(
     """
@@ -643,15 +757,17 @@ with col_d_mix:
         st.markdown("#### [前沿大模型语料配比全景 (Data Mixture)]")
         mixtures_dict = DataMixtureEngine.get_mixtures()
         model_mix_choice = st.selectbox("选择大模型语料分布", list(mixtures_dict.keys()), index=0)
-        
+
         chosen_mix = mixtures_dict[model_mix_choice]
         labels = list(chosen_mix.keys())
         values = list(chosen_mix.values())
-        
-        fig_donut = go.Figure(data=[go.Pie(labels=labels, values=values, hole=0.45, textinfo="label+percent")])
+
+        fig_donut = go.Figure(
+            data=[go.Pie(labels=labels, values=values, hole=0.45, textinfo="label+percent")]
+        )
         fig_donut.update_layout(margin=dict(l=10, r=10, t=20, b=20), showlegend=False)
         fig_donut = _apply_light_theme(fig_donut, f"{model_mix_choice} 语料构成分布")
-        st.plotly_chart(fig_donut, use_container_width=True)
+        st.plotly_chart(fig_donut, width="stretch")
         with st.expander("[HOW TO READ // 读图指南] 预训练多源语料配比环形图", expanded=False):
             st.markdown(
                 """
@@ -666,9 +782,9 @@ with col_d_pipe:
         for s in stages:
             st.markdown(
                 f"""
-                **{s['stage']}**  
-                - **核心规则**：{s['rules']}  
-                - **过滤效率**：<span style='color:#dc2626;font-weight:600;'>{s['filter_rate']}</span>
+                **{s["stage"]}**
+                - **核心规则**：{s["rules"]}
+                - **过滤效率**：<span style='color:#dc2626;font-weight:600;'>{s["filter_rate"]}</span>
                 ---
                 """,
                 unsafe_allow_html=True,
@@ -677,7 +793,9 @@ with col_d_pipe:
 # ---------------------------------------------------------------------------
 # 零基础进阶：预训练与扩展定律核心公式拆解
 # ---------------------------------------------------------------------------
-with st.expander("[GROWTH GUIDE // 成长指南] 预训练目标与 Chinchilla 扩展定律核心公式全解", expanded=True):
+with st.expander(
+    "[GROWTH GUIDE // 成长指南] 预训练目标与 Chinchilla 扩展定律核心公式全解", expanded=True
+):
     st.markdown(
         """
         ### 0. 核心公式逐字拆解：DeepMind Chinchilla 大模型扩展定律
@@ -699,5 +817,3 @@ with st.expander("[GROWTH GUIDE // 成长指南] 预训练目标与 Chinchilla �
         * DeepMind 严格证明：在固定总算力下，**每增加 1 个参数，应当对应增加 20 个训练 Token**！这也是 LLaMA (7B 训 2T Tokens) 性能跨代吊打上一代旧模型的数学底层秘密！
         """
     )
-
-

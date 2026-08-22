@@ -18,9 +18,11 @@ import numpy as np
 import streamlit as st
 
 import dashboard.components.charts
+
 importlib.reload(dashboard.components.charts)
 
 from dashboard.components.charts import plot_attention_heatmap_nlp, plot_token_probabilities
+from dashboard.components.pedagogy import render_lesson_evidence
 from dashboard.styles.theme import (
     anchor_badge,
     apply_custom_theme,
@@ -39,6 +41,7 @@ st.set_page_config(
 )
 
 apply_custom_theme()
+render_lesson_evidence("M09")
 
 render_hero_header(
     title="Mini-GPT 文本生成与自回归采样",
@@ -53,11 +56,41 @@ render_hero_header(
 render_page_guide(
     title="Mini-GPT 文本生成与空间交互地图",
     blueprint_sections=[
-        {"id": "A", "name": "文本生成控制台", "desc": "在左侧侧边栏调节 Prompt、Temperature 温度与 Top-K 候选池", "color": "amber", "target_id": "region-a"},
-        {"id": "B", "name": "教学指引", "desc": "当前卡片：通俗理解 ChatGPT 逐词猜下一个字机理与 KV-Cache", "color": "blue", "target_id": "region-b"},
-        {"id": "C", "name": "实时生成遥测", "desc": "显示当前置信度最高的下一词预测、创造力系数与序列长度", "color": "emerald", "target_id": "region-c"},
-        {"id": "D", "name": "实时文本流展示", "desc": "打字机效果逐词呈现模型吐出的新词汇与上下文窗口", "color": "purple", "target_id": "region-d"},
-        {"id": "E", "name": "候选词概率排行榜", "desc": "柱状图实时揭秘模型心中的候选词概率分布与温度平滑度", "color": "blue", "target_id": "region-e"},
+        {
+            "id": "A",
+            "name": "文本生成控制台",
+            "desc": "在左侧侧边栏调节 Prompt、Temperature 温度与 Top-K 候选池",
+            "color": "amber",
+            "target_id": "region-a",
+        },
+        {
+            "id": "B",
+            "name": "教学指引",
+            "desc": "当前卡片：通俗理解 ChatGPT 逐词猜下一个字机理与 KV-Cache",
+            "color": "blue",
+            "target_id": "region-b",
+        },
+        {
+            "id": "C",
+            "name": "实时生成遥测",
+            "desc": "显示当前置信度最高的下一词预测、创造力系数与序列长度",
+            "color": "emerald",
+            "target_id": "region-c",
+        },
+        {
+            "id": "D",
+            "name": "实时文本流展示",
+            "desc": "打字机效果逐词呈现模型吐出的新词汇与上下文窗口",
+            "color": "purple",
+            "target_id": "region-d",
+        },
+        {
+            "id": "E",
+            "name": "候选词概率排行榜",
+            "desc": "柱状图实时揭秘模型心中的候选词概率分布与温度平滑度",
+            "color": "blue",
+            "target_id": "region-e",
+        },
     ],
     plain_intro=(
         f"<b>终于到了见证奇迹的时刻——我们把前面的所有技术拼成了一个微型 ChatGPT！</b><br>"
@@ -90,7 +123,10 @@ render_page_guide(
 # ---------------------------------------------------------------------------
 # 侧边栏控制面板
 # ---------------------------------------------------------------------------
-st.sidebar.markdown(f'<div id="region-a" class="interactive-region" style="margin-bottom:0.6rem;padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">{anchor_badge("A", "amber")} <b>GENERATION CONTROLS // 文本生成控制台</b></div>', unsafe_allow_html=True)
+st.sidebar.markdown(
+    f'<div id="region-a" class="interactive-region" style="margin-bottom:0.6rem;padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">{anchor_badge("A", "amber")} <b>GENERATION CONTROLS // 文本生成控制台</b></div>',
+    unsafe_allow_html=True,
+)
 
 # ---------------------------------------------------------------------------
 # 模型与词表初始化
@@ -99,6 +135,7 @@ raw_vocab = get_mini_vocab()
 vocab_words = list(raw_vocab.keys())
 inv_vocab = {v: k for k, v in raw_vocab.items()}
 vocab_size = len(vocab_words)
+
 
 # 实例化 TinyGPT 模型
 @st.cache_resource
@@ -114,6 +151,7 @@ def load_tiny_gpt():
     pretrained_w = get_pretrained_embeddings(vocab_size, d_model=32)
     gpt_model.wte = pretrained_w
     return gpt_model
+
 
 gpt = load_tiny_gpt()
 
@@ -169,18 +207,24 @@ gen_tokens_count = st.sidebar.slider(
 
 col_btn1, col_btn2 = st.sidebar.columns(2)
 with col_btn1:
-    btn_generate_all = st.button("RUN // 一键自回归", type="primary", use_container_width=True)
+    btn_generate_all = st.button("RUN // 一键自回归", type="primary", width="stretch")
 with col_btn2:
-    btn_step_one = st.button("STEP // 单步推演", use_container_width=True)
+    btn_step_one = st.button("STEP // 单步推演", width="stretch")
 
 # ---------------------------------------------------------------------------
 # 会话状态管理 (Session State)
 # ---------------------------------------------------------------------------
-if "current_generated_tokens" not in st.session_state or st.session_state.get("last_prompt") != current_prompt_text:
-    init_tokens = [w.lower().strip(",.!?") for w in current_prompt_text.strip().split() if w.strip()]
+if (
+    "current_generated_tokens" not in st.session_state
+    or st.session_state.get("last_prompt") != current_prompt_text
+):
+    init_tokens = [
+        w.lower().strip(",.!?") for w in current_prompt_text.strip().split() if w.strip()
+    ]
     st.session_state.current_generated_tokens = init_tokens
     st.session_state.last_prompt = current_prompt_text
     st.session_state.step_counter = 0
+
 
 # ---------------------------------------------------------------------------
 # 模型预测核心函数
@@ -191,28 +235,31 @@ def compute_next_token_distribution(tokens_list: list[str], temp: float, k: int)
     truncated = tokens_list[-20:]
     token_ids = [raw_vocab.get(w, 0) for w in truncated]
     context = np.array([token_ids], dtype=np.int32)
-    
+
     # 前向传播得到 logits: (1, T, vocab_size)
     logits = gpt.forward(context)
     next_logits = logits[0, -1, :] / max(temp, 1e-4)
-    
+
     # 减去最大值防止溢出
     exp_logits = np.exp(next_logits - np.max(next_logits))
     probs = exp_logits / np.sum(exp_logits)
-    
+
     # Top-K 截断
     top_indices = np.argsort(probs)[-k:]
     masked_probs = np.zeros_like(probs)
     masked_probs[top_indices] = probs[top_indices]
     masked_probs = masked_probs / (np.sum(masked_probs) + 1e-12)
-    
+
     return masked_probs, truncated
+
 
 # ---------------------------------------------------------------------------
 # 触发生成逻辑
 # ---------------------------------------------------------------------------
 if btn_generate_all:
-    tokens_so_far = [w.lower().strip(",.!?") for w in current_prompt_text.strip().split() if w.strip()]
+    tokens_so_far = [
+        w.lower().strip(",.!?") for w in current_prompt_text.strip().split() if w.strip()
+    ]
     for _ in range(gen_tokens_count):
         probs, _ = compute_next_token_distribution(tokens_so_far, temperature, top_k)
         sampled_id = np.random.choice(vocab_size, p=probs)
@@ -232,7 +279,9 @@ elif btn_step_one:
 
 # 获取当前状态下的预测概率
 current_tokens = st.session_state.current_generated_tokens
-current_probs, current_context_tokens = compute_next_token_distribution(current_tokens, temperature, top_k)
+current_probs, current_context_tokens = compute_next_token_distribution(
+    current_tokens, temperature, top_k
+)
 
 top_predicted_id = int(np.argmax(current_probs))
 top_predicted_word = inv_vocab.get(top_predicted_id, "the")
@@ -244,7 +293,7 @@ top_predicted_prob = float(current_probs[top_predicted_id])
 st.markdown(
     f'<div id="region-c" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;">'
     f'{anchor_badge("C", "emerald")} <span style="font-weight:800;color:#065f46;font-size:0.86rem;">GENERATION TELEMETRY // 实时生成与采样遥测</span>'
-    f'</div>',
+    f"</div>",
     unsafe_allow_html=True,
 )
 metric_grid_html = (
@@ -259,7 +308,9 @@ metric_grid_html = (
     + render_metric_card(
         "TEMPERATURE // 创造力系数",
         f"T = {temperature:.1f}",
-        delta="确定模式" if temperature < 0.4 else ("均衡创作" if temperature <= 1.0 else "发散混乱"),
+        delta="确定模式"
+        if temperature < 0.4
+        else ("均衡创作" if temperature <= 1.0 else "发散混乱"),
         delta_type="positive" if 0.4 <= temperature <= 1.0 else "neutral",
         icon_name="zap",
     )
@@ -287,7 +338,7 @@ st.markdown(metric_grid_html, unsafe_allow_html=True)
 st.markdown(
     f'<div id="region-d" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;margin-top:1rem;">'
     f'{anchor_badge("D", "purple")} <span style="font-weight:800;color:#5b21b6;font-size:0.86rem;">LIVE TEXT STREAM // 实时自回归文本流 (打字机效果)</span>'
-    f'</div>',
+    f"</div>",
     unsafe_allow_html=True,
 )
 prompt_len = len(current_prompt_text.strip().split())
@@ -302,7 +353,7 @@ with col_bar:
     st.markdown(
         f'<div id="region-e" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;margin-top:0.4rem;">'
         f'{anchor_badge("E", "blue")} <span style="font-weight:800;color:#1e40af;font-size:0.86rem;">NEXT-TOKEN PROBABILITIES // 候选词概率排行榜 (T={temperature})</span>'
-        f'</div>',
+        f"</div>",
         unsafe_allow_html=True,
     )
     fig_probs = plot_token_probabilities(
@@ -311,7 +362,7 @@ with col_bar:
         top_k=top_k,
         title=f"PROBABILITY DISTRIBUTION // 下一词概率柱状图 (Top {top_k})",
     )
-    st.plotly_chart(fig_probs, use_container_width=True)
+    st.plotly_chart(fig_probs, width="stretch")
     with st.expander("[HOW TO READ // 读图指南] 下一词概率预测柱状图", expanded=False):
         st.markdown(
             """
@@ -334,7 +385,7 @@ with col_attn:
             tokens_y=current_context_tokens,
             title="Transformer Layer 2 Attention",
         )
-        st.plotly_chart(fig_realtime_attn, use_container_width=True)
+        st.plotly_chart(fig_realtime_attn, width="stretch")
         with st.expander("[HOW TO READ // 读图指南] 当前步因果注意力聚焦矩阵", expanded=False):
             st.markdown(
                 """
@@ -356,31 +407,39 @@ col_t1, col_t2, col_t3 = st.columns(3)
 toy_logits = np.array([4.0, 3.2, 2.1, 1.5, 0.8, -0.5, -1.2])
 toy_words = ["queen", "king", "princess", "prince", "woman", "cat", "dog"]
 
+
 def toy_softmax(l_arr, t_val):
     scaled = l_arr / t_val
     exps = np.exp(scaled - np.max(scaled))
     return exps / np.sum(exps)
 
+
 with col_t1:
     with st.container(border=True):
         st.markdown("#### [GREEDY // 绝对确定] T = 0.1")
         st.caption("最高分被无限放大，其余概率归零。每次点击生成的词绝对确定。")
-        fig_t1 = plot_token_probabilities(toy_softmax(toy_logits, 0.1), toy_words, top_k=5, title="T=0.1 极度尖锐 (Greedy)")
-        st.plotly_chart(fig_t1, use_container_width=True)
+        fig_t1 = plot_token_probabilities(
+            toy_softmax(toy_logits, 0.1), toy_words, top_k=5, title="T=0.1 极度尖锐 (Greedy)"
+        )
+        st.plotly_chart(fig_t1, width="stretch")
 
 with col_t2:
     with st.container(border=True):
         st.markdown("#### [CREATIVE // 均衡创作] T = 0.7")
         st.caption("高分词依然占优，但赋予次高分词适度机会，展现生动多样的表达。")
-        fig_t2 = plot_token_probabilities(toy_softmax(toy_logits, 0.7), toy_words, top_k=5, title="T=0.7 经典推荐 (Balanced)")
-        st.plotly_chart(fig_t2, use_container_width=True)
+        fig_t2 = plot_token_probabilities(
+            toy_softmax(toy_logits, 0.7), toy_words, top_k=5, title="T=0.7 经典推荐 (Balanced)"
+        )
+        st.plotly_chart(fig_t2, width="stretch")
 
 with col_t3:
     with st.container(border=True):
         st.markdown("#### [CHAOTIC // 随机发散] T = 2.0")
         st.caption("差异被强行抹平，所有词概率趋同，模型极易产生乱码和幻觉。")
-        fig_t3 = plot_token_probabilities(toy_softmax(toy_logits, 2.0), toy_words, top_k=5, title="T=2.0 极度平坦 (Uniform)")
-        st.plotly_chart(fig_t3, use_container_width=True)
+        fig_t3 = plot_token_probabilities(
+            toy_softmax(toy_logits, 2.0), toy_words, top_k=5, title="T=2.0 极度平坦 (Uniform)"
+        )
+        st.plotly_chart(fig_t3, width="stretch")
 
 with st.expander("[HOW TO READ // 读图指南] 采样温度 Temperature 概率塑形对比", expanded=False):
     st.markdown(
@@ -395,7 +454,9 @@ with st.expander("[HOW TO READ // 读图指南] 采样温度 Temperature 概率�
 # ---------------------------------------------------------------------------
 # 2026 前沿拓展：KV-Cache 自回归推理加速与显存占用实时监控
 # ---------------------------------------------------------------------------
-render_section_heading("2026 INFERENCE ACCELERATION // 自回归推理加速：KV-Cache 显存与算力优化", icon_name="zap")
+render_section_heading(
+    "2026 INFERENCE ACCELERATION // 自回归推理加速：KV-Cache 显存与算力优化", icon_name="zap"
+)
 
 col_kv_info, col_kv_stat = st.columns([1.2, 1])
 
@@ -414,18 +475,21 @@ with col_kv_info:
 with col_kv_stat:
     with st.container(border=True):
         st.markdown("#### [REAL-TIME TELEMETRY // 当前推理会话 KV 显存开销]")
-        
+
         current_seq_tokens = len(current_tokens)
         from nn_core.kv_cache import KVCache
-        kv_tracker = KVCache(num_layers=2, max_batch_size=1, max_seq_len=64, num_kv_heads=2, head_dim=16)
+
+        kv_tracker = KVCache(
+            num_layers=2, max_batch_size=1, max_seq_len=64, num_kv_heads=2, head_dim=16
+        )
         # 模拟填入当前 token
         fake_kv = np.zeros((1, 2, current_seq_tokens, 16))
         kv_tracker.update(0, fake_kv, fake_kv)
         kv_tracker.update(1, fake_kv, fake_kv)
         kv_stats = kv_tracker.get_memory_stats()
-        
+
         flops_saved_ratio = max(1.0, current_seq_tokens / 2.0)
-        
+
         st.metric(
             label="当前 KV 缓存物理显存占用",
             value=f"{kv_stats['used_kb']:.2f} KB",
@@ -442,7 +506,9 @@ with col_kv_stat:
 # ---------------------------------------------------------------------------
 # 零基础进阶：GPT 自回归生成与采样核心公式拆解
 # ---------------------------------------------------------------------------
-with st.expander("[GROWTH GUIDE // 成长指南] 自回归生成与采样核心公式拆解（ChatGPT 说话的秘密）", expanded=True):
+with st.expander(
+    "[GROWTH GUIDE // 成长指南] 自回归生成与采样核心公式拆解（ChatGPT 说话的秘密）", expanded=True
+):
     st.markdown(
         """
         ### 0. 核心公式逐字拆解：带温度调节的自回归概率分布
@@ -463,4 +529,3 @@ with st.expander("[GROWTH GUIDE // 成长指南] 自回归生成与采样核心�
         * **本质机理**：把前面所有 Token 的 Key 和 Value 矩阵保存在显存缓存中，推理速度直接从龟速的 $O(N^2)$ 飙升到极速的 $O(1)$。
         """
     )
-

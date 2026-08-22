@@ -16,6 +16,7 @@ from dashboard.constants.knowledge import (
     OptimizerMeta,
     RegularizerMeta,
 )
+from dashboard.constants.course import EvidenceLevel, LessonMeta, Reference, LESSONS
 
 __all__ = [
     "ACTIVATIONS",
@@ -29,4 +30,8 @@ __all__ = [
     "InitializerMeta",
     "OptimizerMeta",
     "RegularizerMeta",
+    "EvidenceLevel",
+    "LessonMeta",
+    "Reference",
+    "LESSONS",
 ]

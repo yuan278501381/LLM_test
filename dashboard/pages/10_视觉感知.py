@@ -17,6 +17,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from dashboard.components.charts import _apply_light_theme
+from dashboard.components.pedagogy import render_lesson_evidence
 from dashboard.styles.theme import (
     anchor_badge,
     apply_custom_theme,
@@ -35,6 +36,7 @@ st.set_page_config(
 )
 
 apply_custom_theme()
+render_lesson_evidence("M10")
 
 render_hero_header(
     title="卷积与视觉感知架构",
@@ -49,18 +51,48 @@ render_hero_header(
 render_page_guide(
     title="视觉感知架构与空间交互地图",
     blueprint_sections=[
-        {"id": "A", "name": "视觉控制台", "desc": "在左侧侧边栏切换测试图像、滤波卷积核与 ViT Patch 尺寸", "color": "amber", "target_id": "region-a"},
-        {"id": "B", "name": "教学指引", "desc": "当前卡片：通俗理解 CNN 感受野、ViT 图块切片与 CLIP 图文对齐", "color": "blue", "target_id": "region-b"},
-        {"id": "C", "name": "实时视觉遥测", "desc": "显示当前特征图尺寸、Token 序列长度、感受野与参数量", "color": "emerald", "target_id": "region-c"},
-        {"id": "D", "name": "2D 卷积滑动响应", "desc": "原图、3x3 卷积核矩阵与输出响应图三视窗并排透视", "color": "purple", "target_id": "region-d"},
-        {"id": "E", "name": "ViT 图块与 CLIP 对齐", "desc": "图像切片重构网格与多模态图文对齐余弦相似度矩阵", "color": "blue", "target_id": "region-e"},
+        {
+            "id": "A",
+            "name": "视觉控制台",
+            "desc": "在左侧侧边栏切换测试图像、滤波卷积核与 ViT Patch 尺寸",
+            "color": "amber",
+            "target_id": "region-a",
+        },
+        {
+            "id": "B",
+            "name": "教学指引",
+            "desc": "当前卡片：通俗理解 CNN 感受野、ViT 图块切片与 CLIP 图文对齐",
+            "color": "blue",
+            "target_id": "region-b",
+        },
+        {
+            "id": "C",
+            "name": "实时视觉遥测",
+            "desc": "显示当前特征图尺寸、Token 序列长度、感受野与参数量",
+            "color": "emerald",
+            "target_id": "region-c",
+        },
+        {
+            "id": "D",
+            "name": "2D 卷积滑动响应",
+            "desc": "原图、3x3 卷积核矩阵与输出响应图三视窗并排透视",
+            "color": "purple",
+            "target_id": "region-d",
+        },
+        {
+            "id": "E",
+            "name": "ViT 图块与 CLIP 对齐",
+            "desc": "图像切片重构网格与多模态图文对齐余弦相似度矩阵",
+            "color": "blue",
+            "target_id": "region-e",
+        },
     ],
     plain_intro=(
         f"<b>为什么处理文字的 Transformer 能看懂图片？</b><br>"
         f"在传统计算机视觉中，<b>卷积核 (CNN)</b> 像一个放大镜，在图像上一步步滑动，提取边缘、纹理等局部特征；<br>"
         f"而 2020 年诞生的 <b>Vision Transformer (ViT)</b> 提出了革命性的思想：把图片切成一个个网格小图块 (Patch)，"
         f"每个图块就像一个'词'，直接送入标准的 Transformer 中阅读！<br>"
-        f"随后在 {anchor_badge('[E. CLIP 实验室]', 'blue', target_id='region-e')} 中，文字和图片投影到了同一个语义向量空间，彻底打通了多模态大模型的任督二脉！"
+        f"随后在 {anchor_badge('[E. CLIP 实验室]', 'blue', target_id='region-e')} 中，观察微型双塔如何把图文投影到共享空间；本页结果不代表训练后的 CLIP 能力。"
     ),
     hyperparams_desc=(
         f"• <b>在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 调节</b>：<br>"
@@ -83,7 +115,10 @@ render_page_guide(
 # ---------------------------------------------------------------------------
 # 侧边栏参数控制
 # ---------------------------------------------------------------------------
-st.sidebar.markdown(f'<div id="region-a" class="interactive-region" style="margin-bottom:0.6rem;padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">{anchor_badge("A", "amber")} <b>VISION CONTROLS // 视觉感知控制台</b></div>', unsafe_allow_html=True)
+st.sidebar.markdown(
+    f'<div id="region-a" class="interactive-region" style="margin-bottom:0.6rem;padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">{anchor_badge("A", "amber")} <b>VISION CONTROLS // 视觉感知控制台</b></div>',
+    unsafe_allow_html=True,
+)
 
 # ---------------------------------------------------------------------------
 # 侧边栏参数控制
@@ -141,7 +176,8 @@ KERNELS_DICT = {
     "Sobel 垂直边缘 (Sobel-Y)": np.array([[-1, -2, -1], [0, 0, 0], [1, 2, 1]], dtype=np.float32),
     "拉普拉斯全向边缘 (Laplacian)": np.array([[0, 1, 0], [1, -4, 1], [0, 1, 0]], dtype=np.float32),
     "图像锐化 (Sharpen)": np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]], dtype=np.float32),
-    "高斯模糊 (Gaussian Blur)": np.array([[1, 2, 1], [2, 4, 2], [1, 2, 1]], dtype=np.float32) / 16.0,
+    "高斯模糊 (Gaussian Blur)": np.array([[1, 2, 1], [2, 4, 2], [1, 2, 1]], dtype=np.float32)
+    / 16.0,
 }
 
 raw_img = _generate_synthetic_image(img_choice, size=32)
@@ -199,7 +235,7 @@ metric_grid_html = (
 st.markdown(
     f'<div id="region-c" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;">'
     f'{anchor_badge("C", "emerald")} <span style="font-weight:800;color:#065f46;font-size:0.86rem;">VISION TELEMETRY // 视觉特征与 Token 化遥测</span>'
-    f'</div>',
+    f"</div>",
     unsafe_allow_html=True,
 )
 st.markdown(metric_grid_html, unsafe_allow_html=True)
@@ -210,7 +246,7 @@ st.markdown(metric_grid_html, unsafe_allow_html=True)
 st.markdown(
     f'<div id="region-d" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;margin-top:1rem;">'
     f'{anchor_badge("D", "purple")} <span style="font-weight:800;color:#5b21b6;font-size:0.86rem;">2D CONVOLUTION // 卷积滑动滤波计算演示</span>'
-    f'</div>',
+    f"</div>",
     unsafe_allow_html=True,
 )
 
@@ -231,16 +267,14 @@ with col_img_in:
         margin=dict(l=10, r=10, t=30, b=10),
     )
     fig_in = _apply_light_theme(fig_in, f"输入原图 ({img_choice})")
-    st.plotly_chart(fig_in, use_container_width=True)
+    st.plotly_chart(fig_in, width="stretch")
 
 with col_kernel:
     with st.container(border=True):
         st.markdown(f"#### [FILTER // 当前卷积核]\n**{kernel_choice}**")
         st.caption("3×3 感受野离散差分矩阵：")
         st.code(str(cur_kernel), language="text")
-        st.markdown(
-            "$$Y_{i,j} = \\sum_{m=-1}^1 \\sum_{n=-1}^1 X_{i+m, j+n} \\cdot W_{m,n}$$"
-        )
+        st.markdown("$$Y_{i,j} = \\sum_{m=-1}^1 \\sum_{n=-1}^1 X_{i+m, j+n} \\cdot W_{m,n}$$")
 
 with col_img_out:
     fig_out = go.Figure(
@@ -258,7 +292,7 @@ with col_img_out:
         margin=dict(l=10, r=10, t=30, b=10),
     )
     fig_out = _apply_light_theme(fig_out, "输出特征响应图 (Feature Map)")
-    st.plotly_chart(fig_out, use_container_width=True)
+    st.plotly_chart(fig_out, width="stretch")
     with st.expander("[HOW TO READ // 读图指南] 卷积特征响应图", expanded=False):
         st.markdown(
             """
@@ -270,7 +304,9 @@ with col_img_out:
 # ---------------------------------------------------------------------------
 # Section 2: 多通道特征图对比
 # ---------------------------------------------------------------------------
-render_section_heading("MULTI-CHANNEL FEATURE MAPS // 经典空间滤波核特征响应矩阵", icon_name="target")
+render_section_heading(
+    "MULTI-CHANNEL FEATURE MAPS // 经典空间滤波核特征响应矩阵", icon_name="target"
+)
 
 sub_cols = st.columns(4)
 sample_kernels = [
@@ -301,7 +337,7 @@ for idx, (k_name, k_mat) in enumerate(sample_kernels):
             margin=dict(l=5, r=5, t=25, b=5),
         )
         sub_fig = _apply_light_theme(sub_fig, k_name)
-        st.plotly_chart(sub_fig, use_container_width=True)
+        st.plotly_chart(sub_fig, width="stretch")
 
 with st.expander("[HOW TO READ // 读图指南] 经典空间滤波算子横向对比", expanded=False):
     st.markdown(
@@ -318,7 +354,7 @@ with st.expander("[HOW TO READ // 读图指南] 经典空间滤波算子横向�
 st.markdown(
     f'<div id="region-e" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;margin-top:1.2rem;">'
     f'{anchor_badge("E", "blue")} <span style="font-weight:800;color:#1e40af;font-size:0.86rem;">VISION TRANSFORMER (ViT) & CLIP // 图像切片与图文多模态对齐</span>'
-    f'</div>',
+    f"</div>",
     unsafe_allow_html=True,
 )
 
@@ -338,10 +374,24 @@ with col_vit_img:
     shapes = []
     for line_pos in range(P, 32, P):
         shapes.append(
-            dict(type="line", x0=line_pos - 0.5, x1=line_pos - 0.5, y0=-0.5, y1=31.5, line=dict(color="#ffffff", width=1.5, dash="dot"))
+            dict(
+                type="line",
+                x0=line_pos - 0.5,
+                x1=line_pos - 0.5,
+                y0=-0.5,
+                y1=31.5,
+                line=dict(color="#ffffff", width=1.5, dash="dot"),
+            )
         )
         shapes.append(
-            dict(type="line", x0=-0.5, x1=31.5, y0=line_pos - 0.5, y1=line_pos - 0.5, line=dict(color="#ffffff", width=1.5, dash="dot"))
+            dict(
+                type="line",
+                x0=-0.5,
+                x1=31.5,
+                y0=line_pos - 0.5,
+                y1=line_pos - 0.5,
+                line=dict(color="#ffffff", width=1.5, dash="dot"),
+            )
         )
     fig_grid.update_layout(
         shapes=shapes,
@@ -349,8 +399,10 @@ with col_vit_img:
         yaxis=dict(showticklabels=False, autorange="reversed"),
         margin=dict(l=10, r=10, t=30, b=10),
     )
-    fig_grid = _apply_light_theme(fig_grid, f"ViT 切片网格 (Patch={P}×{P}, 共 {num_patches} 个图块)")
-    st.plotly_chart(fig_grid, use_container_width=True)
+    fig_grid = _apply_light_theme(
+        fig_grid, f"ViT 切片网格 (Patch={P}×{P}, 共 {num_patches} 个图块)"
+    )
+    st.plotly_chart(fig_grid, width="stretch")
     with st.expander("[HOW TO READ // 读图指南] ViT 图像 Patch 网格切分", expanded=False):
         st.markdown(
             """
@@ -402,7 +454,7 @@ with col_clip_mat:
         margin=dict(l=30, r=30, t=30, b=80),
     )
     fig_clip = _apply_light_theme(fig_clip, "CLIP 跨模态余弦相似度矩阵 (对角线为正样本对)")
-    st.plotly_chart(fig_clip, use_container_width=True)
+    st.plotly_chart(fig_clip, width="stretch")
     with st.expander("[HOW TO READ // 读图指南] CLIP 图文跨模态对齐矩阵", expanded=False):
         st.markdown(
             """
@@ -429,7 +481,9 @@ with col_clip_desc:
 # ---------------------------------------------------------------------------
 # 零基础进阶：视觉多模态核心公式逐字拆解与名词通俗速查
 # ---------------------------------------------------------------------------
-with st.expander("[GROWTH GUIDE // 成长指南] 视觉卷积、ViT 与 CLIP 核心公式拆解与大白话全解", expanded=True):
+with st.expander(
+    "[GROWTH GUIDE // 成长指南] 视觉卷积、ViT 与 CLIP 核心公式拆解与大白话全解", expanded=True
+):
     st.markdown(
         """
         ### 0. 核心公式逐字拆解：2D 空间卷积滤波

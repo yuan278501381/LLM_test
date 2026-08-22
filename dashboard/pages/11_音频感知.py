@@ -1,8 +1,8 @@
 # Copyright (c) 2026 Yy1 (yuan278501381) | MIT License
 """
-里程碑 11: 音频信号与语音理解 (FFT -> Mel -> Whisper) - 零基础入门保姆级教学平台
+里程碑 11: 音频信号与语音理解 (FFT -> Mel -> 连续帧切片) - 零基础入门教学平台
 
-解剖时域连续振动波形、STFT 短时傅里叶变换、梅尔听觉滤波器组与现代语音模型 (Whisper) Token 化流程。
+解剖时域波形、STFT、梅尔滤波器组与连续频谱帧切片，并说明它与 Whisper 完整前端的边界。
 """
 
 import os
@@ -17,6 +17,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from dashboard.components.charts import _apply_light_theme
+from dashboard.components.pedagogy import render_lesson_evidence
 from dashboard.styles.theme import (
     anchor_badge,
     apply_custom_theme,
@@ -26,7 +27,7 @@ from dashboard.styles.theme import (
     render_section_heading,
 )
 from nn_core.audio import (
-    AudioTokenizer,
+    SpectrogramFramePatcher,
     compute_mel_spectrogram,
     generate_chord,
     generate_waveform,
@@ -40,10 +41,11 @@ st.set_page_config(
 )
 
 apply_custom_theme()
+render_lesson_evidence("M11", show_contract=True)
 
 render_hero_header(
     title="音频信号与语音理解架构",
-    subtitle="从空气分子振动到语音语义：解剖时域波形、STFT 短时傅里叶变换、梅尔滤波器组与 Whisper 语音 Token 化",
+    subtitle="从空气振动到时频特征：解剖波形、STFT、梅尔滤波器组与连续频谱帧切片（非 Whisper 复刻）",
     badge_text="MILESTONE 11 // AUDIO PERCEPTION",
     badge_type="purple",
 )
@@ -54,18 +56,48 @@ render_hero_header(
 render_page_guide(
     title="音频感知架构与空间交互地图",
     blueprint_sections=[
-        {"id": "A", "name": "音频合成控制台", "desc": "在左侧侧边栏调节基频、波形类型、泛音叠加与梅尔频段数", "color": "amber", "target_id": "region-a"},
-        {"id": "B", "name": "教学指引", "desc": "当前卡片：通俗理解声波连续振动、STFT 傅里叶分光与梅尔耳蜗滤波", "color": "blue", "target_id": "region-b"},
-        {"id": "C", "name": "实时声学遥测", "desc": "显示采样率、频谱帧数、梅尔频段数与 Token 序列长度", "color": "emerald", "target_id": "region-c"},
-        {"id": "D", "name": "时域示波器与播放", "desc": "微观连续振动波形与纯 NumPy 实时合成标准 WAV 音频试听", "color": "purple", "target_id": "region-d"},
-        {"id": "E", "name": "梅尔滤波与 Whisper", "desc": "耳蜗非线性滤波器组、2D 梅尔声学热力图与 Whisper Token", "color": "blue", "target_id": "region-e"},
+        {
+            "id": "A",
+            "name": "音频合成控制台",
+            "desc": "在左侧侧边栏调节基频、波形类型、泛音叠加与梅尔频段数",
+            "color": "amber",
+            "target_id": "region-a",
+        },
+        {
+            "id": "B",
+            "name": "教学指引",
+            "desc": "当前卡片：通俗理解声波连续振动、STFT 傅里叶分光与梅尔耳蜗滤波",
+            "color": "blue",
+            "target_id": "region-b",
+        },
+        {
+            "id": "C",
+            "name": "实时声学遥测",
+            "desc": "显示采样率、频谱帧数、梅尔频段数与连续特征块数量",
+            "color": "emerald",
+            "target_id": "region-c",
+        },
+        {
+            "id": "D",
+            "name": "时域示波器与播放",
+            "desc": "微观连续振动波形与纯 NumPy 实时合成标准 WAV 音频试听",
+            "color": "purple",
+            "target_id": "region-d",
+        },
+        {
+            "id": "E",
+            "name": "梅尔滤波与帧切片",
+            "desc": "梅尔滤波器组、2D log-Mel 特征与连续帧分组；非离散 tokenizer",
+            "color": "blue",
+            "target_id": "region-e",
+        },
     ],
     plain_intro=(
         f"<b>大模型是如何'听到'声音的？</b><br>"
         f"人类耳朵听到的声音，在物理上只是<b>空气压强的连续时间振动波形</b>；<br>"
         f"计算机通过 <b>傅里叶变换 (FFT)</b> 像三棱镜分解白光一样，将复杂的混合波形拆解为不同频率成分；<br>"
         f"再通过模拟人耳非线性听觉的 <b>梅尔滤波器组 (Mel Filterbank)</b>，在 {anchor_badge('[E. 梅尔频谱图]', 'blue', target_id='region-e')} 将一维声音压缩为一张 2D 的<b>'声音热力图'</b>；<br>"
-        f"最后像 Whisper 这样的现代大模型，就可以直接<b>像阅读文本一样阅读这张声音频谱图</b>！"
+        f"语音模型会继续用卷积或投影网络把 log-Mel 特征变换为隐藏表示；这一步不同于文本的离散 tokenization。"
     ),
     hyperparams_desc=(
         f"• <b>在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 调节</b>：<br>"
@@ -77,7 +109,7 @@ render_page_guide(
     telemetry_desc=(
         f"• <b>在 {anchor_badge('[D. 时域示波器]', 'purple', target_id='region-d')} 观测</b>：微观连续振动波形与真实声音试听。<br>"
         f"• <b>在 {anchor_badge('[E. 梅尔频谱图]', 'blue', target_id='region-e')} 观测</b>：对数梅尔功率谱能量分布。<br>"
-        f"• <b>在 {anchor_badge('[C. 声学遥测]', 'emerald', target_id='region-c')} 评估</b>：采样率与 Whisper 序列长度。"
+        f"• <b>在 {anchor_badge('[C. 声学遥测]', 'emerald', target_id='region-c')} 评估</b>：采样率、频谱帧数与连续特征块数量。"
     ),
     experiments=[
         f"<b>第 1 步【聆听与观察纯音】</b>：点击 {anchor_badge('[D. 示波器]', 'purple', target_id='region-d')} 旁边的播放器试听 440Hz 纯音，并观察上方示波器中优美的正弦波形！",
@@ -89,7 +121,10 @@ render_page_guide(
 # ---------------------------------------------------------------------------
 # 侧边栏参数控制
 # ---------------------------------------------------------------------------
-st.sidebar.markdown(f'<div id="region-a" class="interactive-region" style="margin-bottom:0.6rem;padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">{anchor_badge("A", "amber")} <b>AUDIO CONTROLS // 音频信号控制台</b></div>', unsafe_allow_html=True)
+st.sidebar.markdown(
+    f'<div id="region-a" class="interactive-region" style="margin-bottom:0.6rem;padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">{anchor_badge("A", "amber")} <b>AUDIO CONTROLS // 音频信号控制台</b></div>',
+    unsafe_allow_html=True,
+)
 
 # ---------------------------------------------------------------------------
 # 侧边栏参数控制
@@ -137,7 +172,9 @@ sr = 16000
 duration = 1.0
 
 if add_harmonics:
-    raw_signal = generate_chord([freq_val, freq_val * 2.0, freq_val * 3.0], duration=duration, sr=sr)
+    raw_signal = generate_chord(
+        [freq_val, freq_val * 2.0, freq_val * 3.0], duration=duration, sr=sr
+    )
 else:
     raw_signal = generate_waveform(freq=freq_val, duration=duration, sr=sr, wave_type=wave_choice)
 
@@ -147,7 +184,7 @@ mel_spec = compute_mel_spectrogram(
 )
 
 # Token 化
-tokenizer = AudioTokenizer(n_mels=n_mels_val, frame_width=4)
+tokenizer = SpectrogramFramePatcher(n_mels=n_mels_val, frame_width=4)
 audio_tokens = tokenizer.tokenize(mel_spec)
 
 # 打包 WAV 字节流
@@ -191,7 +228,7 @@ metric_grid_html = (
 st.markdown(
     f'<div id="region-c" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;">'
     f'{anchor_badge("C", "emerald")} <span style="font-weight:800;color:#065f46;font-size:0.86rem;">AUDIO TELEMETRY // 音频特征与时频分解遥测</span>'
-    f'</div>',
+    f"</div>",
     unsafe_allow_html=True,
 )
 st.markdown(metric_grid_html, unsafe_allow_html=True)
@@ -202,7 +239,7 @@ st.markdown(metric_grid_html, unsafe_allow_html=True)
 st.markdown(
     f'<div id="region-d" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;margin-top:1rem;">'
     f'{anchor_badge("D", "purple")} <span style="font-weight:800;color:#5b21b6;font-size:0.86rem;">TIME-DOMAIN OSCILLOSCOPE // 时域连续波形与声音播放器</span>'
-    f'</div>',
+    f"</div>",
     unsafe_allow_html=True,
 )
 
@@ -229,7 +266,7 @@ with col_wave_plot:
         margin=dict(l=40, r=20, t=30, b=40),
     )
     fig_wave = _apply_light_theme(fig_wave, f"微观时域振动连续波形 (前 20ms)")
-    st.plotly_chart(fig_wave, use_container_width=True)
+    st.plotly_chart(fig_wave, width="stretch")
     with st.expander("[HOW TO READ // 读图指南] 微观时域振动波形图", expanded=False):
         st.markdown(
             """
@@ -241,21 +278,25 @@ with col_wave_plot:
 
 with col_audio_play:
     with st.container(border=True):
-        st.markdown(f"#### [AUDIO PLAYER // 真实播放]\n**{wave_choice.split(' ')[0]} @ {freq_val} Hz**")
+        st.markdown(
+            f"#### [AUDIO PLAYER // 真实播放]\n**{wave_choice.split(' ')[0]} @ {freq_val} Hz**"
+        )
         st.caption("由纯 NumPy 实时合成，手写 44 字节 RIFF/WAVE 标准文件头：")
         st.audio(wav_bytes, format="audio/wav")
         st.markdown(
             f"""
             - **信号时长**：`1.0 秒`
             - **采样总点数**：`{len(raw_signal):,}` 点
-            - **泛音状态**：`{'已叠加 (2x, 3x)' if add_harmonics else '纯单频'}`
+            - **泛音状态**：`{"已叠加 (2x, 3x)" if add_harmonics else "纯单频"}`
             """
         )
 
 # ---------------------------------------------------------------------------
 # Section 2: 离散傅里叶变换 (FFT) 频谱分解
 # ---------------------------------------------------------------------------
-render_section_heading("FOURIER FREQUENCY DECOMPOSITION // 快速傅里叶变换 (FFT) 频域分解", icon_name="target")
+render_section_heading(
+    "FOURIER FREQUENCY DECOMPOSITION // 快速傅里叶变换 (FFT) 频域分解", icon_name="target"
+)
 
 fft_full = np.abs(np.fft.rfft(raw_signal))
 freq_axis = np.fft.rfftfreq(len(raw_signal), 1.0 / sr)
@@ -278,7 +319,7 @@ fig_fft.update_layout(
     margin=dict(l=40, r=20, t=30, b=40),
 )
 fig_fft = _apply_light_theme(fig_fft, "FFT 全局频谱能量分布图 (0 ~ 3000 Hz)")
-st.plotly_chart(fig_fft, use_container_width=True)
+st.plotly_chart(fig_fft, width="stretch")
 with st.expander("[HOW TO READ // 读图指南] FFT 全局频谱能量柱状图", expanded=False):
     st.markdown(
         """
@@ -294,7 +335,7 @@ with st.expander("[HOW TO READ // 读图指南] FFT 全局频谱能量柱状图"
 st.markdown(
     f'<div id="region-e" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;margin-top:1.2rem;">'
     f'{anchor_badge("E", "blue")} <span style="font-weight:800;color:#1e40af;font-size:0.86rem;">MEL FILTERBANK & SPECTROGRAM // 梅尔滤波器组与 2D 对数梅尔频谱图</span>'
-    f'</div>',
+    f"</div>",
     unsafe_allow_html=True,
 )
 
@@ -324,7 +365,7 @@ with col_fb_plot:
         margin=dict(l=40, r=20, t=30, b=40),
     )
     fig_fb = _apply_light_theme(fig_fb, f"梅尔三角滤波器组 ({n_mels_val} 临界频带几何重叠)")
-    st.plotly_chart(fig_fb, use_container_width=True)
+    st.plotly_chart(fig_fb, width="stretch")
     with st.expander("[HOW TO READ // 读图指南] 梅尔三角滤波器组分布", expanded=False):
         st.markdown(
             """
@@ -348,19 +389,21 @@ with col_mel_heat:
         margin=dict(l=40, r=20, t=30, b=40),
     )
     fig_spec = _apply_light_theme(fig_spec, "2D 对数梅尔功率频谱图 (Log-Mel Spectrogram)")
-    st.plotly_chart(fig_spec, use_container_width=True)
+    st.plotly_chart(fig_spec, width="stretch")
     with st.expander("[HOW TO READ // 读图指南] 2D 对数梅尔时频谱图", expanded=False):
         st.markdown(
             """
             * **横轴【时间流逝】**、**纵轴【梅尔频段高低】**、**颜色深浅【能量强弱 (dB)】**。
-            * **[OPTIMAL // 现代 AI 声学输入]**：Whisper / 语音大模型直接把这张 2D 时频谱当成图片喂给视觉 Transformer！
+            * **[MODEL INPUT // 模型输入]**：语音模型通常先用卷积或线性投影处理 log-Mel 特征；它不是把频谱直接交给视觉 Transformer。
             """
         )
 
 # ---------------------------------------------------------------------------
-# Section 4: Whisper 语音模型端到端流水线 (2026 前沿)
+# Section 4: 连续声学特征与 Whisper 架构边界
 # ---------------------------------------------------------------------------
-render_section_heading("WHISPER AUDIO-TO-TOKEN PIPELINE // 现代语音模型 Token 化流水线", icon_name="cpu")
+render_section_heading(
+    "CONTINUOUS AUDIO FEATURES // 连续声学特征与 Whisper 架构边界", icon_name="cpu"
+)
 
 col_w_pipe, col_w_info = st.columns([1.2, 1])
 
@@ -382,19 +425,21 @@ with col_w_info:
     with st.container(border=True):
         st.markdown(
             f"""
-            #### [AUDIO TOKENIZATION // 声学特征 Token 化]
+            #### [FRAME PATCHING // 连续声学帧切片]
             - **输入频谱图尺寸**：`{mel_spec.shape[0]} 频段 × {mel_spec.shape[1]} 时间帧`
-            - **分帧打包倍率 (Frame Width)**：`4 帧/Token`
-            - **最终大模型 Token 数量**：`{audio_tokens.shape[0]} 个连续表征向量`
-            - **单 Token 嵌入维度**：`{audio_tokens.shape[1]} 维`
-            - **核心启示**：*语音与文本在大模型深层没有本质区别，都是高维嵌入向量的序列自回归！*
+            - **分帧打包倍率 (Frame Width)**：`4 帧/特征块`
+            - **连续特征块数量**：`{audio_tokens.shape[0]} 个`
+            - **单块展平维度**：`{audio_tokens.shape[1]} 维`
+            - **结论边界**：这些是连续浮点特征，不是离散 token id，也不是 Whisper tokenizer。
             """
         )
 
 # ---------------------------------------------------------------------------
 # 零基础进阶：音频语音核心公式逐字拆解与名词通俗速查
 # ---------------------------------------------------------------------------
-with st.expander("[GROWTH GUIDE // 成长指南] 音频信号处理与 Whisper 语音识别核心公式全解", expanded=True):
+with st.expander(
+    "[GROWTH GUIDE // 成长指南] 音频信号处理与 Whisper 语音识别核心公式全解", expanded=True
+):
     st.markdown(
         """
         ### 0. 核心公式逐字拆解：离散傅里叶变换 (FFT) 与 梅尔刻度 (Mel Scale)
@@ -415,4 +460,3 @@ with st.expander("[GROWTH GUIDE // 成长指南] 音频信号处理与 Whisper �
         * 整个语音识别（ASR）本质上就是把这张“彩色乐谱”当成一张图片，用视觉 Transformer 读出里面的文字！
         """
     )
-

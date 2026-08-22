@@ -18,9 +18,11 @@ import plotly.graph_objects as go
 import streamlit as st
 
 import dashboard.components.charts
+
 importlib.reload(dashboard.components.charts)
 
 from dashboard.components.charts import _apply_light_theme, plot_attention_heatmap_nlp
+from dashboard.components.pedagogy import render_lesson_evidence
 from dashboard.styles.theme import (
     anchor_badge,
     apply_custom_theme,
@@ -39,6 +41,7 @@ st.set_page_config(
 )
 
 apply_custom_theme()
+render_lesson_evidence("M08", show_contract=True)
 
 render_hero_header(
     title="Transformer 结构块与残差流",
@@ -53,36 +56,66 @@ render_hero_header(
 render_page_guide(
     title="Transformer 结构块与空间交互地图",
     blueprint_sections=[
-        {"id": "A", "name": "积木架构控制台", "desc": "在左侧侧边栏调节堆叠层数、隐藏层维度与输入测试句子", "color": "amber", "target_id": "region-a"},
-        {"id": "B", "name": "教学指引", "desc": "当前卡片：通俗理解 Pre-LN 架构、残差高速公路与 SwiGLU 门控前馈", "color": "blue", "target_id": "region-b"},
-        {"id": "C", "name": "实时积木遥测", "desc": "监测堆叠层数、残差流向量模长增长、FFN 维度与总参数量", "color": "emerald", "target_id": "region-c"},
-        {"id": "D", "name": "Pre-LN 数据流拓扑", "desc": "直观拆解 LayerNorm、MHA、GELU FFN 与主干残差流计算图", "color": "purple", "target_id": "region-d"},
-        {"id": "E", "name": "逐层注意力演进", "desc": "同屏对比从浅层局部短语到深层全局语义跨距的注意力分工", "color": "blue", "target_id": "region-e"},
+        {
+            "id": "A",
+            "name": "积木架构控制台",
+            "desc": "在左侧侧边栏调节堆叠层数、隐藏层维度与输入测试句子",
+            "color": "amber",
+            "target_id": "region-a",
+        },
+        {
+            "id": "B",
+            "name": "教学指引",
+            "desc": "当前卡片：通俗理解 Pre-LN 架构、残差高速公路与 SwiGLU 门控前馈",
+            "color": "blue",
+            "target_id": "region-b",
+        },
+        {
+            "id": "C",
+            "name": "实时积木遥测",
+            "desc": "监测堆叠层数、残差流向量模长增长、FFN 维度与总参数量",
+            "color": "emerald",
+            "target_id": "region-c",
+        },
+        {
+            "id": "D",
+            "name": "Pre-LN 数据流拓扑",
+            "desc": "直观拆解 LayerNorm、MHA、GELU FFN 与主干残差流计算图",
+            "color": "purple",
+            "target_id": "region-d",
+        },
+        {
+            "id": "E",
+            "name": "未训练注意力对比",
+            "desc": "检查随机初始化层的权重形状、归一化与信息混合；不作语义解释",
+            "color": "blue",
+            "target_id": "region-e",
+        },
     ],
     plain_intro=(
         f"<b>Transformer Block 就是现代大语言模型的标准积木块</b>。<br>"
         f"它把<b>自注意力机制 (MHA)</b>、<b>前馈全连接网络 (FFN)</b> 和<b>残差高速公路 (Residual Stream)</b> 封装在同一个盒子里。<br>"
         f"主干道上的残差流像一块中央黑板，数据在流动过程中，MHA 负责在不同词之间搬运信息，FFN 负责非线性思考与知识提取。<br>"
-        f"每一层只在黑板上写下微小的增量，<b>层数堆得越多，模型理解越深刻！</b><br><br>"
+        f"每一层向残差流写入一个增量；只有经过合适数据与目标训练后，这些增量才可能形成有用表示。<br><br>"
         f"<b>【2026 前沿拓展】：SwiGLU 门控前馈网络</b><br>"
         f"现代 LLM 使用 SwiGLU 替代了传统的 GELU FFN，它引入了与输入相关的门控（Gate）机制："
         f"不仅决定激活强度，还直接调控信息流转通道，极大提升了同等参数量下的知识容量！"
     ),
     hyperparams_desc=(
         f"• <b>在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 调节</b>：<br>"
-        f"• <b>Transformer 堆叠层数 (Num Layers)</b>：堆叠的积木数量（1~4层），层数越深抽象推理能力越强。<br>"
+        f"• <b>Transformer 堆叠层数 (Num Layers)</b>：堆叠数量（1~4 层）；增加层数会增加容量和计算量，但不保证能力提升。<br>"
         f"• <b>隐藏层维度 (d_model)</b>：残差流主干道的向量宽度（32/64 维）。<br>"
         f"• <b>注意力头数 (Heads)</b>：每个结构块内的并行观察视角数。<br>"
-        f"• <b>测试输入句子</b>：观察多层网络在处理真实文本时的逐层注意力演进。"
+        f"• <b>测试输入句子</b>：检查 token 经过随机初始化 Block 时的矩阵计算；结果不是训练后的语言理解。"
     ),
     telemetry_desc=(
-        f"• <b>在 {anchor_badge('[E. 逐层注意力热力图]', 'blue', target_id='region-e')} 观测</b>：同屏对比 Layer 1 到 Layer N 的注意力模式分工。<br>"
+        f"• <b>在 {anchor_badge('[E. 逐层注意力热力图]', 'blue', target_id='region-e')} 观测</b>：同屏核对 Layer 1 到 Layer N 的未训练注意力数值。<br>"
         f"• <b>在 {anchor_badge('[D. Pre-LN 数据流]', 'purple', target_id='region-d')} 拆解</b>：主干残差流计算流程。<br>"
         f"• <b>在 {anchor_badge('[C. 积木遥测]', 'emerald', target_id='region-c')} 评估</b>：残差流向量模长增长折线。"
     ),
     experiments=[
-        f"<b>第 1 步【对比逐层分工】</b>：在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 把【堆叠层数】调到 3 或 4，观察 {anchor_badge('[E. 逐层热力图]', 'blue', target_id='region-e')}：第 1 层偏向相邻词，而高层开始跨距跳跃关注语义相关词！",
-        f"<b>第 2 步【观察残差流范数】</b>：查看残差流向量模长增长折线，体会残差连接能让深层网络绝不发生梯度消失！",
+        f"<b>第 1 步【核对随机初始化】</b>：把【堆叠层数】调到 3 或 4，检查 {anchor_badge('[E. 逐层热力图]', 'blue', target_id='region-e')} 每行是否归一化；不要把随机图案解释成语义分工。",
+        f"<b>第 2 步【观察残差流范数】</b>：查看向量模长变化，理解恒等分支为何有利于信息与梯度传播，同时记录它并不保证任意深度下都稳定。",
         f"<b>第 3 步【对比前沿门控机制】</b>：滚动至底部实验室，体验 SwiGLU 的乘法门控机制如何通过 $x \\otimes \\text{{Swish}}(Wx)$ 实现对特征的高级非线性调制！",
     ],
 )
@@ -90,7 +123,10 @@ render_page_guide(
 # ---------------------------------------------------------------------------
 # 侧边栏控制面板
 # ---------------------------------------------------------------------------
-st.sidebar.markdown(f'<div id="region-a" class="interactive-region" style="margin-bottom:0.6rem;padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">{anchor_badge("A", "amber")} <b>BLOCK ARCHITECTURE // 积木架构控制台</b></div>', unsafe_allow_html=True)
+st.sidebar.markdown(
+    f'<div id="region-a" class="interactive-region" style="margin-bottom:0.6rem;padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">{anchor_badge("A", "amber")} <b>BLOCK ARCHITECTURE // 积木架构控制台</b></div>',
+    unsafe_allow_html=True,
+)
 
 # ---------------------------------------------------------------------------
 # 词表与嵌入层
@@ -160,10 +196,7 @@ x_stream = embedding_layer.forward(tokens_array)  # shape: (1, seq_len, 32)
 norms_history = [float(np.mean(np.linalg.norm(x_stream[0], axis=-1)))]
 
 # 实例化多层 Transformer Block 并依次前向传播
-blocks = [
-    TransformerBlock(d_model=32, num_heads=num_heads, d_ff=128)
-    for _ in range(num_layers)
-]
+blocks = [TransformerBlock(d_model=32, num_heads=num_heads, d_ff=128) for _ in range(num_layers)]
 
 layer_attn_weights = []
 
@@ -185,7 +218,7 @@ total_params = params_per_block * num_layers + (len(vocab_words) * 32)
 st.markdown(
     f'<div id="region-c" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;">'
     f'{anchor_badge("C", "emerald")} <span style="font-weight:800;color:#065f46;font-size:0.86rem;">BLOCK TELEMETRY // 积木架构与特征流遥测</span>'
-    f'</div>',
+    f"</div>",
     unsafe_allow_html=True,
 )
 metric_grid_html = (
@@ -200,7 +233,7 @@ metric_grid_html = (
     + render_metric_card(
         "RESIDUAL STREAM NORM // 残差流范数",
         f"{norms_history[-1]:.2f}",
-        delta=f"较初始增长 +{(norms_history[-1]/norms_history[0] - 1)*100:.1f}%",
+        delta=f"较初始增长 +{(norms_history[-1] / norms_history[0] - 1) * 100:.1f}%",
         delta_type="positive",
         icon_name="trending-up",
     )
@@ -228,7 +261,7 @@ st.markdown(metric_grid_html, unsafe_allow_html=True)
 st.markdown(
     f'<div id="region-d" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;margin-top:1rem;">'
     f'{anchor_badge("D", "purple")} <span style="font-weight:800;color:#5b21b6;font-size:0.86rem;">PRE-LN ARCHITECTURE // Pre-LN Transformer 结构块内部数据流拓扑</span>'
-    f'</div>',
+    f"</div>",
     unsafe_allow_html=True,
 )
 render_architecture_flow_card()
@@ -238,8 +271,8 @@ render_architecture_flow_card()
 # ---------------------------------------------------------------------------
 st.markdown(
     f'<div id="region-e" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;margin-top:1.2rem;">'
-    f'{anchor_badge("E", "blue")} <span style="font-weight:800;color:#1e40af;font-size:0.86rem;">LAYER-WISE ATTENTION // 逐层注意力模式演进同屏对比 (1 ~ {num_layers} 层)</span>'
-    f'</div>',
+    f'{anchor_badge("E", "blue")} <span style="font-weight:800;color:#1e40af;font-size:0.86rem;">UNTRAINED ATTENTION // 随机初始化注意力数值对比 (1 ~ {num_layers} 层)</span>'
+    f"</div>",
     unsafe_allow_html=True,
 )
 
@@ -250,15 +283,15 @@ for i in range(num_layers):
             attention_weights=layer_attn_weights[i],
             tokens_x=raw_tokens,
             tokens_y=raw_tokens,
-            title=f"Block #{i+1} (Head 0)",
+            title=f"Block #{i + 1} (Head 0)",
         )
-        st.plotly_chart(fig_layer, use_container_width=True)
+        st.plotly_chart(fig_layer, width="stretch")
 
 with st.expander("[HOW TO READ // 读图指南] 逐层注意力演进热力图", expanded=False):
     st.markdown(
         """
         * **纵轴 (当前词)** 与 **横轴 (历史关注词)**：展示每个 Transformer 层的自注意力分布。
-        * **[OPTIMAL // 逐层抽象演进]**：
+        * **[BOUNDARY // 结论边界]**：这些 Block 没有经过语料训练；热力图只用于检查计算与信息混合，不能证明逐层语义抽象。
           * **第 1 层 (浅层)**：注意力主要集中在邻近词（提取局部短语、标点等浅层语法特征）。
           * **深层 (第 2/3 层)**：注意力亮点开始跳跃式分布在远距离的关键核心词（完成深层语义理解与长程代词绑定）。
         """
@@ -267,7 +300,9 @@ with st.expander("[HOW TO READ // 读图指南] 逐层注意力演进热力图",
 # ---------------------------------------------------------------------------
 # 主视图区 3：残差流范数增长曲线
 # ---------------------------------------------------------------------------
-render_section_heading("RESIDUAL STREAM CAPACITY ACCUMULATION // 残差流特征累积与范数增长", icon_name="trending-up")
+render_section_heading(
+    "RESIDUAL STREAM CAPACITY ACCUMULATION // 残差流特征累积与范数增长", icon_name="trending-up"
+)
 
 col_curve, col_math = st.columns([1.4, 1])
 
@@ -293,7 +328,7 @@ with col_curve:
         showlegend=False,
     )
     fig_norm = _apply_light_theme(fig_norm, "RESIDUAL NORM GROWTH // 残差流模长递增趋势")
-    st.plotly_chart(fig_norm, use_container_width=True)
+    st.plotly_chart(fig_norm, width="stretch")
     with st.expander("[HOW TO READ // 读图指南] 残差流模长与特征累积折线图", expanded=False):
         st.markdown(
             """
@@ -311,16 +346,18 @@ with col_math:
             1. **中央信息总线**：
                残差流就像一条高宽带总线，每个 Block 不重写整条总线，只以加法形式写入增量特征 $\\Delta x$；
             2. **梯度高速公路**：
-               反向传播时，损失梯度可以直接通过加法分支无阻碍传回底层（$\\frac{\\partial}{\\partial x}(x + f(x)) = 1 + f'(x)$），彻底消除了梯度消失；
+               加法分支为梯度提供恒等项（$\\frac{\\partial}{\\partial x}(x + f(x)) = 1 + f'(x)$），通常改善深层优化，但仍可能因初始化、归一化或数值尺度而不稳定；
             3. **为什么采用 Pre-LN？**：
-               现代大模型（LLaMA/GPT-3/4）全面淘汰 Post-LN，将 LayerNorm 放在子层之前，确保残差主干道完全无阻碍，使得训练哪怕几百层模型也能极其稳定。
+               Pre-LN 把归一化放在子层之前，通常改善深层网络的训练稳定性；Post-LN 仍有研究与应用，具体选择依赖架构和训练方案。
             """
         )
 
 # ---------------------------------------------------------------------------
 # 2026 前沿拓展：GELU FFN vs SwiGLU 门控前馈网络
 # ---------------------------------------------------------------------------
-render_section_heading("2026 FFN EVOLUTION // 前馈网络演进：经典 GELU vs 现代 SwiGLU 门控", icon_name="cpu")
+render_section_heading(
+    "2026 FFN EVOLUTION // 前馈网络演进：经典 GELU vs 现代 SwiGLU 门控", icon_name="cpu"
+)
 
 col_gelu_box, col_swiglu_box = st.columns(2)
 
@@ -344,14 +381,16 @@ with col_swiglu_box:
             """
             - **计算路径**：双重升维 (Gate & Up) ➔ SiLU 门控相乘 ➔ 降维；
             - **参数量**：$3 \\times d_{model} \\times \\frac{8}{3}d_{model}$ (等效总参数量)；
-            - **核心优势**：元素级门控相乘使模型拥有动态特征选择与乘法表达能力，几乎在所有现代基准测试中全面超越 GELU。
+            - **核心特点**：元素级门控提供乘法交互；是否优于 GELU 取决于参数预算、数据和训练配置。
             """
         )
 
 # ---------------------------------------------------------------------------
 # 零基础进阶：Transformer Block 核心公式逐字拆解与名词通俗速查
 # ---------------------------------------------------------------------------
-with st.expander("[GROWTH GUIDE // 成长指南] Transformer Block 核心公式拆解与大模型底座名词全解", expanded=True):
+with st.expander(
+    "[GROWTH GUIDE // 成长指南] Transformer Block 核心公式拆解与大模型底座名词全解", expanded=True
+):
     st.markdown(
         """
         ### 0. 核心公式逐字拆解：Pre-LN Transformer Block 标准计算流
@@ -363,15 +402,14 @@ with st.expander("[GROWTH GUIDE // 成长指南] Transformer Block 核心公式�
         | **$x$** | **输入残差主干信号 (Residual Stream)** | $N \\times d_{\\text{model}}$ | **中央高速公路上的原始行李箱**。装载着当前词汇的所有历史特征。 |
         | **$\\text{LN}$** | **层归一化 (Layer Normalization / RMSNorm)** | 函数映射 | **信号调音台**。把向量的均值拉到 0、方差拉到 1.0，防止数字在深度传递中过大或过小失真。 |
         | **$\\text{MHA}$** | **多头自注意力层 (Multi-Head Attention)** | $N \\times d_{\\text{model}}$ | **词与词之间的社交网络**。让当前词去查看句子中其他词的信息。 |
-        | **$+$ (加法)** | **残差连接分支 (Residual Skip-Connection)** | 矩阵直接相加 | **直通免死金牌**。将新提炼的信息直接加在原行李箱上，反向传播时导数恒含 $+1$，彻底消灭梯度消失！ |
+        | **$+$ (加法)** | **残差连接分支 (Residual Skip-Connection)** | 矩阵直接相加 | 提供恒等信息与梯度路径，通常缓解深层优化困难，但不是稳定性的无条件保证。 |
         | **$\\text{FFN}$** | **前馈感知网络 (Feed-Forward Network)** | $N \\times d_{\\text{model}}$ | **知识百科全书**。如果说 MHA 负责在词与词之间传纸条，FFN 则负责从记忆里检索这个词本身的百科知识。 |
         | **$x^{(2)}$** | **当前 Block 最终输出特征** | $N \\times d_{\\text{model}}$ | 经过本层注意力社交与知识补充后的新特征，直接送入下一层 Transformer Block。 |
         
         ---
         
-        ### 1. 为什么大模型必须使用【Pre-LN】而非 Post-LN？
-        * **Post-LN（早期 BERT 做法）**：$x_{l+1} = \\text{LN}(x_l + f(x_l))$，归一化横在主干道上，几十层之后主干梯度被层层衰减阻断，极难训练；
-        * **Pre-LN（现代 GPT/LLaMA 做法）**：$x_{l+1} = x_l + f(\\text{LN}(x_l))$，主干道纯粹做加法，$x_L = x_0 + \\sum f_l$，数百层深度也能畅通无阻极速收敛！
+        ### 1. Pre-LN 与 Post-LN 有什么取舍？
+        * **Post-LN（原始 Transformer/BERT 常见做法）**：$x_{l+1} = \\text{LN}(x_l + f(x_l))$。深层训练通常更依赖 warm-up 和初始化，但并非不可训练。
+        * **Pre-LN（许多现代 LLM 的做法）**：$x_{l+1} = x_l + f(\\text{LN}(x_l))$。主干保留加法路径，通常更易优化，但仍需合适的初始化、尺度控制和训练配置。
         """
     )
-

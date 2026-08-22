@@ -11,39 +11,42 @@ nn_core.rope - 旋转位置编码模块 (Rotary Position Embedding)
 
 import logging
 import uuid
+
 import numpy as np
 
 logger = logging.getLogger(__name__)
 
 
-def precompute_freqs_cis(dim: int, max_seq_len: int, theta: float = 10000.0) -> tuple[np.ndarray, np.ndarray]:
+def precompute_freqs_cis(
+    dim: int, max_seq_len: int, theta: float = 10000.0
+) -> tuple[np.ndarray, np.ndarray]:
     """
     预计算旋转角度矩阵的 cos 和 sin。
-    
+
     Args:
         dim: 每个注意力头的维度 (d_k，必须为偶数)
         max_seq_len: 最大序列长度
         theta: 基频常数 (默认 10000.0)
-        
+
     Returns:
         cos: 形状 (max_seq_len, dim)
         sin: 形状 (max_seq_len, dim)
     """
     assert dim % 2 == 0, "RoPE 特征维度必须为偶数"
-    
+
     # 频率指数: theta^(-2i / dim)
     freq_indices = np.arange(0, dim, 2, dtype=np.float64)
     freqs = 1.0 / (theta ** (freq_indices / dim))  # shape: (dim // 2,)
-    
+
     # 时间步向量 [0, 1, 2, ..., max_seq_len - 1]
     positions = np.arange(max_seq_len, dtype=np.float64)  # shape: (max_seq_len,)
-    
+
     # 外积得到角度网格 (max_seq_len, dim // 2)
     angles = np.outer(positions, freqs)
-    
+
     # 沿最后一维复制一份以适配成对旋转: (max_seq_len, dim)
     angles_expanded = np.repeat(angles, 2, axis=-1)
-    
+
     cos = np.cos(angles_expanded)
     sin = np.sin(angles_expanded)
     return cos, sin
@@ -63,17 +66,17 @@ def rotate_half(x: np.ndarray) -> np.ndarray:
 def apply_rope(x: np.ndarray, cos: np.ndarray, sin: np.ndarray) -> np.ndarray:
     r"""
     对输入 Query 或 Key 向量应用旋转位置编码。
-    
+
     数学公式:
         $R_m x = x \odot \cos(m\theta) + \text{rotate\_half}(x) \odot \sin(m\theta)$
-        
+
     Args:
         x: 形状 (batch_size, seq_len, num_heads, head_dim) 或 (batch_size, num_heads, seq_len, head_dim)
         cos: 形状 (seq_len, head_dim)
         sin: 形状 (seq_len, head_dim)
     """
     seq_len = x.shape[1] if x.ndim == 4 and x.shape[1] <= cos.shape[0] else x.shape[2]
-    
+
     # 截取对应序列长度并广播维度
     if x.ndim == 4:
         if x.shape[1] == seq_len:  # (batch, seq_len, heads, dim)
@@ -86,9 +89,9 @@ def apply_rope(x: np.ndarray, cos: np.ndarray, sin: np.ndarray) -> np.ndarray:
         c = cos[:seq_len, :]
         s = sin[:seq_len, :]
     else:
-        c = cos[:x.shape[0], :]
-        s = sin[:x.shape[0], :]
-        
+        c = cos[: x.shape[0], :]
+        s = sin[: x.shape[0], :]
+
     return (x * c) + (rotate_half(x) * s)
 
 
@@ -104,7 +107,9 @@ class RotaryPositionalEmbedding:
         self.cos, self.sin = precompute_freqs_cis(dim, max_seq_len, theta)
 
         tid = uuid.uuid4().hex[:8]
-        logger.info("[%s] RoPE 已创建: dim=%d, max_len=%d, theta=%.1f", tid, dim, max_seq_len, theta)
+        logger.info(
+            "[%s] RoPE 已创建: dim=%d, max_len=%d, theta=%.1f", tid, dim, max_seq_len, theta
+        )
 
     def forward(self, q: np.ndarray, k: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         """
@@ -128,7 +133,7 @@ class RotaryPositionalEmbedding:
                 s_i = self.sin[i]
                 c_j = self.cos[j]
                 s_j = self.sin[j]
-                
+
                 u_i = (u * c_i) + (rotate_half(u) * s_i)
                 u_j = (u * c_j) + (rotate_half(u) * s_j)
                 decay_matrix[i, j] = np.dot(u_i, u_j)

@@ -4,7 +4,6 @@ tests/test_video.py - 视频感知与世界模型单元测试
 """
 
 import numpy as np
-import pytest
 
 from nn_core.video import (
     SpatioTemporalPatchEmbed,
@@ -68,7 +67,9 @@ def test_spatio_temporal_patch_embed():
     d_model = 32
     video = np.random.randn(B, T, C, H, W).astype(np.float32)
 
-    st_embed = SpatioTemporalPatchEmbed(img_size=H, patch_size=P, n_frames=T, in_channels=C, d_model=d_model)
+    st_embed = SpatioTemporalPatchEmbed(
+        img_size=H, patch_size=P, n_frames=T, in_channels=C, d_model=d_model
+    )
     tokens = st_embed.forward(video)
     num_spatial = (H // P) ** 2  # 16
     expected_tokens = T * num_spatial  # 128
@@ -80,7 +81,7 @@ def test_diffusion_scheduler():
     num_steps = 20
     scheduler = DiffusionScheduler(num_steps=num_steps)
     sched = scheduler.get_schedule()
-    
+
     alphas_cumprod = sched["alphas_cumprod"]
     # 验证 alpha_bar 单调递减
     assert np.all(np.diff(alphas_cumprod) < 0.0)

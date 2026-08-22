@@ -13,11 +13,11 @@ tests.test_2026_modern_llm - 2026 现代 LLM 核心前沿算子单元测试套�
 import numpy as np
 import pytest
 
-from nn_core.bpe import BytePairEncoder, get_stats, merge
-from nn_core.rope import RotaryPositionalEmbedding, apply_rope, precompute_freqs_cis, rotate_half
+from nn_core.bpe import BytePairEncoder
 from nn_core.gqa import GroupedQueryAttention, repeat_kv
-from nn_core.swiglu import SwiGLU, silu
 from nn_core.kv_cache import KVCache
+from nn_core.rope import RotaryPositionalEmbedding, apply_rope, precompute_freqs_cis
+from nn_core.swiglu import SwiGLU, silu
 from nn_core.tensor import set_seed
 
 
@@ -98,7 +98,7 @@ class TestRoPE:
         rope = RotaryPositionalEmbedding(dim=16, max_seq_len=32)
         q = np.random.randn(2, 5, 4, 16)
         k = np.random.randn(2, 5, 4, 16)
-        q_rot, k_rot = rope.forward(q, k)
+        q_rot, _k_rot = rope.forward(q, k)
 
         norm_q_orig = np.linalg.norm(q, axis=-1)
         norm_q_rot = np.linalg.norm(q_rot, axis=-1)
@@ -188,8 +188,8 @@ class TestKVCache:
         # 步 1: Prompt 长度为 3
         k1 = np.random.randn(1, 2, 3, 4)
         v1 = np.random.randn(1, 2, 3, 4)
-        full_k, full_v = cache.update(0, k1, v1)
-        full_k2, full_v2 = cache.update(1, k1, v1)
+        full_k, _full_v = cache.update(0, k1, v1)
+        _full_k2, _full_v2 = cache.update(1, k1, v1)
 
         assert full_k.shape == (1, 2, 3, 4)
         assert cache.current_seq_len == 3

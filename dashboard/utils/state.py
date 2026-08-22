@@ -51,7 +51,8 @@ def set_state(key: str, value: Any) -> None:
 def reset_state() -> None:
     """清除所有训练相关的 session state"""
     keys_to_remove = [
-        k for k in st.session_state.keys()
+        k
+        for k in st.session_state.keys()
         if k.startswith(("model_", "history_", "snapshot_", "training_", "m4_"))
     ]
     for k in keys_to_remove:
@@ -202,7 +203,9 @@ def get_dataset(
     elif "spiral" in clean_name:
         return make_spiral(n_samples=n_samples, noise=noise, random_state=random_state)
     elif "blob" in clean_name:
-        X, y_onehot = make_blobs(n_samples=n_samples, noise=noise, n_classes=2, random_state=random_state)
+        X, y_onehot = make_blobs(
+            n_samples=n_samples, noise=noise, n_classes=2, random_state=random_state
+        )
         y = np.argmax(y_onehot, axis=1).reshape(-1, 1).astype(np.float64)
         return X, y
     return make_moons(n_samples=n_samples, noise=noise, random_state=random_state)

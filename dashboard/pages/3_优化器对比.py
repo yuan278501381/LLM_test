@@ -26,6 +26,7 @@ from dashboard.components.param_panel import (
     render_network_params,
 )
 from dashboard.constants.knowledge import OPTIMIZERS
+from dashboard.components.pedagogy import render_lesson_evidence
 from dashboard.styles.theme import (
     anchor_badge,
     apply_custom_theme,
@@ -50,6 +51,7 @@ st.set_page_config(
 )
 
 apply_custom_theme()
+render_lesson_evidence("M03")
 
 render_hero_header(
     title="优化器多轨竞速对比",
@@ -64,11 +66,41 @@ render_hero_header(
 render_page_guide(
     title="优化器多轨竞速对比与空间交互地图",
     blueprint_sections=[
-        {"id": "A", "name": "控制台面板", "desc": "在左侧侧边栏调节基准学习率、网络结构与训练轮数", "color": "amber", "target_id": "region-a"},
-        {"id": "B", "name": "教学指引", "desc": "当前卡片：通俗理解 SGD/Momentum/RMSProp/Adam 算法本质", "color": "blue", "target_id": "region-b"},
-        {"id": "C", "name": "实时竞速遥测", "desc": "查看四大优化器最终的做题扣分与登顶冠军", "color": "emerald", "target_id": "region-c"},
-        {"id": "D", "name": "多轨收敛对比图", "desc": "同一起跑线 4 色多轨竞速曲线，看谁最先贴底收敛", "color": "purple", "target_id": "region-d"},
-        {"id": "E", "name": "排行榜与四分屏", "desc": "并排对比四大算法最终画出的空间决策分界质量", "color": "blue", "target_id": "region-e"},
+        {
+            "id": "A",
+            "name": "控制台面板",
+            "desc": "在左侧侧边栏调节基准学习率、网络结构与训练轮数",
+            "color": "amber",
+            "target_id": "region-a",
+        },
+        {
+            "id": "B",
+            "name": "教学指引",
+            "desc": "当前卡片：通俗理解 SGD/Momentum/RMSProp/Adam 算法本质",
+            "color": "blue",
+            "target_id": "region-b",
+        },
+        {
+            "id": "C",
+            "name": "实时竞速遥测",
+            "desc": "查看四大优化器最终的做题扣分与登顶冠军",
+            "color": "emerald",
+            "target_id": "region-c",
+        },
+        {
+            "id": "D",
+            "name": "多轨收敛对比图",
+            "desc": "同一起跑线 4 色多轨竞速曲线，看谁最先贴底收敛",
+            "color": "purple",
+            "target_id": "region-d",
+        },
+        {
+            "id": "E",
+            "name": "排行榜与四分屏",
+            "desc": "并排对比四大算法最终画出的空间决策分界质量",
+            "color": "blue",
+            "target_id": "region-e",
+        },
     ],
     plain_intro=(
         f"<b>优化器（Optimizer）就是模型下山寻宝的「导航算法」！</b><br>"
@@ -76,7 +108,7 @@ render_page_guide(
         f"• <b>SGD（普通梯度下降）</b>：像近视眼，只看脚下哪边陡就走哪边，容易在峡谷里来回撞墙。<br>"
         f"• <b>Momentum（动量加速）</b>：给机器人加了滑雪惯性，能在平缓处加速冲刺，冲过小土坡。<br>"
         f"• <b>RMSProp（自适应步长）</b>：经常大跳的参数自动减速，平缓的参数自动加速。<br>"
-        f"• <b>Adam（现代 AI 之王）</b>：结合了动量惯性与自适应步长，是 ChatGPT 等大模型的工业级默认标配！"
+        f"• <b>Adam</b>：结合一阶动量与二阶矩缩放，是常用起点；实际训练也常用 AdamW、SGD 等，结果依赖任务与超参数。"
     ),
     hyperparams_desc=(
         f"• <b>在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 调节</b>：<br>"
@@ -99,7 +131,10 @@ render_page_guide(
 # ---------------------------------------------------------------------------
 # 侧边栏控制面板
 # ---------------------------------------------------------------------------
-st.sidebar.markdown(f'<div id="region-a" class="interactive-region" style="margin-bottom:0.6rem;padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">{anchor_badge("A", "amber")} <b>HYPERPARAMETERS // 控制台配置</b></div>', unsafe_allow_html=True)
+st.sidebar.markdown(
+    f'<div id="region-a" class="interactive-region" style="margin-bottom:0.6rem;padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">{anchor_badge("A", "amber")} <b>HYPERPARAMETERS // 控制台配置</b></div>',
+    unsafe_allow_html=True,
+)
 dataset_name, n_samples, noise, random_state = render_dataset_selector(
     key_prefix="m3_", default_dataset="moons"
 )
@@ -117,14 +152,21 @@ col1, col2 = st.sidebar.columns(2)
 with col1:
     lr = st.number_input(
         "基准学习率 (LR)",
-        0.001, 1.0, 0.03, step=0.01, format="%.3f",
+        0.001,
+        1.0,
+        0.03,
+        step=0.01,
+        format="%.3f",
         help="所有优化器共享的基准更新步长 $\\eta$。可观察不同优化器在相同学习率下的抗震荡与自适应特性。",
         key="m3_lr",
     )
 with col2:
     epochs = st.slider(
         "竞速轮数 (Epochs)",
-        20, 500, 150, step=10,
+        20,
+        500,
+        150,
+        step=10,
         help="同台竞速迭代的总轮数。",
         key="m3_epochs",
     )
@@ -174,13 +216,15 @@ for opt_meta in optimizer_items:
 
     converged_epoch = next((i + 1 for i, l in enumerate(hist["loss"]) if l < 0.25), "未收敛")
 
-    leaderboard_rows.append({
-        "优化器算法": opt_meta.label,
-        "最终 Loss": f"{final_loss:.4f}",
-        "最终准确率": f"{final_acc:.1%}",
-        "收敛步数 (Loss < 0.25)": str(converged_epoch),
-        "_raw_loss": final_loss,
-    })
+    leaderboard_rows.append(
+        {
+            "优化器算法": opt_meta.label,
+            "最终 Loss": f"{final_loss:.4f}",
+            "最终准确率": f"{final_acc:.1%}",
+            "收敛步数 (Loss < 0.25)": str(converged_epoch),
+            "_raw_loss": final_loss,
+        }
+    )
 
 leaderboard_rows.sort(key=lambda x: x["_raw_loss"])
 champion = leaderboard_rows[0]["优化器算法"]
@@ -193,16 +237,40 @@ champion_acc = leaderboard_rows[0]["最终准确率"]
 st.markdown(
     f'<div id="region-c" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;">'
     f'{anchor_badge("C", "emerald")} <span style="font-weight:800;color:#065f46;font-size:0.86rem;">TELEMETRY BENCHMARK // 实时竞速遥测看板</span>'
-    f'</div>',
+    f"</div>",
     unsafe_allow_html=True,
 )
 grid_html = (
     '<div class="metric-grid">'
-    + render_metric_card("BENCHMARK WINNER // 竞速冠军", champion, delta=f"Loss: {champion_loss} | Acc: {champion_acc}", delta_type="positive", icon_name="award")
-    + render_metric_card("TOPOLOGY // 数据集拓扑", dataset_name.upper(), delta=f"N={n_samples} | NOISE={noise}", delta_type="neutral", icon_name="database")
-    + render_metric_card("INITIALIZER // 初始化器", init_name.upper(), delta=f"{n_layers} HIDDEN LAYERS", delta_type="neutral", icon_name="layers")
-    + render_metric_card("TOTAL EPOCHS // 总轮数", f"{epochs} EPOCHS", delta=f"LR = {lr}", delta_type="neutral", icon_name="activity")
-    + '</div>'
+    + render_metric_card(
+        "BENCHMARK WINNER // 竞速冠军",
+        champion,
+        delta=f"Loss: {champion_loss} | Acc: {champion_acc}",
+        delta_type="positive",
+        icon_name="award",
+    )
+    + render_metric_card(
+        "TOPOLOGY // 数据集拓扑",
+        dataset_name.upper(),
+        delta=f"N={n_samples} | NOISE={noise}",
+        delta_type="neutral",
+        icon_name="database",
+    )
+    + render_metric_card(
+        "INITIALIZER // 初始化器",
+        init_name.upper(),
+        delta=f"{n_layers} HIDDEN LAYERS",
+        delta_type="neutral",
+        icon_name="layers",
+    )
+    + render_metric_card(
+        "TOTAL EPOCHS // 总轮数",
+        f"{epochs} EPOCHS",
+        delta=f"LR = {lr}",
+        delta_type="neutral",
+        icon_name="activity",
+    )
+    + "</div>"
 )
 st.markdown(grid_html, unsafe_allow_html=True)
 
@@ -212,11 +280,13 @@ st.markdown(grid_html, unsafe_allow_html=True)
 st.markdown(
     f'<div id="region-d" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;">'
     f'{anchor_badge("D", "purple")} <span style="font-weight:800;color:#5b21b6;font-size:0.86rem;">MULTI-LOSS BENCHMARK // 多轨收敛竞速对比图</span>'
-    f'</div>',
+    f"</div>",
     unsafe_allow_html=True,
 )
-fig_multi_loss = plot_multi_loss_curves(histories, title="OPTIMIZER BENCHMARK // 优化器多轨收敛对比")
-st.plotly_chart(fig_multi_loss, use_container_width=True)
+fig_multi_loss = plot_multi_loss_curves(
+    histories, title="OPTIMIZER BENCHMARK // 优化器多轨收敛对比"
+)
+st.plotly_chart(fig_multi_loss, width="stretch")
 
 with st.expander("[HOW TO READ // 读图指南] 判断优化器速度与稳定性", expanded=False):
     st.markdown(
@@ -238,22 +308,24 @@ with st.expander("[HOW TO READ // 读图指南] 判断优化器速度与稳定�
 st.markdown(
     f'<div id="region-e" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;">'
     f'{anchor_badge("E", "blue")} <span style="font-weight:800;color:#1e40af;font-size:0.86rem;">LEADERBOARD & 4-QUADRANT VIEW // 效能排行榜与四分屏决策边界并排透视</span>'
-    f'</div>',
+    f"</div>",
     unsafe_allow_html=True,
 )
 df_board = pd.DataFrame(leaderboard_rows).drop(columns=["_raw_loss"])
-st.dataframe(df_board, use_container_width=True, hide_index=True)
+st.dataframe(df_board, width="stretch", hide_index=True)
 
 cols = st.columns(4)
 
 for idx, opt_meta in enumerate(optimizer_items):
     with cols[idx]:
         m = trained_models[opt_meta.id]
-        acc_text = next(r["最终准确率"] for r in leaderboard_rows if r["优化器算法"] == opt_meta.label)
+        acc_text = next(
+            r["最终准确率"] for r in leaderboard_rows if r["优化器算法"] == opt_meta.label
+        )
         fig_b = plot_decision_boundary(
             m, X, y, resolution=70, title=f"{opt_meta.id} (Acc: {acc_text})"
         )
-        st.plotly_chart(fig_b, use_container_width=True)
+        st.plotly_chart(fig_b, width="stretch")
 
 with st.expander("[HOW TO READ // 读图指南] 直观验证最终划分能力", expanded=False):
     st.markdown(
@@ -290,4 +362,3 @@ with st.expander("[GROWTH GUIDE // 成长指南] 优化器核心机制通俗全�
         * **一句话总结**：既有冲过鞍点平原的冲劲，又有在狭窄峡谷里不翻车的自适应平衡感！
         """
     )
-

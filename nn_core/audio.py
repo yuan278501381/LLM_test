@@ -8,24 +8,20 @@ nn_core.audio - 纯 NumPy 音频时域波形合成、STFT 短时傅里叶变换�
 - `hz_to_mel` / `mel_to_hz`: 赫兹与梅尔听觉感知尺度非线性映射
 - `mel_filterbank`: 三角梅尔重叠带通滤波器组构建 (连续浮点三角插值，严防零行)
 - `compute_mel_spectrogram`: 对数梅尔功率频谱图提取流水线
-- `AudioTokenizer`: 类似 Whisper 的音频特征时域分帧 Token 化器
+- `SpectrogramFramePatcher`: 将连续 log-Mel 帧分组为固定宽度特征块
 - `numpy_to_wav_bytes`: 零依赖纯 struct 序列化打包标准 RIFF/WAVE 字节流
 """
 
-import io
 import logging
 import struct
-from typing import Optional, Tuple
+
 import numpy as np
 
 logger = logging.getLogger("nn_core.audio")
 
 
 def generate_waveform(
-    freq: float = 440.0,
-    duration: float = 1.0,
-    sr: int = 16000,
-    wave_type: str = "sine"
+    freq: float = 440.0, duration: float = 1.0, sr: int = 16000, wave_type: str = "sine"
 ) -> np.ndarray:
     """
     合成指定频率与类型的单声道时域连续波形信号。
@@ -40,11 +36,7 @@ def generate_waveform(
     return signal.astype(np.float32)
 
 
-def generate_chord(
-    freqs: list[float],
-    duration: float = 1.0,
-    sr: int = 16000
-) -> np.ndarray:
+def generate_chord(freqs: list[float], duration: float = 1.0, sr: int = 16000) -> np.ndarray:
     """
     多频谐波与和弦合成叠加。
     """
@@ -59,11 +51,7 @@ def generate_chord(
     return signal.astype(np.float32)
 
 
-def stft(
-    signal: np.ndarray,
-    n_fft: int = 512,
-    hop_length: int = 256
-) -> np.ndarray:
+def stft(signal: np.ndarray, n_fft: int = 512, hop_length: int = 256) -> np.ndarray:
     """
     纯 NumPy 短时傅里叶变换 (Short-Time Fourier Transform)。
 
@@ -72,17 +60,17 @@ def stft(
     返回复数频谱矩阵 shape: (n_fft // 2 + 1, n_frames)
     """
     window = np.hanning(n_fft)
-    
+
     pad_amount = n_fft // 2
     padded_signal = np.pad(signal, (pad_amount, pad_amount), mode="reflect")
-    
+
     num_frames = (len(padded_signal) - n_fft) // hop_length + 1
     frames = np.zeros((num_frames, n_fft), dtype=np.float32)
-    
+
     for t in range(num_frames):
         start = t * hop_length
         frames[t] = padded_signal[start : start + n_fft] * window
-        
+
     stft_matrix = np.fft.rfft(frames, n=n_fft, axis=-1)
     return stft_matrix.T
 
@@ -97,11 +85,7 @@ def mel_to_hz(mel: np.ndarray | float) -> np.ndarray | float:
     return 700.0 * (10.0 ** (mel / 2595.0) - 1.0)
 
 
-def mel_filterbank(
-    sr: int = 16000,
-    n_fft: int = 512,
-    n_mels: int = 80
-) -> np.ndarray:
+def mel_filterbank(sr: int = 16000, n_fft: int = 512, n_mels: int = 80) -> np.ndarray:
     """
     构建符合人类听觉耳蜗临界频带的重叠三角梅尔滤波器组矩阵 (基于标准连续频点三角插值)。
     返回 shape: (n_mels, n_fft // 2 + 1)
@@ -114,28 +98,28 @@ def mel_filterbank(
 
     mel_min = hz_to_mel(f_min)
     mel_max = hz_to_mel(f_max)
-    
+
     # 在 Mel 刻度上等间距采样 n_mels + 2 个锚点
     mel_points = np.linspace(mel_min, mel_max, n_mels + 2)
-    hz_points = mel_to_hz(mel_points)
-    
+    hz_points = np.asarray(mel_to_hz(mel_points), dtype=np.float64)
+
     filterbank = np.zeros((n_mels, num_freq_bins), dtype=np.float32)
-    
+
     for m in range(1, n_mels + 1):
         f_left = hz_points[m - 1]
         f_center = hz_points[m]
         f_right = hz_points[m + 1]
-        
+
         # 三角上升区与下降区
         up = (fft_freqs - f_left) / (f_center - f_left + 1e-8)
         down = (f_right - fft_freqs) / (f_right - f_center + 1e-8)
         tri = np.maximum(0.0, np.minimum(up, down))
-        
+
         # 若由于离散分辨率导致峰值未采样，确保在最接近点至少有响应
         if np.sum(tri) == 0.0:
             closest_idx = np.argmin(np.abs(fft_freqs - f_center))
             tri[closest_idx] = 1.0
-            
+
         # Slaney 归一化 (面积归一化)
         enorm = 2.0 / (f_right - f_left + 1e-8)
         filterbank[m - 1] = tri * enorm
@@ -144,11 +128,7 @@ def mel_filterbank(
 
 
 def compute_mel_spectrogram(
-    signal: np.ndarray,
-    sr: int = 16000,
-    n_fft: int = 512,
-    hop_length: int = 256,
-    n_mels: int = 80
+    signal: np.ndarray, sr: int = 16000, n_fft: int = 512, hop_length: int = 256, n_mels: int = 80
 ) -> np.ndarray:
     """
     计算对数梅尔功率频谱图 (Log-Mel Spectrogram)。
@@ -156,18 +136,20 @@ def compute_mel_spectrogram(
     """
     spec_complex = stft(signal, n_fft=n_fft, hop_length=hop_length)
     power_spec = np.abs(spec_complex) ** 2
-    
+
     fb = mel_filterbank(sr=sr, n_fft=n_fft, n_mels=n_mels)
     mel_spec = np.dot(fb, power_spec)
-    
+
     log_mel_spec = np.log(np.maximum(mel_spec, 1e-10))
     return log_mel_spec.astype(np.float32)
 
 
-class AudioTokenizer:
+class SpectrogramFramePatcher:
     """
-    音频时域分帧 Token 化器（类似 OpenAI Whisper / Google AudioPaLM）。
-    将 2D 梅尔频谱图沿时间轴切分打包为 1D 连续 Token 嵌入向量序列。
+    连续频谱帧切片器。
+
+    将 2D log-Mel 频谱沿时间轴分组为连续特征块。输出仍是浮点特征，
+    不是离散 token id；也不实现 Whisper 的卷积前端或文本 tokenizer。
     """
 
     def __init__(self, n_mels: int = 80, frame_width: int = 4) -> None:
@@ -181,10 +163,14 @@ class AudioTokenizer:
         """
         n_mels, n_frames = mel_spec.shape
         num_tokens = n_frames // self.frame_width
-        
+
         truncated = mel_spec[:, : num_tokens * self.frame_width]
         tokens = truncated.reshape(n_mels, num_tokens, self.frame_width).transpose(1, 0, 2)
         return tokens.reshape(num_tokens, n_mels * self.frame_width)
+
+
+class AudioTokenizer(SpectrogramFramePatcher):
+    """兼容旧 API 的别名；实际行为是连续频谱帧切片，而非 Whisper tokenizer。"""
 
 
 def numpy_to_wav_bytes(signal: np.ndarray, sr: int = 16000) -> bytes:
@@ -194,7 +180,7 @@ def numpy_to_wav_bytes(signal: np.ndarray, sr: int = 16000) -> bytes:
     """
     clipped = np.clip(signal, -1.0, 1.0)
     pcm_data = (clipped * 32767.0).astype(np.int16).tobytes()
-    
+
     num_channels = 1
     bits_per_sample = 16
     byte_rate = sr * num_channels * (bits_per_sample // 8)

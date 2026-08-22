@@ -1,19 +1,39 @@
 # 🧠 NN Playground — 从零手搓神经网络到理解多模态世界模型的交互式学习平台
 
-> 从单个感知器神经元出发，用 **纯 NumPy** 白盒实现从 MLP、Transformer、GPT 到 **多模态视觉音频、视频理解、世界模型与后训练对齐** 的完整全生命周期闭环链路，
-> 配合 **Streamlit + Plotly 工业级交互式仪表板** 实时解剖每个参数与激活响应对模型行为的影响。
-> 一步步彻底击碎深度学习与现代通用大模型的全部黑盒。
+> 从单个感知器神经元出发，用 **纯 NumPy** 构建从 MLP、Transformer、GPT 到 **多模态感知、世界模型与后训练对齐** 的白盒教学链路，
+> 配合 **Streamlit + Plotly 交互式仪表板**，观察参数、梯度与激活响应如何影响模型行为。
+> 通过可运行、可验证、可解释的实验，逐步打开深度学习与现代大模型的黑盒。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![Tests](https://img.shields.io/badge/tests-201%20passed-brightgreen.svg)](#)
+[![Tests](https://img.shields.io/badge/tests-pytest%20verified-brightgreen.svg)](#)
 
-## ✨ 学习路径与 15 大里程碑总览
+## 🎯 项目使命与教学原则
 
-本项目将"从零深入理解现代通用大模型"的学习之旅拆分为 **15 个渐进式里程碑**，覆盖从最基础的线性分类到视频世界模型与基准考试框架：
+> **项目使命（确立于 2026-08-22）**：打造一套从零基础通向深入理解的神经网络理论与实践课程。学习者不仅能知道一个模型“怎么用”，还应能解释它“为什么有效、参数如何改变结果、它解决了前代架构的什么问题，以及又付出了什么代价”。
+
+本项目的长期目标是：
+
+1. **从零到深入，理论与实践闭环**：从线性代数、微积分、概率与优化的必要基础出发，完成公式推导、纯 NumPy 实现、可视化观察、参数实验、结果解释与知识检验的完整学习循环。
+2. **理解架构，而不是背诵名词**：系统覆盖神经网络发展史上具有代表性和持续影响力的架构、训练方法与工程技术；逐一说明其结构、关键参数、归纳偏置、适用边界、计算代价与失败模式。
+3. **让参数影响可观察、可比较、可解释**：通过控制变量实验展示学习率、初始化、深度、宽度、激活函数、正则化、归一化、注意力头数、上下文长度、采样策略等因素如何影响收敛、泛化、稳定性、效率与输出行为。
+4. **沿历史问题链理解每次变革**：每个关键节点都采用“前代瓶颈 → 核心创新 → 实验证据 → 新增能力 → 代价与局限 → 后续演进”的方式讲解，建立从感知器、反向传播、CNN/RNN 到 Transformer、多模态、生成模型与对齐技术的因果脉络。
+5. **以教学严谨性作为第一约束**：公式、术语、数据、图表和历史结论应可追溯；关键数值应可复现；明确区分事实、经验规律、教学类比和作者推断，并持续用单元测试、数值梯度校验及参考实现交叉验证。
+6. **追求世界级交互与学习体验**：交互不只追求“好看”，还应减少认知负担，提供清晰的先修知识、学习目标、操作引导、即时反馈、对照实验、错误诊断、阶段测验、进度记录和无障碍支持。
+
+### 内容证据与范围边界
+
+- **白盒实现不等于工业复刻**：本项目优先以小规模、可运行、可观察的实现解释原理；教学缩小版、合成数据、模拟结果和真实训练结果必须明确标注，不把演示值包装成论文复现或真实基准成绩。
+- **“完整”指知识链路完整，而非穷举一切**：神经网络架构仍在快速演进。项目以“代表性、影响力、教学价值、可验证性”为收录标准，并通过版本化路线图持续扩充，而不宣称在某一时刻已经覆盖所有架构。
+- **每个主题的目标交付物**：概念地图、必要数学、从零实现、参数消融实验、常见误区、历史定位、原始资料/权威参考、自动化验证与可操作练习。
+
+## ✨ 学习路径与 M00-M15 里程碑总览
+
+本项目将学习路径拆分为 **M00-M15 渐进式里程碑**，覆盖必要数学、线性分类、现代模型组件和评估方法。完整的已实现/部分实现/仅规划状态见 [课程地图](CURRICULUM_MAP.md)：
 
 | 篇章 | 里程碑 | 主题 | 核心可视化与教学亮点 |
 |:----:|:------:|:-----|:-----------|
+| **先修篇** | M00 | 数学与计算基础 | 张量 shape、矩阵乘法、链式法则、有限差分梯度检查 |
 | **基础篇** | M01 | 单神经元感知器 | 决策边界动态平移、Loss 曲线、权重寻优轨迹 |
 | | M02 | 多层网络 (MLP) | 网络拓扑图、神经元活性探针、梯度弥散/爆炸诊断 |
 | | M03 | 优化器竞速对比 | SGD / Momentum / RMSProp / Adam 同屏竞速对比 |
@@ -24,11 +44,11 @@
 | | M08 | Transformer Block | Pre-LN 残差流、GELU/SwiGLU 门控 FFN、多层堆叠 |
 | | M09 | Mini-GPT | 自回归接龙生成、Temperature/Top-K 采样、打字机 |
 | **多模态篇** | M10 | 卷积与视觉感知 | 2D 卷积滑动计算、特征图热力图、ViT Patch 切片、CLIP 图文对齐 |
-| | M11 | 音频信号与语音 | 实时波形示波器、FFT 频谱分解、Mel 滤波器组、Whisper Token 化 |
-| | M12 | 视频与世界模型 | 32×32 视频时序采样、空间 vs 时间注意力、下一帧物理推演、Sora 扩散加噪 |
+| | M11 | 音频信号与语音 | 实时波形示波器、FFT 频谱分解、Mel 滤波器组、连续音频帧切片（非 Whisper 复刻） |
+| | M12 | 视频与世界模型 | 32×32 合成视频采样、时空相关性、教学级下一帧预测、DDPM 前向加噪调度 |
 | **训练篇** | M13 | 预训练与扩展定律 | MLM/CLM/Contrastive/MAE、Chinchilla 扩展定律计算器、BPE 分词演练、语料配比 |
 | | M14 | 后训练对齐工程 | SFT、RLHF、DPO、LoRA 矩阵分解、同一问题三阶段回答质变实录 |
-| **评估篇** | M15 | 评估基准框架 | Perplexity (PPL) 仪表盘、MMLU / GSM8K 模拟考场、六维雷达图、天梯排行榜 |
+| **评估篇** | M15 | 评估基准框架 | Perplexity (PPL) 计算、Mini-MMLU / Mini-GSM8K 教学题集、模拟能力对比与雷达图 |
 
 ## 🚀 快速开始与启停最佳实践
 
@@ -36,7 +56,7 @@
 # 1. 安装依赖 (基于现代 uv 极速包管理器)
 uv sync
 
-# 2. 运行自动化回归测试套件 (201 项全通过 · 梯度误差 < 1e-4)
+# 2. 运行自动化回归测试套件（测试数量随课程增长，以命令输出为准）
 uv run pytest tests/ -v
 ```
 
@@ -62,10 +82,10 @@ uv run streamlit run dashboard/app.py --server.port 8501
 
 | 组件 | 技术标准 | 架构说明 |
 |:-----|:-----|:-----|
-| 核心计算引擎 | **纯 NumPy (Zero External ML Libs)** | 手写前向传播、解析梯度反向传播、优化器、MHA/GQA、ViT、Sora 扩散调度、DPO、LoRA |
-| 前端交互呈现 | **Streamlit + Plotly (Linear / Stripe Light Theme)** | 世界级纯净亮色主题，零文字重叠，全屏幕高分屏自适应 (High-DPI) |
+| 核心计算引擎 | **纯 NumPy (Zero External ML Libs)** | 手写基础算子的前向/反向传播、优化器、MHA/GQA、ViT、DDPM 前向加噪调度、DPO、LoRA |
+| 前端交互呈现 | **Streamlit + Plotly (Linear / Stripe Light Theme)** | 统一亮色主题、响应式布局与参数联动图表 |
 | 跨架构与跨平台 | **Python 3.11+ (Windows / macOS / Linux)** | 原生适配 x64 与 ARM64 指令集架构 |
-| 测试与数学保障 | **pytest (201 项单元 + E2E 自动化测试)** | 双侧中心差分法梯度数值校验 ($\text{Error} < 10^{-4}$)，全页面 AppTest 仿真 |
+| 测试与数学保障 | **pytest 单元测试 + Streamlit AppTest** | 双侧中心差分法梯度数值校验 ($\text{Error} < 10^{-4}$)，全页面启动仿真 |
 
 ## 📁 项目拓扑结构
 
@@ -93,9 +113,9 @@ uv run streamlit run dashboard/app.py --server.port 8501
 │   ├── gpt.py                # TinyGPT (自回归文本生成 + Temperature/Top-K 采样)
 │   ├── vit.py                # Vision Transformer (PatchEmbedding 图像切片)
 │   ├── clip.py               # CLIP 图文双塔对齐与 InfoNCE 对比学习
-│   ├── audio.py              # STFT 傅里叶变换、梅尔滤波器组、AudioTokenizer、WAV 打包
+│   ├── audio.py              # STFT、梅尔滤波器组、连续帧切片、WAV 打包
 │   ├── video.py              # 32x32 合成视频动力学、3D 时空 Patch 嵌入
-│   ├── world_model.py        # 下一帧自回归物理世界预测模型 + Diffusion 扩散去噪调度器
+│   ├── world_model.py        # 教学级下一帧预测头 + Diffusion 前向加噪调度器
 │   ├── pretraining.py        # 预训练四大范式：MLM (BERT), CLM (GPT), 对比 (CLIP), MAE
 │   ├── rlhf.py               # 奖励模型 (RewardModel), PPO-Clip 策略梯度, DPO 隐式损失
 │   ├── lora.py               # LoRA 低秩旁路矩阵分解与权重合并
@@ -105,14 +125,14 @@ uv run streamlit run dashboard/app.py --server.port 8501
 │   └── callbacks.py          # 训练历史、早停机制、实验追踪
 ├── datasets/                 # 📦 合成数据集生成器
 │   └── generators.py         # Circle, Moons, Blobs, Spirals, XOR, Wave
-├── dashboard/                # 🎨 Streamlit + Plotly 世界级交互式可视化实验室
+├── dashboard/                # 🎨 Streamlit + Plotly 交互式可视化实验室
 │   ├── app.py                # 15 里程碑 Bento Grid 导航主枢纽
-│   ├── pages/                # 15 个渐进式实验页面 (M01 ~ M15)
+│   ├── pages/                # 16 个渐进式实验页面 (M00 ~ M15)
 │   ├── components/           # 可复用图表引擎、参数面板、网络拓扑图
 │   ├── constants/            # 领域知识元数据库 (公式、教学隐喻、前沿架构)
 │   ├── styles/               # 主题系统 (矢量 SVG 图标库、高对比度卡片)
 │   └── utils/                # 状态管理与参数解析
-├── tests/                    # ✅ 自动化回归测试矩阵 (201 项全通过)
+├── tests/                    # ✅ 自动化回归测试矩阵（数量以 pytest 收集结果为准）
 │   ├── test_activations.py   # 激活函数单元测试
 │   ├── test_layers.py        # Dense, Dropout 层单元测试
 │   ├── test_losses.py        # 损失函数单元测试

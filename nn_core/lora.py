@@ -8,7 +8,7 @@ nn_core.lora - 低秩自适应微调 (Low-Rank Adaptation / LoRA) 纯 NumPy 计�
 """
 
 import logging
-from typing import Optional, Tuple
+
 import numpy as np
 
 logger = logging.getLogger("nn_core.lora")
@@ -45,7 +45,7 @@ class LoRALayer:
         self.grad_A = np.zeros_like(self.A)
         self.grad_B = np.zeros_like(self.B)
 
-        self._x: Optional[np.ndarray] = None
+        self._x: np.ndarray | None = None
 
     @property
     def num_trainable_params(self) -> int:
@@ -95,7 +95,7 @@ class LoRALayer:
         delta_w = np.dot(self.A, self.B) * self.scaling
         return self.W + delta_w
 
-    def get_trainable_params(self) -> list[Tuple[np.ndarray, np.ndarray]]:
+    def get_trainable_params(self) -> list[tuple[np.ndarray, np.ndarray]]:
         """实现优化器参数协议"""
         return [
             (self.A, self.grad_A),

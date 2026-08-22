@@ -81,6 +81,8 @@ class Sigmoid(Activation):
         直接从缓存的输出计算，避免重复计算 sigmoid。
         """
         s = self.output_cache
+        if s is None:
+            raise RuntimeError("Sigmoid.backward() 必须在 forward() 之后调用")
         return dout * s * (1.0 - s)
 
 
@@ -106,7 +108,10 @@ class ReLU(Activation):
 
     def backward(self, dout: np.ndarray) -> np.ndarray:
         """反向传播: dL/dx = dout · (x > 0)"""
-        return dout * (self.input_cache > 0).astype(np.float64)
+        x = self.input_cache
+        if x is None:
+            raise RuntimeError("ReLU.backward() 必须在 forward() 之后调用")
+        return dout * (x > 0).astype(np.float64)
 
 
 class Tanh(Activation):
@@ -131,7 +136,10 @@ class Tanh(Activation):
 
     def backward(self, dout: np.ndarray) -> np.ndarray:
         """反向传播: dL/dx = dout · (1 - tanh²(x))"""
-        return dout * (1.0 - self.output_cache**2)
+        output = self.output_cache
+        if output is None:
+            raise RuntimeError("Tanh.backward() 必须在 forward() 之后调用")
+        return dout * (1.0 - output**2)
 
 
 class LeakyReLU(Activation):
@@ -163,7 +171,10 @@ class LeakyReLU(Activation):
 
     def backward(self, dout: np.ndarray) -> np.ndarray:
         """反向传播: dL/dx = dout · (1 if x > 0 else α)"""
-        return dout * np.where(self.input_cache > 0, 1.0, self.alpha)
+        x = self.input_cache
+        if x is None:
+            raise RuntimeError("LeakyReLU.backward() 必须在 forward() 之后调用")
+        return dout * np.where(x > 0, 1.0, self.alpha)
 
     def __repr__(self) -> str:
         return f"LeakyReLU(alpha={self.alpha})"
@@ -207,5 +218,7 @@ class Softmax(Activation):
         等价于完整 Jacobian 计算，但更高效。
         """
         s = self.output_cache
+        if s is None:
+            raise RuntimeError("Softmax.backward() 必须在 forward() 之后调用")
         # 简化的向量化计算
         return s * (dout - np.sum(dout * s, axis=1, keepdims=True))

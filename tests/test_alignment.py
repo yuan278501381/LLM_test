@@ -49,8 +49,12 @@ def test_dpo_loss():
     """测试 DPO 隐式奖励闭式损失"""
     dpo = DPOLoss(beta=0.1)
     # 当策略模型更偏好 chosen (pi_w > ref_w, pi_l < ref_l) 时，loss 较低
-    loss_good = dpo.forward(pi_logprobs_w=-0.2, pi_logprobs_l=-1.5, ref_logprobs_w=-0.8, ref_logprobs_l=-0.8)
-    loss_bad = dpo.forward(pi_logprobs_w=-1.5, pi_logprobs_l=-0.2, ref_logprobs_w=-0.8, ref_logprobs_l=-0.8)
+    loss_good = dpo.forward(
+        pi_logprobs_w=-0.2, pi_logprobs_l=-1.5, ref_logprobs_w=-0.8, ref_logprobs_l=-0.8
+    )
+    loss_bad = dpo.forward(
+        pi_logprobs_w=-1.5, pi_logprobs_l=-0.2, ref_logprobs_w=-0.8, ref_logprobs_l=-0.8
+    )
     assert loss_good < loss_bad
     assert loss_good > 0.0
 

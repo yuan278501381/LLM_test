@@ -39,9 +39,7 @@ SVG_ICONS: dict[str, str] = {
     "award": (
         '<circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>'
     ),
-    "terminal": (
-        '<polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/>'
-    ),
+    "terminal": ('<polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/>'),
     "shield": '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/>',
     "target": (
         '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>'
@@ -70,12 +68,8 @@ SVG_ICONS: dict[str, str] = {
     ),
     "play": '<polygon points="6 3 20 12 6 21 6 3"/>',
     "skip-forward": '<polygon points="5 4 15 12 5 20 5 4"/><line x1="19" x2="19" y1="5" y2="19"/>',
-    "thermometer": (
-        '<path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/>'
-    ),
-    "search": (
-        '<circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/>'
-    ),
+    "thermometer": ('<path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/>'),
+    "search": ('<circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/>'),
     "tag": (
         '<path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"/>'
         '<circle cx="7" cy="7" r=".5" fill="currentColor"/>'
@@ -113,6 +107,6 @@ def svg_icon(name: str, size: int = 16, color: str = "currentColor", extra_class
     return (
         f'<svg width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" '
         f'stroke="{color}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"{class_attr}>'
-        f'{inner_svg}'
-        f'</svg>'
+        f"{inner_svg}"
+        f"</svg>"
     )

@@ -72,21 +72,29 @@ def render_dataset_selector(
     with col1:
         n_samples = st.slider(
             "样本量 (N)",
-            50, 1000, 250, step=50,
+            50,
+            1000,
+            250,
+            step=50,
             help="数据集中的总样本点数量。样本量越大，决策边界泛化越平滑，单轮计算量成正比增加。",
             key=f"{key_prefix}n_samples",
         )
     with col2:
         noise = st.slider(
             "噪声比 (Noise)",
-            0.0, 0.4, 0.1, step=0.02,
+            0.0,
+            0.4,
+            0.1,
+            step=0.02,
             help="高斯噪声标准差。噪声越大，两类数据在边界处重叠越严重，考验模型的正则化抗过拟合能力。",
             key=f"{key_prefix}noise",
         )
 
     random_state = st.sidebar.number_input(
         "随机种子 (Seed)",
-        0, 9999, 42,
+        0,
+        9999,
+        42,
         help="控制伪随机数发生器起点，确保数据生成与实验结果可 100% 稳定复现。",
         key=f"{key_prefix}random_state",
     )
@@ -108,7 +116,9 @@ def render_network_params(
     if allow_multi_layer:
         n_layers = st.sidebar.slider(
             "隐藏层深度 (Depth)",
-            1, 5, default_layers,
+            1,
+            5,
+            default_layers,
             help="隐藏层数量。网络越深，能够执行的「非线性空间流形折叠」次数越多，但对梯度反向传播的要求也越高。",
             key=f"{key_prefix}n_layers",
         )
@@ -121,9 +131,11 @@ def render_network_params(
     for i in range(n_layers):
         default_val = defaults[i] if i < len(defaults) else 4
         n = st.sidebar.slider(
-            f"隐藏层 #{i+1} 神经元数",
-            1 if not allow_multi_layer else 2, 64, default_val,
-            help=f"第 {i+1} 隐藏层的特征维度。神经元数量越多，该层对复杂空间分界面的拟合容量越大。",
+            f"隐藏层 #{i + 1} 神经元数",
+            1 if not allow_multi_layer else 2,
+            64,
+            default_val,
+            help=f"第 {i + 1} 隐藏层的特征维度。神经元数量越多，该层对复杂空间分界面的拟合容量越大。",
             key=f"{key_prefix}neurons_{i}",
         )
         neurons_per_layer.append(n)
@@ -223,7 +235,10 @@ def render_training_params(
 
     epochs = st.sidebar.slider(
         "训练轮数 (Epochs)",
-        10, 800, default_epochs, step=10,
+        10,
+        800,
+        default_epochs,
+        step=10,
         help="全量数据集被前向与反向遍历的总循环次数。",
         key=f"{key_prefix}epochs",
     )
@@ -243,9 +258,25 @@ def render_probe_point_selector(key_prefix: str = "") -> tuple[float, float]:
     st.sidebar.caption("设置虚拟测试样本 (x₁, x₂)，实时捕获信号在前向各层神经元中的激发状态：")
     col1, col2 = st.sidebar.columns(2)
     with col1:
-        px = st.number_input("探针坐标 x₁", -3.0, 3.0, 0.5, step=0.1, help="探针样本在特征 x₁ 轴的坐标值", key=f"{key_prefix}probe_x")
+        px = st.number_input(
+            "探针坐标 x₁",
+            -3.0,
+            3.0,
+            0.5,
+            step=0.1,
+            help="探针样本在特征 x₁ 轴的坐标值",
+            key=f"{key_prefix}probe_x",
+        )
     with col2:
-        py = st.number_input("探针坐标 x₂", -3.0, 3.0, 0.5, step=0.1, help="探针样本在特征 x₂ 轴的坐标值", key=f"{key_prefix}probe_y")
+        py = st.number_input(
+            "探针坐标 x₂",
+            -3.0,
+            3.0,
+            0.5,
+            step=0.1,
+            help="探针样本在特征 x₂ 轴的坐标值",
+            key=f"{key_prefix}probe_y",
+        )
     return float(px), float(py)
 
 
@@ -258,7 +289,7 @@ def render_deep_dive_card(
     with st.expander(f"DEEP DIVE // 微观机理与案例解析: {title}", expanded=False):
         for item in meta_items:
             formula_line = f"`{item.formula}`" if hasattr(item, "formula") else ""
-            impact_val = getattr(item, 'impact', getattr(item, 'difficulty', ''))
+            impact_val = getattr(item, "impact", getattr(item, "difficulty", ""))
             st.markdown(
                 f"##### **{item.label}** {formula_line}\n"
                 f"- **[CONCEPT // 详细含义]**: {item.desc}\n"

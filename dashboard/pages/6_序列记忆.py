@@ -17,9 +17,11 @@ import numpy as np
 import streamlit as st
 
 import dashboard.components.charts
+
 importlib.reload(dashboard.components.charts)
 
 from dashboard.components.charts import plot_memory_decay_heatmap
+from dashboard.components.pedagogy import render_lesson_evidence
 from dashboard.styles.theme import (
     anchor_badge,
     apply_custom_theme,
@@ -38,6 +40,7 @@ st.set_page_config(
 )
 
 apply_custom_theme()
+render_lesson_evidence("M06")
 
 render_hero_header(
     title="序列记忆与遗忘瓶颈",
@@ -52,11 +55,41 @@ render_hero_header(
 render_page_guide(
     title="序列记忆与空间交互地图",
     blueprint_sections=[
-        {"id": "A", "name": "时序输入控制台", "desc": "在左侧侧边栏切换短句、长句或自定义句子与隐藏层维度", "color": "amber", "target_id": "region-a"},
-        {"id": "B", "name": "教学指引", "desc": "当前卡片：通俗理解 RNN 隐藏状态背包与长程遗忘致命缺陷", "color": "blue", "target_id": "region-b"},
-        {"id": "C", "name": "实时记忆遥测", "desc": "显示当前序列长度、句首信息保留率与时间步记忆衰减", "color": "emerald", "target_id": "region-c"},
-        {"id": "D", "name": "时序流水线色块", "desc": "按时间步展示每一个 Token 的隐藏状态向量流动与激活强度", "color": "purple", "target_id": "region-d"},
-        {"id": "E", "name": "记忆衰减热力图", "desc": "直观验证右上角大面积褪色白块，见证信息稀释与注意力诞生背景", "color": "blue", "target_id": "region-e"},
+        {
+            "id": "A",
+            "name": "时序输入控制台",
+            "desc": "在左侧侧边栏切换短句、长句或自定义句子与隐藏层维度",
+            "color": "amber",
+            "target_id": "region-a",
+        },
+        {
+            "id": "B",
+            "name": "教学指引",
+            "desc": "当前卡片：通俗理解 RNN 隐藏状态背包与长程遗忘致命缺陷",
+            "color": "blue",
+            "target_id": "region-b",
+        },
+        {
+            "id": "C",
+            "name": "实时记忆遥测",
+            "desc": "显示当前序列长度、句首信息保留率与时间步记忆衰减",
+            "color": "emerald",
+            "target_id": "region-c",
+        },
+        {
+            "id": "D",
+            "name": "时序流水线色块",
+            "desc": "按时间步展示每一个 Token 的隐藏状态向量流动与激活强度",
+            "color": "purple",
+            "target_id": "region-d",
+        },
+        {
+            "id": "E",
+            "name": "记忆衰减热力图",
+            "desc": "直观验证右上角大面积褪色白块，见证信息稀释与注意力诞生背景",
+            "color": "blue",
+            "target_id": "region-e",
+        },
     ],
     plain_intro=(
         f"<b>RNN 就像一个记性有限的听书人</b>。<br>"
@@ -85,7 +118,10 @@ render_page_guide(
 # ---------------------------------------------------------------------------
 # 侧边栏控制面板
 # ---------------------------------------------------------------------------
-st.sidebar.markdown(f'<div id="region-a" class="interactive-region" style="margin-bottom:0.6rem;padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">{anchor_badge("A", "amber")} <b>SEQUENCE CONTROLS // 时序输入控制台</b></div>', unsafe_allow_html=True)
+st.sidebar.markdown(
+    f'<div id="region-a" class="interactive-region" style="margin-bottom:0.6rem;padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">{anchor_badge("A", "amber")} <b>SEQUENCE CONTROLS // 时序输入控制台</b></div>',
+    unsafe_allow_html=True,
+)
 
 # ---------------------------------------------------------------------------
 # 词表与模型初始化
@@ -166,7 +202,7 @@ retention_rate = first_token_retention
 st.markdown(
     f'<div id="region-c" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;">'
     f'{anchor_badge("C", "emerald")} <span style="font-weight:800;color:#065f46;font-size:0.86rem;">MEMORY TELEMETRY // 序列记忆与衰减遥测看板</span>'
-    f'</div>',
+    f"</div>",
     unsafe_allow_html=True,
 )
 metric_grid_html = (
@@ -181,8 +217,12 @@ metric_grid_html = (
     + render_metric_card(
         "HEAD RETENTION // 句首记忆留存率",
         f"{retention_rate * 100:.1f}%",
-        delta="严重遗忘 (SEVERE)" if retention_rate < 0.35 else ("轻度衰减" if retention_rate < 0.65 else "留存良好"),
-        delta_type="negative" if retention_rate < 0.35 else ("neutral" if retention_rate < 0.65 else "positive"),
+        delta="严重遗忘 (SEVERE)"
+        if retention_rate < 0.35
+        else ("轻度衰减" if retention_rate < 0.65 else "留存良好"),
+        delta_type="negative"
+        if retention_rate < 0.35
+        else ("neutral" if retention_rate < 0.65 else "positive"),
         icon_name="activity",
     )
     + render_metric_card(
@@ -209,7 +249,7 @@ st.markdown(metric_grid_html, unsafe_allow_html=True)
 st.markdown(
     f'<div id="region-d" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;margin-top:1rem;">'
     f'{anchor_badge("D", "purple")} <span style="font-weight:800;color:#5b21b6;font-size:0.86rem;">STEP-BY-STEP RECURRENT FLOW // RNN 隐状态顺次传递流水线</span>'
-    f'</div>',
+    f"</div>",
     unsafe_allow_html=True,
 )
 render_sequence_flow(raw_tokens, hidden_states_list)
@@ -220,7 +260,7 @@ render_sequence_flow(raw_tokens, hidden_states_list)
 st.markdown(
     f'<div id="region-e" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;margin-top:1.2rem;">'
     f'{anchor_badge("E", "blue")} <span style="font-weight:800;color:#1e40af;font-size:0.86rem;">MEMORY DECAY HEATMAP // 序列记忆与历史衰减矩阵</span>'
-    f'</div>',
+    f"</div>",
     unsafe_allow_html=True,
 )
 
@@ -229,7 +269,7 @@ fig_decay = plot_memory_decay_heatmap(
     tokens=raw_tokens,
     title="RNN RECURRENT MEMORY DECAY // 隐状态历史关联度矩阵 (越靠右上角颜色越浅代表遗忘)",
 )
-st.plotly_chart(fig_decay, use_container_width=True)
+st.plotly_chart(fig_decay, width="stretch")
 
 with st.expander("[HOW TO READ // 读图指南] 时间步传递与长程遗忘瓶颈", expanded=False):
     st.markdown(
@@ -245,7 +285,9 @@ with st.expander("[HOW TO READ // 读图指南] 时间步传递与长程遗忘�
 # ---------------------------------------------------------------------------
 # 底部理论对比卡片：RNN 遗忘瓶颈 vs Attention 动态路由
 # ---------------------------------------------------------------------------
-render_section_heading("ARCHITECTURAL EVOLUTION // 为什么必须从 RNN 进化到 Attention？", icon_name="zap")
+render_section_heading(
+    "ARCHITECTURAL EVOLUTION // 为什么必须从 RNN 进化到 Attention？", icon_name="zap"
+)
 
 col_rnn, col_attn = st.columns(2)
 with col_rnn:
@@ -272,14 +314,16 @@ with col_attn:
             - **全局矩阵并行共振**：
               所有 Token 的 Query/Key/Value 矩阵一次性送入 GPU，单步完成 $N \times N$ 全对全关联计算；
             - **动态聚光灯 (Dynamic Spotlight)**：
-              根据上下文动态分配权重，彻底攻克长程记忆与代词回指难题！
+              根据上下文动态分配权重，缩短信息交互路径；长程记忆和指代仍取决于训练数据、容量与上下文长度。
             """
         )
 
 # ---------------------------------------------------------------------------
 # 零基础进阶：RNN 核心递归公式逐字拆解与名词通俗速查
 # ---------------------------------------------------------------------------
-with st.expander("[GROWTH GUIDE // 成长指南] RNN 核心公式拆解与序列时序名词通俗全解", expanded=False):
+with st.expander(
+    "[GROWTH GUIDE // 成长指南] RNN 核心公式拆解与序列时序名词通俗全解", expanded=False
+):
     st.markdown(
         """
         ### 0. 核心公式逐字拆解：RNN 单步隐状态递归传递
@@ -302,4 +346,3 @@ with st.expander("[GROWTH GUIDE // 成长指南] RNN 核心公式拆解与序列
         * **本质机理**：把时间步像手风琴一样拉开，误差梯度顺着时间链条 $t \\to t-1 \\to t-2$ 一路倒推求导。链条越长，梯度越容易衰减为 0（长程遗忘）。
         """
     )
-

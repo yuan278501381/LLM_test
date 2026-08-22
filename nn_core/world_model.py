@@ -1,15 +1,15 @@
 # Copyright (c) 2026 Yy1 (yuan278501381) | MIT License
 """
-nn_core.world_model - 世界模型下一帧动力学推演与 Diffusion 扩散去噪调度器 (对标 Sora / DiT)
+nn_core.world_model - 教学级下一帧预测头与 Diffusion 前向加噪调度器
 
 包含：
 - `NextFramePredictor`: 基于上下文序列嵌入自回归推演未来帧像素的世界模型预测头
-- `DiffusionScheduler`: 连续高斯前向加噪与去噪方差调度引擎 (DDPM / DiT 架构基石)
+- `DiffusionScheduler`: DDPM 连续高斯前向加噪方差调度；不含反向去噪网络
 - `visualize_diffusion_process`: 扩散时间步前向轨迹模拟
 """
 
 import logging
-from typing import Optional, Tuple
+
 import numpy as np
 
 logger = logging.getLogger("nn_core.world_model")
@@ -50,7 +50,7 @@ class NextFramePredictor:
 
 class DiffusionScheduler:
     """
-    扩散模型 (Diffusion Model) 前向加噪调度器 (DDPM / DiT 核心算法)。
+    DDPM 前向加噪调度器；提供噪声日程与闭式采样，不包含可学习去噪器。
 
     前向扩散加噪公式：
         $$q(x_t | x_0) = \\mathcal{N}\\left(x_t; \\sqrt{\\bar{\\alpha}_t} x_0, (1 - \\bar{\\alpha}_t) \\mathbf{I}\\right)$$
@@ -93,12 +93,7 @@ class DiffusionScheduler:
             # 累乘保留系数: alpha_bar_t = prod(alpha_1 ... alpha_t)
             self.alphas_cumprod = np.cumprod(self.alphas)
 
-    def add_noise(
-        self,
-        x_0: np.ndarray,
-        t: int,
-        noise: Optional[np.ndarray] = None
-    ) -> np.ndarray:
+    def add_noise(self, x_0: np.ndarray, t: int, noise: np.ndarray | None = None) -> np.ndarray:
         """
         在时间步 t 对清晰图像 x_0 进行单步闭式加噪。
         t ∈ [0, num_steps - 1]
@@ -130,10 +125,8 @@ class DiffusionScheduler:
 
 
 def visualize_diffusion_process(
-    x_0: np.ndarray,
-    scheduler: DiffusionScheduler,
-    steps_to_show: int = 5
-) -> list[Tuple[int, np.ndarray]]:
+    x_0: np.ndarray, scheduler: DiffusionScheduler, steps_to_show: int = 5
+) -> list[tuple[int, np.ndarray]]:
     """
     生成从清晰原图到纯高斯白噪声的等间隔扩散演化快照。
     """

@@ -11,14 +11,17 @@ nn_core.bpe - 分词工程与字节对编码模块 (Byte-Pair Encoding)
 
 import logging
 import uuid
+from itertools import pairwise
 
 logger = logging.getLogger(__name__)
 
 
-def get_stats(ids: list[int], counts: dict[tuple[int, int], int] | None = None) -> dict[tuple[int, int], int]:
+def get_stats(
+    ids: list[int], counts: dict[tuple[int, int], int] | None = None
+) -> dict[tuple[int, int], int]:
     """统计序列中相邻 ID 对的出现频次"""
     counts = {} if counts is None else counts
-    for pair in zip(ids, ids[1:], strict=False):
+    for pair in pairwise(ids):
         counts[pair] = counts.get(pair, 0) + 1
     return counts
 
@@ -40,7 +43,7 @@ def merge(ids: list[int], pair: tuple[int, int], new_id: int) -> list[int]:
 class BytePairEncoder:
     """
     字节级 BPE (Byte-Pair Encoding) 分词器。
-    
+
     工作原理:
     1. 将原始文本按 UTF-8 编码为原始字节序列 [0~255]；
     2. 统计出现频率最高的相邻字节/Token 对；
@@ -77,7 +80,7 @@ class BytePairEncoder:
             if not stats:
                 break
             # 找到最高频对
-            best_pair = max(stats, key=stats.get)
+            best_pair = max(stats, key=lambda pair: stats[pair])
             count = stats[best_pair]
             if count <= 1 and step > 10:
                 # 出现次数过低则提前终止
@@ -98,17 +101,26 @@ class BytePairEncoder:
             )
             merged_repr = token_bytes.decode("utf-8", errors="replace")
 
-            self.merge_history.append({
-                "step": step + 1,
-                "pair_ids": best_pair,
-                "pair_str": pair_repr,
-                "merged_str": merged_repr,
-                "new_id": new_id,
-                "freq": count,
-            })
+            self.merge_history.append(
+                {
+                    "step": step + 1,
+                    "pair_ids": best_pair,
+                    "pair_str": pair_repr,
+                    "merged_str": merged_repr,
+                    "new_id": new_id,
+                    "freq": count,
+                }
+            )
 
             if verbose:
-                logger.debug("Merge #%d: %s -> %s (id=%d, count=%d)", step + 1, pair_repr, merged_repr, new_id, count)
+                logger.debug(
+                    "Merge #%d: %s -> %s (id=%d, count=%d)",
+                    step + 1,
+                    pair_repr,
+                    merged_repr,
+                    new_id,
+                    count,
+                )
 
     def encode(self, text: str) -> list[int]:
         """将输入文本编码为 Token ID 列表"""
@@ -133,7 +145,7 @@ class BytePairEncoder:
             if idx in self.vocab:
                 part_bytes.append(self.vocab[idx])
             else:
-                part_bytes.append(f"<unk:{idx}>".encode("utf-8"))
+                part_bytes.append(f"<unk:{idx}>".encode())
         full_bytes = b"".join(part_bytes)
         return full_bytes.decode("utf-8", errors="replace")
 

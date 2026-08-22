@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 def _normalize(X: np.ndarray, feature_range: tuple[float, float] = (-1.0, 1.0)) -> np.ndarray:
     """将特征归一化到指定范围"""
     scaler = MinMaxScaler(feature_range=feature_range)
-    return scaler.fit_transform(X)
+    return np.asarray(scaler.fit_transform(X), dtype=np.float64)
 
 
 def make_moons(
@@ -54,7 +54,9 @@ def make_moons(
     Returns:
         (X, y): X shape (n, 2), y shape (n, 1)
     """
-    X, y = _sk_moons(n_samples=n_samples, noise=noise, random_state=random_state)
+    raw_X, raw_y = _sk_moons(n_samples=n_samples, noise=noise, random_state=random_state)
+    X = np.asarray(raw_X, dtype=np.float64)
+    y = np.asarray(raw_y)
     X = _normalize(X)
     y = y.reshape(-1, 1).astype(np.float64)
     logger.debug("make_moons: n=%d, noise=%.2f → X%s, y%s", n_samples, noise, X.shape, y.shape)
@@ -81,12 +83,14 @@ def make_circles(
     Returns:
         (X, y): X shape (n, 2), y shape (n, 1)
     """
-    X, y = _sk_circles(
+    raw_X, raw_y = _sk_circles(
         n_samples=n_samples,
         noise=noise,
         random_state=random_state,
         factor=factor,
     )
+    X = np.asarray(raw_X, dtype=np.float64)
+    y = np.asarray(raw_y)
     X = _normalize(X)
     y = y.reshape(-1, 1).astype(np.float64)
     logger.debug("make_circles: n=%d, noise=%.2f → X%s, y%s", n_samples, noise, X.shape, y.shape)
@@ -225,13 +229,17 @@ def make_blobs(
     Returns:
         (X, y): X shape (n, 2), y shape (n, n_classes) (one-hot)
     """
-    X, y_int = _sk_blobs(
+    raw_result = _sk_blobs(
         n_samples=n_samples,
         centers=n_classes,
         cluster_std=noise + 0.5,  # 基线标准差 + 用户噪声
         random_state=random_state,
         n_features=2,
+        return_centers=False,
     )
+    raw_X, raw_y_int = raw_result[0], raw_result[1]
+    X = np.asarray(raw_X, dtype=np.float64)
+    y_int = np.asarray(raw_y_int, dtype=np.int64)
     X = _normalize(X)
 
     # 转换为 one-hot 编码

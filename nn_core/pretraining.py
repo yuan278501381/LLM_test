@@ -11,7 +11,7 @@ nn_core.pretraining - 预训练范式全景计算引擎 (MLM / CLM / 对比学�
 """
 
 import logging
-from typing import Optional, Tuple
+
 import numpy as np
 
 from nn_core.attention import causal_mask
@@ -54,7 +54,7 @@ class MaskedLanguageModel:
         self.head_w = np.random.randn(d_model, vocab_size) * np.sqrt(2.0 / d_model)
         self.head_b = np.zeros(vocab_size)
 
-    def create_mlm_batch(self, token_ids: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def create_mlm_batch(self, token_ids: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         根据标准 BERT 策略创建掩码样本：
         - 80% 替换为 [MASK]
@@ -65,7 +65,7 @@ class MaskedLanguageModel:
         masked_ids = token_ids.copy()
         labels = np.full_like(token_ids, -100)  # -100 忽略计算损失
         seq_len = token_ids.shape[1]
-        
+
         num_to_mask = max(1, int(seq_len * self.mask_ratio))
         mask_indices = np.random.choice(seq_len, size=num_to_mask, replace=False)
         mask_positions = np.zeros(seq_len, dtype=bool)
@@ -136,8 +136,8 @@ class MaskedLanguageModel:
         # 2. 利用缓存的隐藏层激活计算分类头权重的真实梯度
         #    logits = H @ W + b  =>  dW = H.T @ dL/dz,  db = sum(dL/dz)
         active_hidden = self._last_hidden[0, mask_positions]  # (num_masked, d_model)
-        grad_w = np.dot(active_hidden.T, grad_output)        # (d_model, vocab_size)
-        grad_b = np.sum(grad_output, axis=0)                 # (vocab_size,)
+        grad_w = np.dot(active_hidden.T, grad_output)  # (d_model, vocab_size)
+        grad_b = np.sum(grad_output, axis=0)  # (vocab_size,)
 
         # 3. SGD 真实梯度下降更新
         self.head_w -= lr * grad_w
@@ -170,7 +170,7 @@ class CausalLanguageModel:
         self.head_w = np.random.randn(d_model, vocab_size) * np.sqrt(2.0 / d_model)
         self.head_b = np.zeros(vocab_size)
 
-    def create_clm_batch(self, token_ids: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    def create_clm_batch(self, token_ids: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         """输入为 tokens[:-1], 预测目标为 tokens[1:]"""
         x_input = token_ids[:, :-1]
         y_target = token_ids[:, 1:]
@@ -240,7 +240,9 @@ class ContrastiveLearning:
     def __init__(self, d_model: int = 32) -> None:
         self.d_model = d_model
 
-    def create_positive_pairs(self, embeddings: np.ndarray, noise_std: float = 0.1) -> Tuple[np.ndarray, np.ndarray]:
+    def create_positive_pairs(
+        self, embeddings: np.ndarray, noise_std: float = 0.1
+    ) -> tuple[np.ndarray, np.ndarray]:
         """通过高斯数据增强构建同源正样本对 (z_i, z_j)"""
         z_i = embeddings + np.random.randn(*embeddings.shape) * noise_std
         z_j = embeddings + np.random.randn(*embeddings.shape) * noise_std
@@ -283,13 +285,13 @@ class MaskedAutoEncoder:
         # 简单解码重建 MLP
         self.decoder = np.random.randn(d_model, d_model) * 0.1
 
-    def create_mae_batch(self, patches: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def create_mae_batch(self, patches: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         patches: (B, num_patches, patch_dim)
         随机遮蔽 mask_ratio (默认 75%) 的图块
         返回 (masked_patches, mask_indices, unmasked_indices)
         """
-        B, N, D = patches.shape
+        _B, N, _D = patches.shape
         num_masked = int(N * self.mask_ratio)
         perm = np.random.permutation(N)
         mask_indices = perm[:num_masked]
@@ -304,10 +306,12 @@ class MaskedAutoEncoder:
         # 简单模拟自注意力全局补全
         return masked_patches + np.dot(masked_patches, self.decoder) * 0.5
 
-    def reconstruction_loss(self, pred_patches: np.ndarray, true_patches: np.ndarray, mask_indices: np.ndarray) -> float:
+    def reconstruction_loss(
+        self, pred_patches: np.ndarray, true_patches: np.ndarray, mask_indices: np.ndarray
+    ) -> float:
         """仅在被遮蔽的 75% 图块上计算 MSE 损失"""
         diff = pred_patches[:, mask_indices] - true_patches[:, mask_indices]
-        return float(np.mean(diff ** 2))
+        return float(np.mean(diff**2))
 
 
 class PretrainingComparator:
@@ -318,10 +322,30 @@ class PretrainingComparator:
     @staticmethod
     def get_transfer_scores() -> dict[str, dict[str, int]]:
         return {
-            "MLM (BERT 完形填空)": {"文本分类": 94, "阅读理解": 90, "自回归生成": 35, "跨模态检索": 65},
-            "CLM (GPT 因果接龙)": {"文本分类": 80, "阅读理解": 78, "自回归生成": 96, "跨模态检索": 55},
-            "Contrastive (CLIP 对比)": {"文本分类": 72, "阅读理解": 60, "自回归生成": 40, "跨模态检索": 98},
-            "MAE (视觉掩码自编码)": {"文本分类": 88, "阅读理解": 50, "自回归生成": 30, "跨模态检索": 62},
+            "MLM (BERT 完形填空)": {
+                "文本分类": 94,
+                "阅读理解": 90,
+                "自回归生成": 35,
+                "跨模态检索": 65,
+            },
+            "CLM (GPT 因果接龙)": {
+                "文本分类": 80,
+                "阅读理解": 78,
+                "自回归生成": 96,
+                "跨模态检索": 55,
+            },
+            "Contrastive (CLIP 对比)": {
+                "文本分类": 72,
+                "阅读理解": 60,
+                "自回归生成": 40,
+                "跨模态检索": 98,
+            },
+            "MAE (视觉掩码自编码)": {
+                "文本分类": 88,
+                "阅读理解": 50,
+                "自回归生成": 30,
+                "跨模态检索": 62,
+            },
         }
 
 
@@ -339,10 +363,10 @@ class ScalingLawEngine:
     """
 
     # Hoffmann et al. (2022) Table A3 拟合真实参数
-    E = 1.6934   # 不可约熵损失 (Irreducible loss / 语言内在熵)
-    A = 406.4    # 参数规模常数
+    E = 1.6934  # 不可约熵损失 (Irreducible loss / 语言内在熵)
+    A = 406.4  # 参数规模常数
     ALPHA = 0.3392
-    B = 410.7    # 数据规模常数
+    B = 410.7  # 数据规模常数
     BETA = 0.2849
 
     @classmethod
@@ -356,8 +380,8 @@ class ScalingLawEngine:
         G = ((cls.ALPHA * cls.A) / (cls.BETA * cls.B)) ** (1.0 / (cls.ALPHA + cls.BETA))  # ~1.300
 
         c_div_6 = C / 6.0
-        n_opt = G * (c_div_6 ** a)
-        d_opt = (1.0 / G) * (c_div_6 ** b)
+        n_opt = G * (c_div_6**a)
+        d_opt = (1.0 / G) * (c_div_6**b)
 
         loss = cls.estimate_loss(n_opt, d_opt)
 
@@ -437,12 +461,12 @@ class SimpleBPE:
 
     def __init__(self, vocab_size: int = 50) -> None:
         self.target_vocab_size = vocab_size
-        self.merges: list[Tuple[str, str]] = []
+        self.merges: list[tuple[str, str]] = []
         self.vocab: dict[str, int] = {}
 
-    def _get_stats(self, word_freqs: dict[tuple[str, ...], int]) -> dict[Tuple[str, str], int]:
+    def _get_stats(self, word_freqs: dict[tuple[str, ...], int]) -> dict[tuple[str, str], int]:
         """统计所有相邻子词对的共现频次"""
-        pairs: dict[Tuple[str, str], int] = {}
+        pairs: dict[tuple[str, str], int] = {}
         for word, freq in word_freqs.items():
             for i in range(len(word) - 1):
                 pair = (word[i], word[i + 1])
@@ -450,9 +474,7 @@ class SimpleBPE:
         return pairs
 
     def _merge_pair(
-        self,
-        pair: Tuple[str, str],
-        word_freqs: dict[tuple[str, ...], int]
+        self, pair: tuple[str, str], word_freqs: dict[tuple[str, ...], int]
     ) -> dict[tuple[str, ...], int]:
         """在所有单词切分序列中将目标字符对合并为新子词"""
         new_word_freqs: dict[tuple[str, ...], int] = {}
@@ -481,7 +503,7 @@ class SimpleBPE:
                 word_counts[w] = word_counts.get(w, 0) + 1
 
         word_freqs: dict[tuple[str, ...], int] = {
-            tuple(list(w) + ["</w>"]): count for w, count in word_counts.items()
+            tuple([*list(w), "</w>"]): count for w, count in word_counts.items()
         }
 
         # 初始基础单字符词表
@@ -500,7 +522,7 @@ class SimpleBPE:
             if not pairs:
                 break
             # 贪心选取出现频次最高的相邻对
-            best_pair = max(pairs, key=pairs.get)
+            best_pair = max(pairs, key=lambda pair: pairs[pair])
             best_freq = pairs[best_pair]
             if best_freq < 1:
                 break
@@ -510,13 +532,15 @@ class SimpleBPE:
             new_token = best_pair[0] + best_pair[1]
             self.vocab[new_token] = len(self.vocab)
 
-            merge_history.append({
-                "step": step + 1,
-                "merged_pair": f"'{best_pair[0]}' + '{best_pair[1]}'",
-                "new_token": new_token,
-                "frequency": best_freq,
-                "vocab_size": len(self.vocab),
-            })
+            merge_history.append(
+                {
+                    "step": step + 1,
+                    "merged_pair": f"'{best_pair[0]}' + '{best_pair[1]}'",
+                    "new_token": new_token,
+                    "frequency": best_freq,
+                    "vocab_size": len(self.vocab),
+                }
+            )
 
         return merge_history
 
@@ -524,7 +548,7 @@ class SimpleBPE:
         """利用训练好的 merge 规则切分文本"""
         tokens: list[str] = []
         for word in text.strip().split():
-            splits = list(word) + ["</w>"]
+            splits = [*list(word), "</w>"]
             for pair in self.merges:
                 i = 0
                 new_splits = []
@@ -609,4 +633,3 @@ class DataMixtureEngine:
                 "filter_rate": "净化约 5% 高危数据",
             },
         ]
-

@@ -29,11 +29,11 @@ LIGHT_PALETTE = {
     "zero_line": "rgba(15, 23, 42, 0.08)",
     "font_color": "#0f172a",
     "font_muted": "#64748b",
-    "primary": "#1d4ed8",     # 纯正皇家蓝
-    "secondary": "#be123c",   # 玫瑰红
-    "accent": "#047857",      # 翡翠绿
-    "warning": "#b45309",     # 琥珀深橙
-    "purple": "#6d28d9",      # 紫罗兰
+    "primary": "#1d4ed8",  # 纯正皇家蓝
+    "secondary": "#be123c",  # 玫瑰红
+    "accent": "#047857",  # 翡翠绿
+    "warning": "#b45309",  # 琥珀深橙
+    "purple": "#6d28d9",  # 紫罗兰
     "classes": ["#1d4ed8", "#be123c", "#047857", "#b45309", "#6d28d9"],
     "optimizers": {
         "SGD": "#64748b",
@@ -117,9 +117,9 @@ def plot_decision_boundary(
     if preds.shape[1] == 1:
         zz = preds.reshape(xx.shape)
         colorscale = [
-            [0.0, "rgba(29, 78, 216, 0.22)"],   # 类别 0 (蓝)
-            [0.5, "rgba(241, 245, 249, 0.6)"],   # 决策临界线
-            [1.0, "rgba(190, 18, 60, 0.22)"],    # 类别 1 (红)
+            [0.0, "rgba(29, 78, 216, 0.22)"],  # 类别 0 (蓝)
+            [0.5, "rgba(241, 245, 249, 0.6)"],  # 决策临界线
+            [1.0, "rgba(190, 18, 60, 0.22)"],  # 类别 1 (红)
         ]
     else:
         zz = np.argmax(preds, axis=1).reshape(xx.shape).astype(float)
@@ -128,35 +128,39 @@ def plot_decision_boundary(
     fig = go.Figure()
 
     # 连续概率等高面 (平滑淡色概率背景场)
-    fig.add_trace(go.Contour(
-        x=np.linspace(x_min, x_max, resolution),
-        y=np.linspace(y_min, y_max, resolution),
-        z=zz,
-        colorscale=colorscale,
-        showscale=False,
-        contours=dict(showlines=False, coloring="fill"),
-        hoverinfo="skip",
-        showlegend=False,
-    ))
-
-    # 显式绘制唯一的决策分界线 (Decision Boundary: 概率临界线 P=0.5 / 直线方程 z=0)
-    if preds.shape[1] == 1:
-        fig.add_trace(go.Contour(
+    fig.add_trace(
+        go.Contour(
             x=np.linspace(x_min, x_max, resolution),
             y=np.linspace(y_min, y_max, resolution),
             z=zz,
-            contours=dict(
-                start=0.5,
-                end=0.5,
-                size=0,
-                coloring="none",
-                showlabels=False,
-            ),
-            line=dict(width=3.5, color="#0f172a", dash="solid"),
-            name="决策分界线 (Line: P=0.5)",
-            showlegend=True,
-            hovertemplate="<b>[DECISION LINE] 决策分界线 (Decision Line: P=0.5)</b><extra></extra>",
-        ))
+            colorscale=colorscale,
+            showscale=False,
+            contours=dict(showlines=False, coloring="fill"),
+            hoverinfo="skip",
+            showlegend=False,
+        )
+    )
+
+    # 显式绘制唯一的决策分界线 (Decision Boundary: 概率临界线 P=0.5 / 直线方程 z=0)
+    if preds.shape[1] == 1:
+        fig.add_trace(
+            go.Contour(
+                x=np.linspace(x_min, x_max, resolution),
+                y=np.linspace(y_min, y_max, resolution),
+                z=zz,
+                contours=dict(
+                    start=0.5,
+                    end=0.5,
+                    size=0,
+                    coloring="none",
+                    showlabels=False,
+                ),
+                line=dict(width=3.5, color="#0f172a", dash="solid"),
+                name="决策分界线 (Line: P=0.5)",
+                showlegend=True,
+                hovertemplate="<b>[DECISION LINE] 决策分界线 (Decision Line: P=0.5)</b><extra></extra>",
+            )
+        )
 
     # 训练数据散点
     labels = y.ravel() if y.shape[1] == 1 else np.argmax(y, axis=1)
@@ -165,43 +169,47 @@ def plot_decision_boundary(
     for cls_idx in unique_classes:
         mask = labels == cls_idx
         color = LIGHT_PALETTE["classes"][cls_idx % len(LIGHT_PALETTE["classes"])]
-        fig.add_trace(go.Scatter(
-            x=X[mask, 0],
-            y=X[mask, 1],
-            mode="markers",
-            name=f"Class {cls_idx}",
-            marker=dict(
-                size=8,
-                color=color,
-                line=dict(width=1.5, color="#ffffff"),
-                opacity=0.9,
-            ),
-            hovertemplate=(
-                f"<b>Class {cls_idx}</b><br>"
-                + "x₁: %{x:.3f}<br>"
-                + "x₂: %{y:.3f}<extra></extra>"
-            ),
-        ))
+        fig.add_trace(
+            go.Scatter(
+                x=X[mask, 0],
+                y=X[mask, 1],
+                mode="markers",
+                name=f"Class {cls_idx}",
+                marker=dict(
+                    size=8,
+                    color=color,
+                    line=dict(width=1.5, color="#ffffff"),
+                    opacity=0.9,
+                ),
+                hovertemplate=(
+                    f"<b>Class {cls_idx}</b><br>"
+                    + "x₁: %{x:.3f}<br>"
+                    + "x₂: %{y:.3f}<extra></extra>"
+                ),
+            )
+        )
 
     # 动态探针样本点
     if probe_point is not None:
         px, py = probe_point
-        fig.add_trace(go.Scatter(
-            x=[px],
-            y=[py],
-            mode="markers+text",
-            name="PROBE POINT",
-            text=["PROBE"],
-            textposition="top center",
-            textfont=dict(color="#b45309", size=10, family="JetBrains Mono", weight="bold"),
-            marker=dict(
-                size=14,
-                color="#b45309",
-                symbol="cross",
-                line=dict(width=2.5, color="#ffffff"),
-            ),
-            hovertemplate="<b>PROBE POINT // 活性探针点</b><br>x₁: %{x:.3f}<br>x₂: %{y:.3f}<extra></extra>",
-        ))
+        fig.add_trace(
+            go.Scatter(
+                x=[px],
+                y=[py],
+                mode="markers+text",
+                name="PROBE POINT",
+                text=["PROBE"],
+                textposition="top center",
+                textfont=dict(color="#b45309", size=10, family="JetBrains Mono", weight="bold"),
+                marker=dict(
+                    size=14,
+                    color="#b45309",
+                    symbol="cross",
+                    line=dict(width=2.5, color="#ffffff"),
+                ),
+                hovertemplate="<b>PROBE POINT // 活性探针点</b><br>x₁: %{x:.3f}<br>x₂: %{y:.3f}<extra></extra>",
+            )
+        )
 
     fig.update_layout(
         xaxis_title="Feature x₁",
@@ -230,7 +238,8 @@ def plot_loss_curve(
 ) -> go.Figure:
     """绘制亮色平滑训练收敛图 (严格防多列重叠)"""
     fig = make_subplots(
-        rows=1, cols=2,
+        rows=1,
+        cols=2,
         subplot_titles=("损失收敛 (Loss)", "准确率 (Accuracy)"),
         horizontal_spacing=0.14,
     )
@@ -242,7 +251,8 @@ def plot_loss_curve(
         min_idx = int(np.argmin(losses))
         fig.add_trace(
             go.Scatter(
-                x=epochs, y=losses,
+                x=epochs,
+                y=losses,
                 mode="lines",
                 name="Train Loss",
                 line=dict(color=LIGHT_PALETTE["primary"], width=2.5, shape="spline", smoothing=1.1),
@@ -250,25 +260,29 @@ def plot_loss_curve(
                 fillcolor="rgba(29, 78, 216, 0.05)",
                 hovertemplate="轮数 %{x}: 损失 Loss = %{y:.4f}<extra></extra>",
             ),
-            row=1, col=1,
+            row=1,
+            col=1,
         )
         fig.add_trace(
             go.Scatter(
-                x=[epochs[min_idx]], y=[losses[min_idx]],
+                x=[epochs[min_idx]],
+                y=[losses[min_idx]],
                 mode="markers",
                 name="Min Loss",
                 marker=dict(size=8, color=LIGHT_PALETTE["accent"], symbol="diamond"),
                 hovertemplate=f"最低损失: {losses[min_idx]:.4f} (第 {epochs[min_idx]} 轮)<extra></extra>",
                 showlegend=False,
             ),
-            row=1, col=1,
+            row=1,
+            col=1,
         )
 
     if "accuracy" in history and history["accuracy"]:
         accs = history["accuracy"]
         fig.add_trace(
             go.Scatter(
-                x=epochs, y=accs,
+                x=epochs,
+                y=accs,
                 mode="lines",
                 name="Train Acc",
                 line=dict(color=LIGHT_PALETTE["accent"], width=2.5, shape="spline", smoothing=1.1),
@@ -276,13 +290,20 @@ def plot_loss_curve(
                 fillcolor="rgba(4, 120, 87, 0.05)",
                 hovertemplate="轮数 %{x}: 准确率 Acc = %{y:.2%}<extra></extra>",
             ),
-            row=1, col=2,
+            row=1,
+            col=2,
         )
 
     fig.update_xaxes(title_text="训练轮数 (Epoch)", row=1, col=1, gridcolor=LIGHT_PALETTE["grid"])
     fig.update_xaxes(title_text="训练轮数 (Epoch)", row=1, col=2, gridcolor=LIGHT_PALETTE["grid"])
     fig.update_yaxes(title_text="损失误差 (Loss)", row=1, col=1, gridcolor=LIGHT_PALETTE["grid"])
-    fig.update_yaxes(title_text="准确率 (Accuracy)", row=1, col=2, gridcolor=LIGHT_PALETTE["grid"], range=[0, 1.05])
+    fig.update_yaxes(
+        title_text="准确率 (Accuracy)",
+        row=1,
+        col=2,
+        gridcolor=LIGHT_PALETTE["grid"],
+        range=[0, 1.05],
+    )
 
     fig.update_layout(
         showlegend=False,
@@ -301,8 +322,9 @@ def plot_activation_heatmap(
     """绘制亮色各层神经元激活热力矩阵"""
     n_layers = len(activations)
     fig = make_subplots(
-        rows=1, cols=n_layers,
-        subplot_titles=[f"Layer {i+1} (dim={act.shape[1]})" for i, act in enumerate(activations)],
+        rows=1,
+        cols=n_layers,
+        subplot_titles=[f"Layer {i + 1} (dim={act.shape[1]})" for i, act in enumerate(activations)],
         horizontal_spacing=0.06,
     )
 
@@ -314,7 +336,9 @@ def plot_activation_heatmap(
                 colorscale="Blues",
                 showscale=(idx == n_layers - 1),
                 colorbar=dict(
-                    title=dict(text="Activation", side="right", font=dict(size=10, color="#0f172a")),
+                    title=dict(
+                        text="Activation", side="right", font=dict(size=10, color="#0f172a")
+                    ),
                     x=1.02,
                     thickness=12,
                     len=0.85,
@@ -322,10 +346,16 @@ def plot_activation_heatmap(
                 ),
                 hovertemplate="Sample: %{y}<br>Neuron: %{x}<br>Value: %{z:.3f}<extra></extra>",
             ),
-            row=1, col=idx + 1,
+            row=1,
+            col=idx + 1,
         )
         fig.update_xaxes(title_text="Neuron", row=1, col=idx + 1, gridcolor=LIGHT_PALETTE["grid"])
-        fig.update_yaxes(title_text="Sample" if idx == 0 else "", row=1, col=idx + 1, gridcolor=LIGHT_PALETTE["grid"])
+        fig.update_yaxes(
+            title_text="Sample" if idx == 0 else "",
+            row=1,
+            col=idx + 1,
+            gridcolor=LIGHT_PALETTE["grid"],
+        )
 
     return _apply_light_theme(fig, title)
 
@@ -340,19 +370,26 @@ def plot_gradient_histograms(
 ) -> go.Figure:
     """绘制各层梯度的亮色直方图 (图例置于底部，防遮挡)"""
     fig = go.Figure()
-    colors = [LIGHT_PALETTE["primary"], LIGHT_PALETTE["purple"], LIGHT_PALETTE["warning"], LIGHT_PALETTE["secondary"]]
+    colors = [
+        LIGHT_PALETTE["primary"],
+        LIGHT_PALETTE["purple"],
+        LIGHT_PALETTE["warning"],
+        LIGHT_PALETTE["secondary"],
+    ]
 
     for idx, (grad, name) in enumerate(zip(gradients, layer_names, strict=False)):
         vals = grad.ravel()
         color = colors[idx % len(colors)]
-        fig.add_trace(go.Histogram(
-            x=vals,
-            name=name,
-            opacity=0.6,
-            marker_color=color,
-            nbinsx=40,
-            hovertemplate=f"<b>{name}</b><br>Gradient: %{{x:.4f}}<br>Count: %{{y}}<extra></extra>",
-        ))
+        fig.add_trace(
+            go.Histogram(
+                x=vals,
+                name=name,
+                opacity=0.6,
+                marker_color=color,
+                nbinsx=40,
+                hovertemplate=f"<b>{name}</b><br>Gradient: %{{x:.4f}}<br>Count: %{{y}}<extra></extra>",
+            )
+        )
 
     fig.update_layout(
         barmode="overlay",
@@ -383,19 +420,26 @@ def plot_weight_histograms(
 ) -> go.Figure:
     """绘制各层权重的亮色直方图 (图例置于底部)"""
     fig = go.Figure()
-    colors = [LIGHT_PALETTE["accent"], LIGHT_PALETTE["primary"], LIGHT_PALETTE["purple"], LIGHT_PALETTE["warning"]]
+    colors = [
+        LIGHT_PALETTE["accent"],
+        LIGHT_PALETTE["primary"],
+        LIGHT_PALETTE["purple"],
+        LIGHT_PALETTE["warning"],
+    ]
 
     for idx, (w, name) in enumerate(zip(weights, layer_names, strict=False)):
         vals = w.ravel()
         color = colors[idx % len(colors)]
-        fig.add_trace(go.Histogram(
-            x=vals,
-            name=name,
-            opacity=0.6,
-            marker_color=color,
-            nbinsx=40,
-            hovertemplate=f"<b>{name}</b><br>Weight: %{{x:.4f}}<br>Count: %{{y}}<extra></extra>",
-        ))
+        fig.add_trace(
+            go.Histogram(
+                x=vals,
+                name=name,
+                opacity=0.6,
+                marker_color=color,
+                nbinsx=40,
+                hovertemplate=f"<b>{name}</b><br>Weight: %{{x:.4f}}<br>Count: %{{y}}<extra></extra>",
+            )
+        )
 
     fig.update_layout(
         barmode="overlay",
@@ -434,14 +478,16 @@ def plot_multi_loss_curves(
         clean_key = name.split(" ")[0]
         color = LIGHT_PALETTE["optimizers"].get(clean_key, LIGHT_PALETTE["primary"])
 
-        fig.add_trace(go.Scatter(
-            x=epochs,
-            y=losses,
-            mode="lines",
-            name=name,
-            line=dict(color=color, width=2.5, shape="spline", smoothing=1.1),
-            hovertemplate=f"<b>{name}</b><br>Epoch: %{{x}}<br>Loss: %{{y:.4f}}<extra></extra>",
-        ))
+        fig.add_trace(
+            go.Scatter(
+                x=epochs,
+                y=losses,
+                mode="lines",
+                name=name,
+                line=dict(color=color, width=2.5, shape="spline", smoothing=1.1),
+                hovertemplate=f"<b>{name}</b><br>Epoch: %{{x}}<br>Loss: %{{y:.4f}}<extra></extra>",
+            )
+        )
 
     fig.update_layout(
         xaxis_title="Epoch 训练轮次",
@@ -476,46 +522,55 @@ def plot_weight_trajectory(
         w1_vals = [float(w.ravel()[0]) for w in trajectory]
         w2_vals = [float(w.ravel()[1]) for w in trajectory]
 
-        fig.add_trace(go.Scatter(
-            x=w1_vals, y=w2_vals,
-            mode="lines+markers",
-            name="Search Path (寻优轨迹)",
-            line=dict(color=LIGHT_PALETTE["primary"], width=2.5),
-            marker=dict(
-                size=5,
-                color=list(range(len(w1_vals))),
-                colorscale="Blues",
-                showscale=True,
-                colorbar=dict(
-                    title=dict(text="Step 步数", font=dict(size=10, color="#0f172a")),
-                    x=1.02,
-                    thickness=12,
-                    len=0.8,
-                    y=0.45,
-                    tickfont=dict(size=9, color="#64748b"),
+        fig.add_trace(
+            go.Scatter(
+                x=w1_vals,
+                y=w2_vals,
+                mode="lines+markers",
+                name="Search Path (寻优轨迹)",
+                line=dict(color=LIGHT_PALETTE["primary"], width=2.5),
+                marker=dict(
+                    size=5,
+                    color=list(range(len(w1_vals))),
+                    colorscale="Blues",
+                    showscale=True,
+                    colorbar=dict(
+                        title=dict(text="Step 步数", font=dict(size=10, color="#0f172a")),
+                        x=1.02,
+                        thickness=12,
+                        len=0.8,
+                        y=0.45,
+                        tickfont=dict(size=9, color="#64748b"),
+                    ),
                 ),
-            ),
-            hovertemplate="Step %{marker.color}: w₁=%{x:.3f}, w₂=%{y:.3f}<extra></extra>",
-        ))
+                hovertemplate="Step %{marker.color}: w₁=%{x:.3f}, w₂=%{y:.3f}<extra></extra>",
+            )
+        )
 
-        fig.add_trace(go.Scatter(
-            x=[w1_vals[0]], y=[w2_vals[0]],
-            mode="markers+text",
-            name="Start (起点)",
-            text=["START"],
-            textposition="bottom right",
-            textfont=dict(color="#be123c", family="JetBrains Mono", size=10, weight="bold"),
-            marker=dict(size=11, color=LIGHT_PALETTE["secondary"], symbol="circle"),
-        ))
-        fig.add_trace(go.Scatter(
-            x=[w1_vals[-1]], y=[w2_vals[-1]],
-            mode="markers+text",
-            name="Optimal (极优点)",
-            text=["FINAL"],
-            textposition="top right",
-            textfont=dict(color="#047857", family="JetBrains Mono", size=10, weight="bold"),
-            marker=dict(size=12, color=LIGHT_PALETTE["accent"], symbol="diamond"),
-        ))
+        fig.add_trace(
+            go.Scatter(
+                x=[w1_vals[0]],
+                y=[w2_vals[0]],
+                mode="markers+text",
+                name="Start (起点)",
+                text=["START"],
+                textposition="bottom right",
+                textfont=dict(color="#be123c", family="JetBrains Mono", size=10, weight="bold"),
+                marker=dict(size=11, color=LIGHT_PALETTE["secondary"], symbol="circle"),
+            )
+        )
+        fig.add_trace(
+            go.Scatter(
+                x=[w1_vals[-1]],
+                y=[w2_vals[-1]],
+                mode="markers+text",
+                name="Optimal (极优点)",
+                text=["FINAL"],
+                textposition="top right",
+                textfont=dict(color="#047857", family="JetBrains Mono", size=10, weight="bold"),
+                marker=dict(size=12, color=LIGHT_PALETTE["accent"], symbol="diamond"),
+            )
+        )
 
     fig.update_layout(
         xaxis_title="Parameter w₁",
@@ -568,72 +623,101 @@ def plot_embedding_space(
                 mask_bg[i] = False
 
     if np.any(mask_bg):
-        fig.add_trace(go.Scatter3d(
-            x=vecs_3d[mask_bg, 0],
-            y=vecs_3d[mask_bg, 1],
-            z=vecs_3d[mask_bg, 2],
-            mode="markers",
-            name="背景词 (Vocabulary)",
-            text=np.array(words)[mask_bg],
-            marker=dict(size=4, color="rgba(100, 116, 139, 0.4)"),
-            hovertemplate="Word: %{text}<extra></extra>",
-        ))
+        fig.add_trace(
+            go.Scatter3d(
+                x=vecs_3d[mask_bg, 0],
+                y=vecs_3d[mask_bg, 1],
+                z=vecs_3d[mask_bg, 2],
+                mode="markers",
+                name="背景词 (Vocabulary)",
+                text=np.array(words)[mask_bg],
+                marker=dict(size=4, color="rgba(100, 116, 139, 0.4)"),
+                hovertemplate="Word: %{text}<extra></extra>",
+            )
+        )
 
     # 高亮词
     if highlight_words:
         for hw in highlight_words:
             if hw in words:
                 idx = words.index(hw)
-                fig.add_trace(go.Scatter3d(
-                    x=[vecs_3d[idx, 0]],
-                    y=[vecs_3d[idx, 1]],
-                    z=[vecs_3d[idx, 2]],
-                    mode="markers+text",
-                    name=hw,
-                    text=[hw],
-                    textposition="top center",
-                    textfont=dict(size=11, color=LIGHT_PALETTE["primary"], family="JetBrains Mono", weight="bold"),
-                    marker=dict(size=8, color=LIGHT_PALETTE["primary"]),
-                    hovertemplate="Word: %{text}<extra></extra>",
-                ))
+                fig.add_trace(
+                    go.Scatter3d(
+                        x=[vecs_3d[idx, 0]],
+                        y=[vecs_3d[idx, 1]],
+                        z=[vecs_3d[idx, 2]],
+                        mode="markers+text",
+                        name=hw,
+                        text=[hw],
+                        textposition="top center",
+                        textfont=dict(
+                            size=11,
+                            color=LIGHT_PALETTE["primary"],
+                            family="JetBrains Mono",
+                            weight="bold",
+                        ),
+                        marker=dict(size=8, color=LIGHT_PALETTE["primary"]),
+                        hovertemplate="Word: %{text}<extra></extra>",
+                    )
+                )
 
     # 算术矢量平行四边形 A - B + C = Result
     if arithmetic:
-        A, B, C, R = arithmetic.get("A"), arithmetic.get("B"), arithmetic.get("C"), arithmetic.get("Result")
+        A, B, C, R = (
+            arithmetic.get("A"),
+            arithmetic.get("B"),
+            arithmetic.get("C"),
+            arithmetic.get("Result"),
+        )
         if all(w in words for w in [A, B, C, R]):
-            idx_a, idx_b, idx_c, idx_r = words.index(A), words.index(B), words.index(C), words.index(R)
-            
+            idx_a, idx_b, idx_c, idx_r = (
+                words.index(A),
+                words.index(B),
+                words.index(C),
+                words.index(R),
+            )
+
             # 画虚线 B -> A 和 C -> R
-            fig.add_trace(go.Scatter3d(
-                x=[vecs_3d[idx_b, 0], vecs_3d[idx_a, 0]],
-                y=[vecs_3d[idx_b, 1], vecs_3d[idx_a, 1]],
-                z=[vecs_3d[idx_b, 2], vecs_3d[idx_a, 2]],
-                mode="lines",
-                name=f"{B} -> {A}",
-                line=dict(color=LIGHT_PALETTE["accent"], width=4, dash="dash"),
-            ))
-            fig.add_trace(go.Scatter3d(
-                x=[vecs_3d[idx_c, 0], vecs_3d[idx_r, 0]],
-                y=[vecs_3d[idx_c, 1], vecs_3d[idx_r, 1]],
-                z=[vecs_3d[idx_c, 2], vecs_3d[idx_r, 2]],
-                mode="lines",
-                name=f"{C} -> {R}",
-                line=dict(color=LIGHT_PALETTE["accent"], width=4, dash="dash"),
-            ))
-            
+            fig.add_trace(
+                go.Scatter3d(
+                    x=[vecs_3d[idx_b, 0], vecs_3d[idx_a, 0]],
+                    y=[vecs_3d[idx_b, 1], vecs_3d[idx_a, 1]],
+                    z=[vecs_3d[idx_b, 2], vecs_3d[idx_a, 2]],
+                    mode="lines",
+                    name=f"{B} -> {A}",
+                    line=dict(color=LIGHT_PALETTE["accent"], width=4, dash="dash"),
+                )
+            )
+            fig.add_trace(
+                go.Scatter3d(
+                    x=[vecs_3d[idx_c, 0], vecs_3d[idx_r, 0]],
+                    y=[vecs_3d[idx_c, 1], vecs_3d[idx_r, 1]],
+                    z=[vecs_3d[idx_c, 2], vecs_3d[idx_r, 2]],
+                    mode="lines",
+                    name=f"{C} -> {R}",
+                    line=dict(color=LIGHT_PALETTE["accent"], width=4, dash="dash"),
+                )
+            )
+
             # 标注关键 4 词
-            for w, idx, color in zip([A, B, C, R], [idx_a, idx_b, idx_c, idx_r], [LIGHT_PALETTE["primary"]]*3 + [LIGHT_PALETTE["secondary"]]):
-                fig.add_trace(go.Scatter3d(
-                    x=[vecs_3d[idx, 0]],
-                    y=[vecs_3d[idx, 1]],
-                    z=[vecs_3d[idx, 2]],
-                    mode="markers+text",
-                    name=w,
-                    text=[w],
-                    textposition="top center",
-                    textfont=dict(size=12, color=color, family="JetBrains Mono", weight="bold"),
-                    marker=dict(size=9, color=color),
-                ))
+            for w, idx, color in zip(
+                [A, B, C, R],
+                [idx_a, idx_b, idx_c, idx_r],
+                [LIGHT_PALETTE["primary"]] * 3 + [LIGHT_PALETTE["secondary"]],
+            ):
+                fig.add_trace(
+                    go.Scatter3d(
+                        x=[vecs_3d[idx, 0]],
+                        y=[vecs_3d[idx, 1]],
+                        z=[vecs_3d[idx, 2]],
+                        mode="markers+text",
+                        name=w,
+                        text=[w],
+                        textposition="top center",
+                        textfont=dict(size=12, color=color, family="JetBrains Mono", weight="bold"),
+                        marker=dict(size=9, color=color),
+                    )
+                )
 
     fig.update_layout(
         scene=dict(
@@ -660,7 +744,7 @@ def plot_memory_decay_heatmap(
 ) -> go.Figure:
     """绘制 RNN 序列记忆强度的衰减热力图 (带微白间隔网格，彻底防重叠)"""
     n_steps = len(hidden_states)
-    
+
     memory_matrix = np.zeros((n_steps, n_steps))
     for i in range(n_steps):
         for j in range(i + 1):
@@ -672,23 +756,25 @@ def plot_memory_decay_heatmap(
 
     memory_matrix[np.triu_indices(n_steps, 1)] = np.nan
 
-    fig = go.Figure(data=go.Heatmap(
-        z=memory_matrix,
-        x=tokens,
-        y=tokens,
-        colorscale="Blues",
-        showscale=True,
-        xgap=2,
-        ygap=2,
-        colorbar=dict(
-            title=dict(text="Memory", font=dict(size=10, color="#0f172a")),
-            thickness=12,
-            len=0.85,
-            x=1.02,
-        ),
-        hovertemplate="当前词 (Query): <b>%{y}</b><br>历史词 (Key): <b>%{x}</b><br>记忆强度: <b>%{z:.3f}</b><extra></extra>",
-    ))
-    
+    fig = go.Figure(
+        data=go.Heatmap(
+            z=memory_matrix,
+            x=tokens,
+            y=tokens,
+            colorscale="Blues",
+            showscale=True,
+            xgap=2,
+            ygap=2,
+            colorbar=dict(
+                title=dict(text="Memory", font=dict(size=10, color="#0f172a")),
+                thickness=12,
+                len=0.85,
+                x=1.02,
+            ),
+            hovertemplate="当前词 (Query): <b>%{y}</b><br>历史词 (Key): <b>%{x}</b><br>记忆强度: <b>%{z:.3f}</b><extra></extra>",
+        )
+    )
+
     fig.update_layout(
         xaxis=dict(
             side="bottom",
@@ -715,31 +801,33 @@ def plot_attention_heatmap_nlp(
 ) -> go.Figure:
     """
     绘制 N×N 注意力权重热力图 (2026 工业级防重叠排版)。
-    
+
     关键防撞车设计：
     - X 轴刻度置于顶部方便阅读，但免除顶部冗长大标题文字撞车
     - 垂直预留充足 margin，防止 title 与顶部词汇重合
     - 丰富的 Hover 悬停气泡完整呈现 Query -> Key 关系与精准百分比
     """
-    fig = go.Figure(data=go.Heatmap(
-        z=attention_weights,
-        x=tokens_x,
-        y=tokens_y,
-        colorscale="Blues",
-        showscale=True,
-        xgap=2,
-        ygap=2,
-        colorbar=dict(
-            title=dict(text="Weight", font=dict(size=10, color="#0f172a")),
-            thickness=11,
-            len=0.85,
-            x=1.02,
-            y=0.48,
-        ),
-        zmin=0.0,
-        zmax=1.0,
-        hovertemplate="Query (生成词): <b>%{y}</b><br>Key (关注词): <b>%{x}</b><br>Attention 权重: <b>%{z:.2%}</b><extra></extra>",
-    ))
+    fig = go.Figure(
+        data=go.Heatmap(
+            z=attention_weights,
+            x=tokens_x,
+            y=tokens_y,
+            colorscale="Blues",
+            showscale=True,
+            xgap=2,
+            ygap=2,
+            colorbar=dict(
+                title=dict(text="Weight", font=dict(size=10, color="#0f172a")),
+                thickness=11,
+                len=0.85,
+                x=1.02,
+                y=0.48,
+            ),
+            zmin=0.0,
+            zmax=1.0,
+            hovertemplate="Query (生成词): <b>%{y}</b><br>Key (关注词): <b>%{x}</b><br>Attention 权重: <b>%{z:.2%}</b><extra></extra>",
+        )
+    )
 
     # 根据序列长度自适应刻度倾斜角度
     tick_angle = -30 if len(tokens_x) > 6 else 0
@@ -777,20 +865,22 @@ def plot_token_probabilities(
     top_probs = token_probs[top_indices]
     top_words = [vocab[i] for i in top_indices]
 
-    fig = go.Figure(go.Bar(
-        x=top_probs,
-        y=top_words,
-        orientation='h',
-        marker=dict(
-            color=top_probs,
-            colorscale="Blues",
-            line=dict(width=1, color="rgba(15,23,42,0.1)"),
-        ),
-        text=[f"{p:.1%}" for p in top_probs],
-        textposition="outside",
-        textfont=dict(family="JetBrains Mono", size=10, color="#0f172a"),
-        hovertemplate="Token: <b>%{y}</b><br>Probability: %{x:.4f}<extra></extra>",
-    ))
+    fig = go.Figure(
+        go.Bar(
+            x=top_probs,
+            y=top_words,
+            orientation="h",
+            marker=dict(
+                color=top_probs,
+                colorscale="Blues",
+                line=dict(width=1, color="rgba(15,23,42,0.1)"),
+            ),
+            text=[f"{p:.1%}" for p in top_probs],
+            textposition="outside",
+            textfont=dict(family="JetBrains Mono", size=10, color="#0f172a"),
+            hovertemplate="Token: <b>%{y}</b><br>Probability: %{x:.4f}<extra></extra>",
+        )
+    )
 
     fig.update_layout(
         xaxis_title="Probability (置信概率)",

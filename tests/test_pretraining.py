@@ -4,17 +4,16 @@ tests/test_pretraining.py - 预训练范式模块单元测试与梯度检验
 """
 
 import numpy as np
-import pytest
 
 from nn_core.pretraining import (
     CausalLanguageModel,
     ContrastiveLearning,
+    DataMixtureEngine,
     MaskedAutoEncoder,
     MaskedLanguageModel,
     PretrainingComparator,
     ScalingLawEngine,
     SimpleBPE,
-    DataMixtureEngine,
 )
 
 
@@ -69,7 +68,7 @@ def test_data_mixture_and_pipeline():
     """测试预训练语料配比与清洗流水线数据完整性"""
     mixtures = DataMixtureEngine.get_mixtures()
     assert "LLaMA-3 (Meta 2024, 15T)" in mixtures
-    for name, mix in mixtures.items():
+    for _name, mix in mixtures.items():
         total_pct = sum(mix.values())
         assert abs(total_pct - 100.0) < 1e-3  # 配比总和为 100%
 
@@ -80,16 +79,15 @@ def test_data_mixture_and_pipeline():
         assert "rules" in stage
 
 
-
 def test_mlm_batch_and_loss():
     """测试 BERT 式掩码生成与 MLM 交叉熵损失"""
     vocab_size = 50
     seq_len = 20
     token_ids = np.random.randint(1, vocab_size, size=(1, seq_len))
-    
+
     mlm = MaskedLanguageModel(vocab_size=vocab_size, d_model=16, mask_ratio=0.15)
     masked_ids, labels, mask_pos = mlm.create_mlm_batch(token_ids)
-    
+
     assert masked_ids.shape == (1, seq_len)
     assert np.sum(mask_pos) >= 1
     assert np.sum(labels != -100) == np.sum(mask_pos)
@@ -110,7 +108,7 @@ def test_clm_batch_and_loss():
     vocab_size = 50
     seq_len = 15
     token_ids = np.random.randint(1, vocab_size, size=(1, seq_len))
-    
+
     clm = CausalLanguageModel(vocab_size=vocab_size, d_model=16)
     x_in, y_tgt = clm.create_clm_batch(token_ids)
     assert x_in.shape == (1, seq_len - 1)
@@ -132,7 +130,7 @@ def test_contrastive_learning_nt_xent():
     D = 16
     embeds = np.random.randn(N, D)
     cl = ContrastiveLearning(d_model=D)
-    
+
     z_i, z_j = cl.create_positive_pairs(embeds, noise_std=0.01)
     assert z_i.shape == (N, D)
     assert z_j.shape == (N, D)
@@ -150,8 +148,8 @@ def test_mae_masking_and_reconstruction():
     patches = np.random.randn(B, num_patches, d_model)
 
     mae = MaskedAutoEncoder(num_patches=num_patches, d_model=d_model, mask_ratio=0.75)
-    masked_p, mask_idx, unmask_idx = mae.create_mae_batch(patches)
-    
+    masked_p, mask_idx, _unmask_idx = mae.create_mae_batch(patches)
+
     assert len(mask_idx) == 12  # 75% of 16
     assert np.all(masked_p[:, mask_idx] == 0.0)
 
@@ -166,7 +164,7 @@ def test_pretraining_comparator():
     """测试下游任务迁移能力字典"""
     scores = PretrainingComparator.get_transfer_scores()
     assert len(scores) == 4
-    for model_name, task_dict in scores.items():
+    for _model_name, task_dict in scores.items():
         assert len(task_dict) == 4
         for score in task_dict.values():
             assert 0 <= score <= 100

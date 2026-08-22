@@ -8,7 +8,7 @@ nn_core.vit - Vision Transformer (ViT) 纯 NumPy 视觉特征提取与分类模�
 """
 
 import logging
-from typing import Optional, Tuple
+
 import numpy as np
 
 from nn_core.layernorm import LayerNorm
@@ -119,7 +119,7 @@ class VisionTransformer:
         self.head_w = np.random.randn(d_model, num_classes) * np.sqrt(2.0 / d_model)
         self.head_b = np.zeros(num_classes)
 
-    def forward(self, img: np.ndarray) -> Tuple[np.ndarray, list[np.ndarray]]:
+    def forward(self, img: np.ndarray) -> tuple[np.ndarray, list[np.ndarray]]:
         """
         前向图像分类与注意力图提取。
         返回 (logits, attention_weights_list)

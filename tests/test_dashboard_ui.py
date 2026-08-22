@@ -88,9 +88,8 @@ class TestThemeHtmlIntegrity:
             render_text_stream_box,
             render_vector_equation_card,
         )
+
         # 确保这些函数能够无异常执行
-        tokens = ["the", "cat", "sat"]
-        h_states = [np.random.randn(1, 16) for _ in range(3)]
         # 验证不会抛异常即可
         assert callable(render_sequence_flow)
         assert callable(render_vector_equation_card)
@@ -199,7 +198,10 @@ class TestChartFactory:
         words = ["king", "queen", "man", "woman", "apple"]
         vecs = np.random.randn(5, 32)
         fig = plot_embedding_space(
-            words, vecs, highlight_words=["king", "queen"], arithmetic={"A": "king", "B": "man", "C": "woman", "Result": "queen"}
+            words,
+            vecs,
+            highlight_words=["king", "queen"],
+            arithmetic={"A": "king", "B": "man", "C": "woman", "Result": "queen"},
         )
         assert isinstance(fig, go.Figure)
 
@@ -255,6 +257,14 @@ class TestStreamlitAppE2E:
         at = AppTest.from_file(app_path, default_timeout=20).run()
         assert not at.exception, f"app.py runtime error: {at.exception}"
 
+    def test_page0_math_foundations_e2e(self):
+        """测试 M00：shape、链式法则与有限差分页面。"""
+        page_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "dashboard", "pages", "0_数学基础.py")
+        )
+        at = AppTest.from_file(page_path, default_timeout=25).run()
+        assert not at.exception, f"Page 0 runtime error: {at.exception}"
+
     def test_page1_perceptron_e2e(self):
         page_path = os.path.abspath(
             os.path.join(
@@ -263,6 +273,27 @@ class TestStreamlitAppE2E:
         )
         at = AppTest.from_file(page_path, default_timeout=20).run()
         assert not at.exception, f"Page 1 runtime error: {at.exception}"
+
+    def test_page1_player_can_pause_and_hold_step(self):
+        """连续演播可暂停，暂停后不会继续推进当前参数状态。"""
+        page_path = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__), "..", "dashboard", "pages", "1_单神经元感知器.py"
+            )
+        )
+        at = AppTest.from_file(page_path, default_timeout=25).run()
+        play = next(button for button in at.button if "连续演播" in button.label)
+        play.click().run()
+        at.run()
+
+        pause = next(button for button in at.button if "暂停观察" in button.label)
+        pause.click().run()
+        at.run()
+        paused_step = at.session_state["m1_scrub_step"]
+
+        at.run()
+        assert at.session_state["m1_player_state"] == "paused"
+        assert at.session_state["m1_scrub_step"] == paused_step
 
     def test_page2_deep_network_e2e(self):
         page_path = os.path.abspath(
@@ -368,7 +399,9 @@ class TestStreamlitAppE2E:
     def test_page12_video_world_model_e2e(self):
         """测试 M12: 视频理解与世界模型页面"""
         page_path = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), "..", "dashboard", "pages", "12_视频与世界模型.py")
+            os.path.join(
+                os.path.dirname(__file__), "..", "dashboard", "pages", "12_视频与世界模型.py"
+            )
         )
         at = AppTest.from_file(page_path, default_timeout=25).run()
         assert not at.exception, f"Page 12 runtime error: {at.exception}"
@@ -396,4 +429,3 @@ class TestStreamlitAppE2E:
         )
         at = AppTest.from_file(page_path, default_timeout=25).run()
         assert not at.exception, f"Page 15 runtime error: {at.exception}"
-

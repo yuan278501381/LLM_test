@@ -5,21 +5,19 @@ nn_core.video - 纯 NumPy 合成视频生成、时空图块嵌入 (Spatio-Tempor
 包含：
 - `generate_synthetic_video`: 32x32 多模式连续运动灰度视频序列合成 (反射弹跳/平移/扩散膨胀/圆周旋转/弧形平移)
 - `VideoFrameSampler`: 均匀抽样与关键帧运动突变差异抽样器
-- `SpatioTemporalPatchEmbed`: 3D 视频时空切片嵌入层 (对标 ViViT / Sora Spatio-Temporal Patches)
+- `SpatioTemporalPatchEmbed`: 教学级 3D 视频时空切片投影层
 - `compute_frame_difference` / `compute_frame_change_magnitude`: 帧间差分能量与全局像素扰动范数计算
 """
 
 import logging
-from typing import Tuple
+
 import numpy as np
 
 logger = logging.getLogger("nn_core.video")
 
 
 def generate_synthetic_video(
-    n_frames: int = 8,
-    size: int = 32,
-    motion: str = "bounce"
+    n_frames: int = 8, size: int = 32, motion: str = "bounce"
 ) -> np.ndarray:
     """
     合成指定帧数与运动模式的 32x32 灰度视频序列。
@@ -38,27 +36,27 @@ def generate_synthetic_video(
             cy = int(radius + tri_wave * (size - 2 * radius))
             cx = int(center + (size // 4) * np.sin(2 * np.pi * t / n_frames))
             y, x = np.ogrid[:size, :size]
-            mask = (x - cx) ** 2 + (y - cy) ** 2 <= radius ** 2
+            mask = (x - cx) ** 2 + (y - cy) ** 2 <= radius**2
             img[mask] = 1.0
         elif motion == "circular" or "圆周" in motion or "旋转" in motion:
             # 匀速圆周运动轨迹
             cx = int(center + (size // 3) * np.sin(2 * np.pi * t / n_frames))
             cy = int(center + (size // 3) * np.cos(2 * np.pi * t / n_frames))
             y, x = np.ogrid[:size, :size]
-            mask = (x - cx) ** 2 + (y - cy) ** 2 <= radius ** 2
+            mask = (x - cx) ** 2 + (y - cy) ** 2 <= radius**2
             img[mask] = 1.0
         elif motion == "slide" or "滑动" in motion:
             # 物体从左往右匀速平移
             cx = int((size - 2 * radius) * (t / max(1, n_frames - 1))) + radius
             cy = center
             y, x = np.ogrid[:size, :size]
-            mask = (x - cx) ** 2 + (y - cy) ** 2 <= radius ** 2
+            mask = (x - cx) ** 2 + (y - cy) ** 2 <= radius**2
             img[mask] = 1.0
         elif motion == "grow" or "膨胀" in motion:
             # 物体从中心逐渐变大
             cur_r = int(radius * (1.0 + 2.0 * t / max(1, n_frames - 1)))
             y, x = np.ogrid[:size, :size]
-            mask = (x - center) ** 2 + (y - center) ** 2 <= cur_r ** 2
+            mask = (x - center) ** 2 + (y - center) ** 2 <= cur_r**2
             img[mask] = 1.0
         else:  # 矩形方块弧形平移
             cx = int(center + (size // 4) * np.cos(np.pi * t / n_frames))
@@ -77,7 +75,7 @@ def compute_frame_difference(video: np.ndarray) -> np.ndarray:
     """计算相邻帧之间的均方差 (MSE) 能量"""
     # video: (T, 1, H, W)
     diffs = np.diff(video, axis=0)
-    mse = np.mean(diffs ** 2, axis=(1, 2, 3))
+    mse = np.mean(diffs**2, axis=(1, 2, 3))
     return mse.astype(np.float32)
 
 
@@ -102,7 +100,7 @@ class VideoFrameSampler:
     def __init__(self, strategy: str = "uniform") -> None:
         self.strategy = strategy
 
-    def sample(self, video: np.ndarray, n_sample: int = 4) -> Tuple[np.ndarray, list[int]]:
+    def sample(self, video: np.ndarray, n_sample: int = 4) -> tuple[np.ndarray, list[int]]:
         """
         从原视频中抽取 n_sample 帧。
         返回 (sampled_video, indices)
@@ -116,7 +114,7 @@ class VideoFrameSampler:
             diffs = compute_frame_difference(video)
             # 首帧必选，其余按变化率排序后重新按时间戳排序
             top_diff_indices = np.argsort(diffs)[::-1][: n_sample - 1] + 1
-            indices = sorted(list(set([0] + top_diff_indices.tolist())))
+            indices = sorted(set([0, *top_diff_indices.tolist()]))
             # 若数量不足，用均匀采样补齐
             if len(indices) < n_sample:
                 uniform_indices = np.linspace(0, T - 1, n_sample, dtype=int).tolist()

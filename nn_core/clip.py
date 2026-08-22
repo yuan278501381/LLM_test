@@ -9,7 +9,7 @@ nn_core.clip - 对比语言-图像预训练 (CLIP) 双塔架构与对比学习�
 """
 
 import logging
-from typing import Tuple
+
 import numpy as np
 
 from nn_core.embeddings import Embedding, PositionalEncoding
@@ -102,7 +102,7 @@ class CLIPDualEncoder:
         return np.dot(img_embeds, txt_embeds.T)
 
 
-def get_pretrained_clip_data() -> Tuple[list[str], list[str], np.ndarray]:
+def get_pretrained_clip_data() -> tuple[list[str], list[str], np.ndarray]:
     """
     返回预置的 8 组图文概念、文本描述与对齐的余弦相似度矩阵（用于教学与可视化演示）。
     """

@@ -132,7 +132,7 @@ ACTIVATIONS: dict[str, ActivationMeta] = {
         label="ReLU (线性整流函数)",
         formula="f(z) = \\max(0, z)",
         desc="正向区域保持完全线性，负向区域直接置零。现代深度学习中最通用、计算最快的基准激活函数。",
-        impact="彻底解决正向区域的梯度消失问题；但若学习率过大导致神经元输出长期落入负区，会出现导数恒为 0 的「神经元坏死 (Dying ReLU)」现象。",
+        impact="在正输入区导数为 1，可缓解饱和激活的梯度衰减；但负输入区导数为 0，参数设置不当时可能出现 Dying ReLU。",
         example="绝大多数卷积神经网络 (CNN) 与深层 MLP 的隐藏层默认首选；在双螺旋、半月形流形折叠中表现优异。",
     ),
     "Sigmoid": ActivationMeta(
@@ -155,8 +155,8 @@ ACTIVATIONS: dict[str, ActivationMeta] = {
         id="LeakyReLU",
         label="LeakyReLU (带泄露线性整流)",
         formula="f(z) = \\max(\\alpha z, z), \\quad \\alpha = 0.01",
-        desc="在负半轴保留微小的倾斜斜率（默认 0.01），允许负信号产生微弱响应，绝不彻底封死。",
-        impact="彻底杜绝了 ReLU 的神经元死亡问题，使得原本休眠的神经元在反向传播中依然能接收微弱梯度并有机会被重新唤醒。",
+        desc="在负半轴保留微小斜率（默认 0.01），让负输入仍能传递非零梯度。",
+        impact="可缓解标准 ReLU 的零负半轴问题，但较小负斜率仍可能造成弱梯度，不能保证所有训练设置都稳定。",
         example="生成对抗网络 (GAN) 判别器；包含高噪声或负向特征密集的复杂拓扑拟合。",
     ),
     "Softmax": ActivationMeta(
@@ -179,7 +179,7 @@ OPTIMIZERS: dict[str, OptimizerMeta] = {
         formula="\\theta_{t+1} = \\theta_t - \\frac{\\eta}{\\sqrt{\\hat{v}_t} + \\epsilon} \\hat{m}_t",
         desc="结合了 Momentum 的一阶动量（方向惯性）与 RMSProp 的二阶未中心化方差（自适应步长），并包含初始冷启动偏差修正。",
         impact="对学习率超参数鲁棒，能自适应调节不同参数的更新步长，在极高曲率和鞍点地形中收敛速度远超传统优化器。",
-        example="几乎所有现代深度学习架构（Transformer、GPT、ResNet、Diffusion）的工业级默认第一选择。",
+        example="Transformer、视觉模型与生成模型中常见的起点；实际选择常包括 AdamW、SGD 等，并依赖任务与正则化方案。",
     ),
     "SGD": OptimizerMeta(
         id="SGD",
@@ -216,7 +216,7 @@ INITIALIZERS: dict[str, InitializerMeta] = {
         label="He / Kaiming (何恺明正态分布)",
         formula="W \\sim \\mathcal{N}\\left(0,\\; \\sigma^2 = \\frac{2}{n_{in}}\\right)",
         desc="何恺明针对 ReLU 类单边抑制激活函数推导的方差补偿初始化方案，补偿了负半轴归零导致的信号能量减半。",
-        impact="保持深层网络中各层激活值与梯度的方差稳定恒定，彻底避免深层前向信号衰竭或反向梯度弥散。",
+        impact="在独立性等推导假设近似成立时，有助于维持 ReLU 网络的信号方差；深层训练仍受归一化、残差尺度和数据分布影响。",
         example="所有搭载 ReLU / LeakyReLU 的深层网络（如 50~152 层 ResNet）的标准标配。",
     ),
     "xavier": InitializerMeta(
@@ -388,6 +388,7 @@ PRESETS_REGISTRY: dict[str, dict[str, Any]] = {
     },
 }
 
+
 # ---------------------------------------------------------------------------
 # 7. 现代大模型架构核心组件知识库 (2026 Modern LLM Architecture)
 # ---------------------------------------------------------------------------
@@ -410,6 +411,7 @@ class ArchitectureMeta:
             f"• **[BENCHMARK // 工业标准]**: {self.example}"
         )
 
+
 MODERN_LLM_ARCH: dict[str, ArchitectureMeta] = {
     "BPE": ArchitectureMeta(
         id="BPE",
@@ -424,8 +426,8 @@ MODERN_LLM_ARCH: dict[str, ArchitectureMeta] = {
         label="RoPE (Rotary Position Embedding / 旋转位置编码)",
         formula="f(q, m) = (q_0+iq_1)e^{im\\theta}, \\quad \\langle f(q,m), f(k,n)\\rangle = \\text{Re}\\left(q k^* e^{i(m-n)\\theta}\\right)",
         desc="将位置信息通过复数域的旋转矩阵注入到 Query 和 Key 中，使得其内积结果自然带入且仅依赖于相对距离 (m-n)。",
-        impact="彻底取代了早期的绝对正弦位置编码，展现出极强的长度外推泛化能力 (Length Extrapolation)，模型能轻松处理比训练时更长的文本。",
-        example="2026 几乎所有开源模型的绝对标配，如 LLaMA 全系列、Qwen、Mistral 等均采用 RoPE 及其改进变体 (YaRN/NTK)。",
+        impact="以旋转方式编码相对位置信息，并被许多现代 LLM 采用；超出训练长度时仍可能退化，常需频率缩放等扩展方法。",
+        example="LLaMA、Qwen、Mistral 等模型采用 RoPE 或其变体；它不是唯一的位置编码方案。",
     ),
     "GQA": ArchitectureMeta(
         id="GQA",
@@ -470,7 +472,7 @@ MULTIMODAL_ARCH: dict[str, ArchitectureMeta] = {
         label="ViT (Vision Transformer / 图像切片自注意力)",
         formula="Z_0 = [x_{\\text{cls}}; x_p^1 E; \\dots; x_p^N E] + E_{\\text{pos}}",
         desc="将整幅图像切分为不重叠的小图块 (Patches)，将每个 Patch 视为一个 Token 送入标准 Transformer Encoder 处理全局自注意力。",
-        impact="彻底打破了 CV 与 NLP 的模态鸿沟，消除了卷积的归纳偏置，在大规模数据预训练下展现出强大的表征上限。",
+        impact="把图像表示成 token 序列并使用全局注意力，弱化了卷积的局部归纳偏置；效果依赖数据规模、正则化和训练方案。",
         example="ViT-H/14, DINOv2, MAE 等视觉基础大模型。",
     ),
     "CLIP": ArchitectureMeta(
@@ -487,7 +489,7 @@ MULTIMODAL_ARCH: dict[str, ArchitectureMeta] = {
         formula="X(m, \\omega) = \\sum_{n=0}^{N-1} x(m H + n) w(n) e^{-j \\omega n}",
         desc="将一维时域连续振动声波分解为频域各正弦分量的幅度与相位，STFT 则通过加窗滑动提取动态时频谱。",
         impact="数字音频信号处理的数学基石，将不可解析的连续时间压力波形转化为计算机可处理的频域矩阵。",
-        example="所有现代声学与语音识别前端信号处理流程。",
+        example="许多语音识别与音频分类系统使用的常见声学特征；端到端波形模型可能采用不同前端。",
     ),
     "MelSpec": ArchitectureMeta(
         id="MelSpec",
@@ -563,7 +565,7 @@ TRAINING_ARCH: dict[str, ArchitectureMeta] = {
         id="DPO",
         label="DPO (Direct Preference Optimization / 直接偏好优化)",
         formula="L_{\\text{DPO}} = -\\mathbb{E}\\left[ \\log \\sigma\\left( \\beta \\log \\frac{\\pi_\\theta(y_w|x)}{\\pi_{\\text{ref}}(y_w|x)} - \\beta \\log \\frac{\\pi_\\theta(y_l|x)}{\\pi_{\\text{ref}}(y_l|x)} \\right) \\right]",
-        desc="通过数学变换将奖励模型的最优闭式解直接代入损失函数，彻底摆脱了复杂的强化学习 PPO 训练循环。",
+        desc="通过偏好对直接优化策略与参考策略的相对对数概率，无需在该训练阶段运行 PPO rollout 和显式奖励模型。",
         impact="训练极其稳定，显存消耗减少一半，已成为 2024~2026 年工业界最主流的大模型偏好微调方案。",
         example="LLaMA-3, Qwen-2.5, Mistral 等现代开源模型对齐的默认标准。",
     ),
@@ -573,7 +575,7 @@ TRAINING_ARCH: dict[str, ArchitectureMeta] = {
         formula="W = W_0 + \\Delta W = W_0 + \\frac{\\alpha}{r} B A, \\quad A \\in \\mathbb{R}^{d \\times r}, B \\in \\mathbb{R}^{r \\times k}",
         desc="冻结预训练主干权重，在矩阵旁路引入两个极小秩的分解矩阵 A 和 B 进行梯度更新，推理时可直接合并消除延迟。",
         impact="将显存需求降低 3~5 倍，训练参数量压缩 95% 以上，使得个人电脑或单卡即可微调百亿参数大模型。",
-        example="开源社区微调大模型与 Diffusion 风格权重的绝对标准协议。",
+        example="开源大模型和部分生成模型微调中常见的参数高效方法之一。",
     ),
     "Perplexity": ArchitectureMeta(
         id="Perplexity",
@@ -592,4 +594,3 @@ TRAINING_ARCH: dict[str, ArchitectureMeta] = {
         example="lm-evaluation-harness (EleutherAI), Open LLM Leaderboard (HuggingFace)。",
     ),
 }
-

@@ -34,6 +34,7 @@ from dashboard.constants.knowledge import (
     OPTIMIZERS,
     REGULARIZERS,
 )
+from dashboard.components.pedagogy import render_lesson_evidence
 from dashboard.styles.theme import (
     anchor_badge,
     apply_custom_theme,
@@ -59,6 +60,7 @@ st.set_page_config(
 )
 
 apply_custom_theme()
+render_lesson_evidence("M04")
 
 render_hero_header(
     title="全参数微观实验室",
@@ -73,11 +75,41 @@ render_hero_header(
 render_page_guide(
     title="全参数微观实验室与空间交互地图",
     blueprint_sections=[
-        {"id": "A", "name": "控制台面板", "desc": "在左侧侧边栏调节网络结构、正则化项与优化器参数", "color": "amber", "target_id": "region-a"},
-        {"id": "B", "name": "教学指引", "desc": "当前卡片：通俗理解单步微调、过拟合与 L1/L2 正则化紧箍咒", "color": "blue", "target_id": "region-b"},
-        {"id": "C", "name": "步进训练与遥测", "desc": "点击单步走或练50轮，实时观测损失与权重梯度均值", "color": "emerald", "target_id": "region-c"},
-        {"id": "D", "name": "四宫格微观全景", "desc": "流形面、收敛线、权重谱与梯度流四重视窗同步透视", "color": "purple", "target_id": "region-d"},
-        {"id": "E", "name": "快照 A/B 对比", "desc": "保存当前网络快照并与历史权重进行无缝对比", "color": "blue", "target_id": "region-e"},
+        {
+            "id": "A",
+            "name": "控制台面板",
+            "desc": "在左侧侧边栏调节网络结构、正则化项与优化器参数",
+            "color": "amber",
+            "target_id": "region-a",
+        },
+        {
+            "id": "B",
+            "name": "教学指引",
+            "desc": "当前卡片：通俗理解单步微调、过拟合与 L1/L2 正则化紧箍咒",
+            "color": "blue",
+            "target_id": "region-b",
+        },
+        {
+            "id": "C",
+            "name": "步进训练与遥测",
+            "desc": "点击单步走或练50轮，实时观测损失与权重梯度均值",
+            "color": "emerald",
+            "target_id": "region-c",
+        },
+        {
+            "id": "D",
+            "name": "四宫格微观全景",
+            "desc": "流形面、收敛线、权重谱与梯度流四重视窗同步透视",
+            "color": "purple",
+            "target_id": "region-d",
+        },
+        {
+            "id": "E",
+            "name": "快照 A/B 对比",
+            "desc": "保存当前网络快照并与历史权重进行无缝对比",
+            "color": "blue",
+            "target_id": "region-e",
+        },
     ],
     plain_intro=(
         f"<b>这里是神经网络的「显微镜调试台」！</b><br>"
@@ -109,7 +141,10 @@ render_page_guide(
 # ---------------------------------------------------------------------------
 # 侧边栏控制面板
 # ---------------------------------------------------------------------------
-st.sidebar.markdown(f'<div id="region-a" class="interactive-region" style="margin-bottom:0.6rem;padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">{anchor_badge("A", "amber")} <b>HYPERPARAMETERS // 控制台配置</b></div>', unsafe_allow_html=True)
+st.sidebar.markdown(
+    f'<div id="region-a" class="interactive-region" style="margin-bottom:0.6rem;padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">{anchor_badge("A", "amber")} <b>HYPERPARAMETERS // 控制台配置</b></div>',
+    unsafe_allow_html=True,
+)
 
 # ---------------------------------------------------------------------------
 # 侧边栏控制面板 (中英双语标签，由元数据驱动)
@@ -154,7 +189,11 @@ reg_lambda = 0.0
 if reg_meta.id != "None":
     reg_lambda = st.sidebar.slider(
         "惩罚系数 (λ)",
-        0.0001, 0.1, 0.01, step=0.005, format="%.4f",
+        0.0001,
+        0.1,
+        0.01,
+        step=0.005,
+        format="%.4f",
         help="正则化惩罚强度。越大对权重的压制越强，决策面越平滑；过大会导致欠拟合。",
         key="m4_lambda",
     )
@@ -198,14 +237,18 @@ col_btn1, col_btn2, col_btn3 = st.columns([1, 1, 2])
 
 with col_btn1:
     if st.button("TRAIN // 训练 50 轮", key="m4_train_50"):
-        hist = model.train(X, y, loss_fn=loss_fn, optimizer=opt_instance, epochs=50, batch_size=batch_size)
+        hist = model.train(
+            X, y, loss_fn=loss_fn, optimizer=opt_instance, epochs=50, batch_size=batch_size
+        )
         history["loss"].extend(hist["loss"])
         history["accuracy"].extend(hist["accuracy"])
         st.session_state["m4_epoch_count"] += 50
 
 with col_btn2:
     if st.button("STEP // 单步微调", key="m4_step_1"):
-        hist = model.train(X, y, loss_fn=loss_fn, optimizer=opt_instance, epochs=1, batch_size=batch_size)
+        hist = model.train(
+            X, y, loss_fn=loss_fn, optimizer=opt_instance, epochs=1, batch_size=batch_size
+        )
         history["loss"].extend(hist["loss"])
         history["accuracy"].extend(hist["accuracy"])
         st.session_state["m4_epoch_count"] += 1
@@ -217,7 +260,7 @@ with col_btn3:
         '<div style="display:flex;align-items:center;gap:0.8rem;height:100%;padding-top:0.3rem;">'
         f'<span class="pill-badge pill-emerald"><span class="status-dot"></span> EPOCHS 训练轮数: {current_epochs}</span>'
         f'<span class="pill-badge pill-blue">OPT 优化器: {clean_opt_name} (lr={lr})</span>'
-        '</div>'
+        "</div>"
     )
     st.markdown(badge_status, unsafe_allow_html=True)
 
@@ -227,7 +270,7 @@ with col_btn3:
 st.markdown(
     f'<div id="region-c" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;">'
     f'{anchor_badge("C", "emerald")} <span style="font-weight:800;color:#065f46;font-size:0.86rem;">STEP CONTROLLER & TELEMETRY // 步进训练中枢与遥测指标</span>'
-    f'</div>',
+    f"</div>",
     unsafe_allow_html=True,
 )
 current_loss = history["loss"][-1] if history["loss"] else 1.0
@@ -236,7 +279,7 @@ current_acc = history["accuracy"][-1] if history["accuracy"] else 0.0
 dense_layers = [l for l in model.layers if isinstance(l, Dense)]
 weights_list = [l.weights for l in dense_layers]
 grads_list = [l.grad_weights for l in dense_layers if l.grad_weights is not None]
-layer_names = [f"Dense #{i+1}" for i in range(len(dense_layers))]
+layer_names = [f"Dense #{i + 1}" for i in range(len(dense_layers))]
 
 grad_norm = float(np.mean([np.mean(np.abs(g)) for g in grads_list])) if grads_list else 0.0
 weight_norm = float(np.mean([np.mean(np.abs(w)) for w in weights_list])) if weights_list else 0.0
@@ -245,11 +288,35 @@ clean_reg_name = reg_meta.id
 
 grid_html = (
     '<div class="metric-grid" style="margin-top:0.4rem;">'
-    + render_metric_card("CURRENT LOSS // 当前损失", f"{current_loss:.4f}", delta=f"EPOCH 轮次 #{st.session_state['m4_epoch_count']}", delta_type="positive" if current_loss < 0.2 else "neutral", icon_name="trending-down")
-    + render_metric_card("ACCURACY // 当前准确率", f"{current_acc:.1%}", delta="LIVE STATE", delta_type="positive" if current_acc >= 0.9 else "neutral", icon_name="target")
-    + render_metric_card("GRADIENT NORM // 梯度范数", f"{grad_norm:.2e}", delta="BACKPROP ACTIVITY", delta_type="neutral", icon_name="activity")
-    + render_metric_card("WEIGHT MAGNITUDE // 权重均值", f"{weight_norm:.4f}", delta=f"REG 正则: {clean_reg_name}", delta_type="neutral", icon_name="shield")
-    + '</div>'
+    + render_metric_card(
+        "CURRENT LOSS // 当前损失",
+        f"{current_loss:.4f}",
+        delta=f"EPOCH 轮次 #{st.session_state['m4_epoch_count']}",
+        delta_type="positive" if current_loss < 0.2 else "neutral",
+        icon_name="trending-down",
+    )
+    + render_metric_card(
+        "ACCURACY // 当前准确率",
+        f"{current_acc:.1%}",
+        delta="LIVE STATE",
+        delta_type="positive" if current_acc >= 0.9 else "neutral",
+        icon_name="target",
+    )
+    + render_metric_card(
+        "GRADIENT NORM // 梯度范数",
+        f"{grad_norm:.2e}",
+        delta="BACKPROP ACTIVITY",
+        delta_type="neutral",
+        icon_name="activity",
+    )
+    + render_metric_card(
+        "WEIGHT MAGNITUDE // 权重均值",
+        f"{weight_norm:.4f}",
+        delta=f"REG 正则: {clean_reg_name}",
+        delta_type="neutral",
+        icon_name="shield",
+    )
+    + "</div>"
 )
 st.markdown(grid_html, unsafe_allow_html=True)
 
@@ -259,7 +326,7 @@ st.markdown(grid_html, unsafe_allow_html=True)
 st.markdown(
     f'<div id="region-d" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;margin-top:1rem;">'
     f'{anchor_badge("D", "purple")} <span style="font-weight:800;color:#5b21b6;font-size:0.86rem;">QUAD TELEMETRY CONSOLE // 四宫格微观全景遥测监控台</span>'
-    f'</div>',
+    f"</div>",
     unsafe_allow_html=True,
 )
 
@@ -269,7 +336,7 @@ with grid_c1:
     fig_bound = plot_decision_boundary(
         model, X, y, title=f"DECISION MANIFOLD // 空间决策流形 (Acc: {current_acc:.1%})"
     )
-    st.plotly_chart(fig_bound, use_container_width=True)
+    st.plotly_chart(fig_bound, width="stretch")
     with st.expander("[HOW TO READ // 读图指南] 空间决策流形与分界线", expanded=False):
         st.markdown(
             """
@@ -282,7 +349,7 @@ with grid_c1:
     fig_w_hist = plot_weight_histograms(
         weights_list, layer_names, title="WEIGHT SPECTRUM // 逐层权重参数分布"
     )
-    st.plotly_chart(fig_w_hist, use_container_width=True)
+    st.plotly_chart(fig_w_hist, width="stretch")
     with st.expander("[HOW TO READ // 读图指南] 逐层权重参数直方图", expanded=False):
         st.markdown(
             """
@@ -294,8 +361,10 @@ with grid_c1:
 
 with grid_c2:
     fig_loss = plot_loss_curve(history, title="TRAINING DYNAMICS // 损失与准确率收敛动态")
-    st.plotly_chart(fig_loss, use_container_width=True)
-    with st.expander("[HOW TO READ // 读图指南] 损失收敛 (Loss) 与准确率 (Accuracy)", expanded=False):
+    st.plotly_chart(fig_loss, width="stretch")
+    with st.expander(
+        "[HOW TO READ // 读图指南] 损失收敛 (Loss) 与准确率 (Accuracy)", expanded=False
+    ):
         st.markdown(
             """
             * **横轴**：训练轮数 (Epochs)；**左纵轴**：损失 (Loss，越低越好)；**右纵轴**：准确率 (Accuracy，越高越好)。
@@ -309,7 +378,7 @@ with grid_c2:
         layer_names,
         title="GRADIENT FLOW // 反向传播梯度流分布",
     )
-    st.plotly_chart(fig_g_hist, use_container_width=True)
+    st.plotly_chart(fig_g_hist, width="stretch")
     with st.expander("[HOW TO READ // 读图指南] 反向传播梯度流分布", expanded=False):
         st.markdown(
             """
@@ -325,7 +394,7 @@ with grid_c2:
 st.markdown(
     f'<div id="region-e" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;margin-top:1.2rem;">'
     f'{anchor_badge("E", "blue")} <span style="font-weight:800;color:#1e40af;font-size:0.86rem;">SNAPSHOT ARCHIVE // 实验状态快照管理与 JSON 导出</span>'
-    f'</div>',
+    f"</div>",
     unsafe_allow_html=True,
 )
 
@@ -344,7 +413,9 @@ with col_snap1:
             "weights": [w.tolist() for w in weights_list],
         }
         st.session_state["m4_saved_snapshot"] = snapshot
-        st.success(f"已保存第 {st.session_state['m4_epoch_count']} 轮快照 (Loss: {current_loss:.4f})")
+        st.success(
+            f"已保存第 {st.session_state['m4_epoch_count']} 轮快照 (Loss: {current_loss:.4f})"
+        )
 
 with col_snap2:
     if "m4_saved_snapshot" in st.session_state:
@@ -358,16 +429,26 @@ with col_snap2:
         )
 
 # 深度知识学习指南 (折叠微观原理解析)
-act_meta = ACTIVATIONS.get(activation_name, ACTIVATIONS.get(activation_name.split(" ")[0], ACTIVATIONS["ReLU"]))
-init_meta = INITIALIZERS.get(initializer, INITIALIZERS.get(initializer.split(" ")[0].lower(), INITIALIZERS["he"]))
-opt_meta = OPTIMIZERS.get(optimizer_name, OPTIMIZERS.get(optimizer_name.split(" ")[0], OPTIMIZERS["Adam"]))
+act_meta = ACTIVATIONS.get(
+    activation_name, ACTIVATIONS.get(activation_name.split(" ")[0], ACTIVATIONS["ReLU"])
+)
+init_meta = INITIALIZERS.get(
+    initializer, INITIALIZERS.get(initializer.split(" ")[0].lower(), INITIALIZERS["he"])
+)
+opt_meta = OPTIMIZERS.get(
+    optimizer_name, OPTIMIZERS.get(optimizer_name.split(" ")[0], OPTIMIZERS["Adam"])
+)
 
-render_deep_dive_card("全参数微观实验室正则化与超参数原理指南", [reg_meta, act_meta, init_meta, opt_meta])
+render_deep_dive_card(
+    "全参数微观实验室正则化与超参数原理指南", [reg_meta, act_meta, init_meta, opt_meta]
+)
 
 # ---------------------------------------------------------------------------
 # 零基础进阶：正则化与参数微观名词通俗速查 (含公式拆解)
 # ---------------------------------------------------------------------------
-with st.expander("[GROWTH GUIDE // 成长指南] 正则化核心公式拆解与微观参数名词通俗全解", expanded=False):
+with st.expander(
+    "[GROWTH GUIDE // 成长指南] 正则化核心公式拆解与微观参数名词通俗全解", expanded=False
+):
     st.markdown(
         r"""
         ### 0. 核心公式逐字拆解：L1 / L2 权重正则化
@@ -392,4 +473,3 @@ with st.expander("[GROWTH GUIDE // 成长指南] 正则化核心公式拆解与�
         * **黄金准则**：每一步更新的量 $\\|\\Delta W\\|$ 与当前权重大小 $\\|W\\|$ 的比值在 **$10^{-3} \\approx 0.001$** 附近为最健康的训练状态。
         """
     )
-

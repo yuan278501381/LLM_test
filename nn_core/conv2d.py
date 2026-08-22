@@ -9,19 +9,13 @@ nn_core.conv2d - 纯 NumPy 2D 卷积与池化计算引擎 (基于 im2col 向量�
 """
 
 import logging
-from typing import Optional, Tuple
+
 import numpy as np
 
 logger = logging.getLogger("nn_core.conv2d")
 
 
-def im2col(
-    x: np.ndarray,
-    kh: int,
-    kw: int,
-    stride: int = 1,
-    pad: int = 0
-) -> np.ndarray:
+def im2col(x: np.ndarray, kh: int, kw: int, stride: int = 1, pad: int = 0) -> np.ndarray:
     """
     将 4D 图像张量 (N, C, H, W) 按照卷积核感受野滑动展开为 2D 矩阵 (N*out_h*out_w, C*kh*kw)。
 
@@ -32,10 +26,7 @@ def im2col(
     out_h = (H + 2 * pad - kh) // stride + 1
     out_w = (W + 2 * pad - kw) // stride + 1
 
-    if pad > 0:
-        img = np.pad(x, [(0, 0), (0, 0), (pad, pad), (pad, pad)], mode="constant")
-    else:
-        img = x
+    img = np.pad(x, [(0, 0), (0, 0), (pad, pad), (pad, pad)], mode="constant") if pad > 0 else x
 
     col = np.zeros((N, C, kh, kw, out_h, out_w), dtype=x.dtype)
 
@@ -52,11 +43,11 @@ def im2col(
 
 def col2im(
     col: np.ndarray,
-    x_shape: Tuple[int, int, int, int],
+    x_shape: tuple[int, int, int, int],
     kh: int,
     kw: int,
     stride: int = 1,
-    pad: int = 0
+    pad: int = 0,
 ) -> np.ndarray:
     """
     im2col 的精确逆运算，用于反向传播中将 2D 梯度累加重构回 4D 图像梯度张量 (N, C, H, W)。
@@ -75,7 +66,7 @@ def col2im(
             img[:, :, y:y_max:stride, x_idx:x_max:stride] += col_reshaped[:, :, y, x_idx, :, :]
 
     if pad > 0:
-        return img[:, :, pad:H + pad, pad:W + pad]
+        return img[:, :, pad : H + pad, pad : W + pad]
     return img[:, :, :H, :W]
 
 
@@ -107,7 +98,9 @@ class Conv2D:
 
         # 权重初始化：He / Kaiming 正态初始化
         fan_in = in_channels * kernel_size * kernel_size
-        self.weights = np.random.randn(out_channels, in_channels, kernel_size, kernel_size).astype(np.float64) * np.sqrt(2.0 / fan_in)
+        self.weights = np.random.randn(out_channels, in_channels, kernel_size, kernel_size).astype(
+            np.float64
+        ) * np.sqrt(2.0 / fan_in)
         self.biases = np.zeros(out_channels, dtype=np.float64)
 
         # 梯度容器
@@ -115,8 +108,8 @@ class Conv2D:
         self.grad_biases = np.zeros_like(self.biases)
 
         # 缓存
-        self._x: Optional[np.ndarray] = None
-        self._col: Optional[np.ndarray] = None
+        self._x: np.ndarray | None = None
+        self._col: np.ndarray | None = None
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         """
@@ -125,7 +118,7 @@ class Conv2D:
         返回 shape: (N, out_channels, out_h, out_w)
         """
         self._x = x
-        N, C, H, W = x.shape
+        N, _C, H, W = x.shape
         kh = kw = self.kernel_size
         out_h = (H + 2 * self.padding - kh) // self.stride + 1
         out_w = (W + 2 * self.padding - kw) // self.stride + 1
@@ -164,7 +157,7 @@ class Conv2D:
         dx = col2im(dcol, self._x.shape, kh, kw, self.stride, self.padding)
         return dx
 
-    def get_params_and_grads(self) -> list[Tuple[np.ndarray, np.ndarray]]:
+    def get_params_and_grads(self) -> list[tuple[np.ndarray, np.ndarray]]:
         """实现优化器通用参数协议"""
         return [
             (self.weights, self.grad_weights),
@@ -180,8 +173,8 @@ class MaxPool2D:
     def __init__(self, pool_size: int = 2, stride: int = 2) -> None:
         self.pool_size = pool_size
         self.stride = stride
-        self._x: Optional[np.ndarray] = None
-        self._arg_max: Optional[np.ndarray] = None
+        self._x: np.ndarray | None = None
+        self._arg_max: np.ndarray | None = None
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         """

@@ -18,9 +18,11 @@ import pandas as pd
 import streamlit as st
 
 import dashboard.components.charts
+
 importlib.reload(dashboard.components.charts)
 
 from dashboard.components.charts import plot_embedding_space
+from dashboard.components.pedagogy import render_lesson_evidence
 from dashboard.styles.theme import (
     anchor_badge,
     apply_custom_theme,
@@ -38,6 +40,7 @@ st.set_page_config(
 )
 
 apply_custom_theme()
+render_lesson_evidence("M05")
 
 render_hero_header(
     title="词嵌入语义空间",
@@ -52,11 +55,41 @@ render_hero_header(
 render_page_guide(
     title="词嵌入与空间交互地图",
     blueprint_sections=[
-        {"id": "A", "name": "语义算术控制台", "desc": "在左侧侧边栏配置经典向量算术公式与高亮词簇", "color": "amber", "target_id": "region-a"},
-        {"id": "B", "name": "教学指引", "desc": "当前卡片：通俗理解高维空间向量距离与国王女王平行四边形", "color": "blue", "target_id": "region-b"},
-        {"id": "C", "name": "实时算术遥测", "desc": "显示最优预测词、余弦相似度与几何对齐状态", "color": "emerald", "target_id": "region-c"},
-        {"id": "D", "name": "3D 语义几何流形", "desc": "3D 空间直观旋转观测词汇聚类与向量加减位移虚线", "color": "purple", "target_id": "region-d"},
-        {"id": "E", "name": "前沿 BPE 分词实验室", "desc": "探索工业级大模型的分词切片与贪心合并过程", "color": "blue", "target_id": "region-e"},
+        {
+            "id": "A",
+            "name": "语义算术控制台",
+            "desc": "在左侧侧边栏配置经典向量算术公式与高亮词簇",
+            "color": "amber",
+            "target_id": "region-a",
+        },
+        {
+            "id": "B",
+            "name": "教学指引",
+            "desc": "当前卡片：通俗理解高维空间向量距离与国王女王平行四边形",
+            "color": "blue",
+            "target_id": "region-b",
+        },
+        {
+            "id": "C",
+            "name": "实时算术遥测",
+            "desc": "显示最优预测词、余弦相似度与几何对齐状态",
+            "color": "emerald",
+            "target_id": "region-c",
+        },
+        {
+            "id": "D",
+            "name": "3D 语义几何流形",
+            "desc": "3D 空间直观旋转观测词汇聚类与向量加减位移虚线",
+            "color": "purple",
+            "target_id": "region-d",
+        },
+        {
+            "id": "E",
+            "name": "前沿 BPE 分词实验室",
+            "desc": "探索工业级大模型的分词切片与贪心合并过程",
+            "color": "blue",
+            "target_id": "region-e",
+        },
     ],
     plain_intro=(
         f"<b>词嵌入将每个词汇映射为高维空间中的'方向坐标'</b>。<br>"
@@ -88,7 +121,10 @@ render_page_guide(
 # ---------------------------------------------------------------------------
 # 侧边栏控制面板
 # ---------------------------------------------------------------------------
-st.sidebar.markdown(f'<div id="region-a" class="interactive-region" style="margin-bottom:0.6rem;padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">{anchor_badge("A", "amber")} <b>VECTOR CALCULATOR // 语义算术控制台</b></div>', unsafe_allow_html=True)
+st.sidebar.markdown(
+    f'<div id="region-a" class="interactive-region" style="margin-bottom:0.6rem;padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">{anchor_badge("A", "amber")} <b>VECTOR CALCULATOR // 语义算术控制台</b></div>',
+    unsafe_allow_html=True,
+)
 
 # ---------------------------------------------------------------------------
 # 词表与语义向量数据准备 (中英双语标签)
@@ -243,12 +279,16 @@ for idx in sorted_indices:
         best_match_word = candidate_w
         best_match_sim = sim_val
     if len(top_candidates) < 5:
-        top_candidates.append({
-            "排名 (Rank)": f"#{len(top_candidates)+1}",
-            "候选词汇 (Candidate)": CN_LABEL_MAP.get(candidate_w, candidate_w),
-            "余弦相似度 (Cosine Sim)": f"{sim_val * 100:.2f}%",
-            "状态 (Status)": "[OPTIMAL // 最优匹配]" if candidate_w == best_match_word else "[CANDIDATE // 候选]",
-        })
+        top_candidates.append(
+            {
+                "排名 (Rank)": f"#{len(top_candidates) + 1}",
+                "候选词汇 (Candidate)": CN_LABEL_MAP.get(candidate_w, candidate_w),
+                "余弦相似度 (Cosine Sim)": f"{sim_val * 100:.2f}%",
+                "状态 (Status)": "[OPTIMAL // 最优匹配]"
+                if candidate_w == best_match_word
+                else "[CANDIDATE // 候选]",
+            }
+        )
 
 # ---------------------------------------------------------------------------
 # 遥测指标卡
@@ -258,7 +298,7 @@ metric_grid_html = (
     + render_metric_card(
         "EQUATION RESULT // 算术最优预测",
         CN_LABEL_MAP.get(best_match_word, best_match_word).split()[0].upper(),
-        delta=f"相似度 {best_match_sim*100:.1f}%",
+        delta=f"相似度 {best_match_sim * 100:.1f}%",
         delta_type="positive" if best_match_sim > 0.7 else "neutral",
         icon_name="target",
     )
@@ -290,7 +330,9 @@ st.markdown(metric_grid_html, unsafe_allow_html=True)
 # ---------------------------------------------------------------------------
 # 主视图区：3D / 2D 散点图与算术平行四边形
 # ---------------------------------------------------------------------------
-render_section_heading("SEMANTIC MANIFOLD & VECTOR ARITHMETIC // 语义流形与向量算术空间", icon_name="activity")
+render_section_heading(
+    "SEMANTIC MANIFOLD & VECTOR ARITHMETIC // 语义流形与向量算术空间", icon_name="activity"
+)
 
 # 确定高亮列表
 highlight_tokens = []
@@ -299,7 +341,18 @@ if "Royalty" in selected_group or "王族" in selected_group:
 elif "Animals" in selected_group or "动物" in selected_group:
     highlight_tokens = ["cat", "dog", "kitten", "puppy", "fish", "bird"]
 elif "Geopolitics" in selected_group or "国家" in selected_group:
-    highlight_tokens = ["china", "japan", "usa", "france", "germany", "italy", "beijing", "tokyo", "paris", "rome"]
+    highlight_tokens = [
+        "china",
+        "japan",
+        "usa",
+        "france",
+        "germany",
+        "italy",
+        "beijing",
+        "tokyo",
+        "paris",
+        "rome",
+    ]
 elif "Actions" in selected_group or "行为" in selected_group:
     highlight_tokens = ["run", "walk", "eat", "drink", "sleep", "think", "speak", "write"]
 else:
@@ -319,7 +372,7 @@ fig_space = plot_embedding_space(
     arithmetic=arithmetic_dict,
     title=f"3D SEMANTIC EMBEDDING // 词嵌入语义几何空间 ({selected_group.split()[0]})",
 )
-st.plotly_chart(fig_space, use_container_width=True)
+st.plotly_chart(fig_space, width="stretch")
 
 with st.expander("[HOW TO READ // 读图指南] 空间距离与向量语义算术", expanded=False):
     st.markdown(
@@ -339,7 +392,7 @@ col_table, col_eqn = st.columns([1.2, 1])
 
 with col_table:
     render_section_heading("COSINE SIMILARITY RANKING // 余弦相似度搜索排行", icon_name="target")
-    st.dataframe(pd.DataFrame(top_candidates), use_container_width=True, hide_index=True)
+    st.dataframe(pd.DataFrame(top_candidates), width="stretch", hide_index=True)
 
 with col_eqn:
     render_section_heading("VECTOR EQUATION VERIFICATION // 向量方程几何验证", icon_name="cpu")
@@ -419,12 +472,15 @@ with col_bpe_in:
             height=100,
             key="bpe_input_text",
         )
-        target_vocab_size = st.slider("目标词表容量 (Vocab Size)", min_value=260, max_value=280, value=268, step=1)
-        
+        target_vocab_size = st.slider(
+            "目标词表容量 (Vocab Size)", min_value=260, max_value=280, value=268, step=1
+        )
+
         from nn_core.bpe import BytePairEncoder
+
         bpe_engine = BytePairEncoder(vocab_size=target_vocab_size)
         bpe_engine.train(sample_bpe_text)
-        
+
         encoded_tokens = bpe_engine.encode(sample_bpe_text)
         visual_chunks = bpe_engine.tokenize_visual_chunks(sample_bpe_text)
         raw_bytes_len = len(sample_bpe_text.encode("utf-8"))
@@ -434,8 +490,10 @@ with col_bpe_in:
 with col_bpe_viz:
     with st.container(border=True):
         st.markdown(f"#### [TOKENIZED OUTPUT // 彩虹分词切片] (压缩比: {compression_ratio:.2f}×)")
-        st.caption(f"原始字节数: {raw_bytes_len} Bytes ➔ 压缩为: {token_count} Tokens (节省 {(1-1/compression_ratio)*100:.1f}% 序列长度)")
-        
+        st.caption(
+            f"原始字节数: {raw_bytes_len} Bytes ➔ 压缩为: {token_count} Tokens (节省 {(1 - 1 / compression_ratio) * 100:.1f}% 序列长度)"
+        )
+
         # 渲染彩虹色块
         token_colors = ["#dbeafe", "#fce7f3", "#dcfce7", "#fef3c7", "#f3e8ff", "#ffedd5"]
         pill_html_parts = []
@@ -443,11 +501,14 @@ with col_bpe_viz:
             color = token_colors[idx % len(token_colors)]
             display_str = repr(chunk_str)[1:-1]
             pill_html_parts.append(
-                f'<span style="background:{color};border:1px solid rgba(0,0,0,0.1);padding:3px 7px;border-radius:5px;font-family:\'JetBrains Mono\',monospace;font-size:0.85rem;margin:2px;display:inline-block;">'
+                f"<span style=\"background:{color};border:1px solid rgba(0,0,0,0.1);padding:3px 7px;border-radius:5px;font-family:'JetBrains Mono',monospace;font-size:0.85rem;margin:2px;display:inline-block;\">"
                 f'{display_str} <sub style="color:#64748b;font-size:0.65rem;">#{tid}</sub>'
-                f'</span>'
+                f"</span>"
             )
-        st.markdown('<div style="line-height:2.2;">' + "".join(pill_html_parts) + '</div>', unsafe_allow_html=True)
+        st.markdown(
+            '<div style="line-height:2.2;">' + "".join(pill_html_parts) + "</div>",
+            unsafe_allow_html=True,
+        )
 
         # 展示合并历史表
         if bpe_engine.merge_history:
@@ -457,8 +518,8 @@ with col_bpe_viz:
                     "步骤": f"#{m['step']}",
                     "合并对 (Pair)": f"{m['pair_str'][0]} + {m['pair_str'][1]}",
                     "新 Token": f"'{m['merged_str']}' (ID: {m['new_id']})",
-                    "语料频次": m['freq'],
+                    "语料频次": m["freq"],
                 }
                 for m in bpe_engine.merge_history[:6]
             ]
-            st.dataframe(pd.DataFrame(history_rows), use_container_width=True, hide_index=True)
+            st.dataframe(pd.DataFrame(history_rows), width="stretch", hide_index=True)

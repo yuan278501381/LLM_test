@@ -1,6 +1,6 @@
 # Copyright (c) 2026 Yy1 (yuan278501381) | MIT License
 """
-dashboard.styles.theme - 世界级纯净现代亮色视觉引擎 (Light Mode Design System)
+dashboard.styles.theme - 统一的现代亮色视觉系统 (Light Mode Design System)
 
 提供高对比度、无遮挡、极度清晰的现代亮色 UI 规范（Stripe / Apple / Linear 质感）：
 - 纯净白卡片与多维高对比排版
@@ -14,8 +14,8 @@ import json
 import sys
 
 import streamlit as st
-import streamlit.components.v1 as components
 from dashboard.styles.icons import svg_icon
+
 
 def reload_nn_core_modules() -> None:
     """在 Streamlit 热重载时安全同步 nn_core 核心算法模块，杜绝长时间运行下的模块导入缓存问题"""
@@ -325,42 +325,88 @@ html {
     font-feature-settings: "tnum" 1 !important;
 }
 
-/* 目标区域聚光灯聚焦与背景呼吸高光闪烁 (Target Spotlight & Flash Highlight) */
+/* 教学指代聚焦：单次柔和入场 + 定位标签，避免高频闪烁造成认知干扰 */
 .interactive-region {
     border-radius: 10px !important;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    position: relative !important;
+    transition: background-color 0.35s ease, border-color 0.35s ease,
+                box-shadow 0.35s ease, transform 0.35s ease !important;
     scroll-margin-top: 80px !important;
 }
 
-.flash-highlight,
-.interactive-region:target,
-:target {
-    animation: region-flash-pulse 2.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+.nn-focus-target,
+.interactive-region:target {
+    animation: region-focus-enter 2.8s cubic-bezier(0.16, 1, 0.3, 1) both !important;
 }
 
-@keyframes region-flash-pulse {
+@keyframes region-focus-enter {
     0% {
-        background-color: #bfdbfe !important;
-        box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.5), 0 12px 36px rgba(37, 99, 235, 0.35) !important;
-        border-color: #1d4ed8 !important;
-        transform: scale(1.008) !important;
-    }
-    30% {
-        background-color: #dbeafe !important;
-        box-shadow: 0 0 0 10px rgba(37, 99, 235, 0.22), 0 16px 40px rgba(37, 99, 235, 0.22) !important;
-        border-color: #3b82f6 !important;
-    }
-    65% {
+        opacity: 0.76;
         background-color: #eff6ff !important;
-        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1), 0 8px 24px rgba(37, 99, 235, 0.1) !important;
+        box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.48), 0 8px 30px rgba(37, 99, 235, 0.18) !important;
+        border-color: #60a5fa !important;
+        transform: translateY(8px) !important;
+    }
+    28% {
+        opacity: 1;
+        background-color: #dbeafe !important;
+        box-shadow: 0 0 0 7px rgba(37, 99, 235, 0.12), 0 12px 34px rgba(37, 99, 235, 0.16) !important;
+        border-color: #3b82f6 !important;
+        transform: translateY(0) !important;
+    }
+    68% {
+        background-color: #eff6ff !important;
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.07), 0 8px 24px rgba(37, 99, 235, 0.09) !important;
         border-color: #93c5fd !important;
     }
     100% {
+        opacity: 1;
         background-color: #ffffff !important;
         box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04) !important;
         border-color: #e2e8f0 !important;
-        transform: scale(1) !important;
+        transform: translateY(0) !important;
     }
+}
+
+.nn-focus-chip {
+    position: absolute;
+    right: 0.65rem;
+    top: -0.7rem;
+    z-index: 20;
+    padding: 0.22rem 0.55rem;
+    border: 1px solid #93c5fd;
+    border-radius: 999px;
+    background: rgba(239, 246, 255, 0.96);
+    box-shadow: 0 6px 18px rgba(37, 99, 235, 0.16);
+    color: #1d4ed8;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    pointer-events: none;
+    animation: focus-chip-enter 2.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes focus-chip-enter {
+    0% { opacity: 0; transform: translateY(7px); }
+    16%, 74% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-3px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto !important; }
+    .nn-focus-target, .interactive-region:target, .nn-focus-chip {
+        animation: none !important;
+    }
+    .nn-focus-target {
+        background: #eff6ff !important;
+        border-color: #60a5fa !important;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+    }
+}
+
+/* 浮动导航只在宽屏显示，避免覆盖中等视口的教学图表。 */
+@media (max-width: 2199px) {
+    #nn-floating-spatial-hud { display: none !important; }
 }
 
 /* 空间映射语义锚点胶囊 (Spatial Semantic Badges) */
@@ -467,7 +513,7 @@ html {
 }
 
 /* -------------------------------------------------------------------------
-   世界级交互折叠框与读图指南 (Interactive Reading Guide / Explainer Cards)
+   交互折叠框与读图指南 (Interactive Reading Guide / Explainer Cards)
 ------------------------------------------------------------------------- */
 [data-testid="stExpander"] {
     background: #ffffff !important;
@@ -528,30 +574,44 @@ html {
             if (!doc || doc.__spotlight_injected) return;
             doc.__spotlight_injected = true;
 
-            function triggerFlash(el) {
-                if (!el) return;
-                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                el.classList.remove('flash-highlight');
-                void el.offsetWidth;
-                el.classList.add('flash-highlight');
-
-                var parentContainer = el.closest('[data-testid="stVerticalBlockBorderWrapper"]') || el.parentElement;
-                if (parentContainer) {
-                    parentContainer.classList.remove('flash-highlight');
-                    void parentContainer.offsetWidth;
-                    parentContainer.classList.add('flash-highlight');
-                }
+            function clearFocus() {
+                doc.querySelectorAll('.nn-focus-target').forEach(function(node) {
+                    node.classList.remove('nn-focus-target');
+                });
+                doc.querySelectorAll('.nn-focus-chip').forEach(function(node) {
+                    node.remove();
+                });
             }
+
+            function focusRegion(target) {
+                var el = typeof target === 'string' ? doc.getElementById(target) : target;
+                if (!el) return;
+                clearFocus();
+
+                var reducedMotion = window.parent.matchMedia &&
+                    window.parent.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                el.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'center' });
+                el.classList.remove('nn-focus-target');
+                void el.offsetWidth;
+                el.classList.add('nn-focus-target');
+
+                var chip = doc.createElement('span');
+                chip.className = 'nn-focus-chip';
+                chip.setAttribute('role', 'status');
+                chip.textContent = '正在查看这里';
+                el.appendChild(chip);
+
+                window.parent.clearTimeout(doc.__nnFocusTimer);
+                doc.__nnFocusTimer = window.parent.setTimeout(clearFocus, reducedMotion ? 1800 : 3000);
+            }
+            doc.__nnFocusRegion = focusRegion;
 
             doc.addEventListener('click', function(e) {
                 var a = e.target.closest('a');
                 if (a && a.getAttribute('href') && a.getAttribute('href').includes('#region-')) {
                     e.preventDefault();
                     var targetId = a.getAttribute('href').substring(1);
-                    var targetEl = doc.getElementById(targetId);
-                    if (targetEl) {
-                        triggerFlash(targetEl);
-                    }
+                    focusRegion(targetId);
                 }
             }, true);
 
@@ -559,7 +619,7 @@ html {
                 var hash = window.parent.location.hash;
                 if (hash && hash.includes('#region-')) {
                     var el = doc.querySelector(hash);
-                    if (el) triggerFlash(el);
+                    if (el) focusRegion(el);
                 }
             });
         } catch(e) {
@@ -568,7 +628,7 @@ html {
     })();
     </script>
     """
-    components.html(js_teleport, height=0, width=0)
+    st.iframe(js_teleport, height=1, width=1)
 
 
 def render_hero_header(
@@ -583,26 +643,32 @@ def render_hero_header(
         f'<div style="margin-bottom: 1.4rem;">'
         f'<div style="margin-bottom: 0.5rem;">'
         f'<span class="pill-badge {badge_class}"><span class="status-dot"></span>{badge_text}</span>'
-        f'</div>'
+        f"</div>"
         f'<h1 class="hero-title">{title}</h1>'
         f'<div class="hero-subtitle">{subtitle}</div>'
-        f'</div>'
+        f"</div>"
     )
     st.markdown(html, unsafe_allow_html=True)
 
 
-def render_section_heading(title: str, icon_name: str = "activity", subtext: str | None = None) -> None:
+def render_section_heading(
+    title: str, icon_name: str = "activity", subtext: str | None = None
+) -> None:
     """渲染带极简矢量图标的分区标题"""
     icon_html = svg_icon(icon_name, size=18, color="#1d4ed8")
-    sub_html = f'<div style="color: #64748b; font-size: 0.85rem; margin-top: 0.2rem; font-weight: 500;">{subtext}</div>' if subtext else ""
+    sub_html = (
+        f'<div style="color: #64748b; font-size: 0.85rem; margin-top: 0.2rem; font-weight: 500;">{subtext}</div>'
+        if subtext
+        else ""
+    )
     html = (
         f'<div style="margin-top: 1.4rem; margin-bottom: 0.8rem;">'
         f'<div style="display: flex; align-items: center; gap: 0.5rem;">'
-        f'{icon_html}'
+        f"{icon_html}"
         f'<span style="font-size: 1.15rem; font-weight: 800; color: #0f172a; letter-spacing: -0.01em;">{title}</span>'
-        f'</div>'
-        f'{sub_html}'
-        f'</div>'
+        f"</div>"
+        f"{sub_html}"
+        f"</div>"
     )
     st.markdown(html, unsafe_allow_html=True)
 
@@ -622,8 +688,8 @@ def render_metric_card(
         f'<div class="telemetry-card">'
         f'<div class="telemetry-label"><span>{icon_svg}</span> {label}</div>'
         f'<div class="telemetry-value">{value}</div>'
-        f'{delta_html}'
-        f'</div>'
+        f"{delta_html}"
+        f"</div>"
     )
 
 
@@ -633,10 +699,10 @@ def render_preset_badge(preset_name: str, desc: str) -> None:
     html = (
         f'<div style="background: #eff6ff; border-left: 4px solid #1d4ed8; padding: 0.7rem 1rem; border-radius: 0 8px 8px 0; margin-bottom: 1rem; font-size: 0.88rem; color: #1e3a8a; border: 1px solid #dbeafe; border-left-width: 4px;">'
         f'<div style="display: flex; align-items: center; gap: 0.4rem; font-weight: 700; color: #1d4ed8; margin-bottom: 0.2rem;">'
-        f'{icon_zap} [PRESET // 预设方案]: {preset_name}'
-        f'</div>'
+        f"{icon_zap} [PRESET // 预设方案]: {preset_name}"
+        f"</div>"
         f'<span style="color: #334155;">{desc}</span>'
-        f'</div>'
+        f"</div>"
     )
     st.markdown(html, unsafe_allow_html=True)
 
@@ -650,7 +716,7 @@ def render_page_guide(
     blueprint_sections: list[dict] | None = None,
 ) -> None:
     """
-    渲染全站统一的世界级高对比度【零基础新手教学指引卡片】(Vercel / Linear 顶奢级交互质感)。
+    渲染全站统一的高对比度零基础教学指引卡片。
     包含：
     1. [SPATIAL BLUEPRINT] 页面空间交互地图（可选微缩拓扑）
     2. [CORE PRINCIPLE] 通俗原理解析与空间指代
@@ -668,44 +734,49 @@ def render_page_guide(
         if blueprint_sections:
             render_page_blueprint(blueprint_sections)
 
-        items_html = "".join([f'<li style="margin-bottom:0.45rem;line-height:1.65;">{exp}</li>' for exp in experiments])
+        items_html = "".join(
+            [
+                f'<li style="margin-bottom:0.45rem;line-height:1.65;">{exp}</li>'
+                for exp in experiments
+            ]
+        )
         guide_html = (
             f'<div style="color:#0f172a;font-size:0.92rem;line-height:1.7;">'
             f'<div style="background:#ffffff;border:1px solid #bfdbfe;border-left:4px solid #2563eb;padding:0.9rem 1.15rem;border-radius:8px;margin-bottom:1rem;box-shadow:0 2px 10px rgba(37,99,235,0.04);">'
             f'<div style="display:flex;align-items:center;gap:0.45rem;font-weight:800;color:#1e40af;margin-bottom:0.35rem;">'
             f'{icon_bulb} <span style="text-transform:uppercase;font-size:0.8rem;letter-spacing:0.04em;">[CORE PRINCIPLE // 核心原理解析与空间导引]</span>'
-            f'</div>'
+            f"</div>"
             f'<div style="color:#1e293b;line-height:1.75;">{plain_intro}</div>'
-            f'</div>'
+            f"</div>"
             f'<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">'
             f'<div style="background:#ffffff;padding:0.95rem 1.15rem;border-radius:8px;border:1px solid #fde68a;border-left:3.5px solid #b45309;box-shadow:0 2px 8px rgba(180,83,9,0.03);">'
             f'<div style="display:flex;align-items:center;gap:0.4rem;font-weight:800;color:#92400e;font-size:0.84rem;margin-bottom:0.35rem;">'
             f'{icon_sliders} <span style="text-transform:uppercase;letter-spacing:0.04em;">[INPUT CONTROLS // 控制台输入参数]</span>'
-            f'</div>'
+            f"</div>"
             f'<div style="font-size:0.84rem;color:#475569;line-height:1.65;">{hyperparams_desc}</div>'
-            f'</div>'
+            f"</div>"
             f'<div style="background:#ffffff;padding:0.95rem 1.15rem;border-radius:8px;border:1px solid #a7f3d0;border-left:3.5px solid #047857;box-shadow:0 2px 8px rgba(4,120,87,0.03);">'
             f'<div style="display:flex;align-items:center;gap:0.4rem;font-weight:800;color:#065f46;font-size:0.84rem;margin-bottom:0.35rem;">'
             f'{icon_target} <span style="text-transform:uppercase;letter-spacing:0.04em;">[TELEMETRY // 模型学习遥测成果]</span>'
-            f'</div>'
+            f"</div>"
             f'<div style="font-size:0.84rem;color:#475569;line-height:1.65;">{telemetry_desc}</div>'
-            f'</div>'
-            f'</div>'
+            f"</div>"
+            f"</div>"
             f'<div style="background:#ffffff;padding:0.95rem 1.15rem;border-radius:8px;border:1px solid #cbd5e1;border-left:3.5px solid #0f172a;box-shadow:0 2px 8px rgba(15,23,42,0.03);">'
             f'<div style="display:flex;align-items:center;gap:0.4rem;font-weight:800;color:#0f172a;font-size:0.86rem;margin-bottom:0.5rem;">'
             f'{icon_terminal} <span style="text-transform:uppercase;letter-spacing:0.04em;">[LAB EXPERIMENTS // 结构化探索任务]</span>'
-            f'</div>'
+            f"</div>"
             f'<ol style="margin:0;padding-left:1.3rem;color:#334155;font-size:0.84rem;">{items_html}</ol>'
-            f'</div>'
-            f'</div>'
+            f"</div>"
+            f"</div>"
         )
         st.markdown(guide_html, unsafe_allow_html=True)
-
 
 
 def render_sequence_flow(tokens: list[str], hidden_states: list) -> None:
     """渲染 RNN 时序流动流水线（纯矢量、严格单行无缩进 HTML）"""
     import numpy as np
+
     items = []
     for i, token in enumerate(tokens):
         h_norm = float(np.linalg.norm(hidden_states[i])) if len(hidden_states) > i else 1.0
@@ -714,9 +785,9 @@ def render_sequence_flow(tokens: list[str], hidden_states: list) -> None:
         items.append(
             f'<div style="flex:1;min-width:72px;background:#ffffff;border:1px solid #cbd5e1;border-radius:8px;padding:0.55rem 0.35rem;text-align:center;box-shadow:0 2px 4px rgba(15,23,42,0.03);">'
             f'<div style="font-size:0.68rem;color:#64748b;font-weight:700;text-transform:uppercase;">STEP {i}</div>'
-            f'<div style="font-size:0.95rem;font-weight:800;color:#0f172a;margin:0.2rem 0;font-family:\'JetBrains Mono\';">{token}</div>'
+            f"<div style=\"font-size:0.95rem;font-weight:800;color:#0f172a;margin:0.2rem 0;font-family:'JetBrains Mono';\">{token}</div>"
             f'<div style="background:{tag_bg};color:#ffffff;font-size:0.68rem;font-weight:700;border-radius:4px;padding:0.12rem 0.25rem;">||h||={h_norm:.2f}</div>'
-            f'</div>'
+            f"</div>"
         )
     html = f'<div style="display:flex;gap:0.4rem;overflow-x:auto;padding:0.5rem 0;margin-bottom:1.2rem;">{"".join(items)}</div>'
     st.markdown(html, unsafe_allow_html=True)
@@ -729,16 +800,16 @@ def render_vector_equation_card(word_a: str, word_b: str, word_c: str, best_matc
     html = (
         f'<div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:1.3rem;box-shadow:0 2px 8px rgba(15,23,42,0.03);">'
         f'<div style="display:flex;align-items:center;gap:0.4rem;font-size:0.78rem;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:0.7rem;">'
-        f'{icon_math} [PARALLELOGRAM THEOREM // 语义平行四边形矢量公式]'
-        f'</div>'
-        f'<div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:0.9rem;text-align:center;font-family:\'JetBrains Mono\', monospace;font-size:1.05rem;margin-bottom:0.9rem;">'
+        f"{icon_math} [PARALLELOGRAM THEOREM // 语义平行四边形矢量公式]"
+        f"</div>"
+        f"<div style=\"background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:0.9rem;text-align:center;font-family:'JetBrains Mono', monospace;font-size:1.05rem;margin-bottom:0.9rem;\">"
         f'<span style="color:#1d4ed8;font-weight:800;">{word_a}</span><span style="color:#64748b;"> - </span><span style="color:#be123c;font-weight:800;">{word_b}</span><span style="color:#64748b;"> + </span><span style="color:#047857;font-weight:800;">{word_c}</span><span style="color:#64748b;font-weight:800;"> ≈ </span><span style="color:#7c3aed;font-weight:800;background:#f3e8ff;padding:0.2rem 0.5rem;border-radius:4px;">{best_match}</span>'
-        f'</div>'
+        f"</div>"
         f'<div style="font-size:0.84rem;color:#475569;line-height:1.6;display:flex;gap:0.4rem;align-items:flex-start;">'
-        f'<span>{icon_info}</span>'
-        f'<span><b>几何原理解析</b>：向量位移差 <code>{word_a} - {word_b}</code> 提取了纯粹的概念维度偏置；在流形空间中叠加到 <code>{word_c}</code> 上，高精定向导航至 <code>{best_match}</code>。</span>'
-        f'</div>'
-        f'</div>'
+        f"<span>{icon_info}</span>"
+        f"<span><b>几何原理解析</b>：向量位移差 <code>{word_a} - {word_b}</code> 提取了纯粹的概念维度偏置；在流形空间中叠加到 <code>{word_c}</code> 上，高精定向导航至 <code>{best_match}</code>。</span>"
+        f"</div>"
+        f"</div>"
     )
     st.markdown(html, unsafe_allow_html=True)
 
@@ -747,10 +818,10 @@ def render_architecture_flow_card() -> None:
     """渲染 Pre-LN Transformer 结构块流程卡片（纯矢量、严格单行无缩进 HTML）"""
     icon_cpu = svg_icon("cpu", size=14, color="#1d4ed8")
     html = (
-        f'<div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:1.2rem;font-family:\'JetBrains Mono\', monospace;font-size:0.84rem;line-height:1.6;color:#0f172a;box-shadow:0 2px 8px rgba(15,23,42,0.03);">'
+        f"<div style=\"background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:1.2rem;font-family:'JetBrains Mono', monospace;font-size:0.84rem;line-height:1.6;color:#0f172a;box-shadow:0 2px 8px rgba(15,23,42,0.03);\">"
         f'<div style="display:flex;align-items:center;gap:0.4rem;font-size:0.75rem;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:0.8rem;">'
-        f'{icon_cpu} [PIPELINE TOPOLOGY // 残差主干流拓扑]'
-        f'</div>'
+        f"{icon_cpu} [PIPELINE TOPOLOGY // 残差主干流拓扑]"
+        f"</div>"
         f'<div style="display:flex;justify-content:space-around;align-items:center;flex-wrap:wrap;gap:0.8rem;">'
         f'<div style="background:#eff6ff;border:1px solid #bfdbfe;padding:0.7rem 1rem;border-radius:8px;text-align:center;"><span style="color:#1d4ed8;font-weight:800;">INPUT STREAM x</span><br><span style="font-size:0.72rem;color:#64748b;">(残差流主干)</span></div>'
         f'<div style="color:#64748b;font-size:1.3rem;">➔</div>'
@@ -759,8 +830,8 @@ def render_architecture_flow_card() -> None:
         f'<div style="background:#f8fafc;border:1px solid #cbd5e1;padding:0.7rem 1rem;border-radius:8px;text-align:center;"><span style="color:#7c3aed;font-weight:800;">LayerNorm₂</span> ➔ <span style="color:#b45309;font-weight:800;">GELU FFN</span><br><span style="color:#059669;font-weight:700;">x = x + FFN(LN₂(x))</span></div>'
         f'<div style="color:#64748b;font-size:1.3rem;">➔</div>'
         f'<div style="background:#ecfdf5;border:1px solid #a7f3d0;padding:0.7rem 1rem;border-radius:8px;text-align:center;"><span style="color:#047857;font-weight:800;">OUTPUT STREAM x</span><br><span style="font-size:0.72rem;color:#64748b;">(进入下一层)</span></div>'
-        f'</div>'
-        f'</div>'
+        f"</div>"
+        f"</div>"
     )
     st.markdown(html, unsafe_allow_html=True)
 
@@ -772,20 +843,24 @@ def render_text_stream_box(tokens: list[str], prompt_len: int) -> None:
     badges = []
     for idx, tok in enumerate(tokens):
         if idx < prompt_len:
-            badges.append(f'<span style="background:#f1f5f9;color:#0f172a;border:1px solid #cbd5e1;padding:0.22rem 0.55rem;border-radius:6px;font-weight:700;font-family:\'JetBrains Mono\';">{tok}</span>')
+            badges.append(
+                f"<span style=\"background:#f1f5f9;color:#0f172a;border:1px solid #cbd5e1;padding:0.22rem 0.55rem;border-radius:6px;font-weight:700;font-family:'JetBrains Mono';\">{tok}</span>"
+            )
         else:
-            badges.append(f'<span style="background:#eff6ff;color:#1d4ed8;border:1px solid #93c5fd;padding:0.22rem 0.55rem;border-radius:6px;font-weight:800;font-family:\'JetBrains Mono\';box-shadow:0 2px 6px rgba(37,99,235,0.12);">{icon_sparkle} {tok}</span>')
-    
+            badges.append(
+                f"<span style=\"background:#eff6ff;color:#1d4ed8;border:1px solid #93c5fd;padding:0.22rem 0.55rem;border-radius:6px;font-weight:800;font-family:'JetBrains Mono';box-shadow:0 2px 6px rgba(37,99,235,0.12);\">{icon_sparkle} {tok}</span>"
+            )
+
     html = (
         f'<div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:1.3rem;line-height:2.2;box-shadow:0 2px 8px rgba(15,23,42,0.03);margin-bottom:1.2rem;">'
         f'<div style="display:flex;align-items:center;gap:0.4rem;font-size:0.74rem;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:0.5rem;">'
-        f'{icon_terminal} [CONTEXT WINDOW // 上下文滑动窗口]:'
-        f'</div>'
+        f"{icon_terminal} [CONTEXT WINDOW // 上下文滑动窗口]:"
+        f"</div>"
         f'<div style="display:flex;flex-wrap:wrap;gap:0.45rem;align-items:center;">'
-        f'{" ".join(badges)}'
+        f"{' '.join(badges)}"
         f'<span style="display:inline-block;width:7px;height:16px;background:#1d4ed8;"></span>'
-        f'</div>'
-        f'</div>'
+        f"</div>"
+        f"</div>"
     )
     st.markdown(html, unsafe_allow_html=True)
 
@@ -802,7 +877,10 @@ def anchor_badge(text: str, color_type: str = "blue", target_id: str | None = No
 
 def render_region_anchor(target_id: str) -> None:
     """在组件正上方注入平滑滚动停靠锚点"""
-    st.markdown(f'<div id="{target_id}" style="position:relative;top:-30px;visibility:hidden;height:0;margin:0;padding:0;"></div>', unsafe_allow_html=True)
+    st.markdown(
+        f'<div id="{target_id}" style="position:relative;top:-30px;visibility:hidden;height:0;margin:0;padding:0;"></div>',
+        unsafe_allow_html=True,
+    )
 
 
 def render_interactive_region_header(
@@ -813,19 +891,23 @@ def render_interactive_region_header(
     subtext: str | None = None,
 ) -> None:
     """
-    渲染带有空间锚点与独立背景呼吸闪烁的目标区域头部（严禁 Emoji，纯 SVG 矢量图标）。
-    点击微缩地图直达时，此区域将产生 2.2s 极具质感的淡蓝微光呼吸背景闪烁！
+    渲染带空间锚点与低干扰聚焦反馈的目标区域头部（纯 SVG 矢量图标）。
+    点击导航直达时，此区域会显示柔和入场光晕与“正在查看这里”定位标签。
     """
-    sub_html = f'<div style="color:#64748b;font-size:0.84rem;margin-top:0.25rem;font-weight:500;">{subtext}</div>' if subtext else ""
+    sub_html = (
+        f'<div style="color:#64748b;font-size:0.84rem;margin-top:0.25rem;font-weight:500;">{subtext}</div>'
+        if subtext
+        else ""
+    )
     badge_html = anchor_badge(badge_letter, badge_color)
     html = (
         f'<div id="{region_id}" class="interactive-region" style="scroll-margin-top:75px;padding:0.6rem 0.85rem;margin-top:1.2rem;margin-bottom:0.6rem;border-radius:10px;border:1px solid #e2e8f0;background:#ffffff;">'
         f'<div style="display:flex;align-items:center;gap:0.45rem;">'
-        f'{badge_html}'
+        f"{badge_html}"
         f'<span style="font-size:1.02rem;font-weight:800;color:#0f172a;letter-spacing:-0.01em;">{title}</span>'
-        f'</div>'
-        f'{sub_html}'
-        f'</div>'
+        f"</div>"
+        f"{sub_html}"
+        f"</div>"
     )
     st.markdown(html, unsafe_allow_html=True)
 
@@ -833,11 +915,11 @@ def render_interactive_region_header(
 def render_page_blueprint(sections: list[dict]) -> None:
     """
     渲染页面空间交互蓝图微缩地图 (Page Spatial Blueprint)。
-    每个区域卡片均可直接点击平滑穿梭至目标图表/控制台，并在目标区域触发背景高光呼吸闪烁！
+    每个区域卡片均可直接点击平滑穿梭至目标图表/控制台，并触发低干扰的聚焦提示。
     """
     icon_map = svg_icon("target", size=14, color="#1d4ed8")
     icon_sparkle = svg_icon("sparkles", size=12, color="#1d4ed8")
-    
+
     blocks_html = []
     color_border_map = {
         "amber": ("#fffbeb", "#fde68a", "#92400e"),
@@ -846,7 +928,7 @@ def render_page_blueprint(sections: list[dict]) -> None:
         "purple": ("#f5f3ff", "#ddd6fe", "#5b21b6"),
         "rose": ("#fff1f2", "#fecdd3", "#9f1239"),
     }
-    
+
     for sec in sections:
         sec_id = sec.get("id", "A")
         sec_name = sec.get("name", "")
@@ -854,39 +936,39 @@ def render_page_blueprint(sections: list[dict]) -> None:
         sec_color = sec.get("color", "blue")
         target_id = sec.get("target_id", f"region-{sec_id.lower()}")
         bg_c, border_c, text_c = color_border_map.get(sec_color, color_border_map["blue"])
-        
+
         block = (
             f'<a href="#{target_id}" style="text-decoration:none;color:inherit;flex:1 1 180px;min-width:150px;">'
-            f'<div style="background:{bg_c};border:1px solid {border_c};border-radius:8px;padding:0.6rem 0.8rem;transition:all 0.2s cubic-bezier(0.4,0,0.2,1);cursor:pointer;" onmouseover="this.style.transform=\'translateY(-2px)\';this.style.boxShadow=\'0 4px 12px rgba(0,0,0,0.06)\';" onmouseout="this.style.transform=\'none\';this.style.boxShadow=\'none\';">'
+            f"<div style=\"background:{bg_c};border:1px solid {border_c};border-radius:8px;padding:0.6rem 0.8rem;transition:all 0.2s cubic-bezier(0.4,0,0.2,1);cursor:pointer;\" onmouseover=\"this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.06)';\" onmouseout=\"this.style.transform='none';this.style.boxShadow='none';\">"
             f'<div style="display:flex;align-items:center;gap:0.35rem;margin-bottom:0.25rem;">'
             f'<span class="anchor-badge anchor-badge-{sec_color}" style="font-size:0.72rem;padding:0.1rem 0.35rem;">[{sec_id}]</span>'
             f'<span style="font-weight:800;font-size:0.82rem;color:{text_c};">{sec_name}</span>'
-            f'</div>'
+            f"</div>"
             f'<div style="font-size:0.74rem;color:#475569;line-height:1.4;">{sec_desc}</div>'
-            f'</div>'
-            f'</a>'
+            f"</div>"
+            f"</a>"
         )
         blocks_html.append(block)
-    
+
     html = (
         f'<div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:0.85rem 1.1rem;margin-bottom:1rem;box-shadow:0 2px 8px rgba(15,23,42,0.03);">'
         f'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;">'
         f'<div style="display:flex;align-items:center;gap:0.4rem;font-size:0.74rem;font-weight:800;color:#1e40af;letter-spacing:0.04em;text-transform:uppercase;">'
-        f'{icon_map} [SPATIAL BLUEPRINT // 页面空间交互地图 (点击卡片直达物理区域)]'
-        f'</div>'
-        f'<div style="font-size:0.74rem;font-weight:700;color:#1d4ed8;display:flex;align-items:center;gap:0.3rem;">{icon_sparkle} [CLICK TO FOCUS // 点击瞬移高亮]</div>'
-        f'</div>'
+        f"{icon_map} [SPATIAL BLUEPRINT // 页面空间交互地图 (点击卡片直达物理区域)]"
+        f"</div>"
+        f'<div style="font-size:0.74rem;font-weight:700;color:#1d4ed8;display:flex;align-items:center;gap:0.3rem;">{icon_sparkle} [CLICK TO FOCUS // 点击聚焦定位]</div>'
+        f"</div>"
         f'<div style="display:flex;flex-wrap:wrap;gap:0.6rem;">'
-        f'{"".join(blocks_html)}'
-        f'</div>'
-        f'</div>'
+        f"{''.join(blocks_html)}"
+        f"</div>"
+        f"</div>"
     )
     st.markdown(html, unsafe_allow_html=True)
     render_floating_hud_navigator(sections)
 
 
 def render_floating_hud_navigator(sections: list[dict]) -> None:
-    """使用 components.html 在宿主视窗右侧挂载常驻悬浮微缩罗盘 HUD (ScrollSpy 滚动感知 + 点击瞬移 + 目标呼吸高光)"""
+    """使用 st.iframe 在宿主视窗右侧挂载常驻悬浮微缩罗盘 HUD。"""
     sec_json = json.dumps(sections, ensure_ascii=False)
     js = f"""
     <script>
@@ -904,6 +986,7 @@ def render_floating_hud_navigator(sections: list[dict]) -> None:
             var hud = doc.createElement('div');
             hud.id = 'nn-floating-spatial-hud';
             hud.style.cssText = 'position:fixed;right:22px;top:130px;z-index:999999;background:rgba(255,255,255,0.92);backdrop-filter:blur(16px);border:1px solid #cbd5e1;border-radius:12px;box-shadow:0 10px 30px rgba(15,23,42,0.1);padding:0.65rem 0.75rem;width:175px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:0.75rem;transition:all 0.2s ease;';
+            if (window.parent.innerWidth < 2200) hud.style.display = 'none';
 
             var header = doc.createElement('div');
             header.style.cssText = 'font-size:0.68rem;font-weight:800;color:#64748b;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:0.45rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #f1f5f9;padding-bottom:0.3rem;';
@@ -937,13 +1020,7 @@ def render_floating_hud_navigator(sections: list[dict]) -> None:
 
                 item.addEventListener('click', function(e) {{
                     e.preventDefault();
-                    var el = doc.getElementById(targetId);
-                    if (el) {{
-                        el.scrollIntoView({{ behavior: 'smooth', block: 'center' }});
-                        el.classList.remove('flash-highlight');
-                        void el.offsetWidth;
-                        el.classList.add('flash-highlight');
-                    }}
+                    if (doc.__nnFocusRegion) doc.__nnFocusRegion(targetId);
                 }});
 
                 list.appendChild(item);
@@ -1004,8 +1081,4 @@ def render_floating_hud_navigator(sections: list[dict]) -> None:
     }})();
     </script>
     """
-    components.html(js, height=0, width=0)
-
-
-
-
+    st.iframe(js, height=1, width=1)

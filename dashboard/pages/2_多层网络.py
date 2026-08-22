@@ -30,6 +30,7 @@ from dashboard.components.param_panel import (
     render_training_params,
 )
 from dashboard.constants.knowledge import ACTIVATIONS, INITIALIZERS, OPTIMIZERS
+from dashboard.components.pedagogy import render_lesson_evidence
 from dashboard.styles.theme import (
     anchor_badge,
     apply_custom_theme,
@@ -55,6 +56,7 @@ st.set_page_config(
 )
 
 apply_custom_theme()
+render_lesson_evidence("M02")
 
 render_hero_header(
     title="多层网络与动态活性探针",
@@ -69,11 +71,41 @@ render_hero_header(
 render_page_guide(
     title="多层神经网络与空间交互地图",
     blueprint_sections=[
-        {"id": "A", "name": "控制台与探针", "desc": "在左侧侧边栏调节网络层数、神经元数与虚拟探针坐标", "color": "amber", "target_id": "region-a"},
-        {"id": "B", "name": "教学指引", "desc": "当前卡片：通俗理解隐藏层如何像折纸一样折叠出复杂弯曲分界面", "color": "blue", "target_id": "region-b"},
-        {"id": "C", "name": "实时遥测指标", "desc": "监测参数量、最终损失与全网神经元平均激活度", "color": "emerald", "target_id": "region-c"},
-        {"id": "D", "name": "网络拓扑点亮", "desc": "微观观察探针信号在层层神经元之间被点亮激发的物理过程", "color": "purple", "target_id": "region-d"},
-        {"id": "E", "name": "弯曲决策流形", "desc": "观察多层网络如何画出优雅的弯曲圆环包裹住复杂月牙数据", "color": "blue", "target_id": "region-e"},
+        {
+            "id": "A",
+            "name": "控制台与探针",
+            "desc": "在左侧侧边栏调节网络层数、神经元数与虚拟探针坐标",
+            "color": "amber",
+            "target_id": "region-a",
+        },
+        {
+            "id": "B",
+            "name": "教学指引",
+            "desc": "当前卡片：通俗理解隐藏层如何像折纸一样折叠出复杂弯曲分界面",
+            "color": "blue",
+            "target_id": "region-b",
+        },
+        {
+            "id": "C",
+            "name": "实时遥测指标",
+            "desc": "监测参数量、最终损失与全网神经元平均激活度",
+            "color": "emerald",
+            "target_id": "region-c",
+        },
+        {
+            "id": "D",
+            "name": "网络拓扑点亮",
+            "desc": "微观观察探针信号在层层神经元之间被点亮激发的物理过程",
+            "color": "purple",
+            "target_id": "region-d",
+        },
+        {
+            "id": "E",
+            "name": "弯曲决策流形",
+            "desc": "观察多层网络如何画出优雅的弯曲圆环包裹住复杂月牙数据",
+            "color": "blue",
+            "target_id": "region-e",
+        },
     ],
     plain_intro=(
         f"<b>单神经元只能画 1 根直线，而多层网络像一双能折纸的手！</b><br>"
@@ -103,7 +135,10 @@ render_page_guide(
 # ---------------------------------------------------------------------------
 # 侧边栏控制面板 (含预设，由 knowledge 元数据驱动)
 # ---------------------------------------------------------------------------
-st.sidebar.markdown(f'<div id="region-a" class="interactive-region" style="margin-bottom:0.6rem;padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">{anchor_badge("A", "amber")} <b>HYPERPARAMETERS // 控制台与探针</b></div>', unsafe_allow_html=True)
+st.sidebar.markdown(
+    f'<div id="region-a" class="interactive-region" style="margin-bottom:0.6rem;padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">{anchor_badge("A", "amber")} <b>HYPERPARAMETERS // 控制台与探针</b></div>',
+    unsafe_allow_html=True,
+)
 preset = render_presets_selector(key_prefix="m2_")
 
 if preset:
@@ -135,7 +170,9 @@ else:
     activation_name = net_params["activation"]
     initializer = net_params["initializer"]
 
-    train_params = render_training_params(key_prefix="m2_", default_opt="Adam", default_lr=0.05, default_epochs=150)
+    train_params = render_training_params(
+        key_prefix="m2_", default_opt="Adam", default_lr=0.05, default_epochs=150
+    )
     optimizer_name = train_params["optimizer"]
     lr = train_params["learning_rate"]
     batch_size = train_params["batch_size"]
@@ -202,7 +239,9 @@ for layer in model.layers:
     elif isinstance(layer, Activation):
         curr_signal = layer.forward(curr_signal)
         probe_activations.append(curr_signal.copy())
-        full_act = layer.forward(layer.input_cache) if hasattr(layer, "input_cache") else curr_signal
+        full_act = (
+            layer.forward(layer.input_cache) if hasattr(layer, "input_cache") else curr_signal
+        )
         all_activations.append(full_act)
 
 probe_prob = float(curr_signal.ravel()[0])
@@ -224,16 +263,40 @@ else:
 st.markdown(
     f'<div id="region-c" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;">'
     f'{anchor_badge("C", "emerald")} <span style="font-weight:800;color:#065f46;font-size:0.86rem;">TELEMETRY BENCHMARK // 实时遥测指标看板</span>'
-    f'</div>',
+    f"</div>",
     unsafe_allow_html=True,
 )
 grid_html = (
     '<div class="metric-grid">'
-    + render_metric_card("FINAL LOSS // 最终损失", f"{final_loss:.4f}", delta="CONVERGED" if final_loss < 0.2 else "TRAINING", delta_type="positive" if final_loss < 0.2 else "neutral", icon_name="trending-down")
-    + render_metric_card("ACCURACY // 准确率", f"{final_acc:.1%}", delta=dataset_name.upper(), delta_type="positive" if final_acc >= 0.9 else "neutral", icon_name="target")
-    + render_metric_card("PROBE RESPONSE // 探针响应", f"{probe_prob:.1%}", delta=f"CLASS 预测类别 {probe_pred_class}", delta_type="positive" if probe_pred_class == 1 else "neutral", icon_name="crosshair")
-    + render_metric_card("GRADIENT NORM // 梯度范数", f"{min_grad_norm:.2e}", delta=grad_health_status, delta_type="positive" if "HEALTHY" in grad_health_status else "negative", icon_name="activity")
-    + '</div>'
+    + render_metric_card(
+        "FINAL LOSS // 最终损失",
+        f"{final_loss:.4f}",
+        delta="CONVERGED" if final_loss < 0.2 else "TRAINING",
+        delta_type="positive" if final_loss < 0.2 else "neutral",
+        icon_name="trending-down",
+    )
+    + render_metric_card(
+        "ACCURACY // 准确率",
+        f"{final_acc:.1%}",
+        delta=dataset_name.upper(),
+        delta_type="positive" if final_acc >= 0.9 else "neutral",
+        icon_name="target",
+    )
+    + render_metric_card(
+        "PROBE RESPONSE // 探针响应",
+        f"{probe_prob:.1%}",
+        delta=f"CLASS 预测类别 {probe_pred_class}",
+        delta_type="positive" if probe_pred_class == 1 else "neutral",
+        icon_name="crosshair",
+    )
+    + render_metric_card(
+        "GRADIENT NORM // 梯度范数",
+        f"{min_grad_norm:.2e}",
+        delta=grad_health_status,
+        delta_type="positive" if "HEALTHY" in grad_health_status else "negative",
+        icon_name="activity",
+    )
+    + "</div>"
 )
 st.markdown(grid_html, unsafe_allow_html=True)
 
@@ -246,7 +309,7 @@ with col_topo:
     st.markdown(
         f'<div id="region-d" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;">'
         f'{anchor_badge("D", "purple")} <span style="font-weight:800;color:#5b21b6;font-size:0.86rem;">TOPOLOGY & PROBE // 激活探针与网络拓扑</span>'
-        f'</div>',
+        f"</div>",
         unsafe_allow_html=True,
     )
     fig_topo = plot_network_topology(
@@ -255,7 +318,7 @@ with col_topo:
         neuron_activations=probe_activations,
         title=f"TOPOLOGY & PROBE // 激活探针响应 (x₁={probe_x:.2f}, x₂={probe_y:.2f})",
     )
-    st.plotly_chart(fig_topo, use_container_width=True)
+    st.plotly_chart(fig_topo, width="stretch")
     with st.expander("[HOW TO READ // 读图指南] 网络拓扑与激活点亮", expanded=False):
         st.markdown(
             """
@@ -270,13 +333,13 @@ with col_bound:
     st.markdown(
         f'<div id="region-e" class="interactive-region" style="padding:0.4rem 0.6rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:0.5rem;">'
         f'{anchor_badge("E", "blue")} <span style="font-weight:800;color:#1e40af;font-size:0.86rem;">DECISION MANIFOLD // 空间决策流形与探针定位</span>'
-        f'</div>',
+        f"</div>",
         unsafe_allow_html=True,
     )
     fig_bound = plot_decision_boundary(
         model, X, y, probe_point=probe_pt, title="DECISION MANIFOLD // 空间决策流形与探针定位"
     )
-    st.plotly_chart(fig_bound, use_container_width=True)
+    st.plotly_chart(fig_bound, width="stretch")
     with st.expander("[HOW TO READ // 读图指南] 空间非线性弯曲决策分界线", expanded=False):
         st.markdown(
             """
@@ -294,8 +357,10 @@ col_heat, col_grad = st.columns(2)
 
 with col_heat:
     if all_activations:
-        fig_heat = plot_activation_heatmap(all_activations, title="ACTIVATION HEATMAP // 逐层神经元激活分布")
-        st.plotly_chart(fig_heat, use_container_width=True)
+        fig_heat = plot_activation_heatmap(
+            all_activations, title="ACTIVATION HEATMAP // 逐层神经元激活分布"
+        )
+        st.plotly_chart(fig_heat, width="stretch")
         with st.expander("[HOW TO READ // 读图指南] 逐层神经元激活热力图", expanded=False):
             st.markdown(
                 """
@@ -307,8 +372,10 @@ with col_heat:
 
 with col_grad:
     if dense_grads:
-        fig_grad = plot_gradient_histograms(dense_grads, layer_names, title="GRADIENT FLOW // 反向传播梯度流分布")
-        st.plotly_chart(fig_grad, use_container_width=True)
+        fig_grad = plot_gradient_histograms(
+            dense_grads, layer_names, title="GRADIENT FLOW // 反向传播梯度流分布"
+        )
+        st.plotly_chart(fig_grad, width="stretch")
         with st.expander("[HOW TO READ // 读图指南] 反向传播梯度流分布直方图", expanded=False):
             st.markdown(
                 """
@@ -319,9 +386,15 @@ with col_grad:
             )
 
 # 深度知识学习指南 (折叠微观原理解析)
-act_meta = ACTIVATIONS.get(activation_name, ACTIVATIONS.get(activation_name.split(" ")[0], ACTIVATIONS["ReLU"]))
-init_meta = INITIALIZERS.get(initializer, INITIALIZERS.get(initializer.split(" ")[0].lower(), INITIALIZERS["he"]))
-opt_meta = OPTIMIZERS.get(optimizer_name, OPTIMIZERS.get(optimizer_name.split(" ")[0], OPTIMIZERS["Adam"]))
+act_meta = ACTIVATIONS.get(
+    activation_name, ACTIVATIONS.get(activation_name.split(" ")[0], ACTIVATIONS["ReLU"])
+)
+init_meta = INITIALIZERS.get(
+    initializer, INITIALIZERS.get(initializer.split(" ")[0].lower(), INITIALIZERS["he"])
+)
+opt_meta = OPTIMIZERS.get(
+    optimizer_name, OPTIMIZERS.get(optimizer_name.split(" ")[0], OPTIMIZERS["Adam"])
+)
 
 render_deep_dive_card("多层网络拓扑、激活与初始化微观解析", [act_meta, init_meta, opt_meta])
 
@@ -348,4 +421,3 @@ with st.expander("[GROWTH GUIDE // 成长指南] 多层深度网络核心名词�
         * **本质机理**：反向传播链式求导时，多个小导数连乘导致浅层梯度趋近于 0，靠近输入的权重完全停止更新。
         """
     )
-

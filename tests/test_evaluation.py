@@ -7,8 +7,6 @@ import numpy as np
 import pytest
 
 from nn_core.evaluation import (
-    BenchmarkQuestion,
-    BenchmarkTask,
     EvaluationHarness,
     compute_accuracy,
     compute_f1,

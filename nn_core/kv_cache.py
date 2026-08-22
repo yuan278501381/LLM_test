@@ -10,6 +10,7 @@ nn_core.kv_cache - KV-Cache 推理显存与吞吐优化容器
 
 import logging
 import uuid
+
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -55,7 +56,11 @@ class KVCache:
         tid = uuid.uuid4().hex[:8]
         logger.info(
             "[%s] KVCache 已初始化: layers=%d, max_len=%d, heads=%d, dim=%d",
-            tid, num_layers, max_seq_len, num_kv_heads, head_dim
+            tid,
+            num_layers,
+            max_seq_len,
+            num_kv_heads,
+            head_dim,
         )
 
     def update(
@@ -66,17 +71,17 @@ class KVCache:
     ) -> tuple[np.ndarray, np.ndarray]:
         """
         向指定层追加新的 Key 和 Value，并返回截至当前步的完整历史 KV。
-        
+
         Args:
             layer_idx: 层索引
             new_k: 形状 (batch_size, num_kv_heads, new_seq_len, head_dim)
             new_v: 形状 (batch_size, num_kv_heads, new_seq_len, head_dim)
-            
+
         Returns:
             full_k: 形状 (batch_size, num_kv_heads, total_seq_len, head_dim)
             full_v: 形状 (batch_size, num_kv_heads, total_seq_len, head_dim)
         """
-        batch_size, num_kv_heads, new_len, head_dim = new_k.shape
+        batch_size, _num_kv_heads, new_len, _head_dim = new_k.shape
         start_pos = self.current_seq_len
         end_pos = start_pos + new_len
 
@@ -109,8 +114,22 @@ class KVCache:
         """
         # 每个 float64 占 8 字节 (或 float32 占 4 字节)
         bytes_per_elem = 8
-        total_elements = 2 * self.num_layers * self.max_batch_size * self.num_kv_heads * self.current_seq_len * self.head_dim
-        allocated_elements = 2 * self.num_layers * self.max_batch_size * self.num_kv_heads * self.max_seq_len * self.head_dim
+        total_elements = (
+            2
+            * self.num_layers
+            * self.max_batch_size
+            * self.num_kv_heads
+            * self.current_seq_len
+            * self.head_dim
+        )
+        allocated_elements = (
+            2
+            * self.num_layers
+            * self.max_batch_size
+            * self.num_kv_heads
+            * self.max_seq_len
+            * self.head_dim
+        )
 
         used_bytes = total_elements * bytes_per_elem
         allocated_bytes = allocated_elements * bytes_per_elem
