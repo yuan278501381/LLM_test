@@ -22,14 +22,15 @@ import streamlit.components.v1 as components
 from dashboard.styles.icons import svg_icon
 
 
-def reload_nn_core_modules() -> None:
-    """在 Streamlit 热重载时安全同步 nn_core 核心算法模块，杜绝长时间运行下的模块导入缓存问题"""
-    for mod_name in list(sys.modules.keys()):
-        if mod_name.startswith("nn_core."):
-            mod = sys.modules.get(mod_name)
-            if mod is not None:
-                with contextlib.suppress(Exception):
-                    importlib.reload(mod)
+def reload_runtime_modules() -> None:
+    """在 Streamlit 热重载时安全同步 nn_core 与 dashboard.constants 核心模块，杜绝长时间运行下的模块导入缓存问题"""
+    for prefix in ("nn_core.", "dashboard.constants.", "dashboard.components."):
+        for mod_name in list(sys.modules.keys()):
+            if mod_name.startswith(prefix) or mod_name == prefix.rstrip("."):
+                mod = sys.modules.get(mod_name)
+                if mod is not None:
+                    with contextlib.suppress(Exception):
+                        importlib.reload(mod)
 
 
 def _install_plotly_playback() -> None:
@@ -55,14 +56,13 @@ def apply_custom_theme() -> None:
     """
     注入全局现代极简高对比度亮色 CSS 样式表。
     全面适配 High-DPI / 4K 屏幕与全操作系统缩放（Windows / macOS / Linux）。
+    采用 0ms 本地原生高精字体栈，彻底根绝 FOUT (Flash of Unstyled Text) 字体粗细闪烁与页面跳动。
     """
     _install_plotly_playback()
     st.markdown(
         """<style>
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
-
 /* -------------------------------------------------------------------------
-   全局根变量 (纯净亮色高对比度基底)
+   全局根变量 (纯净亮色高对比度基底 & 0ms 本地极速字体栈)
 ------------------------------------------------------------------------- */
 :root {
     --bg-page: #f8fafc;
@@ -78,16 +78,23 @@ def apply_custom_theme() -> None:
     --accent-purple: #6d28d9;   /* 深紫 */
     --accent-amber: #b45309;    /* 琥珀深棕 */
     --accent-rose: #be123c;     /* 艳红 */
+    --font-system: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "PingFang SC", "Microsoft YaHei", monospace;
 }
 
-/* 全局背景与文字重置 */
+/* 全局背景与文字重置 (0ms 本地原生字体栈，杜绝 FOUT 字体粗细突变与闪烁) */
 html, body, .stApp {
     background-color: var(--bg-page) !important;
-    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif !important;
+    font-family: var(--font-system) !important;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
     color: var(--text-primary) !important;
+}
+
+/* 保证所有文本与表单继承稳固字体，消除挂载瞬间字号跳动 */
+p, span, label, input, textarea, select, button {
+    font-family: inherit;
 }
 
 /* 隐藏 Streamlit 冗余元素 */
@@ -105,7 +112,7 @@ header {background-color: transparent !important;}
 }
 
 /* -------------------------------------------------------------------------
-   侧边栏完全亮色化与导航条文字锐利化
+   侧边栏完全亮色化与导航条文字锐利化 (消除切页字重闪烁)
 ------------------------------------------------------------------------- */
 [data-testid="stSidebar"] {
     background-color: var(--bg-sidebar) !important;
@@ -117,9 +124,10 @@ header {background-color: transparent !important;}
 }
 
 [data-testid="stSidebarNav"] span {
-    font-weight: 600 !important;
+    font-weight: 500 !important;
     color: var(--text-secondary) !important;
-    font-size: 0.92rem !important;
+    font-size: 0.90rem !important;
+    transition: color 0.15s ease, background-color 0.15s ease !important;
 }
 
 [data-testid="stSidebarNav"] a[aria-current="page"] span {

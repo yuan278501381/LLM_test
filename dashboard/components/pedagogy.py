@@ -1,17 +1,13 @@
 # Copyright (c) 2026 Yy1 (yuan278501381) | MIT License
 """教学证据、课程契约与参考资料的统一 Streamlit 组件。"""
 
+import importlib
 from html import escape
 
 import streamlit as st
 
+from dashboard.constants import course
 from dashboard.constants.course import (
-    CLAIMS,
-    CURRICULUM_DAG,
-    EVIDENCE_DESCRIPTIONS,
-    FORMATIVE_QUIZZES,
-    LEARNING_LOOPS,
-    LESSONS,
     Claim,
     EvidenceLevel,
 )
@@ -24,6 +20,19 @@ _EVIDENCE_COLORS: dict[EvidenceLevel, tuple[str, str, str]] = {
     EvidenceLevel.ARCHITECTURE_ONLY: ("#f5f3ff", "#6d28d9", "#ddd6fe"),
     EvidenceLevel.PAPER_REPRODUCTION: ("#f0fdfa", "#0f766e", "#99f6e4"),
 }
+
+
+def _ensure_course_sync(lesson_id: str | None = None) -> None:
+    """在运行时检测课程编号；若未命中则动态同步 course 模块，杜绝热重载缓存问题。"""
+    if lesson_id is not None and lesson_id not in course.LESSONS:
+        with contextlib_suppress():
+            importlib.reload(course)
+
+
+def contextlib_suppress():
+    import contextlib
+
+    return contextlib.suppress(Exception)
 
 
 def evidence_badge(level: EvidenceLevel) -> str:
@@ -41,12 +50,12 @@ def evidence_badge(level: EvidenceLevel) -> str:
 
 def render_lesson_evidence(lesson_id: str, *, show_contract: bool = False) -> None:
     """在页面顶部呈现证据性质、结论边界和可追溯参考资料。"""
-
-    if lesson_id not in LESSONS:
+    _ensure_course_sync(lesson_id)
+    if lesson_id not in course.LESSONS:
         raise ValueError(f"未知课程编号: {lesson_id}")
-    lesson = LESSONS[lesson_id]
+    lesson = course.LESSONS[lesson_id]
     badges = "".join(evidence_badge(level) for level in lesson.evidence)
-    descriptions = "；".join(EVIDENCE_DESCRIPTIONS[level] for level in lesson.evidence)
+    descriptions = "；".join(course.EVIDENCE_DESCRIPTIONS[level] for level in lesson.evidence)
     primary_reference = lesson.references[0]
     st.markdown(
         '<section data-testid="lesson-evidence" '
@@ -65,7 +74,7 @@ def render_lesson_evidence(lesson_id: str, *, show_contract: bool = False) -> No
     if show_contract:
         render_lesson_contract(lesson_id)
 
-    lesson_claims = [claim for claim in CLAIMS.values() if claim.lesson_id == lesson_id]
+    lesson_claims = [claim for claim in course.CLAIMS.values() if claim.lesson_id == lesson_id]
     with st.expander("本页主张索引 // CLAIMS & RESULT IDS"):
         for claim in lesson_claims:
             st.markdown(
@@ -80,7 +89,8 @@ def render_lesson_evidence(lesson_id: str, *, show_contract: bool = False) -> No
 
 def get_result_claim(lesson_id: str, result_id: str) -> Claim:
     """返回页内结果主张；未注册 ID 立即报错。"""
-    for claim in CLAIMS.values():
+    _ensure_course_sync(lesson_id)
+    for claim in course.CLAIMS.values():
         if claim.lesson_id == lesson_id and claim.result_id == result_id:
             return claim
     raise ValueError(f"未注册的页内结果: {lesson_id}/{result_id}")
@@ -105,7 +115,8 @@ def render_result_evidence(lesson_id: str, result_id: str) -> None:
 
 def render_core_result_evidence(lesson_id: str) -> None:
     """呈现本页四类核心结果的常显证据卡，避免证据只藏在页面总说明中。"""
-    if lesson_id not in LESSONS:
+    _ensure_course_sync(lesson_id)
+    if lesson_id not in course.LESSONS:
         raise ValueError(f"未知课程编号: {lesson_id}")
     st.markdown("#### RESULT EVIDENCE // 本页四类核心结论的证据与边界")
     for suffix in ("formula", "result", "history", "failure"):
@@ -114,9 +125,10 @@ def render_core_result_evidence(lesson_id: str) -> None:
 
 def render_formative_quiz(lesson_id: str) -> None:
     """渲染不默认选答案、带诊断反馈且可再次提交的形成性测验。"""
-    if lesson_id not in FORMATIVE_QUIZZES:
+    _ensure_course_sync(lesson_id)
+    if lesson_id not in course.FORMATIVE_QUIZZES:
         raise ValueError(f"未知课程编号: {lesson_id}")
-    quiz = FORMATIVE_QUIZZES[lesson_id]
+    quiz = course.FORMATIVE_QUIZZES[lesson_id]
     st.markdown("#### FORMATIVE CHECK // 先判断，再查看反馈")
     selected = st.radio(
         quiz.question,
@@ -136,11 +148,11 @@ def render_formative_quiz(lesson_id: str) -> None:
 
 def render_lesson_contract(lesson_id: str) -> None:
     """呈现统一教学结构；重点页面可直接复用。"""
-
-    if lesson_id not in LESSONS:
+    _ensure_course_sync(lesson_id)
+    if lesson_id not in course.LESSONS:
         raise ValueError(f"未知课程编号: {lesson_id}")
-    lesson = LESSONS[lesson_id]
-    loop = LEARNING_LOOPS[lesson_id]
+    lesson = course.LESSONS[lesson_id]
+    loop = course.LEARNING_LOOPS[lesson_id]
     with st.expander("LEARNING CONTRACT // 学习目标、失败案例与参考资料"):
         col_left, col_right = st.columns(2)
         with col_left:
@@ -162,7 +174,7 @@ def render_lesson_contract(lesson_id: str) -> None:
         st.markdown("**权威参考资料**")
         for ref in lesson.references:
             st.markdown(f"- [{ref.title}]({ref.url}) — {ref.note}")
-        prerequisites = "、".join(CURRICULUM_DAG[lesson_id]) or "无（起点课程）"
+        prerequisites = "、".join(course.CURRICULUM_DAG[lesson_id]) or "无（起点课程）"
         st.markdown(f"**课程图直接依赖**：{prerequisites}")
         st.markdown("**本课学习闭环**")
         st.markdown(f"1. 诊断：{loop.diagnostic_question}")
