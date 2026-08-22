@@ -26,6 +26,7 @@ from dashboard.components.param_panel import (
     render_dataset_selector,
     render_deep_dive_card,
     render_network_params,
+    render_regularization_params,
     render_training_params,
 )
 from dashboard.components.pedagogy import render_core_result_evidence, render_lesson_evidence
@@ -174,36 +175,9 @@ optimizer_name = train_params["optimizer"]
 lr = train_params["learning_rate"]
 batch_size = train_params["batch_size"]
 
-st.sidebar.markdown("#### REGULARIZATION // 正则化策略")
-reg_list = list(REGULARIZERS.values())
-reg_labels = [m.label for m in reg_list]
-reg_hints = {
-    "None (无正则)": "纯经验风险最小化 · 自由拟合无约束",
-    "L1 正则 (Lasso)": "曼哈顿范数约束 · 驱动权重绝对稀疏化 (产生 0 权重)",
-    "L2 正则 (Ridge)": "欧氏范数约束 · 惩罚极端大权重 · 提升泛化",
-}
-
-selected_reg_label = st.sidebar.radio(
-    "正则化类型",
-    options=reg_labels,
-    format_func=lambda o: f"**{o}**\n\n↳ *{reg_hints.get(o, '泛化约束')}*",
-    help="权重约束项。通过惩罚过大的权重值，防止模型强行记忆样本噪声，有效提升泛化能力。",
-    key="m4_reg",
-)
-reg_meta = next(m for m in reg_list if m.label == selected_reg_label)
-
-reg_lambda = 0.0
-if reg_meta.id != "None":
-    reg_lambda = st.sidebar.slider(
-        "惩罚系数 (λ)",
-        0.0001,
-        0.1,
-        0.01,
-        step=0.005,
-        format="%.4f",
-        help="正则化惩罚强度。越大对权重的压制越强，决策面越平滑；过大会导致欠拟合。",
-        key="m4_lambda",
-    )
+reg_params = render_regularization_params(key_prefix="m4_")
+reg_id = reg_params["regularization"]
+reg_lambda = reg_params["lambda"]
 
 # ---------------------------------------------------------------------------
 # Session State 模型管理 (支持逐步训练)
@@ -217,7 +191,7 @@ if "m4_model" not in st.session_state or st.sidebar.button("RESET // 重置模�
     current_dim = 2
     for i in range(n_layers):
         out_dim = neurons_per_layer[i]
-        reg = resolve_regularizer(reg_meta.id, float(reg_lambda))
+        reg = resolve_regularizer(reg_id, float(reg_lambda))
         m.add(Dense(current_dim, out_dim, initializer=init_name, regularizer=reg))
         m.add(act_cls())
         current_dim = out_dim
@@ -291,7 +265,7 @@ layer_names = [f"Dense #{i + 1}" for i in range(len(dense_layers))]
 grad_norm = float(np.mean([np.mean(np.abs(g)) for g in grads_list])) if grads_list else 0.0
 weight_norm = float(np.mean([np.mean(np.abs(w)) for w in weights_list])) if weights_list else 0.0
 
-clean_reg_name = reg_meta.id
+clean_reg_name = reg_id
 
 grid_html = (
     '<div class="metric-grid" style="margin-top:0.4rem;">'
@@ -464,6 +438,7 @@ with col_snap2:
         )
 
 # 深度知识学习指南 (折叠微观原理解析)
+reg_meta = REGULARIZERS.get(reg_id, REGULARIZERS["None"])
 act_meta = ACTIVATIONS.get(
     activation_name, ACTIVATIONS.get(activation_name.split(" ")[0], ACTIVATIONS["ReLU"])
 )

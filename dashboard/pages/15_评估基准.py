@@ -173,13 +173,16 @@ st.sidebar.markdown(
 # ---------------------------------------------------------------------------
 st.sidebar.markdown("#### HYPERPARAMETERS // 超参数与配置")
 
+model_tier_hints = {
+    "弱基座模型 (Base TinyGPT)": "零样本先验较弱 · 知识储备有限，平均准确率 ~30%",
+    "中等微调模型 (SFT 7B)": "经过指令微调 · 遵循指令良好，平均准确率 ~65%",
+    "强对齐模型 (Aligned 70B)": "全量 RLHF/DPO 对齐 · 强推理与安全围栏，平均准确率 ~90%",
+}
+
 model_tier = st.sidebar.radio(
     "模拟待测模型能力等级",
-    options=[
-        "弱模型 (Base TinyGPT · 30% 准确率)",
-        "中等模型 (SFT 7B · 65% 准确率)",
-        "强模型 (Aligned 70B · 90% 准确率)",
-    ],
+    options=list(model_tier_hints.keys()),
+    format_func=lambda o: f"**{o}**\n\n↳ *{model_tier_hints[o]}*",
     index=2,
 )
 
@@ -195,8 +198,8 @@ selected_task_names = st.sidebar.multiselect(
 # ---------------------------------------------------------------------------
 # 模拟评测执行
 # ---------------------------------------------------------------------------
-accuracy_prob = 0.90 if "强模型" in model_tier else (0.65 if "中等模型" in model_tier else 0.30)
-sim_ppl = 12.4 if "强模型" in model_tier else (38.6 if "中等模型" in model_tier else 145.2)
+accuracy_prob = 0.90 if "强对齐" in model_tier else (0.65 if "中等微调" in model_tier else 0.30)
+sim_ppl = 12.4 if "强对齐" in model_tier else (38.6 if "中等微调" in model_tier else 145.2)
 
 evaluation_rng = np.random.default_rng(42)
 simulated_predictions: dict[str, int] = {}

@@ -169,9 +169,14 @@ patch_size_val = st.sidebar.select_slider(
     value=8,
 )
 
+sampling_hints = {
+    "均匀采样 (Uniform)": "等间隔时序采样 · 保留平滑连续动力学",
+    "关键帧突变采样 (Keyframe)": "基于帧间光流差分 · 精准捕捉突变剧烈动作",
+}
 sampling_strategy = st.sidebar.radio(
     "帧采样策略 (Sampling Strategy)",
-    options=["均匀采样 (Uniform)", "关键帧突变采样 (Keyframe)"],
+    options=list(sampling_hints.keys()),
+    format_func=lambda o: f"**{o}**\n\n↳ *{sampling_hints[o]}*",
     index=0,
 )
 

@@ -24,34 +24,91 @@ PRESETS = PRESETS_REGISTRY
 
 
 DATASET_HINTS = {
-    "双半月弯 (Moons)": "非线性交错流形 · 考验隐藏层非线性拟合能力",
-    "同心圆环 (Circles)": "嵌套的非线性类别 · 单一仿射边界通常无法正确分开",
-    "双螺旋线 (Spiral)": "高曲率混沌奇点 · 考验深层网络容量与局部感知",
-    "高斯双簇 (Blobs)": "线性可分基准流形 · 检验单层感知器收敛速度",
+    "Moons (双月形非线性分布)": "两个交错穿插半月形 · 经典非线性流形，检验隐藏层特征空间扭曲",
+    "Circles (同心圆径向分布)": "内外嵌套同心圆环 · 严格径向非线性，单层线性感知机无法分开",
+    "XOR (正交经典异或分布)": "四象限正负对角异或 · 经典明斯基难题，需至少一层隐藏层破局",
+    "Spiral (双螺旋高曲率分布)": "两条交缠阿基米德螺旋 · 高曲率混沌流形，极限考验网络容量",
+    "Blobs (高斯聚类线性分布)": "多元高斯双簇聚类 · 线性可分基准流形，单神经元可 100% 准确分类",
+    "moons": "两个交错穿插半月形 · 经典非线性流形，检验隐藏层特征空间扭曲",
+    "circles": "内外嵌套同心圆环 · 严格径向非线性，单层线性感知机无法分开",
+    "xor": "四象限正负对角异或 · 经典明斯基难题，需至少一层隐藏层破局",
+    "spiral": "两条交缠阿基米德螺旋 · 高曲率混沌流形，极限考验网络容量",
+    "blobs": "多元高斯双簇聚类 · 线性可分基准流形，单神经元可 100% 准确分类",
 }
 
 ACTIVATION_HINTS = {
     "ReLU (线性整流函数)": "正向恒等 / 负向截断 · 缓解深层梯度消失的工业界基石",
-    "Sigmoid (S型激活函数)": "二分类概率压缩 (0, 1) · 易发生饱和与梯度消失",
-    "Tanh (双曲正切函数)": "零中心化平滑映射 (-1, 1) · 梯度传播优于 Sigmoid",
-    "LeakyReLU (带泄露线性整流)": "负区间保留微小斜率 (0.01) · 可降低持续零梯度风险",
-    "GELU (高斯误差线性单元)": "概率随机正则化平滑门控 · Transformer 标配",
-    "Linear (纯线性恒等变换)": "无非线性变换 · 多层网络将退化为单层仿射变换",
+    "Sigmoid (S型激活函数)": "二分类概率压缩 (0, 1) · 经典 Logistic 回归但易饱和",
+    "Tanh (双曲正切函数)": "零中心化平滑映射 (-1, 1) · 梯度传播对称性优于 Sigmoid",
+    "LeakyReLU (带泄露线性整流)": "负区间保留微小斜率 (0.01) · 避免神经元永久坏死",
+    "GELU (高斯误差线性单元)": "高斯分布概率平滑门控 · Transformer 与现代 LLM 标配",
+    "Linear (纯线性恒等变换)": "纯线性加权仿射变换 · 验证多层网络退化为单层",
+    "relu": "正向恒等 / 负向截断 · 缓解深层梯度消失的工业界基石",
+    "sigmoid": "二分类概率压缩 (0, 1) · 经典 Logistic 回归但易饱和",
+    "tanh": "零中心化平滑映射 (-1, 1) · 梯度传播对称性优于 Sigmoid",
+    "leakyrelu": "负区间保留微小斜率 (0.01) · 避免神经元永久坏死",
+    "gelu": "高斯分布概率平滑门控 · Transformer 与现代 LLM 标配",
+    "linear": "纯线性加权仿射变换 · 验证多层网络退化为单层",
 }
 
 INITIALIZER_HINTS = {
-    "He (Kaiming 正态分布)": "方差 2/Din · 专为 ReLU / LeakyReLU 设计的抗梯度消失方案",
-    "Xavier (Glorot 均匀分布)": "方差 2/(Din+Dout) · 专为 Sigmoid / Tanh 设计的方差均衡方案",
-    "标准高斯分布 (Random Normal)": "均值 0 方差 1 · 深层网络极易迅速导致梯度爆炸或弥散",
-    "全零初始化 (Zeros)": "所有权重为 0 · 神经元完全对称，反向传播无法学习分化",
+    "He / Kaiming (何恺明正态分布)": "方差 2/Din 补偿 · 专为 ReLU / LeakyReLU 深度网络设计",
+    "Xavier / Glorot (正态分布)": "方差 2/(Din+Dout) 均衡 · 专为 Sigmoid / Tanh 设计",
+    "Random (小方差正态分布)": "未缩放小正态分布 (σ=0.01) · 深层网络极易发生梯度弥散",
+    "Zeros (全零基准初始化)": "所有权重为 0 · 破坏对称性破缺，网络退化为单节点",
+    "he": "方差 2/Din 补偿 · 专为 ReLU / LeakyReLU 深度网络设计",
+    "kaiming": "方差 2/Din 补偿 · 专为 ReLU / LeakyReLU 深度网络设计",
+    "xavier": "方差 2/(Din+Dout) 均衡 · 专为 Sigmoid / Tanh 设计",
+    "random": "未缩放小正态分布 (σ=0.01) · 深层网络极易发生梯度弥散",
+    "zeros": "所有权重为 0 · 破坏对称性破缺，网络退化为单节点",
 }
 
 OPTIMIZER_HINTS = {
-    "Adam (自适应矩估计)": "一阶动量 + 二阶方差自校准 · 深度学习工业界默认标配",
-    "SGD (标准随机梯度下降)": "纯沿瞬时小批量梯度方向更新 · 容易在鞍点与峡谷震荡",
-    "Momentum (动量梯度下降)": "累积历史速度惯性 · 有效冲出局部平坦区与高频震荡",
-    "RMSprop (均方根传播)": "指数滑动平均调节学习率 · 专为非平稳目标与 RNN 设计",
+    "Adam (自适应矩估计)": "一阶动量 + 二阶方差自校准 · 工业界深度学习默认首选",
+    "SGD (随机梯度下降)": "纯沿瞬时小批量梯度方向更新 · 基础经典，但容易在鞍点与峡谷震荡",
+    "Momentum (动量加速梯度下降)": "累积历史速度惯性 · 抑制高频震荡，强力冲过局部平坦鞍区",
+    "RMSProp (均方根自适应学习率)": "指数滑动平均动态调节步长 · 专为非平稳目标与序列模型设计",
+    "adam": "一阶动量 + 二阶方差自校准 · 工业界深度学习默认首选",
+    "sgd": "纯沿瞬时小批量梯度方向更新 · 基础经典，但容易在鞍点与峡谷震荡",
+    "momentum": "累积历史速度惯性 · 抑制高频震荡，强力冲过局部平坦鞍区",
+    "rmsprop": "指数滑动平均动态调节步长 · 专为非平稳目标与序列模型设计",
 }
+
+REGULARIZER_HINTS = {
+    "None (无正则化约束)": "无惩罚约束 · 仅以最小化训练误差为目标，高噪声易过拟合",
+    "L2 (Weight Decay / 权重衰减)": "权重平方和惩罚 (Ridge) · 促使权重平滑均匀衰减，平滑决策面",
+    "L1 (Lasso / 权重稀疏化)": "权重绝对值惩罚 (Lasso) · 促使次要权重精确归零，内置特征选择",
+    "none": "无惩罚约束 · 仅以最小化训练误差为目标，高噪声易过拟合",
+    "l2": "权重平方和惩罚 (Ridge) · 促使权重平滑均匀衰减，平滑决策面",
+    "l1": "权重绝对值惩罚 (Lasso) · 促使次要权重精确归零，内置特征选择",
+}
+
+
+def get_visual_hint(
+    label: str,
+    hint_dict: dict[str, str],
+    fallback_dict: dict[str, Any] | None = None,
+) -> str:
+    """全局通用智能提示获取器：精确匹配、模糊匹配或自动从 Knowledge 库提取精炼原理解析"""
+    clean_label = label.strip()
+    if clean_label in hint_dict:
+        return hint_dict[clean_label]
+
+    lower_label = clean_label.lower()
+    for k, v in hint_dict.items():
+        if k.lower() in lower_label or lower_label in k.lower():
+            return v
+
+    if fallback_dict:
+        for meta in fallback_dict.values():
+            m_label = getattr(meta, "label", "")
+            m_id = getattr(meta, "id", "")
+            if m_label == clean_label or m_id.lower() in lower_label:
+                desc = getattr(meta, "desc", "")
+                if desc:
+                    return desc.split("，")[0] if "，" in desc else desc[:32]
+
+    return "参数微调与训练控制"
 
 
 def render_presets_selector(key_prefix: str = "") -> dict[str, Any] | None:
@@ -92,7 +149,7 @@ def render_dataset_selector(
     selected_label = st.sidebar.radio(
         "分布类型 (Distribution)",
         options=dataset_labels,
-        format_func=lambda o: f"**{o}**\n\n↳ *{DATASET_HINTS.get(o, '2D 特征空间流形')}*",
+        format_func=lambda o: f"**{o}**\n\n↳ *{get_visual_hint(o, DATASET_HINTS, DATASETS)}*",
         index=default_idx,
         help="选择 2D 特征空间的数据集流形结构。不同的几何拓扑对网络深度与激活函数非线性有不同的要求。",
         key=f"{key_prefix}dataset",
@@ -190,7 +247,7 @@ def render_network_params(
     selected_act_label = st.radio(
         "激活函数",
         options=act_labels,
-        format_func=lambda o: f"**{o}**\n\n↳ *{ACTIVATION_HINTS.get(o, '非线性变换')}*",
+        format_func=lambda o: f"**{o}**\n\n↳ *{get_visual_hint(o, ACTIVATION_HINTS, ACTIVATIONS)}*",
         index=act_default_idx,
         help="赋予神经网络非线性表达能力的数学变换。没有激活函数的多层网络会退化为单层线性变换。",
         key=f"{key_prefix}activation",
@@ -199,7 +256,9 @@ def render_network_params(
     selected_init_label = st.radio(
         "权重初始化",
         options=init_labels,
-        format_func=lambda o: f"**{o}**\n\n↳ *{INITIALIZER_HINTS.get(o, '参数初始分布')}*",
+        format_func=lambda o: (
+            f"**{o}**\n\n↳ *{get_visual_hint(o, INITIALIZER_HINTS, INITIALIZERS)}*"
+        ),
         index=init_default_idx,
         help="网络初始权重的概率分布。合理的方差缩放初始化（如 He / Xavier）是深层网络避免梯度消失的关键。",
         key=f"{key_prefix}initializer",
@@ -237,7 +296,7 @@ def render_training_params(
     selected_opt_label = st.sidebar.radio(
         "算法类型 (Algorithm)",
         options=opt_labels,
-        format_func=lambda o: f"**{o}**\n\n↳ *{OPTIMIZER_HINTS.get(o, '参数梯度优化算法')}*",
+        format_func=lambda o: f"**{o}**\n\n↳ *{get_visual_hint(o, OPTIMIZER_HINTS, OPTIMIZERS)}*",
         index=opt_default_idx,
         help="指导参数沿着损失曲面梯度方向寻优的更新策略（动量累积、自适应步长等）。",
         key=f"{key_prefix}optimizer",
@@ -256,13 +315,22 @@ def render_training_params(
         key=f"{key_prefix}learning_rate",
     )
 
+    batch_hints = {
+        16: "极小批量 · 高方差随机扰动，逃逸局部极小与鞍点能力极强",
+        32: "经典黄金折中 · 适度随机噪声，兼顾硬件并行吞吐与泛化平滑度",
+        64: "平衡批量 · 梯度方向较稳定，适合多数中等规模流形优化",
+        128: "大批量稳定更新 · 显著降低瞬时方差，依赖更高学习率配合",
+        256: "超大批量 · 极高矩阵并行吞吐，收敛平稳但探索新区域能力较弱",
+        0: "全量精确批次 (GD) · 无随机噪声真实梯度，但计算沉重且易卡在鞍点",
+    }
+
     batch_size = st.sidebar.radio(
         "批大小 (Batch)",
         options=[16, 32, 64, 128, 256, 0],
         format_func=lambda x: (
-            "**Full (全量)**\n\n↳ *全数据梯度精确计算*"
+            f"**Full (全量批次)**\n\n↳ *{batch_hints[0]}*"
             if x == 0
-            else f"**Mini-Batch ({x})**\n\n↳ *兼顾速度与逃逸鞍点*"
+            else f"**Mini-Batch ({x})**\n\n↳ *{batch_hints.get(x, '兼顾速度与泛化')}*"
         ),
         index=1,
         help="每次参数更新所使用的样本数量。Mini-batch 兼具计算效率与适度随机扰动（利于逃逸鞍点）。",
@@ -339,16 +407,13 @@ def render_regularization_params(key_prefix: str = "") -> dict[str, Any]:
     st.sidebar.markdown("#### REGULARIZATION // 正则化机制")
 
     reg_labels = [meta.label for meta in REGULARIZERS.values()]
-    reg_hints = {
-        "None (无正则)": "纯经验风险最小化 · 自由拟合无参数惩罚",
-        "L1 正则 (Lasso)": "曼哈顿范数约束 · 驱动权重绝对稀疏化 (产生 0 权重)",
-        "L2 正则 (Ridge)": "欧氏范数约束 · 惩罚极端大权重 · 提升泛化",
-    }
 
     selected_reg_label = st.sidebar.radio(
         "正则化类型",
         options=reg_labels,
-        format_func=lambda o: f"**{o}**\n\n↳ *{reg_hints.get(o, '泛化约束')}*",
+        format_func=lambda o: (
+            f"**{o}**\n\n↳ *{get_visual_hint(o, REGULARIZER_HINTS, REGULARIZERS)}*"
+        ),
         index=0,
         help="通过在损失函数中增加权重范数惩罚，约束模型复杂度，防止过拟合。",
         key=f"{key_prefix}regularization",

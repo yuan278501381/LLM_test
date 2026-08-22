@@ -192,9 +192,14 @@ label_to_word = {CN_LABEL_MAP.get(w, w): w for w in vocab_words}
 # ---------------------------------------------------------------------------
 st.sidebar.markdown("#### HYPERPARAMETERS // 超参数与配置")
 
+dim_hints = {
+    "3D 立体空间 (3D View)": "保留三主成分 (PC1~PC3) · 360° 旋转观察完整几何簇",
+    "2D 平面投影 (2D View)": "投影前二主成分 (PC1~PC2) · 消除透视畸变二维平面图",
+}
 dim_choice = st.sidebar.radio(
     "空间投影维度",
-    ["3D 立体空间 (3D View)", "2D 平面投影 (2D View)"],
+    options=list(dim_hints.keys()),
+    format_func=lambda o: f"**{o}**\n\n↳ *{dim_hints[o]}*",
     index=0,
     help="将 32 维词向量通过主成分分析 (PCA) 降维投影到低维视口供直观观察。",
 )

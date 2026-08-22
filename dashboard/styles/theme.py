@@ -132,8 +132,9 @@ header {background-color: transparent !important;}
    世界级双栏/单栏智能自适应侧边栏 (Content-Aware Dynamic Layout)
    - 当页面无超参数控制台时 (如 M00 / 首页)：自动收拢为 240px 极简单栏，导航 100% 满宽，杜绝大片空白！
    - 当页面有超参数控制台时 (如 M01~M17)：自动展开为双栏（180px 课程罗盘 + 310px 参数微观控制台）！
+/* -------------------------------------------------------------------------
+   世界级双栏与单栏自适应微观控制台架构 (Fluid Dual-Column & Master-Detail Navigation)
 ------------------------------------------------------------------------- */
-/* 1. 单栏模式 (无超参数控件时，如 M00 / 首页) */
 /* 1. 侧边栏整体与主导航罗盘 (全站统一 Flex Row 双栏架构) */
 [data-testid="stSidebar"] [data-testid="stSidebarContent"] {
     display: flex !important;
@@ -143,11 +144,11 @@ header {background-color: transparent !important;}
     overflow: hidden !important;
 }
 
-/* 栏位 1：主导航航母罗盘 (全站统一 210px 紧凑罗盘，0 抖动，0 高度差) */
+/* 栏位 1：主导航航母罗盘 (全站统一 205px 紧凑罗盘，0 抖动，0 高度差) */
 [data-testid="stSidebar"] [data-testid="stSidebarNav"] {
-    width: 210px !important;
-    min-width: 210px !important;
-    max-width: 210px !important;
+    width: 205px !important;
+    min-width: 205px !important;
+    max-width: 205px !important;
     height: 100% !important;
     overflow-y: auto !important;
     border-right: 1px solid #e2e8f0 !important;
@@ -157,17 +158,17 @@ header {background-color: transparent !important;}
     flex-shrink: 0 !important;
 }
 
-/* 栏位 2：微观超参数控制台 (有内容时展开 480px 充裕舒展空间，彻底杜绝内容截断) */
+/* 栏位 2：微观超参数控制台 (有内容时展开 495px 充裕舒展空间，彻底杜绝内容截断) */
 [data-testid="stSidebar"] [data-testid="stSidebarUserContent"] {
     display: block !important;
-    flex: 1 1 480px !important;
-    width: 480px !important;
+    flex: 1 1 495px !important;
+    width: 495px !important;
     min-width: 460px !important;
-    max-width: 560px !important;
+    max-width: 600px !important;
     height: 100% !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
-    padding: 2.5rem 0.9rem 1.5rem 0.9rem !important;
+    padding: 2.5rem 1.4rem 1.8rem 1.1rem !important;
     background-color: #ffffff !important;
     box-sizing: border-box !important;
 }
@@ -196,16 +197,14 @@ header {background-color: transparent !important;}
     padding: 0 !important;
 }
 
-/* 当栏位 2 有实际控件时 (M01~M17)，展开为宽幅双栏 690px */
-@media (min-width: 1260px) {
-    [data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] [data-testid="stElementContainer"]),
-    [data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] [data-testid="stElementContainer"]) > div {
-        width: 690px !important;
-        min-width: 680px !important;
-        max-width: 770px !important;
-        background-color: #f8fafc !important;
-        border-right: 1px solid #e2e8f0 !important;
-    }
+/* 当栏位 2 有实际控件时 (M01~M17)，展开为宽幅双栏 700px (全屏幕尺寸通用，彻底消除 1260px 媒体查询断点造成的挤压) */
+[data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] [data-testid="stElementContainer"]),
+[data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] [data-testid="stElementContainer"]) > div {
+    width: 700px !important;
+    min-width: 670px !important;
+    max-width: 800px !important;
+    background-color: #f8fafc !important;
+    border-right: 1px solid #e2e8f0 !important;
 }
 
 /* 控制台内部多列、按钮与滑块自适应无截断体系 */
@@ -220,7 +219,7 @@ header {background-color: transparent !important;}
 }
 
 [data-testid="stSidebarUserContent"] [data-testid="column"] {
-    min-width: 120px !important;
+    min-width: 130px !important;
     flex: 1 1 calc(50% - 0.25rem) !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
@@ -263,32 +262,23 @@ header {background-color: transparent !important;}
     flex-shrink: 0 !important;
 }
 
-/* 3. 响应式折叠模式 (屏幕 < 1260px 时弹性回退为垂直单列) */
-@media (max-width: 1259px) {
-    [data-testid="stSidebar"] {
-        width: 330px !important;
-        min-width: 330px !important;
+/* 移动端/极窄屏幕 (< 768px) 弹性回退为单列 */
+@media (max-width: 767px) {
+    [data-testid="stSidebar"],
+    [data-testid="stSidebar"] > div {
+        width: 100vw !important;
         max-width: 360px !important;
-        background-color: #f8fafc !important;
     }
-
     [data-testid="stSidebarContent"] {
-        display: flex !important;
         flex-direction: column !important;
-        height: 100vh !important;
-        padding: 2.8rem 1rem 1.5rem 1rem !important;
-        overflow-y: auto !important;
     }
-
     [data-testid="stSidebarNav"] {
         width: 100% !important;
-        margin-bottom: 1rem !important;
-        padding-bottom: 1rem !important;
-        border-bottom: 1px solid #e2e8f0 !important;
+        max-width: 100% !important;
     }
-
     [data-testid="stSidebarUserContent"] {
         width: 100% !important;
+        max-width: 100% !important;
     }
 }
 
@@ -1038,17 +1028,17 @@ g.updatemenu-button {
                         flex-shrink: 0 !important;
                     }
 
-                    /* 栏位 2：微观超参数控制台 (有内容时展开 480px 充裕舒展空间，彻底杜绝内容截断) */
+                    /* 栏位 2：微观超参数控制台 (有内容时展开 495px 充裕舒展空间，彻底杜绝内容截断) */
                     [data-testid="stSidebar"] [data-testid="stSidebarUserContent"] {
                         display: block !important;
-                        flex: 1 1 480px !important;
-                        width: 480px !important;
+                        flex: 1 1 495px !important;
+                        width: 495px !important;
                         min-width: 460px !important;
-                        max-width: 560px !important;
+                        max-width: 600px !important;
                         height: 100% !important;
                         overflow-y: auto !important;
                         overflow-x: hidden !important;
-                        padding: 2.5rem 0.9rem 1.5rem 0.9rem !important;
+                        padding: 2.5rem 1.4rem 1.8rem 1.1rem !important;
                         background-color: #ffffff !important;
                         box-sizing: border-box !important;
                     }
@@ -1077,16 +1067,14 @@ g.updatemenu-button {
                         padding: 0 !important;
                     }
 
-                    /* 当栏位 2 有实际控件时 (M01~M17)，展开为宽幅双栏 690px */
-                    @media (min-width: 1260px) {
-                        [data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] [data-testid="stElementContainer"]),
-                        [data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] [data-testid="stElementContainer"]) > div {
-                            width: 690px !important;
-                            min-width: 680px !important;
-                            max-width: 770px !important;
-                            background-color: #f8fafc !important;
-                            border-right: 1px solid #e2e8f0 !important;
-                        }
+                    /* 当栏位 2 有实际控件时 (M01~M17)，展开为宽幅双栏 700px (全屏幕尺寸通用，彻底消除 1260px 媒体查询断点造成的挤压) */
+                    [data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] [data-testid="stElementContainer"]),
+                    [data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] [data-testid="stElementContainer"]) > div {
+                        width: 700px !important;
+                        min-width: 670px !important;
+                        max-width: 800px !important;
+                        background-color: #f8fafc !important;
+                        border-right: 1px solid #e2e8f0 !important;
                     }
 
                     /* 控制台内部多列、按钮与滑块自适应无截断体系 */
@@ -1101,7 +1089,7 @@ g.updatemenu-button {
                     }
 
                     [data-testid="stSidebarUserContent"] [data-testid="column"] {
-                        min-width: 120px !important;
+                        min-width: 130px !important;
                         flex: 1 1 calc(50% - 0.25rem) !important;
                         max-width: 100% !important;
                         box-sizing: border-box !important;

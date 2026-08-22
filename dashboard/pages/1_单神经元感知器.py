@@ -26,6 +26,9 @@ from dashboard.components.client_player import (
     render_trajectory_canvas,
 )
 from dashboard.components.param_panel import (
+    ACTIVATION_HINTS,
+    OPTIMIZER_HINTS,
+    get_visual_hint,
     render_dataset_selector,
     render_deep_dive_card,
 )
@@ -226,28 +229,12 @@ st.sidebar.markdown(
     unsafe_allow_html=True,
 )
 
-ACTIVATION_HINTS = {
-    "ReLU (线性整流函数)": "正向恒等 / 负向截断 · 单神经元线性分界面",
-    "Sigmoid (S型激活函数)": "二分类概率压缩 (0, 1) · 经典 Logistic 回归",
-    "Tanh (双曲正切函数)": "零中心化平滑映射 (-1, 1) · 梯度传播对称",
-    "LeakyReLU (带泄露线性整流)": "负区间微小斜率 · 避免神经元坏死",
-    "GELU (高斯误差线性单元)": "概率平滑门控 · Transformer 常用",
-    "Linear (纯线性恒等变换)": "纯线性加权仿射变换",
-}
-
-OPTIMIZER_HINTS = {
-    "Adam (自适应矩估计)": "一阶动量 + 二阶方差自校准 · 默认首选",
-    "SGD (标准随机梯度下降)": "纯沿瞬时小批量梯度方向更新",
-    "Momentum (动量梯度下降)": "累积历史速度惯性 · 冲过局部平坦区",
-    "RMSprop (均方根传播)": "指数滑动平均自适应步长",
-}
-
 act_list = [m for m in ACTIVATIONS.values() if m.id != "Softmax"]
 act_labels = [m.label for m in act_list]
 selected_act_label = st.sidebar.radio(
     "激活函数",
     options=act_labels,
-    format_func=lambda o: f"**{o}**\n\n↳ *{ACTIVATION_HINTS.get(o, '非线性激活函数')}*",
+    format_func=lambda o: f"**{o}**\n\n↳ *{get_visual_hint(o, ACTIVATION_HINTS, ACTIVATIONS)}*",
     help="非线性激活函数。对单神经元而言，Sigmoid 将实数加权值映射为 (0,1) 的二分类置信概率。",
     key="m1_act",
 )
@@ -258,7 +245,7 @@ opt_labels = [m.label for m in opt_list]
 selected_opt_label = st.sidebar.radio(
     "优化器",
     options=opt_labels,
-    format_func=lambda o: f"**{o}**\n\n↳ *{OPTIMIZER_HINTS.get(o, '梯度优化算法')}*",
+    format_func=lambda o: f"**{o}**\n\n↳ *{get_visual_hint(o, OPTIMIZER_HINTS, OPTIMIZERS)}*",
     help="梯度下降算法。负责根据损失对权重 (w₁, w₂) 和偏置 b 的梯度调整参数大小。",
     key="m1_opt",
 )
