@@ -33,7 +33,7 @@ from dashboard.components.param_panel import (
     render_deep_dive_card,
 )
 from dashboard.components.pedagogy import render_core_result_evidence, render_lesson_evidence
-from dashboard.constants.knowledge import ACTIVATIONS, OPTIMIZERS
+from dashboard.constants.knowledge import ACTIVATIONS, DATASETS, OPTIMIZERS
 from dashboard.styles.theme import (
     anchor_badge,
     apply_custom_theme,
@@ -199,29 +199,45 @@ st.sidebar.markdown(
 )
 c_q1, c_q2, c_q3 = st.sidebar.columns(3)
 if c_q1.button(
-    "关卡 1\n初出茅庐", help="Blobs 线性可分简单题，见证单神经元一枪干掉分类 (100% 准确率)"
+    "关卡 1\n初出茅庐",
+    help="Blobs 线性可分简单题，见证单神经元一枪干掉分类 (100% 准确率)",
+    width="stretch",
 ):
-    st.session_state["m1_dataset"] = "blobs"
-    st.session_state["m1_lr"] = 0.1
+    st.session_state["m1_dataset"] = DATASETS["blobs"].label
+    st.session_state["m1_act"] = ACTIVATIONS["Sigmoid"].label
+    st.session_state["m1_opt"] = OPTIMIZERS["Adam"].label
+    st.session_state["m1_lr"] = 0.100
     st.session_state["m1_epochs"] = 100
+    st.rerun()
+
 if c_q2.button(
-    "关卡 2\n调参翻车", help="超大学习率 LR=1.8，步子太大扯到蛋，见证直线剧烈翻滚与损失震荡！"
+    "关卡 2\n调参翻车",
+    help="超大学习率 LR=1.8，步子太大扯到蛋，见证直线剧烈翻滚与损失震荡！",
+    width="stretch",
 ):
-    st.session_state["m1_dataset"] = "blobs"
-    st.session_state["m1_lr"] = 1.8
+    st.session_state["m1_dataset"] = DATASETS["blobs"].label
+    st.session_state["m1_act"] = ACTIVATIONS["Sigmoid"].label
+    st.session_state["m1_opt"] = OPTIMIZERS["SGD"].label
+    st.session_state["m1_lr"] = 1.800
     st.session_state["m1_epochs"] = 60
+    st.rerun()
+
 if c_q3.button(
     "关卡 3\n绝望困境",
     help="XOR 异或难题，直线转到天荒地老也只能瞎猜 50%，见证单神经元的物理极限！",
+    width="stretch",
 ):
-    st.session_state["m1_dataset"] = "xor"
-    st.session_state["m1_lr"] = 0.2
+    st.session_state["m1_dataset"] = DATASETS["xor"].label
+    st.session_state["m1_act"] = ACTIVATIONS["Sigmoid"].label
+    st.session_state["m1_opt"] = OPTIMIZERS["Adam"].label
+    st.session_state["m1_lr"] = 0.150
     st.session_state["m1_epochs"] = 150
+    st.rerun()
 
 st.sidebar.divider()
 
 dataset_name, n_samples, noise, random_state = render_dataset_selector(
-    key_prefix="m1_", default_dataset=st.session_state.get("m1_dataset", "blobs")
+    key_prefix="m1_", default_dataset="blobs"
 )
 
 st.sidebar.markdown(
@@ -363,7 +379,42 @@ grid_html = (
 st.markdown(grid_html, unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
-# 交互式时空倒流演播控制台 (世界级解耦插槽架构 · 零布局跳动)
+# 智能调参诊断与物理瓶颈分析黄色提示框 (Diagnostic Alert Banner)
+# ---------------------------------------------------------------------------
+if final_acc < 0.90 or final_loss > 0.5:
+    if dataset_name.lower() in ["xor", "moons", "circles", "spiral"]:
+        st.warning(
+            f"**[DIAGNOSTIC HINT // 智能诊断：单神经元物理极限]**\n\n"
+            f"当前模型未能将数据集完全分开（当前准确率：**{final_acc:.1%}**，最终损失：**{final_loss:.4f}**）。\n\n"
+            f"• **为什么画不准？** 当前选用的是 **{dataset_name.upper()} 非线性流形**。单神经元的数学本质是单个线性超平面（`w₁·x₁ + w₂·x₂ + b = 0`），只能在空间中画出一根笔直的直线。明斯基（Minsky）在 1969 年证明：单层线性感知机在数学上**绝对无法**将非线性流形（如异或 XOR、双月形）完全切开！\n\n"
+            f"• **如何跑出 100% 正确结果？**\n"
+            f"  1. **体验单神经元满分分类**：在左侧控制台将【分布类型】切换为 **Blobs (高斯聚类线性分布)**，或直接点击左上方 **【关卡 1 初出茅庐】**；\n"
+            f"  2. **攻克非线性难题**：点击左侧导航栏前往 **M02·多层网络 (Multi-Layer Network)**，引入隐藏层神经元实现特征空间的非线性空间流形折叠！"
+        )
+    elif act_meta.id != "Sigmoid":
+        st.warning(
+            f"**[DIAGNOSTIC HINT // 智能诊断：激活函数特性影响]**\n\n"
+            f"当前模型在线性数据集上未达最优收敛（当前准确率：**{final_acc:.1%}**，最终损失：**{final_loss:.4f}**）。\n\n"
+            f"• **为什么未达 100%？** 当前激活函数选用了 **{act_meta.label}**。二分类感知器的标准输出应是将实数线性加权值平滑压缩至 `(0, 1)` 概率区间的 **Sigmoid** 激活函数。使用 ReLU 时，负向区域导数完全置零，可能引发神经元死区（Dying ReLU）导致直线停滞。\n\n"
+            f"• **如何跑出 100% 正确结果？**\n"
+            f"  1. 在左侧控制台将【激活函数】切换为 **Sigmoid (S型激活函数)**；\n"
+            f"  2. 将【学习率】设为 **0.05 ~ 0.2** 黄金区间，点击即可见证 100% 满分收敛！"
+        )
+    elif lr > 1.0:
+        st.warning(
+            f"**[DIAGNOSTIC HINT // 智能诊断：学习率过大导致震荡]**\n\n"
+            f"当前模型发生剧烈翻滚震荡（当前准确率：**{final_acc:.1%}**，最终损失：**{final_loss:.4f}**）。\n\n"
+            f"• **为什么损失震荡？** 当前学习率过大（**LR = {lr}**），导致参数每次更新迈出的步长过大，在损失盆地两侧剧烈跳跃，无法沉降至全局最低点。\n\n"
+            f"• **如何跑出正确结果？**\n"
+            f"  1. 在左侧控制台将【学习率】下调至 **0.05 ~ 0.2**；\n"
+            f"  2. 重新观察右侧损失曲线，将平滑单调俯冲至 0，准确率迅速攀升至 100%。"
+        )
+    else:
+        st.warning(
+            f"**[DIAGNOSTIC HINT // 智能诊断：训练尚未充分收敛]**\n\n"
+            f"当前模型尚未完成充分训练（当前准确率：**{final_acc:.1%}**，最终损失：**{final_loss:.4f}**）。\n\n"
+            f"• **优化建议**：适当提高【训练轮数】至 100~200 轮，或将【学习率】微调至 0.1 左右，帮助模型完成参数收敛。"
+        )
 # ---------------------------------------------------------------------------
 total_steps = len(weight_trajectory)
 if "m1_scrub_step" not in st.session_state or st.session_state["m1_scrub_step"] > total_steps:

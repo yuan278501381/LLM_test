@@ -282,7 +282,7 @@ header {background-color: transparent !important;}
     }
 }
 
-[data-testid="stSidebar"] * {
+[data-testid="stSidebar"] {
     color: var(--text-primary) !important;
 }
 
@@ -374,6 +374,7 @@ header {background-color: transparent !important;}
 
 [data-testid="stSidebarUserContent"] [data-testid="stSlider"],
 [data-testid="stSidebarUserContent"] [data-testid="stSelectbox"],
+[data-testid="stSidebarUserContent"] [data-testid="stMultiSelect"],
 [data-testid="stSidebarUserContent"] [data-testid="stRadio"],
 [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"] {
     background: #f8fafc !important;
@@ -387,10 +388,142 @@ header {background-color: transparent !important;}
 
 [data-testid="stSidebarUserContent"] [data-testid="stSlider"]:hover,
 [data-testid="stSidebarUserContent"] [data-testid="stSelectbox"]:hover,
+[data-testid="stSidebarUserContent"] [data-testid="stMultiSelect"]:hover,
 [data-testid="stSidebarUserContent"] [data-testid="stRadio"]:hover,
 [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"]:hover {
     border-color: #93c5fd !important;
     box-shadow: 0 3px 8px rgba(37, 99, 235, 0.06) !important;
+}
+
+/* -------------------------------------------------------------------------
+   世界级 MultiSelect 标签徽标与多选下拉组件 (Linear / Apple 风格高质感设计)
+------------------------------------------------------------------------- */
+/* 1. 外层多选下拉容器 */
+[data-testid="stMultiSelect"] [data-testid="stMultiSelectTagsContainer"],
+[data-testid="stMultiSelect"] [data-baseweb="select"] > div,
+[data-testid="stMultiSelect"] [role="group"] {
+    background-color: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+    padding: 3px 6px !important;
+    min-height: 40px !important;
+}
+
+[data-testid="stMultiSelect"] [data-testid="stMultiSelectTagsContainer"]:hover,
+[data-testid="stMultiSelect"] [data-baseweb="select"] > div:hover {
+    border-color: #94a3b8 !important;
+    background-color: #ffffff !important;
+}
+
+[data-testid="stMultiSelect"] [data-testid="stMultiSelectTagsContainer"]:focus-within,
+[data-testid="stMultiSelect"] [data-baseweb="select"] > div:focus-within {
+    border-color: #3b82f6 !important;
+    background-color: #ffffff !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+}
+
+/* 2. 核心 Tag 胶囊药丸 (优雅冰川蓝高质感微渐变、精致边框与清晰阴影) */
+[data-testid="stMultiSelect"] span[data-tag],
+[data-testid="stMultiSelect"] span[data-baseweb="tag"],
+[data-testid="stMultiSelect"] div[data-baseweb="tag"],
+span[data-tag],
+span[data-baseweb="tag"] {
+    background: linear-gradient(135deg, #eff6ff 0%, #f1f5f9 100%) !important;
+    background-color: #eff6ff !important;
+    border: 1px solid #bfdbfe !important;
+    border-radius: 6px !important;
+    padding: 0.18rem 0.52rem !important;
+    margin: 3px 4px !important;
+    box-shadow: 0 1px 2px rgba(37, 99, 235, 0.05) !important;
+    transition: all 0.15s ease !important;
+    height: auto !important;
+    min-height: 26px !important;
+    box-sizing: border-box !important;
+    display: inline-flex !important;
+    align-items: center !important;
+}
+
+[data-testid="stMultiSelect"] span[data-tag]:hover,
+[data-testid="stMultiSelect"] span[data-baseweb="tag"]:hover {
+    background: #dbeafe !important;
+    background-color: #dbeafe !important;
+    border-color: #93c5fd !important;
+    box-shadow: 0 2px 5px rgba(37, 99, 235, 0.12) !important;
+}
+
+/* 3. Tag 内部文本 (清晰锐利的深海蓝文字，彻底解决低对比度看不清问题) */
+[data-testid="stMultiSelect"] span[data-tag] span,
+[data-testid="stMultiSelect"] span[data-tag] [title],
+[data-testid="stMultiSelect"] span[data-baseweb="tag"] span,
+[data-testid="stMultiSelect"] span[data-baseweb="tag"] [title],
+span[data-tag] span,
+span[data-tag] [title] {
+    color: #1e3a8a !important; /* 极高对比度清晰深海蓝 */
+    font-size: 0.80rem !important;
+    font-weight: 650 !important;
+    letter-spacing: -0.01em !important;
+    line-height: 1.4 !important;
+}
+
+/* 4. Tag 删除 × 图标按钮 */
+[data-testid="stMultiSelect"] span[data-tag] button,
+[data-testid="stMultiSelect"] span[data-tag] [role="button"],
+[data-testid="stMultiSelect"] span[data-tag] svg,
+span[data-tag] button,
+span[data-tag] svg,
+span[data-baseweb="tag"] [role="button"],
+span[data-baseweb="tag"] svg,
+[data-testid="stMultiSelect"] span[data-baseweb="tag"] svg,
+[data-testid="stMultiSelect"] span[data-baseweb="tag"] [role="button"] {
+    color: #475569 !important;
+    fill: #475569 !important;
+    width: 14px !important;
+    height: 14px !important;
+    transition: all 0.15s ease !important;
+    border-radius: 4px !important;
+    margin-left: 4px !important;
+    background: transparent !important;
+    border: none !important;
+}
+
+[data-testid="stMultiSelect"] span[data-tag] button:hover,
+[data-testid="stMultiSelect"] span[data-tag] button:hover svg,
+span[data-tag] button:hover svg,
+span[data-baseweb="tag"] [role="button"]:hover,
+span[data-baseweb="tag"] [role="button"]:hover svg,
+[data-testid="stMultiSelect"] span[data-baseweb="tag"] [role="button"]:hover svg {
+    color: #dc2626 !important;
+    fill: #dc2626 !important;
+    background-color: #fee2e2 !important;
+}
+
+/* 5. 下拉菜单弹层与选项 */
+[data-baseweb="popover"],
+[data-baseweb="menu"] {
+    background-color: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04) !important;
+}
+
+[data-baseweb="menu"] li,
+[data-baseweb="menu"] [role="option"] {
+    color: #1e293b !important;
+    font-size: 0.83rem !important;
+    font-weight: 500 !important;
+    padding: 0.45rem 0.75rem !important;
+    border-radius: 6px !important;
+    transition: background-color 0.12s ease !important;
+}
+
+[data-baseweb="menu"] li:hover,
+[data-baseweb="menu"] [role="option"]:hover,
+[data-baseweb="menu"] [aria-selected="true"] {
+    background-color: #eff6ff !important;
+    color: #1d4ed8 !important;
+    font-weight: 600 !important;
 }
 
 [data-testid="stSidebarUserContent"] label {
@@ -1209,6 +1342,7 @@ g.updatemenu-button {
                     }
                     [data-testid="stSidebarUserContent"] [data-testid="stSlider"],
                     [data-testid="stSidebarUserContent"] [data-testid="stSelectbox"],
+                    [data-testid="stSidebarUserContent"] [data-testid="stMultiSelect"],
                     [data-testid="stSidebarUserContent"] [data-testid="stRadio"],
                     [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"] {
                         background: #f8fafc !important;
@@ -1219,6 +1353,62 @@ g.updatemenu-button {
                         box-shadow: 0 1px 3px rgba(15, 23, 42, 0.02) !important;
                         transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
                     }
+
+                    /* MultiSelect 标签徽标与多选下拉 (Linear / Apple 风格高质感设计) */
+                    [data-testid="stMultiSelect"] [data-baseweb="select"] > div {
+                        background-color: #f8fafc !important;
+                        border: 1px solid #cbd5e1 !important;
+                        border-radius: 8px !important;
+                        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+                        padding: 3px 6px !important;
+                        min-height: 40px !important;
+                    }
+
+                    span[data-baseweb="tag"],
+                    [data-testid="stMultiSelect"] span[data-baseweb="tag"],
+                    [data-testid="stMultiSelect"] div[data-baseweb="tag"] {
+                        background: linear-gradient(135deg, #eff6ff 0%, #f1f5f9 100%) !important;
+                        border: 1px solid #bfdbfe !important;
+                        border-radius: 6px !important;
+                        padding: 0.2rem 0.55rem !important;
+                        margin: 3px 4px !important;
+                        box-shadow: 0 1px 2px rgba(37, 99, 235, 0.05) !important;
+                        height: auto !important;
+                        min-height: 26px !important;
+                        box-sizing: border-box !important;
+                    }
+
+                    span[data-baseweb="tag"] span,
+                    [data-testid="stMultiSelect"] span[data-baseweb="tag"] span,
+                    span[data-baseweb="tag"] [title],
+                    [data-testid="stMultiSelect"] span[data-baseweb="tag"] [title],
+                    span[data-baseweb="tag"] div {
+                        color: #1e3a8a !important;
+                        font-size: 0.80rem !important;
+                        font-weight: 650 !important;
+                        letter-spacing: -0.01em !important;
+                        line-height: 1.4 !important;
+                    }
+
+                    span[data-baseweb="tag"] [role="button"],
+                    span[data-baseweb="tag"] svg,
+                    [data-testid="stMultiSelect"] span[data-baseweb="tag"] svg,
+                    [data-testid="stMultiSelect"] span[data-baseweb="tag"] [role="button"] {
+                        color: #475569 !important;
+                        fill: #475569 !important;
+                        width: 14px !important;
+                        height: 14px !important;
+                        border-radius: 4px !important;
+                        margin-left: 4px !important;
+                    }
+
+                    span[data-baseweb="tag"] [role="button"]:hover,
+                    [data-testid="stMultiSelect"] span[data-baseweb="tag"] [role="button"]:hover svg {
+                        color: #dc2626 !important;
+                        fill: #dc2626 !important;
+                        background-color: #fee2e2 !important;
+                    }
+
                     [data-testid="stSidebarUserContent"] label {
                         font-weight: 700 !important;
                         font-size: 0.82rem !important;
