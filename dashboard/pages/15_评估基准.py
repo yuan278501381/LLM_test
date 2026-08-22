@@ -309,20 +309,20 @@ with col_radar_desc:
 render_section_heading("OPEN LLM LEADERBOARD // 2026 开放大语言模型权威天梯排行榜", icon_name="layers")
 
 leaderboard_data = {
-    "Rank": ["👑 1", "🥈 2", "🥉 3", "4", "5", "👉 YOU"],
+    "Rank": ["#1", "#2", "#3", "#4", "#5", "[CURRENT]"],
     "Model Name": [
         "Claude 3.5 Sonnet / Opus 4.6",
         "GPT-4o / GPT-5 Omni",
         "LLaMA-3.3-70B-Instruct",
+        "DeepSeek-V3 / R1",
         "Qwen-2.5-72B-Chat",
-        "Mistral-Large-2",
         f"NN-Playground ({model_tier.split(' ')[0]})",
     ],
-    "Params": ["Unknown", "Unknown", "70B", "72B", "123B", "Pure NumPy"],
-    "MMLU": [88.7, 88.5, 82.3, 85.0, 84.0, scores_dict.get("Mini-MMLU (学科通识)", 0.0)],
-    "HellaSwag": [90.2, 89.6, 88.0, 87.5, 86.8, scores_dict.get("Mini-HellaSwag (常识推理)", 0.0)],
-    "GSM8K": [96.4, 95.8, 86.5, 91.0, 89.2, scores_dict.get("Mini-GSM8K (数学推理)", 0.0)],
-    "Safety": [98.5, 98.2, 94.0, 93.5, 92.0, scores_dict.get("Mini-Safety (安全合规)", 0.0)],
+    "Params": ["Unknown", "Unknown", "70B", "671B (37B Act)", "72B", "Pure NumPy"],
+    "MMLU": [88.7, 88.5, 82.3, 88.5, 85.0, scores_dict.get("Mini-MMLU (学科通识)", 0.0)],
+    "HellaSwag": [90.2, 89.6, 88.0, 88.9, 87.5, scores_dict.get("Mini-HellaSwag (常识推理)", 0.0)],
+    "GSM8K": [96.4, 95.8, 86.5, 95.2, 91.0, scores_dict.get("Mini-GSM8K (数学推理)", 0.0)],
+    "Safety": [98.5, 98.2, 94.0, 96.0, 93.5, scores_dict.get("Mini-Safety (安全合规)", 0.0)],
 }
 
 df_lb = pd.DataFrame(leaderboard_data)
@@ -335,3 +335,27 @@ st.dataframe(
     use_container_width=True,
     hide_index=True,
 )
+
+# ---------------------------------------------------------------------------
+# 零基础进阶：大模型评估基准核心公式拆解
+# ---------------------------------------------------------------------------
+with st.expander("[GROWTH GUIDE // 成长指南] 困惑度 (PPL) 与 Elo 竞技场核心公式全解", expanded=True):
+    st.markdown(
+        r"""
+        ### 0. 核心公式逐字拆解：语言模型困惑度 (Perplexity / PPL)
+        $$\\text{PPL} = \\exp\\left(-\\frac{1}{N} \\sum_{i=1}^N \\log P(w_i | w_{<i})\\right) = \\exp(\\text{Cross-Entropy Loss})$$
+        
+        | 符号 | 中文名称 | 数值范围 | 通俗大白话解释（它是什么？起什么作用？） |
+        |:---:|:---:|:---:|:---|
+        | **$P(w_i \| w_{<i})$** | **模型猜对真实单词的置信概率** | $0.0 \\sim 1.0$ | 模型每走一步接龙时，给人类真实标准答案打出的预测概率。 |
+        | **$-\\log P$** | **单步交叉熵罚分** | $\\ge 0$ | 猜得越准罚分越少；猜得越离谱罚分越大。 |
+        | **$\\text{PPL}$** | **困惑度数值 (Perplexity)** | $1.0 \\sim +\\infty$ | **“模型在选词时有多纠结、相当于几选一”**：<br>• $\\text{PPL} = 1.0$：完全成竹在胸（绝对神准）；<br>• $\\text{PPL} = 15$：相当于在 15 个等概率候选词里掷骰子（很聪明）；<br>• $\\text{PPL} = 50000$：完全懵圈，相当于在全词表盲猜（彻底失智）。 |
+        
+        ---
+        
+        ### 1. 为什么评测不能只看 MMLU 单项分？
+        * **数据污染 (Data Contamination)**：很多模型在预训练时偷偷“背过了”MMLU 题库（泄题作弊）；
+        * **Chatbot Arena (盲测竞技场)**：让人类真实用户盲测双盲对话并用 Elo 积分实时打分，是当前公认最难作弊、最权威的真实综合能力试金石！
+        """
+    )
+

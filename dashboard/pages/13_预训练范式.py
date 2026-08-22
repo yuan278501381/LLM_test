@@ -28,9 +28,12 @@ from nn_core.embeddings import get_mini_vocab
 from nn_core.pretraining import (
     CausalLanguageModel,
     ContrastiveLearning,
+    DataMixtureEngine,
     MaskedAutoEncoder,
     MaskedLanguageModel,
     PretrainingComparator,
+    ScalingLawEngine,
+    SimpleBPE,
 )
 
 st.set_page_config(
@@ -41,9 +44,9 @@ st.set_page_config(
 apply_custom_theme()
 
 render_hero_header(
-    title="预训练范式全景与能力基因",
-    subtitle="从海量无标注数据汲取通用世界知识：解剖 MLM 完形填空、CLM 因果接龙、Contrastive 对比学习与 MAE 视觉掩码重建",
-    badge_text="MILESTONE 13 // PRE-TRAINING PARADIGMS",
+    title="预训练范式全景与大模型扩展定律",
+    subtitle="从海量无标注数据汲取通用世界知识：解剖四大自监督目标、Chinchilla 算力扩展定律 (Scaling Laws)、BPE 分词演化与工业级语料配比",
+    badge_text="MILESTONE 13 // PRE-TRAINING PARADIGMS & SCALING LAWS",
     badge_type="blue",
 )
 
@@ -51,31 +54,30 @@ render_hero_header(
 # 零基础保姆级指引 (Zero-Barrier Beginner Guide)
 # ---------------------------------------------------------------------------
 render_page_guide(
-    title="预训练目标函数与模型能力基因",
+    title="预训练目标函数、扩展定律与数据工程",
     plain_intro=(
         "<b>大模型的底座智能究竟是从哪里来的？</b><br>"
-        "在没有任何人工标注的情况下，我们如何让模型自学成才？答案是<b>自监督预训练 (Self-Supervised Pre-training)</b>！<br>"
-        "通过巧妙设计无监督目标函数：<br>"
-        "• <b>BERT (MLM)</b> 玩'完形填空'，挖掉句子里 15% 的词让模型猜，因此精通双向语法与深层语义理解；<br>"
-        "• <b>GPT (CLM)</b> 玩'文字接龙'，只看前文猜下一个词，因此拥有了强大的文本创作与自回归推理能力；<br>"
-        "• <b>CLIP</b> 玩'连连看'，拉近图文距离；<b>MAE</b> 挖掉图片 75% 的块让模型脑补。<br>"
-        "<b>目标函数的数学设计，从根本上决定了模型的'能力基因'！</b>"
+        "在没有任何人工标注的情况下，我们如何让模型自学成才？答案是<b>自监督预训练 (Self-Supervised Pre-training)</b> 与 <b>大模型扩展定律 (Scaling Laws)</b>！<br>"
+        "• <b>四大目标基因</b>：BERT (MLM) 完形填空擅长理解；GPT (CLM) 因果接龙擅长创作推理；CLIP 擅长跨模态对齐；MAE 擅长全局视觉补全。<br>"
+        "• <b>扩展定律经济学</b>：DeepMind Chinchilla 严格证明，模型参数量 $N$ 与训练 Token 数 $D$ 应等比例扩展（$D \\approx 20N$），算力 $C \\approx 6ND$。<br>"
+        "• <b>分词与数据工程</b>：BPE (Byte-Pair Encoding) 从字符自底向上合并出高频子词；高质量多源语料清洗决定模型智能上限！"
     ),
     hyperparams_desc=(
         "• <b>预训练范式选择</b>：MLM (BERT) / CLM (GPT) / Contrastive (CLIP) / MAE (视觉自编码)。<br>"
-        "• <b>MLM 掩码比例</b>：工业标准为 15%（过高缺失上下文，过低学不到知识）。<br>"
-        "• <b>MAE 图像遮蔽率</b>：视觉信息存在高冗余，掩码率通常高达 75%！<br>"
-        "• <b>迷你训练 Epochs</b>：在 Dell XPS 笔记本 CPU 上体验 1~10 轮纯 NumPy 真实损失收敛。"
+        "• <b>算力预算对数指数</b>：从 $10^{18}$ FLOPs 到 $10^{24}$ FLOPs 动态求解 Chinchilla 最优参数量与 Token 数。<br>"
+        "• <b>BPE 目标词表大小</b>：观察从单字符演化为包含常见词根词缀的紧凑词表。<br>"
+        "• <b>迷你训练 Epochs</b>：在笔记本 CPU 上体验纯 NumPy 真实梯度反向传播损失收敛。"
     ),
     telemetry_desc=(
-        "• <b>当前范式训练损失</b>：自监督优化目标收敛轨迹。<br>"
-        "• <b>遮蔽 / 预测 Token 规模</b>：当前批次中参与梯度更新的活跃参数量。<br>"
-        "• <b>下游任务迁移画像</b>：预训练范式向分类、生成、检索任务迁移的能力得分。"
+        "• <b>Chinchilla 最优配置</b>：当前算力预算下的最优参数规模 $N_{\\text{opt}}$ 与最优 Token 数 $D_{\\text{opt}}$。<br>"
+        "• <b>H100 训练工期</b>：基于工业界 MFU=45% 换算的真实 GPU-Days 成本。<br>"
+        "• <b>BPE 文本压缩倍率</b>：子词化相较于纯字符级的序列长度压缩比。"
     ),
     experiments=[
-        "<b>第 1 步【对比完形填空与接龙】</b>：在 Section 2 观察同一句话在 MLM（双向关注两端）与 CLM（仅单向看前文）下的计算方式差异！",
-        "<b>第 2 步【体验真实迷你训练】</b>：在左侧设置 Epoch=5 并点击【🚀 开始纯 NumPy 真实训练】，观察损失曲线如何在 1 秒内平滑下降！",
-        "<b>第 3 步【解读迁移效果图】</b>：在 Section 4 观察四种范式在不同下游任务上的柱状图对比，理解为什么没有万能的模型！",
+        "<b>第 1 步【对比完形填空与接龙】</b>：在 Section 2 观察同一句话在 MLM（双向关注两端）与 CLM（仅单向看前文）下的真实梯度训练收敛！",
+        "<b>第 2 步【探索 Chinchilla 扩展定律】</b>：在 Section 5 拖动算力预算滑块，观察为什么 70B 模型需要喂 1.4T Token，以及 GPT-3 175B 为何欠训练！",
+        "<b>第 3 步【动手训练 BPE 分词器】</b>：在 Section 6 输入自定义句子并点击【训练 BPE 分词规则】，亲眼见证常见词是如何一步步被合并诞生的！",
+        "<b>第 4 步【拆解工业级数据流水线】</b>：在 Section 7 观察 LLaMA-3 与 DeepSeek-V3 的真实语料配比与 4 阶段清洗过滤规则！",
     ],
 )
 
@@ -122,7 +124,7 @@ train_epochs = st.sidebar.slider(
     help="在笔记本 CPU 上秒级完成",
 )
 
-start_train_btn = st.sidebar.button("🚀 开始纯 NumPy 真实训练", use_container_width=True)
+start_train_btn = st.sidebar.button("[EXECUTE] 开始纯 NumPy 真实训练", use_container_width=True)
 
 # ---------------------------------------------------------------------------
 # 数据与模型运算
@@ -395,3 +397,230 @@ fig_trans.update_layout(
 )
 fig_trans = _apply_light_theme(fig_trans, "四大预训练范式向各类下游任务迁移得分全景对比")
 st.plotly_chart(fig_trans, use_container_width=True)
+
+# ---------------------------------------------------------------------------
+# Section 5: 大模型扩展定律 (Scaling Laws) 与最优算力分配计算器 (Chinchilla)
+# ---------------------------------------------------------------------------
+render_section_heading("SCALING LAWS & COMPUTE ALLOCATION // 大模型扩展定律与 Chinchilla 最优算力分配", icon_name="activity")
+
+st.markdown(
+    """
+    **DeepMind Chinchilla 定律 (Hoffmann et al., 2022)** 颠覆了早期 Kaplan 的“大模型优先”假说，严格证明：
+    在固定总算力预算 $C \\approx 6ND$ 下，**模型参数量 $N$ 与训练 Token 数 $D$ 应当等比例缩放**（黄金配比 $D \\approx 20N$）！
+    """
+)
+
+col_s_ctrl, col_s_res = st.columns([1, 2])
+
+with col_s_ctrl:
+    with st.container(border=True):
+        st.markdown("#### [算力预算与硬件配置]")
+        log_flops = st.slider(
+            "总算力预算 (FLOPs 对数指数 $\\log_{10} C$)",
+            min_value=18.0,
+            max_value=25.0,
+            value=23.0,
+            step=0.2,
+            help="10^23 FLOPs 约相当于训练一个 7B~13B 模型所消耗的算力",
+        )
+        current_flops = 10.0 ** log_flops
+        opt_res = ScalingLawEngine.compute_optimal_allocation(current_flops)
+
+        st.markdown(
+            f"""
+            - **算力预算 $C$**：`{current_flops:.2e}` FLOPs
+            - **最优参数量 $N_{{\\text{{opt}}}}$**：`{opt_res['optimal_params_N'] / 1e9:.2f} B` (十亿参数)
+            - **最优 Token 数 $D_{{\\text{{opt}}}}$**：`{opt_res['optimal_tokens_D'] / 1e9:.2f} B` ({opt_res['optimal_tokens_D'] / 1e12:.3f} T Tokens)
+            - **数据/参数比例**：`{opt_res['token_param_ratio']:.1f} : 1` (符合 Chinchilla ~20:1)
+            - **理论预估损失 $L$**：`{opt_res['predicted_loss']:.4f}`
+            - **H100 训练工期**：`{opt_res['h100_gpu_days']:.1f}` GPU-Days (MFU=45%)
+            """
+        )
+
+with col_s_res:
+    with st.container(border=True):
+        st.markdown("#### [前沿大模型在 Scaling 曲线上的实际分布]")
+        bench_data = ScalingLawEngine.get_historical_benchmarks()
+        
+        # 绘制历史模型与当前预算对比散点图
+        fig_scale = go.Figure()
+        
+        # 绘制最优 Chinchilla 理论线
+        synth_flops = np.logspace(18, 25, 50)
+        synth_n = [ScalingLawEngine.compute_optimal_allocation(f)["optimal_params_N"] for f in synth_flops]
+        synth_d = [ScalingLawEngine.compute_optimal_allocation(f)["optimal_tokens_D"] for f in synth_flops]
+        
+        fig_scale.add_trace(
+            go.Scatter(
+                x=[n / 1e9 for n in synth_n],
+                y=[d / 1e12 for d in synth_d],
+                mode="lines",
+                line=dict(color="#1d4ed8", width=2.5, dash="dash"),
+                name="Chinchilla 最优边界 (D ≈ 20N)",
+                hovertemplate="最优参数: %{x:.2f}B<br>最优数据: %{y:.2f}T Tokens<extra></extra>",
+            )
+        )
+        
+        # 绘制历史真实模型散点
+        for b in bench_data:
+            fig_scale.add_trace(
+                go.Scatter(
+                    x=[b["params"] / 1e9],
+                    y=[b["tokens"] / 1e12],
+                    mode="markers+text",
+                    marker=dict(size=12, symbol="diamond"),
+                    name=b["name"],
+                    text=[b["name"]],
+                    textposition="top center",
+                    hovertemplate=f"<b>{b['name']}</b><br>参数量: {b['params']/1e9:.1f}B<br>训练 Token: {b['tokens']/1e12:.1f}T<br>状态: {b['status']}<extra></extra>",
+                )
+            )
+            
+        # 当前滑动条用户选择的最优点
+        fig_scale.add_trace(
+            go.Scatter(
+                x=[opt_res["optimal_params_N"] / 1e9],
+                y=[opt_res["optimal_tokens_D"] / 1e12],
+                mode="markers",
+                marker=dict(size=16, color="#dc2626", symbol="star"),
+                name="当前算力最优解",
+                hovertemplate=f"当前选择算力最优:<br>参数: {opt_res['optimal_params_N']/1e9:.2f}B<br>数据: {opt_res['optimal_tokens_D']/1e12:.2f}T<extra></extra>",
+            )
+        )
+        
+        fig_scale.update_layout(
+            xaxis=dict(title="模型参数量 N (Billion / 十亿)", type="log"),
+            yaxis=dict(title="训练 Token 数 D (Trillion / 万亿)", type="log"),
+            margin=dict(l=40, r=20, t=30, b=40),
+            legend=dict(orientation="h", yanchor="bottom", y=-0.3),
+        )
+        fig_scale = _apply_light_theme(fig_scale, "大模型算力扩展定律与前沿工业界模型位置")
+        st.plotly_chart(fig_scale, use_container_width=True)
+
+# ---------------------------------------------------------------------------
+# Section 6: BPE (Byte-Pair Encoding) 分词器动态演练
+# ---------------------------------------------------------------------------
+render_section_heading("BPE TOKENIZATION // 字节对编码子词分词器演练", icon_name="target")
+
+st.markdown(
+    """
+    大模型并非直接以字符或完整单词作为输入，而是通过 **BPE (Byte-Pair Encoding)** 统计相邻字节/字符频次，
+    从单字符出发自底向上贪心合并为高频子词 (Subwords)，在词表规模与序列长度之间取得极致的压缩平衡！
+    """
+)
+
+col_bpe_in, col_bpe_out = st.columns([1, 2])
+
+with col_bpe_in:
+    with st.container(border=True):
+        st.markdown("#### [分词器语料与配置]")
+        default_bpe_corpus = (
+            "the king and the queen sleep on the big mat\n"
+            "the queen and the king sleep together\n"
+            "the king has a big crown on the head\n"
+            "the queen loves the small cat"
+        )
+        bpe_corpus_input = st.text_area("训练语料库", value=default_bpe_corpus, height=120)
+        target_vocab_k = st.slider("目标词表容量 (Vocab Size)", min_value=15, max_value=50, value=30, step=1)
+        test_sentence_bpe = st.text_input("待切分测试文本", value="the queen sleep on the cat")
+
+with col_bpe_out:
+    with st.container(border=True):
+        bpe_engine = SimpleBPE(vocab_size=target_vocab_k)
+        corpus_list = [line.strip() for line in bpe_corpus_input.strip().split("\n") if line.strip()]
+        merge_records = bpe_engine.train(corpus_list)
+        
+        stats_res = bpe_engine.get_compression_stats(test_sentence_bpe)
+        
+        st.markdown(
+            f"""
+            - **基础单字符数**：`{len(bpe_engine.vocab) - len(merge_records)}` 个字符
+            - **迭代合并次数**：`{len(merge_records)}` 轮
+            - **最终词表大小**：`{len(bpe_engine.vocab)}` 个 Tokens
+            - **文本压缩倍率**：`{stats_res['compression_ratio']:.2f}x` ({stats_res['raw_characters']} 字符 $\\to$ {stats_res['token_count']} Tokens)
+            """
+        )
+        
+        # 可视化切分结果
+        st.markdown("**BPE 子词切分可视化**：")
+        token_badges_html = " ".join([f"<code style='background:#dbeafe;color:#1e40af;padding:3px 6px;border-radius:4px;'>{t}</code>" for t in stats_res['tokens']])
+        st.markdown(token_badges_html, unsafe_allow_html=True)
+        
+        # 展示 Top-5 合并规则
+        if merge_records:
+            st.markdown("<br>**前 5 轮高频字符对合并日志**：", unsafe_allow_html=True)
+            table_md = "| 轮次 | 合并字符对 | 新子词 Token | 语料频次 | 词表规模 |\n|:---:|:---:|:---:|:---:|:---:|\n"
+            for r in merge_records[:5]:
+                table_md += f"| Step {r['step']} | {r['merged_pair']} | `'{r['new_token']}'` | {r['frequency']} | {r['vocab_size']} |\n"
+            st.markdown(table_md)
+
+# ---------------------------------------------------------------------------
+# Section 7: 工业级预训练语料配比与清洗流水线
+# ---------------------------------------------------------------------------
+render_section_heading("PRE-TRAINING DATA MIXTURE & PIPELINE // 工业级语料配比与清洗流水线", icon_name="layers")
+
+st.markdown(
+    """
+    **数据质量决定智能上限 (Garbage In, Garbage Out)**。现代 10T+ Token 级预训练模型依赖严苛的四阶段多源清洗与精准配比！
+    """
+)
+
+col_d_mix, col_d_pipe = st.columns([1, 1])
+
+with col_d_mix:
+    with st.container(border=True):
+        st.markdown("#### [前沿大模型语料配比全景 (Data Mixture)]")
+        mixtures_dict = DataMixtureEngine.get_mixtures()
+        model_mix_choice = st.selectbox("选择大模型语料分布", list(mixtures_dict.keys()), index=0)
+        
+        chosen_mix = mixtures_dict[model_mix_choice]
+        labels = list(chosen_mix.keys())
+        values = list(chosen_mix.values())
+        
+        fig_donut = go.Figure(data=[go.Pie(labels=labels, values=values, hole=0.45, textinfo="label+percent")])
+        fig_donut.update_layout(margin=dict(l=10, r=10, t=20, b=20), showlegend=False)
+        fig_donut = _apply_light_theme(fig_donut, f"{model_mix_choice} 语料构成分布")
+        st.plotly_chart(fig_donut, use_container_width=True)
+
+with col_d_pipe:
+    with st.container(border=True):
+        st.markdown("#### [工业级四阶段数据清洗过滤流水线]")
+        stages = DataMixtureEngine.get_cleaning_pipeline()
+        for s in stages:
+            st.markdown(
+                f"""
+                **{s['stage']}**  
+                - **核心规则**：{s['rules']}  
+                - **过滤效率**：<span style='color:#dc2626;font-weight:600;'>{s['filter_rate']}</span>
+                ---
+                """,
+                unsafe_allow_html=True,
+            )
+
+# ---------------------------------------------------------------------------
+# 零基础进阶：预训练与扩展定律核心公式拆解
+# ---------------------------------------------------------------------------
+with st.expander("[GROWTH GUIDE // 成长指南] 预训练目标与 Chinchilla 扩展定律核心公式全解", expanded=True):
+    st.markdown(
+        """
+        ### 0. 核心公式逐字拆解：DeepMind Chinchilla 大模型扩展定律
+        $$L(N, D) = E + \\frac{A}{N^\\alpha} + \\frac{B}{D^\\beta}$$
+        
+        | 符号 | 中文名称 | 权威拟合数值 | 通俗大白话解释（它是什么？起什么作用？） |
+        |:---:|:---:|:---:|:---|
+        | **$L(N, D)$** | **预测预训练交叉熵损失 (Loss)** | 连续实数 | 评估一个模型预训练完后到底有多聪明（损失越低，模型越强）。 |
+        | **$E$** | **不可约内在熵 (Irreducible Loss)** | **$1.6934$** | **人类语言的物理极限天花板**。即使你拥有无穷大的模型和无穷多的数据，语言本身的随机性也决定了 Loss 不可能低于 $1.6934$。 |
+        | **$N$** | **模型非嵌入参数量 (Parameters)** | 比如 $7\\text{B} = 7 \\times 10^9$ | **大脑的脑容量脑细胞数量**。脑容量越大，记忆能力越强。 |
+        | **$D$** | **训练 Token 总数 (Data Tokens)** | 比如 $2\\text{T} = 2 \\times 10^{12}$ | **给大脑喂的书本知识量**。书读得越多，见识越广。 |
+        | **$A, B$** | **参数与数据规模常数** | $A=406.4, B=410.7$ | 衡量增加参数与增加数据对降低 Loss 的相对贡献系数。 |
+        | **$\\alpha, \\beta$** | **幂律缩放指数 (Scaling Exponents)** | $\\alpha=0.34, \\beta=0.28$ | 揭示“边际效应递减”规律：参数翻倍，损失并不会减半，而是按幂律微弱平滑下降。 |
+        
+        ---
+        
+        ### 1. 为什么 Chinchilla 黄金法则是 $D \\approx 20N$？
+        * 早期 OpenAI Kaplan 论文误以为“模型参数最重要”，导致 GPT-3 175B 只读了 300B Tokens（严重欠训练）；
+        * DeepMind 严格证明：在固定总算力下，**每增加 1 个参数，应当对应增加 20 个训练 Token**！这也是 LLaMA (7B 训 2T Tokens) 性能跨代吊打上一代旧模型的数学底层秘密！
+        """
+    )
+
+

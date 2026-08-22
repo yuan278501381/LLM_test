@@ -6,7 +6,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![Tests](https://img.shields.io/badge/tests-198%20passed-brightgreen.svg)](#)
+[![Tests](https://img.shields.io/badge/tests-201%20passed-brightgreen.svg)](#)
 
 ## ✨ 学习路径与 15 大里程碑总览
 
@@ -26,7 +26,7 @@
 | **多模态篇** | M10 | 卷积与视觉感知 | 2D 卷积滑动计算、特征图热力图、ViT Patch 切片、CLIP 图文对齐 |
 | | M11 | 音频信号与语音 | 实时波形示波器、FFT 频谱分解、Mel 滤波器组、Whisper Token 化 |
 | | M12 | 视频与世界模型 | 32×32 视频时序采样、空间 vs 时间注意力、下一帧物理推演、Sora 扩散加噪 |
-| **训练篇** | M13 | 预训练范式全景 | MLM (BERT) / CLM (GPT) / 对比 (CLIP) / MAE、下游迁移得分画像 |
+| **训练篇** | M13 | 预训练与扩展定律 | MLM/CLM/Contrastive/MAE、Chinchilla 扩展定律计算器、BPE 分词演练、语料配比 |
 | | M14 | 后训练对齐工程 | SFT、RLHF、DPO、LoRA 矩阵分解、同一问题三阶段回答质变实录 |
 | **评估篇** | M15 | 评估基准框架 | Perplexity (PPL) 仪表盘、MMLU / GSM8K 模拟考场、六维雷达图、天梯排行榜 |
 
@@ -36,7 +36,7 @@
 # 1. 安装依赖 (基于现代 uv 极速包管理器)
 uv sync
 
-# 2. 运行自动化回归测试套件 (198 项全通过 · 梯度误差 < 1e-4)
+# 2. 运行自动化回归测试套件 (201 项全通过 · 梯度误差 < 1e-4)
 uv run pytest tests/ -v
 ```
 
@@ -65,7 +65,7 @@ uv run streamlit run dashboard/app.py --server.port 8501
 | 核心计算引擎 | **纯 NumPy (Zero External ML Libs)** | 手写前向传播、解析梯度反向传播、优化器、MHA/GQA、ViT、Sora 扩散调度、DPO、LoRA |
 | 前端交互呈现 | **Streamlit + Plotly (Linear / Stripe Light Theme)** | 世界级纯净亮色主题，零文字重叠，全屏幕高分屏自适应 (High-DPI) |
 | 跨架构与跨平台 | **Python 3.11+ (Windows / macOS / Linux)** | 原生适配 x64 与 ARM64 指令集架构 |
-| 测试与数学保障 | **pytest (198 项单元 + E2E 自动化测试)** | 双侧中心差分法梯度数值校验 ($\text{Error} < 10^{-4}$)，全页面 AppTest 仿真 |
+| 测试与数学保障 | **pytest (201 项单元 + E2E 自动化测试)** | 双侧中心差分法梯度数值校验 ($\text{Error} < 10^{-4}$)，全页面 AppTest 仿真 |
 
 ## 📁 项目拓扑结构
 
@@ -112,7 +112,7 @@ uv run streamlit run dashboard/app.py --server.port 8501
 │   ├── constants/            # 领域知识元数据库 (公式、教学隐喻、前沿架构)
 │   ├── styles/               # 主题系统 (矢量 SVG 图标库、高对比度卡片)
 │   └── utils/                # 状态管理与参数解析
-├── tests/                    # ✅ 自动化回归测试矩阵 (198 项全通过)
+├── tests/                    # ✅ 自动化回归测试矩阵 (201 项全通过)
 │   ├── test_activations.py   # 激活函数单元测试
 │   ├── test_layers.py        # Dense, Dropout 层单元测试
 │   ├── test_losses.py        # 损失函数单元测试

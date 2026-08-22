@@ -125,17 +125,36 @@ def plot_decision_boundary(
 
     fig = go.Figure()
 
-    # 连续概率等高面
+    # 连续概率等高面 (平滑淡色概率背景场)
     fig.add_trace(go.Contour(
         x=np.linspace(x_min, x_max, resolution),
         y=np.linspace(y_min, y_max, resolution),
         z=zz,
         colorscale=colorscale,
         showscale=False,
-        contours=dict(showlines=True, coloring="fill"),
-        line=dict(width=1, color="rgba(15,23,42,0.08)"),
+        contours=dict(showlines=False, coloring="fill"),
         hoverinfo="skip",
+        showlegend=False,
     ))
+
+    # 显式绘制唯一的决策分界线 (Decision Boundary: 概率临界线 P=0.5 / 直线方程 z=0)
+    if preds.shape[1] == 1:
+        fig.add_trace(go.Contour(
+            x=np.linspace(x_min, x_max, resolution),
+            y=np.linspace(y_min, y_max, resolution),
+            z=zz,
+            contours=dict(
+                start=0.5,
+                end=0.5,
+                size=0,
+                coloring="none",
+                showlabels=False,
+            ),
+            line=dict(width=3.5, color="#0f172a", dash="solid"),
+            name="决策分界线 (Line: P=0.5)",
+            showlegend=True,
+            hovertemplate="<b>[DECISION LINE] 决策分界线 (Decision Line: P=0.5)</b><extra></extra>",
+        ))
 
     # 训练数据散点
     labels = y.ravel() if y.shape[1] == 1 else np.argmax(y, axis=1)

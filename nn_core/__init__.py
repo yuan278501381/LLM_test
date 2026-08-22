@@ -68,9 +68,12 @@ from nn_core.world_model import (
 from nn_core.pretraining import (
     CausalLanguageModel,
     ContrastiveLearning,
+    DataMixtureEngine,
     MaskedAutoEncoder,
     MaskedLanguageModel,
     PretrainingComparator,
+    ScalingLawEngine,
+    SimpleBPE,
 )
 from nn_core.rlhf import DPOLoss, PPOClipObjective, RewardModel
 from nn_core.lora import LoRALayer, compute_param_savings
@@ -176,6 +179,9 @@ __all__ = [
     "ContrastiveLearning",
     "MaskedAutoEncoder",
     "PretrainingComparator",
+    "ScalingLawEngine",
+    "SimpleBPE",
+    "DataMixtureEngine",
     "RewardModel",
     "PPOClipObjective",
     "DPOLoss",

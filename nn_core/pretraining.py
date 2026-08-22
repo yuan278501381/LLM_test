@@ -323,3 +323,290 @@ class PretrainingComparator:
             "Contrastive (CLIP 对比)": {"文本分类": 72, "阅读理解": 60, "自回归生成": 40, "跨模态检索": 98},
             "MAE (视觉掩码自编码)": {"文本分类": 88, "阅读理解": 50, "自回归生成": 30, "跨模态检索": 62},
         }
+
+
+class ScalingLawEngine:
+    """
+    大模型扩展定律计算引擎 (Scaling Laws for Neural Language Models)。
+
+    基于 DeepMind Chinchilla (Hoffmann et al., 2022) 经验拟合公式与拉格朗日最优算力分配：
+        $$L(N, D) = E + \\frac{A}{N^\\alpha} + \\frac{B}{D^\\beta}$$
+        算力预算约束：$$C \\approx 6 N D$$
+
+    最优分配解析解：
+        $$N_{\\text{opt}}(C) = G \\left(\\frac{C}{6}\\right)^a, \\quad D_{\\text{opt}}(C) = \\frac{1}{G} \\left(\\frac{C}{6}\\right)^b$$
+        其中 $a = \\frac{\\beta}{\\alpha + \\beta} \\approx 0.456$, $b = \\frac{\\alpha}{\\alpha + \\beta} \\approx 0.544$。
+    """
+
+    # Hoffmann et al. (2022) Table A3 拟合真实参数
+    E = 1.6934   # 不可约熵损失 (Irreducible loss / 语言内在熵)
+    A = 406.4    # 参数规模常数
+    ALPHA = 0.3392
+    B = 410.7    # 数据规模常数
+    BETA = 0.2849
+
+    @classmethod
+    def compute_optimal_allocation(cls, compute_flops: float) -> dict:
+        """
+        根据给定的总浮点计算预算 (FLOPs)，计算 Chinchilla 最优参数量 N 与最优训练 Token 数 D。
+        """
+        C = float(compute_flops)
+        a = cls.BETA / (cls.ALPHA + cls.BETA)  # ~0.456
+        b = cls.ALPHA / (cls.ALPHA + cls.BETA)  # ~0.544
+        G = ((cls.ALPHA * cls.A) / (cls.BETA * cls.B)) ** (1.0 / (cls.ALPHA + cls.BETA))  # ~1.300
+
+        c_div_6 = C / 6.0
+        n_opt = G * (c_div_6 ** a)
+        d_opt = (1.0 / G) * (c_div_6 ** b)
+
+        loss = cls.estimate_loss(n_opt, d_opt)
+
+        # 换算硬件卡天数 (以 NVIDIA H100 SXM5 80GB 为基准，FP16/BF16 峰值 989 TFLOPs，取实际工业 MFU=45% -> 445 TFLOPs)
+        h100_effective_flops_per_sec = 989e12 * 0.45
+        gpu_seconds = C / h100_effective_flops_per_sec
+        h100_gpu_days = gpu_seconds / 86400.0
+
+        return {
+            "compute_flops": C,
+            "optimal_params_N": float(n_opt),
+            "optimal_tokens_D": float(d_opt),
+            "token_param_ratio": float(d_opt / n_opt),
+            "predicted_loss": float(loss),
+            "h100_gpu_days": float(h100_gpu_days),
+        }
+
+    @classmethod
+    def estimate_loss(cls, N: float, D: float) -> float:
+        """计算给定参数量 N 和 Token 数 D 下的预测交叉熵损失"""
+        term_n = cls.A / (float(N) ** cls.ALPHA)
+        term_d = cls.B / (float(D) ** cls.BETA)
+        return float(cls.E + term_n + term_d)
+
+    @staticmethod
+    def get_historical_benchmarks() -> list[dict]:
+        """工业界真实里程碑大模型在 Scaling 曲线上的实际位置与配置"""
+        return [
+            {
+                "name": "GPT-3 (2020)",
+                "params": 175e9,
+                "tokens": 300e9,
+                "flops": 6 * 175e9 * 300e9,  # 3.15e23
+                "status": "严重欠训练 (Param Heavy / Under-trained)",
+                "note": "早期受 Kaplan 定律影响，参数量过大而数据量不足",
+            },
+            {
+                "name": "Chinchilla (2022)",
+                "params": 70e9,
+                "tokens": 1400e9,
+                "flops": 6 * 70e9 * 1400e9,  # 5.88e23
+                "status": "算力最优 (Compute-Optimal)",
+                "note": "严格遵循 D ≈ 20N 黄金法则，70B 击败 175B GPT-3",
+            },
+            {
+                "name": "LLaMA-1 (2023)",
+                "params": 7e9,
+                "tokens": 1000e9,
+                "flops": 6 * 7e9 * 1000e9,  # 4.2e22
+                "status": "超训练 (Over-trained)",
+                "note": "牺牲预训练最优性，换取极致的下游轻量推理部署成本",
+            },
+            {
+                "name": "LLaMA-3 (2024)",
+                "params": 8e9,
+                "tokens": 15000e9,
+                "flops": 6 * 8e9 * 15000e9,  # 7.2e23
+                "status": "极限超训练 (Extreme Over-trained)",
+                "note": "15T Token 持续注水，单模型性能逼近上代 70B",
+            },
+            {
+                "name": "DeepSeek-V3 (2024/2025)",
+                "params": 671e9,  # 37B 激活 MoE
+                "tokens": 14800e9,
+                "flops": 6 * 37e9 * 14800e9,  # MoE 激活计算量
+                "status": "稀疏 MoE 算力最优",
+                "note": "通过 37B 激活实现前沿性能，极致压缩训练算力消耗",
+            },
+        ]
+
+
+class SimpleBPE:
+    """
+    字节对编码 (Byte-Pair Encoding / BPE) 纯 NumPy/Python 算法引擎。
+    展示大模型分词器从字符到子词 (Subword) 的动态合并与词表膨胀机制。
+    """
+
+    def __init__(self, vocab_size: int = 50) -> None:
+        self.target_vocab_size = vocab_size
+        self.merges: list[Tuple[str, str]] = []
+        self.vocab: dict[str, int] = {}
+
+    def _get_stats(self, word_freqs: dict[tuple[str, ...], int]) -> dict[Tuple[str, str], int]:
+        """统计所有相邻子词对的共现频次"""
+        pairs: dict[Tuple[str, str], int] = {}
+        for word, freq in word_freqs.items():
+            for i in range(len(word) - 1):
+                pair = (word[i], word[i + 1])
+                pairs[pair] = pairs.get(pair, 0) + freq
+        return pairs
+
+    def _merge_pair(
+        self,
+        pair: Tuple[str, str],
+        word_freqs: dict[tuple[str, ...], int]
+    ) -> dict[tuple[str, ...], int]:
+        """在所有单词切分序列中将目标字符对合并为新子词"""
+        new_word_freqs: dict[tuple[str, ...], int] = {}
+        bigram = pair
+        for word, freq in word_freqs.items():
+            new_word: list[str] = []
+            i = 0
+            while i < len(word):
+                if i < len(word) - 1 and word[i] == bigram[0] and word[i + 1] == bigram[1]:
+                    new_word.append(bigram[0] + bigram[1])
+                    i += 2
+                else:
+                    new_word.append(word[i])
+                    i += 1
+            new_word_freqs[tuple(new_word)] = freq
+        return new_word_freqs
+
+    def train(self, texts: list[str]) -> list[dict]:
+        """
+        在输入语料上迭代训练 BPE 合并规则，返回每一步的合并记录。
+        """
+        # 1. 初始化词频字典，单词末尾附带词边界标记 '</w>'
+        word_counts: dict[str, int] = {}
+        for text in texts:
+            for w in text.strip().split():
+                word_counts[w] = word_counts.get(w, 0) + 1
+
+        word_freqs: dict[tuple[str, ...], int] = {
+            tuple(list(w) + ["</w>"]): count for w, count in word_counts.items()
+        }
+
+        # 初始基础单字符词表
+        base_chars = set()
+        for w in word_freqs:
+            for c in w:
+                base_chars.add(c)
+
+        self.vocab = {c: i for i, c in enumerate(sorted(list(base_chars)))}
+        self.merges = []
+        merge_history: list[dict] = []
+
+        num_merges = max(0, self.target_vocab_size - len(self.vocab))
+        for step in range(num_merges):
+            pairs = self._get_stats(word_freqs)
+            if not pairs:
+                break
+            # 贪心选取出现频次最高的相邻对
+            best_pair = max(pairs, key=pairs.get)
+            best_freq = pairs[best_pair]
+            if best_freq < 1:
+                break
+
+            word_freqs = self._merge_pair(best_pair, word_freqs)
+            self.merges.append(best_pair)
+            new_token = best_pair[0] + best_pair[1]
+            self.vocab[new_token] = len(self.vocab)
+
+            merge_history.append({
+                "step": step + 1,
+                "merged_pair": f"'{best_pair[0]}' + '{best_pair[1]}'",
+                "new_token": new_token,
+                "frequency": best_freq,
+                "vocab_size": len(self.vocab),
+            })
+
+        return merge_history
+
+    def tokenize(self, text: str) -> list[str]:
+        """利用训练好的 merge 规则切分文本"""
+        tokens: list[str] = []
+        for word in text.strip().split():
+            splits = list(word) + ["</w>"]
+            for pair in self.merges:
+                i = 0
+                new_splits = []
+                while i < len(splits):
+                    if i < len(splits) - 1 and splits[i] == pair[0] and splits[i + 1] == pair[1]:
+                        new_splits.append(pair[0] + pair[1])
+                        i += 2
+                    else:
+                        new_splits.append(splits[i])
+                        i += 1
+                splits = new_splits
+            tokens.extend(splits)
+        return tokens
+
+    def get_compression_stats(self, text: str) -> dict:
+        """评估 BPE 分词的压缩率与 Token 效率"""
+        raw_chars = len(text.replace(" ", ""))
+        tokens = self.tokenize(text)
+        num_tokens = len(tokens)
+        ratio = raw_chars / max(1, num_tokens)
+        return {
+            "raw_characters": raw_chars,
+            "token_count": num_tokens,
+            "compression_ratio": float(ratio),
+            "tokens": tokens,
+        }
+
+
+class DataMixtureEngine:
+    """
+    前沿大模型预训练语料配比 (Data Mixture) 与清洗流水线标准。
+    """
+
+    @staticmethod
+    def get_mixtures() -> dict[str, dict[str, float]]:
+        """工业界经典模型的真实语料配比分布 (百分比)"""
+        return {
+            "LLaMA-3 (Meta 2024, 15T)": {
+                "通用高质量网页 (CommonCrawl / FineWeb)": 50.0,
+                "源代码与技术文档 (GitHub / StackOverflow)": 25.0,
+                "学术论文与科学数据 (ArXiv / PubMed)": 10.0,
+                "多语言语料 (30+ 种语言)": 10.0,
+                "高难度数学与推理合成语料": 5.0,
+            },
+            "DeepSeek-V3 (2024/2025, 14.8T)": {
+                "通用高质量网页 (清洗过滤语料)": 45.0,
+                "高质量代码 (含代码执行轨迹)": 25.0,
+                "中文与多语言本土高质量语料": 15.0,
+                "数学与逻辑推理合成数据 (Math/Reasoning)": 10.0,
+                "图书与学术期刊": 5.0,
+            },
+            "FineWeb-Edu (HuggingFace 2024)": {
+                "高教育价值网页 (Edu Score >= 3)": 60.0,
+                "STEM 理工科专业知识": 20.0,
+                "人文社会与学术百科": 15.0,
+                "高质量问答与教科书": 5.0,
+            },
+        }
+
+    @staticmethod
+    def get_cleaning_pipeline() -> list[dict]:
+        """工业级预训练数据清洗 4 大阶段与核心规则"""
+        return [
+            {
+                "stage": "Stage 1: 文本提取与语言识别",
+                "rules": "HTML 标签清除、Trafilatura 核心正文提取、FastText/CLD3 语言分类器判定（置信度 > 0.65）。",
+                "filter_rate": "过滤约 30% 杂质",
+            },
+            {
+                "stage": "Stage 2: 启发式与质量过滤 (Heuristic Filtering)",
+                "rules": "Gopher/C4 经典规则：行重复率 > 30% 丢弃、无标点或异常符号密度高丢弃、词均长度不在 3~10 之间丢弃、停用词占比过低丢弃。",
+                "filter_rate": "过滤约 40% 低质内容",
+            },
+            {
+                "stage": "Stage 3: 模糊与精确去重 (Deduplication)",
+                "rules": "MinHash + LSH (Locality Sensitive Hashing) 算法：基于 5-gram Jaccard 相似度 > 0.8 消除跨页面模板与机器抓取重复文本。",
+                "filter_rate": "消除约 20% 冗余",
+            },
+            {
+                "stage": "Stage 4: 毒性内容与隐私脱敏 (PII & Toxicity)",
+                "rules": "个人隐私（邮箱、电话、身份证、IP 地址）正则掩蔽脱敏；有毒有害分类器（Toxicity Classifier）过滤低俗暴力语料。",
+                "filter_rate": "净化约 5% 高危数据",
+            },
+        ]
+
