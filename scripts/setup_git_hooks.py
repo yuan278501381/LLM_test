@@ -27,15 +27,9 @@ echo "=================================================="
 echo "[GUARD // 门禁]   Running Local Pre-Commit DevOps Quality Gate..."
 echo "=================================================="
 
-uv run ruff check .
+uv run python scripts/devops.py gate
 if [ $? -ne 0 ]; then
-    echo "[FAIL]  Ruff lint check failed! Commit aborted."
-    exit 1
-fi
-
-uv run pytest tests/test_devops_import_integrity.py tests/test_devops_api_contracts.py -q
-if [ $? -ne 0 ]; then
-    echo "[FAIL]  DevOps import integrity or API contract failed! Commit aborted."
+    echo "[FAIL]  DevOps Quality Gate failed! Commit aborted."
     exit 1
 fi
 

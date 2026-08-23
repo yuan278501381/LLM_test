@@ -182,7 +182,7 @@ pyright:                 FAIL，nn_core/reinforcement.py 有 3 个返回类型�
 - 修复所有 `ruff format --check`、Pyright 错误。
 - 不再整体排除 `dashboard/`；若必须分阶段，引入最小、带原因和到期任务的 per-file ignore。
 - Pyright 至少覆盖 `nn_core/`、`datasets/`、`dashboard/components/`、`dashboard/constants/` 和测试辅助代码；逐步纳入页面。
-- `scripts/devops_ci_gate.py` 加入 `ruff format --check`、`pyright`、`git diff --check`，并与 GitHub Actions 使用同一命令。
+- `scripts/devops.py gate` 加入 `ruff format --check`、`pyright`、`git diff --check`，并与 GitHub Actions 使用同一命令。
 - 删除脚本和测试 docstring 中“世界级、100%、全组合、零缺陷”等不实描述；名称必须准确描述实际覆盖。
 - CI 不应重复运行同一重型页面套件；按 unit/property/content/UI 分层并保留失败定位。
 

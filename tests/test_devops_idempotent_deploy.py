@@ -72,7 +72,13 @@ def test_devops_deploy_cli_json_report_contract():
         "--trace-id",
         "test-trace-contract-json",
     ]
-    out = subprocess.check_output(cmd, cwd=str(_PROJECT_ROOT), text=True)
+    out = subprocess.check_output(
+        cmd,
+        cwd=str(_PROJECT_ROOT),
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+    )
     report_dict = json.loads(out)
 
     assert report_dict["trace_id"] == "test-trace-contract-json"
