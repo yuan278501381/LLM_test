@@ -1937,10 +1937,68 @@ def render_floating_hud_navigator(sections: list[dict]) -> None:
                 doc.querySelectorAll('.nn-focus-chip').forEach(function(node) {{ node.remove(); }});
             }}
 
+            function startPendingNavObserver(targetId) {{
+                if (doc.__nnNavObserver) {{
+                    try {{ doc.__nnNavObserver.disconnect(); }} catch(e) {{}}
+                }}
+                if (doc.__nnNavPollTimer) {{
+                    window.parent.clearInterval(doc.__nnNavPollTimer);
+                }}
+                var startTime = Date.now();
+                var maxWait = 10000;
+
+                function tryPendingFocus() {{
+                    if (doc.__nnPendingTarget !== targetId) return false;
+                    var el = doc.getElementById(targetId);
+                    if (el) {{
+                        if (doc.__nnNavObserver) {{
+                            try {{ doc.__nnNavObserver.disconnect(); }} catch(e) {{}}
+                        }}
+                        if (doc.__nnNavPollTimer) window.parent.clearInterval(doc.__nnNavPollTimer);
+                        doc.__nnPendingTarget = null;
+                        window.parent.__nnPendingTarget = null;
+                        focusRegion(el);
+                        return true;
+                    }}
+                    if (Date.now() - startTime > maxWait) {{
+                        if (doc.__nnNavObserver) {{
+                            try {{ doc.__nnNavObserver.disconnect(); }} catch(e) {{}}
+                        }}
+                        if (doc.__nnNavPollTimer) window.parent.clearInterval(doc.__nnNavPollTimer);
+                        doc.__nnPendingTarget = null;
+                        window.parent.__nnPendingTarget = null;
+                        return false;
+                    }}
+                    return false;
+                }}
+
+                if (window.parent.MutationObserver) {{
+                    doc.__nnNavObserver = new window.parent.MutationObserver(function() {{
+                        tryPendingFocus();
+                        bindCourseAnchors();
+                    }});
+                    doc.__nnNavObserver.observe(doc.body, {{ childList: true, subtree: true }});
+                }}
+
+                doc.__nnNavPollTimer = window.parent.setInterval(function() {{
+                    tryPendingFocus();
+                }}, 100);
+            }}
+
             function focusRegion(target) {{
                 var targetId = typeof target === 'string' ? target : (target ? target.id : '');
                 var el = typeof target === 'string' ? doc.getElementById(target) : target;
-                if (!el) return false;
+                if (!el) {{
+                    if (targetId) {{
+                        doc.__nnPendingTarget = targetId;
+                        window.parent.__nnPendingTarget = targetId;
+                        setActiveItem(targetId);
+                        startPendingNavObserver(targetId);
+                    }}
+                    return false;
+                }}
+                doc.__nnPendingTarget = null;
+                window.parent.__nnPendingTarget = null;
                 clearFocus();
 
                 if (targetId) {{
@@ -1972,6 +2030,7 @@ def render_floating_hud_navigator(sections: list[dict]) -> None:
                 return true;
             }}
             doc.__nnFocusRegion = focusRegion;
+            window.parent.__nnFocusRegion = focusRegion;
 
             function bindCourseAnchors() {{
                 doc.querySelectorAll('a[href*="#region-"]').forEach(function(anchor) {{
@@ -1983,7 +2042,8 @@ def render_floating_hud_navigator(sections: list[dict]) -> None:
                         e.preventDefault();
                         e.stopPropagation();
                         e.stopImmediatePropagation();
-                        focusRegion(href.substring(href.indexOf('#') + 1));
+                        var targetId = href.substring(href.indexOf('#') + 1);
+                        focusRegion(targetId);
                     }}, true);
                 }});
             }}

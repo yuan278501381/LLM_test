@@ -234,7 +234,12 @@ def test_agent_harness_guard_mutation_suite():
 # 6. ClaudeCode2026PostmortemRunner 单测
 # ---------------------------------------------------------------------------
 def test_claude_code_2026_postmortem_runner_official_facts():
-    """验证 2026 Claude Code 事故复盘严格对齐官方事实，无伪造指标"""
+    """验证 2026 Claude Code 事故复盘严格对齐官方事实与推断分离，无语义越界"""
+    # 1. 验证类文档严格引用真实官方标题
+    assert "An update on recent Claude Code quality reports" in (
+        ClaudeCode2026PostmortemRunner.__doc__ or ""
+    )
+
     incidents = ["reasoning_downgrade", "session_cache_wipe", "verbosity_clamp"]
     for inc_key in incidents:
         data = ClaudeCode2026PostmortemRunner.get_incident_data(inc_key)
@@ -244,21 +249,41 @@ def test_claude_code_2026_postmortem_runner_official_facts():
         assert "official_finding" in data
         assert "resolution" in data
         assert "course_inferred_recommendation" in data
+        assert "【课程推断与工程建议】" in data["course_inferred_recommendation"]
         assert (
             "https://www.anthropic.com/engineering/april-23-postmortem"
             in data["official_source_url"]
         )
 
         # 断言不存在未经官方发布的伪造实测数字
-        for forbidden in ["accuracy_buggy", "accuracy_fixed", "latency_buggy", "latency_fixed"]:
+        for forbidden in [
+            "accuracy_buggy",
+            "accuracy_fixed",
+            "latency_buggy",
+            "latency_fixed",
+        ]:
             assert forbidden not in data, f"{inc_key} 不得包含虚构的 {forbidden} 字段"
 
-    # 验证 3% 下降事实准确挂载在事故 3（系统提示词）而非事故 1
-    inc3 = ClaudeCode2026PostmortemRunner.get_incident_data("verbosity_clamp")
-    assert "3%" in inc3["official_finding"]
-
+    # 2. 事故 1：验证 effort 官方事实与推断隔离
     inc1 = ClaudeCode2026PostmortemRunner.get_incident_data("reasoning_downgrade")
+    assert "effort" in inc1["root_cause"]
+    assert "长复杂编码任务" not in inc1["root_cause"]
+    assert "长复杂编码任务" not in inc1["official_finding"]
+    assert "长复杂编码任务" in inc1["course_inferred_recommendation"]
     assert "3%" not in inc1["official_finding"]
+
+    # 3. 事故 2：验证 thinking 清理 Bug 官方事实
+    inc2 = ClaudeCode2026PostmortemRunner.get_incident_data("session_cache_wipe")
+    assert "thinking" in inc2["root_cause"]
+    assert "遗忘" in inc2["official_finding"]
+
+    # 4. 事故 3：验证 verbosity 提示词与 3% 事实，长代码截断仅作为推断
+    inc3 = ClaudeCode2026PostmortemRunner.get_incident_data("verbosity_clamp")
+    assert "verbosity" in inc3["root_cause"]
+    assert "3%" in inc3["official_finding"]
+    assert "长代码截断" not in inc3["root_cause"]
+    assert "长代码截断" not in inc3["official_finding"]
+    assert "代码截断" in inc3["course_inferred_recommendation"]
 
 
 def test_claude_code_2026_unknown_incident_raises_error():

@@ -570,3 +570,17 @@ class TestStreamlitAppE2E:
         )
         at = AppTest.from_file(page_path, default_timeout=25).run()
         assert not at.exception, f"Page 17 runtime error: {at.exception}"
+
+    def test_theme_pending_navigation_observer_contract(self):
+        """测试 theme.py 导航脚本具备 Pending Navigation、MutationObserver 与轮询重试机制"""
+        theme_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "dashboard", "styles", "theme.py")
+        )
+        with open(theme_path, encoding="utf-8") as f:
+            content = f.read()
+
+        assert "startPendingNavObserver" in content
+        assert "doc.__nnPendingTarget" in content
+        assert "MutationObserver" in content
+        assert "doc.__nnNavPollTimer" in content
+        assert "tryPendingFocus" in content

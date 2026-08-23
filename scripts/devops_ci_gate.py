@@ -66,6 +66,12 @@ def main():
         ],
     )
 
+    # 真实 Chromium 浏览器端到端交互与延迟导航重试门禁
+    run_step(
+        "Stage 6: 真实浏览器端到端交互与延迟挂载门禁",
+        ["uv", "run", "python", "tests/test_browser_pending_navigation.py"],
+    )
+
     print("\n" + "=" * 70)
     print("[SUCCESS] ALL CONFIGURED QUALITY GATES PASSED")
     print("=" * 70)

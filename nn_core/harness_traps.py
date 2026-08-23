@@ -494,42 +494,40 @@ class ClaudeCode2026PostmortemRunner:
 
     教学与证据说明:
         - 证据等级: OFFICIAL_DOCUMENTATION / TEACHING_SCALE
-        - 官方事实来源: Anthropic (2026-04-23) "Claude Code Performance Postmortem and Systemic Improvements"
+        - 官方事实来源: Anthropic (2026-04-23) "An update on recent Claude Code quality reports"
           URL: https://www.anthropic.com/engineering/april-23-postmortem
         - 官方确认事实要点:
-          1. 3 月 4 日: 默认 reasoning effort 调整导致部分长复杂编码任务推理深度不足；
-             4 月 7 日全面回退为允许用户在客户端显式配置 reasoning-effort。
-          2. 3 月 26 日: 引入的闲置会话内存优化逻辑，在每轮执行中误清除了历史 thinking block，破坏跨轮连贯性；
+          1. 3 月 4 日: 默认 reasoning effort 从 high 调整为 medium；4 月 7 日全面回退。
+          2. 3 月 26 日: 闲置会话内存清理逻辑 Bug，在每轮执行中误清除了历史 thinking 记录，导致遗忘、重复与异常工具选择；
              4 月 10 日发布 v2.1.101 修复。
-          3. 4 月 16 日: 在系统提示词中追加简短要求导致复杂长代码生成偶发截断；
-             Anthropic 官方复盘记录：在某一内部扩展编码评测集中观察到性能下降约 3%（官方未发布全场景总体准确率绝对数值）；
-             4 月 20 日全面回退并解决（4 月 23 日发布官方技术复盘文章）。
+          3. 4 月 16 日: 在系统提示词中追加简短要求（verbosity 提示词）损害了 coding quality，在某扩展编码评测集之一中观察到下降约 3%；
+             4 月 20 日全面回退解决。
     """
 
     OFFICIAL_INCIDENTS: ClassVar[dict[str, dict[str, Any]]] = {
         "reasoning_downgrade": {
             "title": "事故 1: 思考预算默认值调整 (3月4日 ~ 4月7日)",
-            "official_timeline": "3 月 4 日调整默认 reasoning effort；4 月 7 日全面回退为允许用户显式指定配置。",
-            "root_cause": "官方确认根因：为降低终端响应延迟调整了默认的思考预算（reasoning effort）配置。",
-            "official_finding": "官方确认事实：导致部分长复杂编码任务因思考预算受限出现推理深度不足。",
-            "resolution": "官方确认修复：4 月 7 日全面回退默认设置，保持用户在客户端的显式控制权。",
-            "course_inferred_recommendation": "本项目推断与工程建议：推理预算调整属于关键超参变更，需在长周期真实任务评测集上进行充分验证与灰度发布。",
+            "official_timeline": "3 月 4 日将默认 reasoning effort 从 high 调整为 medium；4 月 7 日全面回退。",
+            "root_cause": "官方确认根因：调整了默认的思考预算（reasoning effort）配置，后经复盘认为权衡不当。",
+            "official_finding": "官方确认事实：默认 reasoning effort 调整导致部分任务推理深度受限。",
+            "resolution": "官方确认修复：4 月 7 日全面回退默认设置。",
+            "course_inferred_recommendation": "【课程推断与工程建议】长复杂编码任务在思考预算调低后推理深度受限；建议向用户提供客户端显式控制参数并进行充分长周期评测。",
         },
         "session_cache_wipe": {
             "title": "事故 2: 闲置会话缓存清理逻辑缺陷 (3月26日 ~ 4月10日)",
             "official_timeline": "3 月 26 日引入闲置会话清理优化；4 月 10 日发布 v2.1.101 修复。",
-            "root_cause": "官方确认根因：为优化闲置会话内存引入的清理逻辑，在每轮执行中误清除了历史 thinking 记录。",
-            "official_finding": "官方确认事实：跨轮长任务中模型因缺少历史思考记录出现逻辑不连贯或重复探索。",
+            "root_cause": "官方确认根因：闲置会话内存清理逻辑存在 Bug，在每轮执行中误清理了历史 thinking 记录。",
+            "official_finding": "官方确认事实：导致模型出现遗忘、重复探索与异常工具选择。",
             "resolution": "官方确认修复：4 月 10 日发布 v2.1.101 修复该会话清理逻辑。",
-            "course_inferred_recommendation": "本项目推断与工程建议：上下文内存优化与缓存淘汰策略必须具备多轮一致性测试，防止内存清理误删关键推理历史。",
+            "course_inferred_recommendation": "【课程推断与工程建议】上下文内存优化必须具备端到端多轮一致性回归测试，防止内存清理误删关键推理历史。",
         },
         "verbosity_clamp": {
-            "title": "事故 3: 系统提示词过度约束导致代码截断 (4月16日 ~ 4月20日)",
-            "official_timeline": "4 月 16 日上线简短系统提示；4 月 20 日全面回退并解决（4 月 23 日发布官方技术复盘文章）。",
-            "root_cause": "官方确认根因：在系统提示词中追加了简洁度（verbosity）控制指令，与复杂长代码生成的完整性需求产生冲突。",
-            "official_finding": "官方确认事实：Anthropic 官方复盘明确记录，在某一内部扩展编码评测集中观察到性能下降约 3%（官方未公布全场景总体准确率绝对数值）。",
-            "resolution": "官方确认修复：4 月 20 日全面回退简短控制指令，消除硬性简洁度对长代码生成的干扰。",
-            "course_inferred_recommendation": "本项目推断与工程建议：全局提示词改动属于高风险干预，需设立防截断门禁与自动化语法/完整性断言。",
+            "title": "事故 3: 系统提示词简洁度调整 (4月16日 ~ 4月20日)",
+            "official_timeline": "4 月 16 日上线简短系统提示词（verbosity 提示词）；4 月 20 日全面回退。",
+            "root_cause": "官方确认根因：在系统提示词中追加了简洁度（verbosity）控制要求，损害了 coding quality。",
+            "official_finding": "官方确认事实：Anthropic 官方复盘明确记录，在某一扩展编码评测集中观察到性能下降约 3%（官方未公布全场景总体准确率绝对数值）。",
+            "resolution": "官方确认修复：4 月 20 日全面回退该系统提示词改动。",
+            "course_inferred_recommendation": "【课程推断与工程建议】提示词简洁度过度约束容易与复杂长代码生成的完整性需求产生冲突导致代码截断；建议设立防截断门禁与 AST 语法完整性断言。",
         },
     }
 
