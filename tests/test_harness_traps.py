@@ -267,15 +267,16 @@ def test_claude_code_2026_postmortem_runner_official_facts():
     # 2. 事故 1：验证 effort 官方事实与推断隔离
     inc1 = ClaudeCode2026PostmortemRunner.get_incident_data("reasoning_downgrade")
     assert "effort" in inc1["root_cause"]
-    assert "长复杂编码任务" not in inc1["root_cause"]
-    assert "长复杂编码任务" not in inc1["official_finding"]
-    assert "长复杂编码任务" in inc1["course_inferred_recommendation"]
+    assert "felt less intelligent" in inc1["official_finding"]
+    assert "推理深度" not in inc1["official_finding"]
+    assert "推理深度" in inc1["course_inferred_recommendation"]
     assert "3%" not in inc1["official_finding"]
 
     # 3. 事故 2：验证 thinking 清理 Bug 官方事实
     inc2 = ClaudeCode2026PostmortemRunner.get_incident_data("session_cache_wipe")
     assert "thinking" in inc2["root_cause"]
-    assert "遗忘" in inc2["official_finding"]
+    assert "forgetful" in inc2["official_finding"]
+    assert "repetitive" in inc2["official_finding"]
 
     # 4. 事故 3：验证 verbosity 提示词与 3% 事实，长代码截断仅作为推断
     inc3 = ClaudeCode2026PostmortemRunner.get_incident_data("verbosity_clamp")

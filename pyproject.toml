@@ -36,6 +36,7 @@ dev = [
     # 测试
     "pytest>=8.0",
     "pytest-cov>=6.0",
+    "playwright>=1.40",
     # Lint & Format
     "ruff>=0.8",
     # 类型检查

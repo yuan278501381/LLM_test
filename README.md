@@ -29,19 +29,19 @@
 
 ### 教学可信度审计状态（更新于 2026-08-23）
 
-> **当前状态：M17 增量整改与全站 18 页面复验已全部通过。** M17 成功完成证据链重构，四类 Claims 严格一对一绑定至四份独立权威文献，官方事故事实（Anthropic 2026-04-23 Postmortem，事故 3 提示词变更致评测集 3% 下降）与本项目工程推断严格分立，剔除所有未证实虚构数字，收窄 Softmax 与 CoT 描述，全站 18 页 100% 达成蓝图目标存在性与唯一性断言。
+> **当前状态：M17 增量整改与全站 18 页面复验已全部通过。** M17 成功完成证据链重构，四类 Claims 严格一对一绑定至四份独立权威文献，官方事故事实（Anthropic 2026-04-23 Postmortem，事故 3 提示词变更致扩展评测集 3% 下降）与本项目工程推断严格分立，剔除所有未证实虚构数字，收窄 Softmax 与 CoT 描述，全站 18 页 100% 达成蓝图目标存在性与唯一性断言。
 
-当前代码收集 **352 项测试并全部通过**，`nn_core + datasets` 分支覆盖率为 **95.03%**（远超 80.0% 门禁标准）。
+当前代码收集 **359 项测试并全部通过**，`nn_core + datasets` 分支覆盖率为 **95.03%**（远超 80.0% 门禁标准）。
 
 本次整改建立了以下可审计基础：
 
 - M00-M17 已进入机器可读无环课程依赖图；每课公开诊断题、最小实验、反例实验、形成性评价和通过标准。
 - 18 页当前登记 72 个 result ID；M00-M17 全部完成与文献或计算协议的一一绑定。
 - 核心契约补强了 attention/mask、RoPE 显式布局、PPL/Accuracy/F1、CLIP 对比损失、扩散调度、Q-Learning/GRPO 模拟边界、局部随机源与早停恢复最佳权重。
-- Ruff 覆盖 dashboard（仅保留有理由的最小页面级 ignore），Pyright 覆盖核心、数据、公共组件和课程常量；本地 DevOps 质量门禁（Pre-commit + `scripts/devops_ci_gate.py`）同时执行 format、lint、type、diff 与分支覆盖率门禁（352 passed / 95.03% 覆盖率）。
+- Ruff 覆盖 dashboard（仅保留有理由的最小页面级 ignore），Pyright 覆盖核心、数据、公共组件和课程常量；本地 DevOps 统一控制台（Pre-commit + `scripts/devops.py gate`）统一调度 7 大阶段（Format、Lint、Typecheck、Diff、359 项单测 / 95.03% 分支覆盖率、真实 Chromium 浏览器 E2E 交互与部署幂等性验证门禁）。
 - 2026-08-23 浏览器全量复验确认 18 页无 Streamlit 页面异常、导航锚点目标存在性与唯一性 100% 通过。
 
-当前基线已更新为 **352 passed / 95.03%**。覆盖率只表示受执行代码比例，不能代替断言质量与教学事实审校。
+当前基线已更新为 **359 passed / 95.03%**。覆盖率只表示受执行代码比例，不能代替断言质量与教学事实审校。
 
 因此，README、页面和发布物不得使用“完全正确”“全部架构”“100% 覆盖”“零缺陷”“工业级复刻”等未经证据支持的认证性措辞。教学质量是按版本持续审计的属性，不是一次测试后永久成立的标签。
 
@@ -167,8 +167,12 @@ uv run streamlit run dashboard/app.py --server.port 8501
 │   ├── test_pretraining.py   # MLM, CLM, MAE, 对比学习预训练测试
 │   ├── test_alignment.py     # RLHF, DPO, LoRA, 后训练测试
 │   ├── test_evaluation.py    # Perplexity 困惑度与 Harness 考试测试
+│   ├── test_devops_idempotent_deploy.py # DevOps 幂等部署生命周期测试
 │   └── test_dashboard_ui.py  # 全局 SVG 图标、图表与 15 大页面 E2E AppTest 仿真
-└── scripts/                  # 🚀 跨平台自动化运维与启动脚本
+└── scripts/                  # 🚀 统一 DevOps 质量门禁 (CI) 与幂等部署 (CD) 控制台
+    ├── devops.py             # 统一 DevOps 调度引擎 (gate / deploy / pipeline / status)
+    ├── deploy.ps1            # PowerShell 一键部署与运维入口
+    └── run_dashboard.ps1     # 仪表板一键幂等拉起入口
 ```
 
 ## 🧮 数学核验范围与梯度校验

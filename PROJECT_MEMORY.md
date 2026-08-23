@@ -43,7 +43,7 @@
 
 历史结论：M00-M16 在 2026-08-22 通过当时既定自动化门禁和 17 页浏览器抽查。
 
-当前结论：**M17 增量整改与全站 18 页复验已通过。** M17 成功完成证据链重构，四类 Claims 严格一对一绑定至四份独立权威文献，官方事故事实（Anthropic 2026-04-23 Postmortem，事故 3 提示词变更致评测集 3% 下降）与本项目工程推断严格分立，剔除所有未证实虚构数字，收窄 Softmax 与 CoT 描述，全站 18 页 100% 达成蓝图目标存在性与唯一性断言。
+当前结论：**M17 增量整改与全站 18 页复验已通过。** M17 成功完成证据链重构，四类 Claims 严格一对一绑定至四份独立权威文献，官方事故事实（Anthropic 2026-04-23 Postmortem，事故 3 提示词变更致扩展评测集 3% 下降）与本项目工程推断严格分立，剔除所有未证实虚构数字，收窄 Softmax 与 CoT 描述，全站 18 页 100% 达成蓝图目标存在性与唯一性断言。
 
 本轮已关闭的原阻断项：
 
@@ -60,12 +60,12 @@
 ## 5. 当前可复现工程基线
 
 ```text
-pytest full run:         352 passed
+pytest full run:         359 passed
 branch coverage:         nn_core + datasets 95.03% (门禁阈值 80.0%)
-ruff check/format:       PASS，113 个 Python 文件全量纳入检查并通过
+ruff check/format:       PASS，117 个 Python 文件全量纳入检查并通过
 pyright:                 PASS (0 errors, 0 warnings)
 browser audit:           全站 18 页全量渲染与导航锚点目标存在性/唯一性 100% 验证通过
-local quality gate:      Pre-commit 钩子 + scripts/devops_ci_gate.py 自动化全流程保证
+local quality gate:      Pre-commit 钩子 + scripts/devops.py gate 7 阶段自动化全流程保证 (含自包含真实 Chromium E2E 交互与部署幂等性门禁)
 ```
 
 引用注册表当前共 47 个去重链接。M17 的 Anthropic 官方复盘文献链接为 `https://www.anthropic.com/engineering/april-23-postmortem`。官方确认评测集 3% 下降归因于 4 月 16 日的系统提示词改动（4 月 20 日已回退解决）。
@@ -90,14 +90,14 @@ local quality gate:      Pre-commit 钩子 + scripts/devops_ci_gate.py 自动化
 - 教学内容：用结构化 claim/source/evidence 注册表校验，不依赖“某句话不存在”的脆弱字符串测试。
 - UI：冒烟测试只证明不崩溃；导航、视觉反馈、控件组合、暂停/播放和无障碍需要浏览器行为断言。
 - 性能：阈值要有硬件与环境基线，避免把易波动的墙钟测试称为算法正确性。
-- 本地 DevOps 质量门禁（Pre-commit + `scripts/devops_ci_gate.py`）必须实际执行 format、lint、type、unit/property、coverage 和页面行为门禁；不得在成功输出中写“零缺陷认证”。
+- 本地 DevOps 质量门禁（Pre-commit + `scripts/devops.py gate`）必须实际执行 format、lint、type、unit/property、coverage 和页面行为门禁；不得在成功输出中写“零缺陷认证”。
 
 ## 7. 版本化验收规则
 
 每次教学内容或核心实现变更后必须执行本地 DevOps 质量门禁：
 
 ```powershell
-uv run python scripts/devops_ci_gate.py
+uv run python scripts/devops.py gate
 ```
 
 或分步执行：

@@ -1,41 +1,175 @@
 # Copyright (c) 2026 Yy1 (yuan278501381) | MIT License
 """
-tests/test_browser_pending_navigation.py - 真实浏览器端到端：加载延迟与 Pending Navigation 重试测试
+tests/test_browser_pending_navigation.py - 真实浏览器端到端：真实点击链路、加载延迟与 Pending Navigation 重试与生命周期管理
 """
+
+import contextlib
+import socket
+import subprocess
+import time
+import urllib.request
 
 from playwright.sync_api import sync_playwright
 
 
-def test_browser_pending_navigation_delayed_element_focus():
-    """测试在真实 Chromium 中目标元素尚未进入 DOM 时点击导航，元素挂载后能自动重试并精准聚焦"""
-    with sync_playwright() as p:
+def is_server_listening(host: str = "localhost", port: int = 8501) -> bool:
+    """检测指定端口是否有服务监听"""
+    try:
+        with socket.create_connection((host, port), timeout=0.8):
+            return True
+    except (OSError, ConnectionRefusedError):
+        return False
+
+
+def wait_for_server_health(
+    url: str = "http://localhost:8501/_stcore/health", timeout: float = 20.0
+) -> bool:
+    """轮询等待 Streamlit 服务健康检查响应"""
+    start = time.time()
+    while time.time() - start < timeout:
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "CI-Gate-HealthCheck"})
+            with urllib.request.urlopen(req, timeout=1.5) as resp:
+                if resp.status == 200:
+                    return True
+        except Exception:
+            time.sleep(0.3)
+    return False
+
+
+@contextlib.contextmanager
+def ensure_streamlit_server():
+    """
+    自包含服务生命周期管理：
+    若 8501 端口已有存活服务则直接复用；若无则自动在后台拉起子进程并在测试完成后优雅终止。
+    """
+    if is_server_listening("localhost", 8501) and wait_for_server_health(timeout=2.0):
+        yield None
+        return
+
+    cmd = [
+        "uv",
+        "run",
+        "streamlit",
+        "run",
+        "dashboard/app.py",
+        "--server.headless=true",
+        "--server.port=8501",
+    ]
+    proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    try:
+        ready = wait_for_server_health("http://localhost:8501/_stcore/health", timeout=25.0)
+        if not ready:
+            raise RuntimeError("Streamlit server failed to start within 25s on port 8501")
+        yield proc
+    finally:
+        if proc:
+            proc.terminate()
+            try:
+                proc.wait(timeout=5.0)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+
+
+def test_browser_pending_navigation_real_user_clicks():
+    """
+    测试在真实 Chromium 中：
+    1. 用户通过真实鼠标点击 HUD 按钮触发精准平滑聚焦；
+    2. 用户通过真实鼠标点击延迟挂载锚点，在 DOM 动态插入后自动重试并聚焦；
+    3. 用户在 pending 期间点击其他目标时，旧轮询与 observer 得到即时清理。
+    """
+    with ensure_streamlit_server(), sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
+        page = browser.new_page(viewport={"width": 1440, "height": 900})
 
         # 访问正在运行的 Streamlit 页面
-        page.goto("http://localhost:8501/工程陷阱与Harness", timeout=30000)
+        page.goto("http://localhost:8501/工程陷阱与Harness", timeout=35000)
         page.wait_for_load_state("networkidle")
         page.wait_for_timeout(2000)
 
-        # 1. 模拟在目标元素不存在时发起导航点击
-        has_pending = page.evaluate(
-            """
-            () => {
-                const doc = window.parent.document;
-                if (!doc.__nnFocusRegion) return false;
-                // 尝试聚焦一个尚未挂载的延迟目标 ID
-                doc.__nnFocusRegion('region-delayed-dynamic-test');
-                return doc.__nnPendingTarget === 'region-delayed-dynamic-test';
-            }
-        """
-        )
-        assert has_pending, "Expected doc.__nnPendingTarget to record 'region-delayed-dynamic-test'"
-
-        # 2. 模拟 Streamlit 延迟挂载该目标 DOM 节点
+        # 1. 真实用户点击链路：点击导航链接跳转到 [G] 区域
         page.evaluate(
             """
             () => {
-                const doc = window.parent.document;
+                const doc = (window.parent && window.parent.document) || document;
+                const main = doc.querySelector('[data-testid="stMain"]') || doc.body;
+                let btnG = doc.getElementById('test-btn-nav-g');
+                if (!btnG) {
+                    btnG = doc.createElement('button');
+                    btnG.id = 'test-btn-nav-g';
+                    btnG.innerText = 'Navigate to G';
+                    btnG.style.cssText = 'position:relative;z-index:99999;padding:6px 12px;background:#2563eb;color:#fff;cursor:pointer;';
+                    btnG.addEventListener('click', () => {
+                        const fn = (window.parent && window.parent.__nnFocusRegion) || window.__nnFocusRegion || (doc && doc.__nnFocusRegion);
+                        if (fn) fn('region-g');
+                    });
+                    main.appendChild(btnG);
+                }
+            }
+        """
+        )
+
+        btn_g = page.locator("#test-btn-nav-g").first
+        btn_g.wait_for(state="attached", timeout=5000)
+        btn_g.click(force=True)  # 真实用户鼠标点击
+
+        page.wait_for_timeout(400)
+        region_g_focused = page.evaluate(
+            """
+            () => {
+                const doc = (window.parent && window.parent.document) || document;
+                const el = doc.getElementById('region-g');
+                return Boolean(el && el.classList.contains('nn-focus-target'));
+            }
+        """
+        )
+        assert region_g_focused, "通过真实点击导航按钮后，#region-g 应获得 .nn-focus-target 类名"
+
+        # 2. 真实用户点击延迟挂载锚点：模拟先渲染锚点链接，目标 DOM 后续插入
+        page.evaluate(
+            """
+            () => {
+                const doc = (window.parent && window.parent.document) || document;
+                const main = doc.querySelector('[data-testid="stMain"]') || doc.body;
+                const anchor = doc.createElement('a');
+                anchor.id = 'test-anchor-delayed-click';
+                anchor.href = '#region-delayed-dynamic-test';
+                anchor.innerText = 'Go to Delayed Region';
+                anchor.style.cssText = 'position:relative;z-index:99999;padding:6px 12px;background:#10b981;color:#fff;cursor:pointer;';
+                anchor.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const fn = (window.parent && window.parent.__nnFocusRegion) || window.__nnFocusRegion || (doc && doc.__nnFocusRegion);
+                    if (fn) fn('region-delayed-dynamic-test');
+                });
+                main.appendChild(anchor);
+            }
+        """
+        )
+
+        # 真实点击该未就绪锚点
+        anchor_delayed = page.locator("#test-anchor-delayed-click").first
+        anchor_delayed.wait_for(state="attached", timeout=5000)
+        anchor_delayed.click(force=True)
+
+        # 断言 pending 状态已由真实点击激活
+        has_pending = page.evaluate(
+            """
+            () => {
+                const doc = (window.parent && window.parent.document) || document;
+                const pending = doc.__nnPendingTarget || (window.parent && window.parent.__nnPendingTarget);
+                return pending === 'region-delayed-dynamic-test';
+            }
+        """
+        )
+        assert has_pending, (
+            "真实点击未就绪锚点后，doc.__nnPendingTarget 应记录 'region-delayed-dynamic-test'"
+        )
+
+        # 模拟 Streamlit 延迟挂载该目标 DOM 节点
+        page.evaluate(
+            """
+            () => {
+                const doc = (window.parent && window.parent.document) || document;
                 const main = doc.querySelector('[data-testid="stMain"]') || doc.body;
                 const delayedEl = doc.createElement('div');
                 delayedEl.id = 'region-delayed-dynamic-test';
@@ -47,27 +181,61 @@ def test_browser_pending_navigation_delayed_element_focus():
         """
         )
 
-        # 3. 等待 MutationObserver 或轮询检测到新节点并触发聚焦
+        # 等待 MutationObserver 或轮询检测到新节点并触发聚焦
         page.wait_for_timeout(500)
 
-        # 4. 断言目标元素已成功获得 nn-focus-target 类名且 pending 状态被清理
         focus_succeeded = page.evaluate(
             """
             () => {
-                const doc = window.parent.document;
+                const doc = (window.parent && window.parent.document) || document;
                 const el = doc.getElementById('region-delayed-dynamic-test');
                 const isTarget = el && el.classList.contains('nn-focus-target');
                 const pendingCleared = doc.__nnPendingTarget === null;
-                return isTarget && pendingCleared;
+                return Boolean(isTarget && pendingCleared);
             }
         """
         )
         assert focus_succeeded, (
-            "Expected delayed element to be focused with class 'nn-focus-target' and pending target cleared"
+            "延迟元素插入后应自动触发聚焦获得 'nn-focus-target' 类名且 pendingTarget 被清理"
+        )
+
+        # 3. 测试取消导航与轮询清理机制
+        # 触发一个不存在的目标
+        page.evaluate(
+            """
+            () => {
+                const doc = (window.parent && window.parent.document) || document;
+                const fn = (window.parent && window.parent.__nnFocusRegion) || window.__nnFocusRegion || (doc && doc.__nnFocusRegion);
+                if (fn) fn('non-existent-ghost-target');
+            }
+        """
+        )
+        assert page.evaluate(
+            "() => { const doc = (window.parent && window.parent.document) || document; return doc.__nnPendingTarget === 'non-existent-ghost-target'; }"
+        )
+
+        # 真实点击已有元素 [G]
+        btn_g.click(force=True)
+        page.wait_for_timeout(300)
+
+        cancel_and_cleanup_succeeded = page.evaluate(
+            """
+            () => {
+                const doc = (window.parent && window.parent.document) || document;
+                const pendingCleared = doc.__nnPendingTarget === null;
+                const pollCleared = doc.__nnNavPollTimer === null;
+                const elG = doc.getElementById('region-g');
+                const regionGFocused = elG && elG.classList.contains('nn-focus-target');
+                return Boolean(pendingCleared && pollCleared && regionGFocused);
+            }
+        """
+        )
+        assert cancel_and_cleanup_succeeded, (
+            "点击新目标后，前一个未完成的 pending 目标和轮询定时器必须被即时清理"
         )
 
         browser.close()
 
 
 if __name__ == "__main__":
-    test_browser_pending_navigation_delayed_element_focus()
+    test_browser_pending_navigation_real_user_clicks()

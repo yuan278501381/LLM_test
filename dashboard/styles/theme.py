@@ -896,8 +896,8 @@ g.updatemenu-button {
     }
 }
 
-/* 浮动导航只在宽屏显示，避免覆盖中等视口的教学图表。 */
-@media (max-width: 2199px) {
+/* 浮动导航在平板及桌面端显示，在小屏幕移动端隐藏避免覆盖教学图表。 */
+@media (max-width: 1024px) {
     #nn-floating-spatial-hud { display: none !important; }
 }
 
@@ -1937,13 +1937,26 @@ def render_floating_hud_navigator(sections: list[dict]) -> None:
                 doc.querySelectorAll('.nn-focus-chip').forEach(function(node) {{ node.remove(); }});
             }}
 
-            function startPendingNavObserver(targetId) {{
+            function cancelPendingNavObserver() {{
                 if (doc.__nnNavObserver) {{
                     try {{ doc.__nnNavObserver.disconnect(); }} catch(e) {{}}
+                    doc.__nnNavObserver = null;
                 }}
                 if (doc.__nnNavPollTimer) {{
                     window.parent.clearInterval(doc.__nnNavPollTimer);
+                    doc.__nnNavPollTimer = null;
                 }}
+                doc.__nnPendingTarget = null;
+                if (window.parent) window.parent.__nnPendingTarget = null;
+            }}
+            doc.__nnCancelPendingNav = cancelPendingNavObserver;
+            window.parent.__nnCancelPendingNav = cancelPendingNavObserver;
+
+            function startPendingNavObserver(targetId) {{
+                cancelPendingNavObserver();
+                doc.__nnPendingTarget = targetId;
+                if (window.parent) window.parent.__nnPendingTarget = targetId;
+
                 var startTime = Date.now();
                 var maxWait = 10000;
 
@@ -1951,22 +1964,12 @@ def render_floating_hud_navigator(sections: list[dict]) -> None:
                     if (doc.__nnPendingTarget !== targetId) return false;
                     var el = doc.getElementById(targetId);
                     if (el) {{
-                        if (doc.__nnNavObserver) {{
-                            try {{ doc.__nnNavObserver.disconnect(); }} catch(e) {{}}
-                        }}
-                        if (doc.__nnNavPollTimer) window.parent.clearInterval(doc.__nnNavPollTimer);
-                        doc.__nnPendingTarget = null;
-                        window.parent.__nnPendingTarget = null;
+                        cancelPendingNavObserver();
                         focusRegion(el);
                         return true;
                     }}
                     if (Date.now() - startTime > maxWait) {{
-                        if (doc.__nnNavObserver) {{
-                            try {{ doc.__nnNavObserver.disconnect(); }} catch(e) {{}}
-                        }}
-                        if (doc.__nnNavPollTimer) window.parent.clearInterval(doc.__nnNavPollTimer);
-                        doc.__nnPendingTarget = null;
-                        window.parent.__nnPendingTarget = null;
+                        cancelPendingNavObserver();
                         return false;
                     }}
                     return false;
@@ -1990,15 +1993,12 @@ def render_floating_hud_navigator(sections: list[dict]) -> None:
                 var el = typeof target === 'string' ? doc.getElementById(target) : target;
                 if (!el) {{
                     if (targetId) {{
-                        doc.__nnPendingTarget = targetId;
-                        window.parent.__nnPendingTarget = targetId;
                         setActiveItem(targetId);
                         startPendingNavObserver(targetId);
                     }}
                     return false;
                 }}
-                doc.__nnPendingTarget = null;
-                window.parent.__nnPendingTarget = null;
+                cancelPendingNavObserver();
                 clearFocus();
 
                 if (targetId) {{
@@ -2054,7 +2054,6 @@ def render_floating_hud_navigator(sections: list[dict]) -> None:
             var hud = doc.createElement('div');
             hud.id = 'nn-floating-spatial-hud';
             hud.style.cssText = 'position:fixed;right:20px;top:115px;z-index:999999;background:rgba(255,255,255,0.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid #cbd5e1;border-radius:12px;box-shadow:0 10px 25px -5px rgba(15,23,42,0.08),0 4px 6px -2px rgba(15,23,42,0.04);padding:0.65rem 0.75rem;width:178px;font-family:JetBrains Mono,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:0.75rem;transition:all 0.2s cubic-bezier(0.4,0,0.2,1);';
-            if (window.parent.innerWidth < 1280) hud.style.display = 'none';
 
             var header = doc.createElement('div');
             header.style.cssText = 'font-size:0.68rem;font-weight:800;color:#64748b;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:0.45rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #f1f5f9;padding-bottom:0.3rem;';

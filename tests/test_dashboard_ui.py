@@ -580,6 +580,7 @@ class TestStreamlitAppE2E:
             content = f.read()
 
         assert "startPendingNavObserver" in content
+        assert "cancelPendingNavObserver" in content
         assert "doc.__nnPendingTarget" in content
         assert "MutationObserver" in content
         assert "doc.__nnNavPollTimer" in content
