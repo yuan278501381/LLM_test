@@ -59,9 +59,9 @@
 ## 5. 当前可复现工程基线
 
 ```text
-pytest full run:         374 passed
-branch coverage:         nn_core + datasets 94.74% (门禁阈值 80.0%)
-ruff check/format:       PASS，116 个 Python 文件全量纳入检查并通过
+pytest full run:         392 passed
+branch coverage:         nn_core + datasets 94.49% (门禁阈值 80.0%)
+ruff check/format:       PASS，124 个 Python 文件全量纳入检查并通过
 pyright:                 PASS (0 errors, 0 warnings)
 browser audit:           全站 18 页全量路由渲染与生命周期 HUD 清理 100% 验证通过
 local quality gate:      Pre-commit 钩子 + scripts/devops.py test/gate 7 阶段自动化全流程保证 (含自包含真实 Chromium E2E 交互与部署幂等性门禁)

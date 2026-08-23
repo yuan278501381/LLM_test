@@ -35,6 +35,7 @@ from dashboard.styles.theme import (
     render_section_heading,
 )
 from nn_core.embeddings import Embedding, get_mini_vocab, get_synthetic_demo_embeddings
+from nn_core.flash_attention import flash_attention_2_forward
 from nn_core.transformer import TransformerBlock
 
 st.set_page_config(
@@ -412,8 +413,114 @@ with col_swiglu_box, st.container(border=True):
     )
 
 # ---------------------------------------------------------------------------
-# 零基础进阶：Transformer Block 核心公式逐字拆解与名词通俗速查
+# 2026 前沿计算引擎：FlashAttention-2 核心分块与 Online Softmax
 # ---------------------------------------------------------------------------
+render_section_heading(
+    "FLASHATTENTION-2 // 现代长上下文计算引擎：分块循环与 Online Softmax", icon_name="activity"
+)
+
+with st.container(border=True):
+    col_fa_ctrl, col_fa_view = st.columns([1.2, 2.0])
+
+    with col_fa_ctrl:
+        st.markdown("#### [ALGORITHM CONTROLLER // 分块参数控制台]")
+        fa_seq_len = st.select_slider(
+            "序列长度 N (Sequence Length)",
+            options=[64, 128, 256, 512, 1024, 2048],
+            value=256,
+            key="fa_seq_len_slider",
+            help="随着序列长度增长，标准 Attention 的 O(N^2) 显存读写急剧攀升，FlashAttention 将其大幅压降",
+        )
+        col_b1, col_b2 = st.columns(2)
+        with col_b1:
+            fa_br = st.selectbox("Query 块大小 Br", [16, 32, 64], index=1, key="fa_br_select")
+        with col_b2:
+            fa_bc = st.selectbox("KV 块大小 Bc", [16, 32, 64], index=1, key="fa_bc_select")
+
+        fa_head_dim = st.selectbox("头特征维度 d_k", [32, 64, 128], index=1, key="fa_dk_select")
+        fa_is_causal = st.checkbox("启用因果自回归掩码 (Causal)", value=True, key="fa_causal_check")
+
+        # 运行 FlashAttention-2 计算模拟
+        q_demo = np.random.randn(1, fa_seq_len, fa_head_dim).astype(np.float64)
+        k_demo = np.random.randn(1, fa_seq_len, fa_head_dim).astype(np.float64)
+        v_demo = np.random.randn(1, fa_seq_len, fa_head_dim).astype(np.float64)
+
+        _fa_out, fa_tele = flash_attention_2_forward(
+            q_demo, k_demo, v_demo, block_size_r=fa_br, block_size_c=fa_bc, is_causal=fa_is_causal
+        )
+
+        std_io_kb = fa_tele["standard_hbm_io_bytes"] / 1024.0
+        flash_io_kb = fa_tele["flash_hbm_io_bytes"] / 1024.0
+        sram_kb = fa_tele["sram_footprint_bytes"] / 1024.0
+
+        st.markdown(
+            f"""
+            <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:0.8rem;margin-top:0.6rem;">
+                <div style="font-size:0.75rem;font-weight:700;color:#64748b;">HBM 访存优化成效</div>
+                <div style="font-size:1.4rem;font-weight:800;color:#1d4ed8;margin:0.2rem 0;">
+                    {fa_tele["io_reduction_ratio"]:.2f}x <span style="font-size:0.85rem;color:#047857;font-weight:600;">IO 吞吐节省</span>
+                </div>
+                <div style="font-size:0.8rem;color:#475569;">
+                    标准 Attention 读写: <b>{std_io_kb:.1f} KB</b><br>
+                    FlashAttention 读写: <b>{flash_io_kb:.1f} KB</b><br>
+                    SRAM 峰值占用: <b>{sram_kb:.1f} KB</b>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    with col_fa_view:
+        st.markdown("#### [HBM IO SCALING & ONLINE SOFTMAX // 显存访存对比与分块追踪]")
+
+        # 绘制序列长度扩展下的 HBM 访存对比曲线
+        seq_samples = [64, 128, 256, 512, 1024, 2048]
+        std_ios = []
+        flash_ios = []
+        for s_len in seq_samples:
+            s_q = np.zeros((1, s_len, fa_head_dim))
+            s_k = np.zeros((1, s_len, fa_head_dim))
+            s_v = np.zeros((1, s_len, fa_head_dim))
+            _, s_tel = flash_attention_2_forward(
+                s_q, s_k, s_v, block_size_r=fa_br, block_size_c=fa_bc, is_causal=fa_is_causal
+            )
+            std_ios.append(s_tel["standard_hbm_io_bytes"] / (1024.0 * 1024.0))  # MB
+            flash_ios.append(s_tel["flash_hbm_io_bytes"] / (1024.0 * 1024.0))  # MB
+
+        fig_fa = go.Figure()
+        fig_fa.add_trace(
+            go.Scatter(
+                x=seq_samples,
+                y=std_ios,
+                mode="lines+markers",
+                name="标准 Attention (O(N^2) 显存读写)",
+                line={"color": "#be123c", "width": 2.5},
+            )
+        )
+        fig_fa.add_trace(
+            go.Scatter(
+                x=seq_samples,
+                y=flash_ios,
+                mode="lines+markers",
+                name="FlashAttention-2 (O(N) 显存读写)",
+                line={"color": "#1d4ed8", "width": 2.5},
+            )
+        )
+        fig_fa.update_layout(
+            title="序列长度 vs HBM 显存读写总量 (MB)",
+            xaxis_title="Sequence Length (N)",
+            yaxis_title="HBM IO Traffic (MB)",
+            template="plotly_white",
+            height=280,
+            margin={"l": 40, "r": 20, "t": 35, "b": 35},
+            legend={"orientation": "h", "yanchor": "bottom", "y": 1.02, "xanchor": "right", "x": 1},
+        )
+        st.plotly_chart(fig_fa, use_container_width=True)
+
+        st.caption(
+            r"核心原理：FlashAttention-2 在 SRAM 有限空间内通过 Online Softmax 动态更新最大值 $m$ 与归一化分母 $\ell$，"
+            r"彻底消除了将中间 $N \times N$ 注意力分数矩阵写入并重新读出 HBM 显存的开销。"
+        )
 with st.expander(
     "[GROWTH GUIDE // 成长指南] Transformer Block 核心公式拆解与大模型底座名词全解", expanded=True
 ):

@@ -57,6 +57,7 @@ from nn_core.evaluation import (
     get_mini_mmlu,
     get_mini_safety,
 )
+from nn_core.flash_attention import flash_attention_2_forward
 from nn_core.gelu import GELU
 from nn_core.gpt import TinyGPT
 from nn_core.gqa import GroupedQueryAttention, repeat_kv
@@ -82,6 +83,7 @@ from nn_core.losses import (
     CategoricalCrossEntropyWithLogits,
 )
 from nn_core.model import Sequential
+from nn_core.moe import ExpertFFN, MoELayer, TopKGating
 from nn_core.observability import (
     GLOBAL_RING_BUFFER,
     DailyRetentionFileHandler,
@@ -98,6 +100,7 @@ from nn_core.observability import (
     traced_span,
 )
 from nn_core.optimizers import SGD, Adam, Momentum, RMSProp
+from nn_core.paged_kv_cache import PagedKVCache, PhysicalBlock
 from nn_core.posttraining import AlignmentPipeline, generate_before_after_examples
 
 # 预训练范式、后训练对齐与评测体系
@@ -167,6 +170,7 @@ __all__ = [
     "Embedding",
     "EvaluationHarness",
     "ExperimentLogger",
+    "ExpertFFN",
     "FeedForward",
     "GroupedQueryAttention",
     "KVCache",
@@ -178,11 +182,14 @@ __all__ = [
     "MaskedAutoEncoder",
     "MaskedLanguageModel",
     "MaxPool2D",
+    "MoELayer",
     "Momentum",
     "MultiHeadAttention",
     "NextFramePredictor",
     "PPOClipObjective",
+    "PagedKVCache",
     "PatchEmbedding",
+    "PhysicalBlock",
     "PositionalEncoding",
     "PretrainingComparator",
     "RMSProp",
@@ -204,6 +211,7 @@ __all__ = [
     "Tanh",
     "TinyGPT",
     "TokenizerTrapInspector",
+    "TopKGating",
     "TraceIdFilter",
     "TrainingHistory",
     "TransformerBlock",
@@ -222,6 +230,7 @@ __all__ = [
     "compute_param_savings",
     "compute_perplexity",
     "contrastive_loss",
+    "flash_attention_2_forward",
     "generate_before_after_examples",
     "generate_chord",
     "generate_synthetic_video",

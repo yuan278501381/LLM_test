@@ -20,6 +20,7 @@ from dashboard.components.charts import (
     plot_decision_boundary,
     plot_multi_loss_curves,
 )
+from dashboard.components.experiment_diff import render_experiment_diff_controller
 from dashboard.components.param_panel import (
     render_dataset_selector,
     render_deep_dive_card,
@@ -219,6 +220,7 @@ for opt_meta in optimizer_items:
 
     leaderboard_rows.append(
         {
+            "_opt_id": opt_meta.id,
             "优化器算法": opt_meta.label,
             "最终 Loss": f"{final_loss:.4f}",
             "最终准确率": f"{final_acc:.1%}",
@@ -228,6 +230,7 @@ for opt_meta in optimizer_items:
     )
 
 leaderboard_rows.sort(key=lambda x: x["_raw_loss"])
+champion_id = leaderboard_rows[0]["_opt_id"]
 champion = leaderboard_rows[0]["优化器算法"]
 champion_loss = leaderboard_rows[0]["最终 Loss"]
 champion_acc = leaderboard_rows[0]["最终准确率"]
@@ -356,6 +359,38 @@ with st.expander("[HOW TO READ // 读图指南] 直观验证最终划分能力",
         * [WARNING] **【欠训练形态】**：如果某个优化器的图里黑色分界线依然是一根僵硬的斜线甚至切错了大部分点，说明它在有限轮数内没能逃出平原（如学习率未调准的纯 SGD）。
         """
     )
+
+# ---------------------------------------------------------------------------
+# 双实验消融差分对比 (Side-by-Side Experiment Diff)
+# ---------------------------------------------------------------------------
+try:
+    c_loss_val = float(str(champion_loss).split()[0])
+except (ValueError, IndexError):
+    c_loss_val = 0.0
+
+try:
+    c_acc_val = float(str(champion_acc).replace("%", "")) / 100.0
+except ValueError:
+    c_acc_val = 0.0
+
+render_experiment_diff_controller(
+    module_id="M03",
+    current_name=f"{dataset_name.upper()} | {init_name.upper()} | {champion} (lr={lr})",
+    current_params={
+        "Dataset": dataset_name,
+        "Champion Opt": champion,
+        "Learning Rate": lr,
+        "Hidden Layers": n_layers,
+        "Neurons": str(neurons_per_layer),
+        "Epochs": epochs,
+        "Initializer": init_name,
+    },
+    current_metrics={
+        "Champion Loss": c_loss_val,
+        "Champion Accuracy": c_acc_val,
+    },
+    current_loss_history=histories.get(champion_id, {}).get("loss", []),
+)
 
 # 深度知识学习指南 (折叠微观原理解析)
 render_deep_dive_card("四大优化算法动力学原理与更新公式深度对比", optimizer_items)

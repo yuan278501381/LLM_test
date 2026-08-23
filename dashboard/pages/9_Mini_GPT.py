@@ -35,6 +35,7 @@ from dashboard.styles.theme import (
 )
 from nn_core.embeddings import get_mini_vocab, get_synthetic_demo_embeddings
 from nn_core.gpt import TinyGPT
+from nn_core.paged_kv_cache import PagedKVCache
 
 st.set_page_config(
     page_title="Mini-GPT · NN Playground",
@@ -525,6 +526,119 @@ with col_kv_stat:
             value=f"{flops_saved_ratio:.1f}× 吞吐提速",
             delta=f"避免了过去 {current_seq_tokens} 步的冗余重算",
             delta_color="normal",
+        )
+
+# ---------------------------------------------------------------------------
+# 2026 前沿服务架构：PagedAttention 显存分页与前缀共享 (vLLM 核心算法)
+# ---------------------------------------------------------------------------
+render_section_heading(
+    "PAGEDATTENTION // 现代推理服务显存分页与前缀共享 (vLLM 核心算法)", icon_name="layers"
+)
+
+with st.container(border=True):
+    col_pa_ctrl, col_pa_view = st.columns([1.2, 2.0])
+
+    with col_pa_ctrl:
+        st.markdown("#### [PAGE TABLE CONTROLLER // 分页与并发控制台]")
+        pa_block_size = st.selectbox(
+            "物理页块大小 (Tokens/Block)", [4, 8, 16], index=0, key="pa_bs_sel"
+        )
+        pa_enable_prefix = st.checkbox(
+            "启用前缀缓存共享 (Prefix Caching)", value=True, key="pa_prefix_chk"
+        )
+        pa_append_steps = st.slider(
+            "并发新生成 Token 步数", min_value=1, max_value=8, value=3, key="pa_gen_steps"
+        )
+
+        # 模拟运行 PagedKVCache
+        paged_mgr = PagedKVCache(
+            total_blocks=16, block_size=pa_block_size, num_kv_heads=2, head_dim=16
+        )
+
+        # 请求 A: 初始 6 个 token
+        prompt_a_k = np.random.randn(2, 6, 16)
+        prompt_a_v = np.random.randn(2, 6, 16)
+        paged_mgr.allocate_sequence("Req-A (用户1)", prompt_a_k, prompt_a_v)
+
+        if pa_enable_prefix:
+            # 请求 B 共享请求 A 的前缀 (Prefix Caching)
+            paged_mgr.fork_sequence_prefix("Req-A (用户1)", "Req-B (用户2 共享前缀)")
+        else:
+            # 独立分配
+            paged_mgr.allocate_sequence(
+                "Req-B (用户2 独立前缀)", prompt_a_k.copy(), prompt_a_v.copy()
+            )
+
+        # 模拟生成追加 token
+        cow_count = 0
+        for _ in range(pa_append_steps):
+            tok_k = np.random.randn(2, 16)
+            tok_v = np.random.randn(2, 16)
+            _, cow_a = paged_mgr.append_token("Req-A (用户1)", tok_k, tok_v)
+            target_b = "Req-B (用户2 共享前缀)" if pa_enable_prefix else "Req-B (用户2 独立前缀)"
+            _, cow_b = paged_mgr.append_token(target_b, tok_k, tok_v)
+            if cow_a:
+                cow_count += 1
+            if cow_b:
+                cow_count += 1
+
+        p_stats = paged_mgr.get_memory_stats()
+
+        st.markdown(
+            f"""
+            <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:0.8rem;margin-top:0.6rem;">
+                <div style="font-size:0.75rem;font-weight:700;color:#64748b;">显存利用率对比</div>
+                <div style="font-size:1.3rem;font-weight:800;color:#047857;margin:0.2rem 0;">
+                    {p_stats["internal_fragmentation_rate"] * 100:.1f}% <span style="font-size:0.85rem;color:#475569;font-weight:500;">内部碎片率</span>
+                </div>
+                <div style="font-size:0.8rem;color:#475569;">
+                    物理块总数: <b>16 Blocks</b> (空闲 <b>{p_stats["free_blocks"]}</b>)<br>
+                    逻辑 Token 总量: <b>{p_stats["total_logical_tokens"]} Tokens</b><br>
+                    物理存储 Token: <b>{p_stats["physical_stored_tokens"]} Tokens</b><br>
+                    前缀共享节省: <b style="color:#1d4ed8;">{p_stats["shared_saved_tokens"]} Tokens</b><br>
+                    传统预分配浪费: <b style="color:#be123c;">{p_stats["traditional_prealloc_waste_rate"] * 100:.1f}%</b>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    with col_pa_view:
+        st.markdown("#### [VIRTUAL BLOCK TABLE MAPPING // 虚拟页表与显存池映射]")
+
+        # 渲染虚拟页表映射
+        table_rows = []
+        for req_id, b_ids in paged_mgr.block_tables.items():
+            blocks_badges = " ".join(
+                [
+                    f'<span style="background:#dbeafe;color:#1d4ed8;font-weight:700;padding:2px 6px;border-radius:4px;font-family:monospace;font-size:0.75rem;">Block #{bid} (ref={paged_mgr.physical_blocks[bid].ref_count})</span>'
+                    for bid in b_ids
+                ]
+            )
+            table_rows.append(
+                f"<tr>"
+                f'<td style="padding:6px 8px;font-weight:700;font-size:0.82rem;border-bottom:1px solid #f1f5f9;">{req_id}</td>'
+                f'<td style="padding:6px 8px;font-size:0.82rem;border-bottom:1px solid #f1f5f9;">{blocks_badges}</td>'
+                f'<td style="padding:6px 8px;font-size:0.82rem;text-align:right;font-weight:700;color:#0f172a;border-bottom:1px solid #f1f5f9;">{paged_mgr.seq_lengths[req_id]} Tokens</td>'
+                f"</tr>"
+            )
+
+        st.markdown(
+            f"""
+            <table style="width:100%;border-collapse:collapse;margin-bottom:0.8rem;background:#ffffff;border:1px solid #e2e8f0;border-radius:6px;overflow:hidden;">
+                <thead style="background:#f8fafc;font-size:0.75rem;color:#64748b;font-weight:700;text-transform:uppercase;">
+                    <tr><th style="padding:6px 8px;text-align:left;">请求 ID</th><th style="padding:6px 8px;text-align:left;">映射物理页表 (Block IDs)</th><th style="padding:6px 8px;text-align:right;">序列长度</th></tr>
+                </thead>
+                <tbody>{"".join(table_rows)}</tbody>
+            </table>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        st.caption(
+            "核心机理：传统大模型推理会为每个请求按最长上下文（如 2048）一次性连续预分配显存，导致大量显存闲置浪费（碎片率 60%~80%）。"
+            "PagedAttention 引入操作系统的虚拟内存分页思想，将 Key/Value 缓存切分为不连续的定长物理块，"
+            "按需动态分配并通过页表索引，同时支持多个请求零拷贝共享 System Prompt 前缀，极大提升高并发吞吐。"
         )
 
 # ---------------------------------------------------------------------------

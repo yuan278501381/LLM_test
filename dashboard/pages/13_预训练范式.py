@@ -29,6 +29,7 @@ from dashboard.styles.theme import (
     render_section_heading,
 )
 from nn_core.embeddings import get_mini_vocab
+from nn_core.moe import MoELayer
 from nn_core.pretraining import (
     CausalLanguageModel,
     ContrastiveLearning,
@@ -825,6 +826,114 @@ with col_d_pipe:
                 """,
                 unsafe_allow_html=True,
             )
+
+# ---------------------------------------------------------------------------
+# 2026 前沿架构：MoE 混合专家模型与稀疏门控路由
+# ---------------------------------------------------------------------------
+render_section_heading(
+    "MIXTURE OF EXPERTS // 现代大模型稀疏化架构：MoE 动态路由与负载均衡", icon_name="git-branch"
+)
+
+with st.container(border=True):
+    col_moe_ctrl, col_moe_view = st.columns([1.2, 2.0])
+
+    with col_moe_ctrl:
+        st.markdown("#### [ROUTER CONTROLLER // 门控路由控制台]")
+        moe_num_experts = st.selectbox(
+            "专家总数 E (Total Experts)", [4, 8], index=0, key="moe_num_exp"
+        )
+        moe_top_k = st.selectbox("激活专家数 K (Top-K Active)", [1, 2], index=1, key="moe_top_k")
+        moe_aux_weight = st.select_slider(
+            "负载均衡辅助损失权重 (Aux Loss Weight α)",
+            options=[0.0, 0.001, 0.01, 0.05, 0.1],
+            value=0.01,
+            key="moe_aux_w",
+            help="当 α=0.0 时可能出现路由坍塌 (单一专家垄断所有 Token)；当 α>0 时迫使路由器均分各专家负载",
+        )
+        moe_enable_bias = st.checkbox(
+            "启用 DeepSeek-V3 动态偏置自平衡 (Aux-Loss-Free)", value=True, key="moe_bias_chk"
+        )
+
+        # 模拟生成多领域 Token
+        domains = ["代码", "数学", "文学", "逻辑", "历史", "医学", "翻译", "法律"]
+        num_tokens_sim = 64
+        rng = np.random.RandomState(42)
+        sim_tokens = rng.randn(num_tokens_sim, 32)
+
+        moe_layer = MoELayer(
+            d_model=32,
+            d_ff=64,
+            num_experts=moe_num_experts,
+            top_k=moe_top_k,
+            aux_loss_weight=moe_aux_weight,
+            seed=42,
+        )
+
+        _moe_out, aux_l, moe_tele = moe_layer.forward(sim_tokens)
+
+        # 模拟运行若干步动态偏置调整
+        if moe_enable_bias:
+            f_e_arr = np.array(moe_tele["gating_stats"]["expert_dispatch_fractions"])
+            moe_layer.router.update_dynamic_bias(
+                target_fraction=1.0 / moe_num_experts, gamma=0.1, f_e=f_e_arr
+            )
+            _moe_out, aux_l, moe_tele = moe_layer.forward(sim_tokens)
+
+        active_ratio = moe_tele["active_parameter_ratio"] * 100
+        is_collapsed = moe_tele["gating_stats"]["is_collapsed"]
+        status_text = (
+            "<span style='color:#dc2626;font-weight:700;'>存在路由坍塌风险 (负载极度不均)</span>"
+            if is_collapsed
+            else "<span style='color:#047857;font-weight:700;'>负载均衡良好</span>"
+        )
+
+        st.markdown(
+            f"""
+            <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:0.8rem;margin-top:0.6rem;">
+                <div style="font-size:0.75rem;font-weight:700;color:#64748b;">MoE 算力与状态遥测</div>
+                <div style="font-size:1.3rem;font-weight:800;color:#1d4ed8;margin:0.2rem 0;">
+                    {active_ratio:.0f}% <span style="font-size:0.85rem;color:#475569;font-weight:500;">单步激活算力</span>
+                </div>
+                <div style="font-size:0.8rem;color:#475569;">
+                    辅助损失 (Aux Loss): <b>{aux_l:.6f}</b><br>
+                    路由熵 (Routing Entropy): <b>{moe_tele["gating_stats"]["entropy"]:.3f}</b><br>
+                    健康状态: {status_text}
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    with col_moe_view:
+        st.markdown("#### [EXPERT DISPATCH & LOAD BALANCING // 专家负载分布]")
+
+        exp_counts = moe_tele["expert_token_counts"]
+        exp_labels = [f"专家 #{i + 1}" for i in range(moe_num_experts)]
+
+        fig_moe = go.Figure()
+        fig_moe.add_trace(
+            go.Bar(
+                x=exp_labels,
+                y=exp_counts,
+                marker_color="#1d4ed8",
+                text=exp_counts,
+                textposition="auto",
+            )
+        )
+        fig_moe.update_layout(
+            title=f"Token 派发至各专家的频次分布 (总 Token={num_tokens_sim}, Top-{moe_top_k})",
+            xaxis_title="专家编号",
+            yaxis_title="分配到的 Token 数",
+            template="plotly_white",
+            height=260,
+            margin={"l": 40, "r": 20, "t": 35, "b": 35},
+        )
+        st.plotly_chart(fig_moe, use_container_width=True)
+
+        st.caption(
+            "核心机理：MoE（如 DeepSeek-V3 671B/37B Act）通过稀疏门控网络将不同专业属性的 Token 路由给特定领域的专用前馈专家（FFN），"
+            "在维持超大规模模型参数容量的同时，每次前向仅消耗极小比例的激活算力。负载均衡损失与动态偏置机制用于杜绝少数专家被垄断挤爆、其余专家闲置的路由坍塌问题。"
+        )
 
 # ---------------------------------------------------------------------------
 # 零基础进阶：预训练与扩展定律核心公式拆解
