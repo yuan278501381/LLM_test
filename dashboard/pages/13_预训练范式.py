@@ -610,7 +610,7 @@ with col_s_ctrl:
             - **算力预算 $C$**：`{current_flops:.2e}` FLOPs
             - **最优参数量 $N_{{\\text{{opt}}}}$**：`{opt_res["optimal_params_N"] / 1e9:.2f} B` (十亿参数)
             - **最优 Token 数 $D_{{\\text{{opt}}}}$**：`{opt_res["optimal_tokens_D"] / 1e9:.2f} B` ({opt_res["optimal_tokens_D"] / 1e12:.3f} T Tokens)
-            - **数据/参数比例**：`{opt_res["token_param_ratio"]:.1f} : 1` (符合 Chinchilla ~20:1)
+            - **最优数据/参数比**：`{opt_res["token_param_ratio"]:.1f} : 1` (依幂律随总算力预算增长而动态提升；70B 预算区间附近对应约 20:1)
             - **理论预估损失 $L$**：`{opt_res["predicted_loss"]:.4f}`
             - **H100 训练工期**：`{opt_res["h100_gpu_days"]:.1f}` GPU-Days (MFU=45%)
             """
@@ -840,7 +840,7 @@ with st.expander(
         | 符号 | 中文名称 | 权威拟合数值 | 通俗大白话解释（它是什么？起什么作用？） |
         |:---:|:---:|:---:|:---|
         | **$L(N, D)$** | **预测预训练交叉熵损失 (Loss)** | 连续实数 | 评估一个模型预训练完后到底有多聪明（损失越低，模型越强）。 |
-        | **$E$** | **不可约内在熵 (Irreducible Loss)** | **$1.6934$** | **人类语言的物理极限天花板**。即使你拥有无穷大的模型和无穷多的数据，语言本身的随机性也决定了 Loss 不可能低于 $1.6934$。 |
+        | **$E$** | **不可约内在熵 (Irreducible Loss)** | **$1.6934$** | **特定实验设定下的拟合渐近损失下界**。表示在 Hoffmann et al. (2022) 使用的 MassiveText 数据集、SentencePiece 分词器与 Transformer 架构下，无穷大参数与数据时的拟合渐近下界（受语料纯度、分词粒度等实验条件约束，并非物理普适常量）。 |
         | **$N$** | **模型非嵌入参数量 (Parameters)** | 比如 $7\\text{B} = 7 \\times 10^9$ | **大脑的脑容量脑细胞数量**。脑容量越大，记忆能力越强。 |
         | **$D$** | **训练 Token 总数 (Data Tokens)** | 比如 $2\\text{T} = 2 \\times 10^{12}$ | **给大脑喂的书本知识量**。书读得越多，见识越广。 |
         | **$A, B$** | **参数与数据规模常数** | $A=406.4, B=410.7$ | 衡量增加参数与增加数据对降低 Loss 的相对贡献系数。 |

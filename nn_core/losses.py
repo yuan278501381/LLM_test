@@ -99,19 +99,24 @@ class BinaryCrossEntropy(Loss):
         """
         计算二元交叉熵损失。
 
-        使用 safe_log 防止 log(0)。
+        输入应当为预测概率范围 (0, 1)。
+        通过将输入截断到 [eps, 1 - eps] 保证数值稳定性与非负性 L >= 0。
 
         Args:
-            y_pred: 模型输出概率，shape (n, 1)，范围 (0, 1)
+            y_pred: 模型输出概率，shape (n, 1)，理论范围 (0, 1)
             y_true: 真实标签，shape (n, 1)，值为 0 或 1
 
         Returns:
-            标量损失值
+            标量损失值 (>= 0)
         """
-        self.y_pred = y_pred
+        eps = 1e-12
+        y_pred_clipped = np.clip(y_pred, eps, 1.0 - eps)
+        self.y_pred = y_pred_clipped
         self.y_true = y_true
-        loss = -np.mean(y_true * safe_log(y_pred) + (1.0 - y_true) * safe_log(1.0 - y_pred))
-        return float(loss)
+        loss = -np.mean(
+            y_true * np.log(y_pred_clipped) + (1.0 - y_true) * np.log(1.0 - y_pred_clipped)
+        )
+        return max(0.0, float(loss))
 
     def backward(self) -> np.ndarray:
         """

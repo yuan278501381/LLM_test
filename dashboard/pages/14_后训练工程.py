@@ -465,10 +465,10 @@ with col_dpo_card:
         st.markdown(
             """
             #### [DPO // 直接偏好目标]
-            - **传统 RLHF**：需要同时维护 4 个模型（Actor, Critic, Ref, Reward），显存消耗巨大，训练极其脆弱；
-            - **DPO 巧思**：直接推导出隐式奖励封闭解：
+            - **传统 RLHF (PPO)**：需同时维护 Actor, Critic, Ref, Reward 多个模型，包含在线 Rollout 生成与梯度估计，调参超参数空间大；
+            - **DPO 巧思 (Rafailov et al., 2023)**：推导出隐式奖励与策略闭式解：
             $$r^*(x, y) = \\beta \\log \\frac{\\pi_\\theta(y|x)}{\\pi_{ref}(y|x)}$$
-            - **单步二元交叉熵**：直接计算偏好对损失，训练稳定如 SFT，显存立减 $50\\%$！
+            - **直接偏好损失**：直接对离线偏好数据对计算分类交叉熵损失，免除了显式奖励模型与在线采样 Rollout 开销，在论文实验中展示了更轻量且稳定的对齐特性。
             """
         )
 

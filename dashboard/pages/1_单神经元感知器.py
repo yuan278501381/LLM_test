@@ -45,7 +45,7 @@ from dashboard.styles.theme import (
 )
 from dashboard.utils.state import get_dataset, resolve_activation, resolve_optimizer
 from nn_core.layers import Dense
-from nn_core.losses import BinaryCrossEntropy
+from nn_core.losses import MSE, BinaryCrossEntropy
 from nn_core.model import Sequential
 
 st.set_page_config(
@@ -303,7 +303,11 @@ model.add(dense_layer)
 act_cls = resolve_activation(act_meta.id)
 model.add(act_cls())
 
-loss_fn = BinaryCrossEntropy()
+# 损失函数与激活函数科学匹配：
+# BCE 损失数学上严格要求输入为 (0, 1) 概率值（Sigmoid）；
+# 对于 Linear / ReLU / Tanh 等输出未严格限制在 (0, 1) 的激活，使用 MSE 损失以保证数学严谨性与非负性
+loss_fn = BinaryCrossEntropy() if act_meta.id == "Sigmoid" else MSE()
+
 opt_cls = resolve_optimizer(opt_meta.id)
 optimizer = opt_cls(learning_rate=float(lr))
 
@@ -317,7 +321,10 @@ history: dict[str, list[float]] = {"loss": [], "accuracy": []}
 for _ in range(int(epochs)):
     y_pred = model.forward(X, training=True)
     loss = loss_fn.forward(y_pred, y)
-    acc = float(np.mean((y_pred >= 0.5).astype(float) == y))
+    if act_meta.id == "Tanh":
+        acc = float(np.mean((y_pred >= 0.0).astype(float) == y))
+    else:
+        acc = float(np.mean((y_pred >= 0.5).astype(float) == y))
 
     history["loss"].append(loss)
     history["accuracy"].append(acc)
@@ -712,8 +719,8 @@ with st.expander(
     "[GROWTH GUIDE // 成长指南] 核心公式逐字拆解与深度学习名词通俗全解", expanded=True
 ):
     st.markdown(
-        """
-        ### 0. 核心公式逐字拆解：$Z = XW + b$ 与 $\\hat{y} = \\sigma(Z)$
+        r"""
+        ### 0. 核心公式逐字拆解：$Z = XW + b$ 与 $\hat{y} = \sigma(Z)$
         这是整个深度学习世界最基础、最通用的**第一核心公式**：
 
         | 符号 | 中文名称 | 矩阵形状 (Shape) | 通俗大白话解释（它是什么？起什么作用？） |
@@ -756,8 +763,14 @@ with st.expander(
         ---
 
         ### 5. 什么是【前向传播 (Forward)】与【反向传播 (Backward)】？
-        * **前向传播 (Forward)**：**做题过程**。输入特征 $(x_1, x_2)$ 进入神经元，计算出预测结果 $\\hat{y}$，并算出当前扣了多少分 (Loss)。
+        * **前向传播 (Forward)**：**做题过程**。输入特征 $(x_1, x_2)$ 进入神经元，计算出预测结果 $\hat{y}$，并算出当前扣了多少分 (Loss)。
         * **反向传播 (Backward)**：**订正错题过程**。拿着扣分结果，沿着数学公式倒推，找出究竟是 $w_1$ 调偏了还是 $b$ 调高了，计算出每个参数的梯度。
         * **参数更新 (Step)**：根据梯度，真正把 $w$ 和 $b$ 往正确方向微调一步。
+
+        ---
+
+        ### 6. 经典 Rosenblatt 感知器 vs. 现代可微逻辑神经元 (Logistic Neuron)
+        * **经典 Rosenblatt 感知器 (1958)**：采用非连续阶跃激活函数 $f(z) = \text{sign}(z)$，输出硬分类标签 $\pm 1$。因为阶跃函数的导数在非零处恒为 0，无法使用微积分梯度下降，依赖于分类错误时的离散纠错规则 $w \leftarrow w + \eta (y - \hat{y}) x$。仅在线性可分数据集上保证有限步收敛（感知器收敛定理）。
+        * **现代逻辑神经元 (Logistic Neuron)**：采用光滑可微的 Sigmoid 激活函数 $\sigma(z) = \frac{1}{1 + e^{-z}}$，将实数加权映射为连续后验概率 $P(Y=1|X) \in (0, 1)$，并通过二元交叉熵 (BCE) 损失进行端到端微积分反向传播（极大似然估计）。
         """
     )

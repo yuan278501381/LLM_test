@@ -38,10 +38,10 @@
 - M00-M17 已进入机器可读无环课程依赖图；每课公开诊断题、最小实验、反例实验、形成性评价和通过标准。
 - 18 页当前登记 72 个 result ID；M00-M17 全部完成与文献或计算协议的一一绑定。
 - 核心契约补强了 attention/mask、RoPE 显式布局、PPL/Accuracy/F1、CLIP 对比损失、扩散调度、Q-Learning/GRPO 模拟边界、局部随机源与早停恢复最佳权重。
-- Ruff 覆盖 dashboard（仅保留有理由的最小页面级 ignore），Pyright 覆盖核心、数据、公共组件和课程常量；本地 DevOps 统一控制台（Pre-commit + `scripts/devops.py gate`）统一调度 7 大阶段（Format、Lint、Typecheck、Diff、359 项单测 / 95.03% 分支覆盖率、真实 Chromium 浏览器 E2E 交互与部署幂等性验证门禁）。
+- Ruff 覆盖 dashboard（仅保留有理由的最小页面级 ignore），Pyright 覆盖核心、数据、公共组件和课程常量；本地 DevOps 统一控制台（Pre-commit + `scripts/devops.py gate`）统一调度 7 大阶段（Format、Lint、Typecheck、Diff、361 项单测 / 95.03% 分支覆盖率、真实 Chromium 浏览器 E2E 交互与部署幂等性验证门禁）。
 - 2026-08-23 浏览器全量复验确认 18 页无 Streamlit 页面异常、导航锚点目标存在性与唯一性 100% 通过。
 
-当前基线已更新为 **359 passed / 95.03%**。覆盖率只表示受执行代码比例，不能代替断言质量与教学事实审校。
+当前基线已更新为 **361 passed / 95.03%**。覆盖率只表示受执行代码比例，不能代替断言质量与教学事实审校。
 
 因此，README、页面和发布物不得使用“完全正确”“全部架构”“100% 覆盖”“零缺陷”“工业级复刻”等未经证据支持的认证性措辞。教学质量是按版本持续审计的属性，不是一次测试后永久成立的标签。
 

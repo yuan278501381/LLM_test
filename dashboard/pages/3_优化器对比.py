@@ -118,14 +118,14 @@ render_page_guide(
         f"• <b>竞速轮数 (Epochs)</b>：让 4 辆赛车在同一起跑线上跑多少圈。"
     ),
     telemetry_desc=(
-        f"• <b>在 {anchor_badge('[D. 多轨收敛图]', 'purple', target_id='region-d')} 观战</b>：4 根不同颜色的线，<b>谁的线掉得最快、最低，谁就是冠军</b>！<br>"
-        f"• <b>在 {anchor_badge('[C. 竞速遥测指标]', 'emerald', target_id='region-c')} 揭晓</b>：查看全场最优表现者。<br>"
+        f"• <b>在 {anchor_badge('[D. 多轨收敛图]', 'purple', target_id='region-d')} 观测</b>：4 根不同颜色的收敛曲线，对比各优化器在当前超参数下的下降速率与平稳度。<br>"
+        f"• <b>在 {anchor_badge('[C. 竞速遥测指标]', 'emerald', target_id='region-c')} 统计</b>：量化比较最终损失值、收敛耗时与准确率。<br>"
         f"• <b>在 {anchor_badge('[E. 四分屏分界]', 'blue', target_id='region-e')} 验收</b>：并排展示 4 种算法各自最终画出的分界面质量。"
     ),
     experiments=[
-        f"<b>第 1 步【看多轨竞速】</b>：直接观察 {anchor_badge('[D. 多轨对比图]', 'purple', target_id='region-d')}，看绿色线 (Adam) 是不是比灰色线 (SGD) 下降得快得多！",
-        f"<b>第 2 步【大油门测试】</b>：在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 把【基准学习率】从 <code>0.03</code> 调大到 <code>0.1</code>。你会发现 SGD 开始剧烈颠簸震荡，而 Adam 依然稳健冲刺到底！",
-        f"<b>第 3 步【四分屏对比】</b>：在 {anchor_badge('[E. 四分屏分界]', 'blue', target_id='region-e')} 对比 4 种优化器最终谁把红蓝两类分得最漂亮！",
+        f"<b>第 1 步【对比多轨收敛】</b>：观察 {anchor_badge('[D. 多轨对比图]', 'purple', target_id='region-d')}，对比 SGD、Momentum、RMSProp 与 Adam 在当前地形下的收敛动态与震荡特性。",
+        f"<b>第 2 步【学习率敏感度探究】</b>：在 {anchor_badge('[A. 控制台]', 'amber', target_id='region-a')} 调节【基准学习率】（如 0.01 vs 0.1）。观察在不同超参数配置下各优化器的收敛稳定性与边界行为（自适应优化器通常适应面更广，但在极端学习率下同样可能发生震荡或发散）。",
+        f"<b>第 3 步【四分屏形态对比】</b>：在 {anchor_badge('[E. 四分屏分界]', 'blue', target_id='region-e')} 对比 4 种优化器最终拟合的决策流形平滑度与抗噪能力。",
     ],
 )
 

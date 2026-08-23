@@ -75,6 +75,17 @@ class TestBinaryCrossEntropy:
         val = loss_fn.forward(y_pred, y_true)
         assert not np.isnan(val)
 
+    def test_forward_非法与越界输入保证非负损失(self):
+        """当预测值超出 (0, 1) 区间时（如 Linear/ReLU/Tanh 输出），BCE 仍能安全截断且损失保证非负"""
+        loss_fn = BinaryCrossEntropy()
+        # 模拟未加约束的输出：2.0 与 -0.5
+        y_pred_out_of_bounds = np.array([[2.0], [-0.5]])
+        y_true = np.array([[1.0], [0.0]])
+        val = loss_fn.forward(y_pred_out_of_bounds, y_true)
+        assert not np.isnan(val)
+        assert not np.isinf(val)
+        assert val >= 0.0, f"BCE 损失必须非负，实际得到: {val}"
+
 
 class TestCategoricalCrossEntropy:
     """分类交叉熵损失测试"""

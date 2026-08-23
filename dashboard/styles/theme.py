@@ -1057,7 +1057,8 @@ g.updatemenu-button {
         unsafe_allow_html=True,
     )
 
-    sidebar_nav_js = """<!doctype html><html><head><meta charset="utf-8"></head><body>
+    trace_nonce = str(get_trace_id())
+    sidebar_nav_template = """<!doctype html><html><head><meta charset="utf-8"><!-- trace: __TRACE_NONCE__ --></head><body>
     <script>
     (function() {
         try {
@@ -1418,14 +1419,51 @@ g.updatemenu-button {
                 doc.head.appendChild(headStyle);
             }
 
-            // 每次页面切换或加载时，立即清理宿主 DOM 中可能残留的浮动 HUD 罗盘与未决聚焦观察器
-            var staleHud = doc.getElementById('nn-floating-spatial-hud');
-            if (staleHud) {
-                staleHud.remove();
+            function checkAndCleanupHud() {
+                var currentPath = (window.parent && window.parent.location && window.parent.location.pathname) || '';
+                var isHome = currentPath === '/' || currentPath === '' || currentPath.endsWith('/app') || currentPath.endsWith('app.py');
+
+                var activeLink = doc.querySelector('[data-testid="stSidebarNav"] a[aria-current="page"], [data-testid="stSidebarNavLink"][aria-current="page"], [data-testid="stSidebarNav"] a.active, [data-testid="stSidebarNavLink"].active');
+                if (activeLink) {
+                    var activeText = activeLink.textContent.trim();
+                    if (activeText.indexOf('首页') !== -1 || activeText.indexOf('导航大厅') !== -1) {
+                        isHome = true;
+                    }
+                }
+
+                var hud = doc.getElementById('nn-floating-spatial-hud');
+                if (hud) {
+                    if (isHome) {
+                        hud.remove();
+                        if (doc.__nnCancelPendingNav) {
+                            try { doc.__nnCancelPendingNav(); } catch(e) {}
+                        }
+                        return;
+                    }
+
+                    // 检查主工作区中是否存在属于当前 HUD 的目标锚点
+                    var hudItems = hud.querySelectorAll('.nn-hud-item');
+                    if (hudItems.length > 0) {
+                        var anyFound = false;
+                        for (var i = 0; i < hudItems.length; i++) {
+                            var tId = hudItems[i].getAttribute('data-target');
+                            if (tId && doc.getElementById(tId)) {
+                                anyFound = true;
+                                break;
+                            }
+                        }
+                        if (!anyFound) {
+                            hud.remove();
+                            if (doc.__nnCancelPendingNav) {
+                                try { doc.__nnCancelPendingNav(); } catch(e) {}
+                            }
+                        }
+                    }
+                }
             }
-            if (doc.__nnCancelPendingNav) {
-                try { doc.__nnCancelPendingNav(); } catch(e) {}
-            }
+
+            // 1. 立即执行一次清理
+            checkAndCleanupHud();
 
             var isFormatting = false;
             function updateLayoutAndLabels() {
@@ -1434,6 +1472,23 @@ g.updatemenu-button {
                 try {
                     var links = doc.querySelectorAll('[data-testid="stSidebarNav"] a, [data-testid="stSidebarNavLink"]');
                     links.forEach(function(a) {
+                        // 绑定 0ms 点击瞬时拦截：点击首页或导航大厅时立即清除 HUD
+                        if (!a.getAttribute('data-nn-click-bound')) {
+                            a.setAttribute('data-nn-click-bound', '1');
+                            var clickHandler = function() {
+                                var linkText = a.textContent.trim();
+                                if (linkText.indexOf('首页') !== -1 || linkText.indexOf('导航大厅') !== -1) {
+                                    var h = doc.getElementById('nn-floating-spatial-hud');
+                                    if (h) h.remove();
+                                    if (doc.__nnCancelPendingNav) {
+                                        try { doc.__nnCancelPendingNav(); } catch(e) {}
+                                    }
+                                }
+                            };
+                            a.addEventListener('pointerdown', clickHandler, { capture: true, passive: true });
+                            a.addEventListener('click', clickHandler, { capture: true, passive: true });
+                        }
+
                         var spans = a.querySelectorAll('span');
                         spans.forEach(function(span) {
                             var text = span.textContent.trim();
@@ -1448,20 +1503,24 @@ g.updatemenu-button {
             }
 
             updateLayoutAndLabels();
+            checkAndCleanupHud();
 
-            if (!doc.__nnSidebarObserver) {
+            if (!doc.__nnGlobalObserver) {
                 var observerTimeout = null;
                 var observer = new window.parent.MutationObserver(function() {
                     if (observerTimeout) clearTimeout(observerTimeout);
-                    observerTimeout = setTimeout(updateLayoutAndLabels, 60);
+                    observerTimeout = setTimeout(function() {
+                        updateLayoutAndLabels();
+                        checkAndCleanupHud();
+                    }, 40);
                 });
-                var sidebarEl = doc.querySelector('[data-testid="stSidebar"]') || doc.body;
-                observer.observe(sidebarEl, { childList: true, subtree: true });
-                doc.__nnSidebarObserver = observer;
+                observer.observe(doc.body, { childList: true, subtree: true });
+                doc.__nnGlobalObserver = observer;
             }
         } catch(e) {}
     })();
     </script></body></html>"""
+    sidebar_nav_js = sidebar_nav_template.replace("__TRACE_NONCE__", trace_nonce)
     components.html(sidebar_nav_js, height=1, width=1)
 
 
@@ -1907,62 +1966,62 @@ def render_floating_hud_navigator(sections: list[dict]) -> None:
             }
         )
     sec_json = json.dumps(normalized, ensure_ascii=False)
-    js = f"""<!doctype html><html><head><meta charset="utf-8"></head><body>
+    js_template = """<!doctype html><html><head><meta charset="utf-8"></head><body>
     <script>
-    (function() {{
-        try {{
+    (function() {
+        try {
             var doc = window.parent.document;
             if (!doc) return;
 
             var oldHud = doc.getElementById('nn-floating-spatial-hud');
             if (oldHud) oldHud.remove();
 
-            var sections = {sec_json};
+            var sections = __SECTIONS_JSON__;
             if (!sections || sections.length === 0) return;
 
             doc.__nnIsNavigating = false;
 
-            function setActiveItem(targetId) {{
-                doc.querySelectorAll('.nn-hud-item').forEach(function(el) {{
-                    if (el.getAttribute('data-target') === targetId) {{
+            function setActiveItem(targetId) {
+                doc.querySelectorAll('.nn-hud-item').forEach(function(el) {
+                    if (el.getAttribute('data-target') === targetId) {
                         el.classList.add('active');
                         el.style.background = '#eff6ff';
                         el.style.color = '#1d4ed8';
                         el.style.fontWeight = '800';
                         el.style.borderLeft = '3px solid #2563eb';
-                    }} else {{
+                    } else {
                         el.classList.remove('active');
                         el.style.background = 'transparent';
                         el.style.color = '#334155';
                         el.style.fontWeight = '600';
                         el.style.borderLeft = 'none';
-                    }}
-                }});
-            }}
+                    }
+                });
+            }
 
-            function clearFocus() {{
-                doc.querySelectorAll('.nn-focus-target').forEach(function(node) {{
+            function clearFocus() {
+                doc.querySelectorAll('.nn-focus-target').forEach(function(node) {
                     node.classList.remove('nn-focus-target');
-                }});
-                doc.querySelectorAll('.nn-focus-chip').forEach(function(node) {{ node.remove(); }});
-            }}
+                });
+                doc.querySelectorAll('.nn-focus-chip').forEach(function(node) { node.remove(); });
+            }
 
-            function cancelPendingNavObserver() {{
-                if (doc.__nnNavObserver) {{
-                    try {{ doc.__nnNavObserver.disconnect(); }} catch(e) {{}}
+            function cancelPendingNavObserver() {
+                if (doc.__nnNavObserver) {
+                    try { doc.__nnNavObserver.disconnect(); } catch(e) {}
                     doc.__nnNavObserver = null;
-                }}
-                if (doc.__nnNavPollTimer) {{
+                }
+                if (doc.__nnNavPollTimer) {
                     window.parent.clearInterval(doc.__nnNavPollTimer);
                     doc.__nnNavPollTimer = null;
-                }}
+                }
                 doc.__nnPendingTarget = null;
                 if (window.parent) window.parent.__nnPendingTarget = null;
-            }}
+            }
             doc.__nnCancelPendingNav = cancelPendingNavObserver;
             window.parent.__nnCancelPendingNav = cancelPendingNavObserver;
 
-            function startPendingNavObserver(targetId) {{
+            function startPendingNavObserver(targetId) {
                 cancelPendingNavObserver();
                 doc.__nnPendingTarget = targetId;
                 if (window.parent) window.parent.__nnPendingTarget = targetId;
@@ -1970,60 +2029,60 @@ def render_floating_hud_navigator(sections: list[dict]) -> None:
                 var startTime = Date.now();
                 var maxWait = 10000;
 
-                function tryPendingFocus() {{
+                function tryPendingFocus() {
                     if (doc.__nnPendingTarget !== targetId) return false;
                     var el = doc.getElementById(targetId);
-                    if (el) {{
+                    if (el) {
                         cancelPendingNavObserver();
                         focusRegion(el);
                         return true;
-                    }}
-                    if (Date.now() - startTime > maxWait) {{
+                    }
+                    if (Date.now() - startTime > maxWait) {
                         cancelPendingNavObserver();
                         return false;
-                    }}
+                    }
                     return false;
-                }}
+                }
 
-                if (window.parent.MutationObserver) {{
-                    doc.__nnNavObserver = new window.parent.MutationObserver(function() {{
+                if (window.parent.MutationObserver) {
+                    doc.__nnNavObserver = new window.parent.MutationObserver(function() {
                         tryPendingFocus();
                         bindCourseAnchors();
-                    }});
-                    doc.__nnNavObserver.observe(doc.body, {{ childList: true, subtree: true }});
-                }}
+                    });
+                    doc.__nnNavObserver.observe(doc.body, { childList: true, subtree: true });
+                }
 
-                doc.__nnNavPollTimer = window.parent.setInterval(function() {{
+                doc.__nnNavPollTimer = window.parent.setInterval(function() {
                     tryPendingFocus();
-                }}, 100);
-            }}
+                }, 100);
+            }
 
-            function focusRegion(target) {{
+            function focusRegion(target) {
                 var targetId = typeof target === 'string' ? target : (target ? target.id : '');
                 var el = typeof target === 'string' ? doc.getElementById(target) : target;
-                if (!el) {{
-                    if (targetId) {{
+                if (!el) {
+                    if (targetId) {
                         setActiveItem(targetId);
                         startPendingNavObserver(targetId);
-                    }}
+                    }
                     return false;
-                }}
+                }
                 cancelPendingNavObserver();
                 clearFocus();
 
-                if (targetId) {{
+                if (targetId) {
                     setActiveItem(targetId);
                     doc.__nnIsNavigating = true;
                     if (doc.__nnNavTimer) window.parent.clearTimeout(doc.__nnNavTimer);
-                    doc.__nnNavTimer = window.parent.setTimeout(function() {{
+                    doc.__nnNavTimer = window.parent.setTimeout(function() {
                         doc.__nnIsNavigating = false;
                         updateActiveSection();
-                    }}, 900);
-                }}
+                    }, 900);
+                }
 
                 var reducedMotion = window.parent.matchMedia &&
                     window.parent.matchMedia('(prefers-reduced-motion: reduce)').matches;
-                el.scrollIntoView({{ behavior: reducedMotion ? 'auto' : 'smooth', block: 'center' }});
+                el.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'center' });
                 el.classList.remove('nn-focus-target');
                 void el.offsetWidth;
                 el.classList.add('nn-focus-target');
@@ -2038,15 +2097,15 @@ def render_floating_hud_navigator(sections: list[dict]) -> None:
                     clearFocus, reducedMotion ? 2000 : 4200
                 );
                 return true;
-            }}
+            }
             doc.__nnFocusRegion = focusRegion;
             window.parent.__nnFocusRegion = focusRegion;
 
-            function bindCourseAnchors() {{
-                doc.querySelectorAll('a[href*="#region-"]').forEach(function(anchor) {{
+            function bindCourseAnchors() {
+                doc.querySelectorAll('a[href*="#region-"]').forEach(function(anchor) {
                     if (anchor.getAttribute('data-nn-focus-bound') === '1') return;
                     anchor.setAttribute('data-nn-focus-bound', '1');
-                    anchor.addEventListener('click', function(e) {{
+                    anchor.addEventListener('click', function(e) {
                         var href = anchor.getAttribute('href');
                         if (!href) return;
                         e.preventDefault();
@@ -2054,9 +2113,9 @@ def render_floating_hud_navigator(sections: list[dict]) -> None:
                         e.stopImmediatePropagation();
                         var targetId = href.substring(href.indexOf('#') + 1);
                         focusRegion(targetId);
-                    }}, true);
-                }});
-            }}
+                    }, true);
+                });
+            }
             bindCourseAnchors();
             window.parent.setTimeout(bindCourseAnchors, 300);
             window.parent.setTimeout(bindCourseAnchors, 900);
@@ -2073,7 +2132,7 @@ def render_floating_hud_navigator(sections: list[dict]) -> None:
             var list = doc.createElement('div');
             list.style.cssText = 'display:flex;flex-direction:column;gap:0.25rem;';
 
-            sections.forEach(function(sec) {{
+            sections.forEach(function(sec) {
                 var secId = sec.id || sec.letter || 'A';
                 var secName = sec.name || sec.title || '';
                 var targetId = sec.target_id || ('region-' + secId.toLowerCase());
@@ -2084,108 +2143,133 @@ def render_floating_hud_navigator(sections: list[dict]) -> None:
                 item.style.cssText = 'display:flex;align-items:center;gap:0.4rem;padding:0.3rem 0.45rem;border-radius:6px;text-decoration:none;color:#334155;font-weight:600;transition:all 0.15s ease;cursor:pointer;';
                 item.innerHTML = '<span style="font-family:monospace;font-size:0.72rem;font-weight:800;color:#2563eb;background:#eff6ff;border:1px solid #bfdbfe;padding:0.05rem 0.3rem;border-radius:4px;">[' + secId + ']</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:115px;">' + secName + '</span>';
 
-                item.addEventListener('mouseenter', function() {{
-                    if (!this.classList.contains('active')) {{
+                item.addEventListener('mouseenter', function() {
+                    if (!this.classList.contains('active')) {
                         this.style.background = '#f8fafc';
                         this.style.transform = 'translateX(-2px)';
-                    }}
-                }});
-                item.addEventListener('mouseleave', function() {{
-                    if (!this.classList.contains('active')) {{
+                    }
+                });
+                item.addEventListener('mouseleave', function() {
+                    if (!this.classList.contains('active')) {
                         this.style.background = 'transparent';
                         this.style.transform = 'none';
-                    }}
-                }});
+                    }
+                });
 
-                item.addEventListener('click', function(e) {{
+                item.addEventListener('click', function(e) {
                     e.preventDefault();
                     e.stopPropagation();
                     focusRegion(targetId);
-                }});
+                });
 
                 list.appendChild(item);
-            }});
+            });
 
             hud.appendChild(list);
 
             var topBtn = doc.createElement('div');
             topBtn.style.cssText = 'margin-top:0.45rem;padding-top:0.35rem;border-top:1px solid #f1f5f9;text-align:center;color:#64748b;cursor:pointer;font-size:0.7rem;font-weight:700;transition:color 0.15s;';
             topBtn.innerHTML = '↑ 回到顶部 (Top)';
-            topBtn.addEventListener('mouseenter', function() {{ this.style.color = '#2563eb'; }});
-            topBtn.addEventListener('mouseleave', function() {{ this.style.color = '#64748b'; }});
-            topBtn.addEventListener('click', function() {{
+            topBtn.addEventListener('mouseenter', function() { this.style.color = '#2563eb'; });
+            topBtn.addEventListener('mouseleave', function() { this.style.color = '#64748b'; });
+            topBtn.addEventListener('click', function() {
                 var main = doc.querySelector('[data-testid="stMain"]');
                 var reducedMotion = window.parent.matchMedia &&
                     window.parent.matchMedia('(prefers-reduced-motion: reduce)').matches;
-                if (main) main.scrollTo({{ top: 0, behavior: reducedMotion ? 'auto' : 'smooth' }});
-                else window.parent.scrollTo({{ top: 0, behavior: reducedMotion ? 'auto' : 'smooth' }});
-            }});
+                if (main) main.scrollTo({ top: 0, behavior: reducedMotion ? 'auto' : 'smooth' });
+                else window.parent.scrollTo({ top: 0, behavior: reducedMotion ? 'auto' : 'smooth' });
+            });
             hud.appendChild(topBtn);
 
             doc.body.appendChild(hud);
 
-            function updateActiveSection() {{
+            function updateActiveSection() {
                 if (doc.__nnIsNavigating) return;
+
+                var activeLink = doc.querySelector('[data-testid="stSidebarNav"] a[aria-current="page"], [data-testid="stSidebarNavLink"][aria-current="page"], [data-testid="stSidebarNav"] a.active, [data-testid="stSidebarNavLink"].active');
+                if (activeLink) {
+                    var aText = activeLink.textContent.trim();
+                    if (aText.indexOf('首页') !== -1 || aText.indexOf('导航大厅') !== -1) {
+                        var h = doc.getElementById('nn-floating-spatial-hud');
+                        if (h) h.remove();
+                        return;
+                    }
+                }
+
+                var anyTargetExists = false;
+                for (var k = 0; k < sections.length; k++) {
+                    var sTId = sections[k].target_id || ('region-' + (sections[k].id || '').toLowerCase());
+                    var sEl = doc.getElementById(sTId);
+                    if (sEl && (!sEl.closest || !sEl.closest('[data-testid="stSidebar"]'))) {
+                        anyTargetExists = true;
+                        break;
+                    }
+                }
+                if (!anyTargetExists) {
+                    var curHud = doc.getElementById('nn-floating-spatial-hud');
+                    if (curHud) curHud.remove();
+                    return;
+                }
 
                 var main = doc.querySelector('[data-testid="stMain"]');
                 var viewH = (main ? main.clientHeight : window.parent.innerHeight) || 800;
                 var focalLine = viewH * 0.45;
 
                 // 页面触底保护：如果已经滚动到底部，直接高亮最后一项
-                if (main && (main.scrollTop + main.clientHeight >= main.scrollHeight - 40)) {{
+                if (main && (main.scrollTop + main.clientHeight >= main.scrollHeight - 40)) {
                     var lastSec = sections[sections.length - 1];
-                    if (lastSec) {{
+                    if (lastSec) {
                         setActiveItem(lastSec.target_id || ('region-' + (lastSec.id || '').toLowerCase()));
                         return;
-                    }}
-                }}
+                    }
+                }
 
                 var currentActive = null;
 
-                for (var i = 0; i < sections.length; i++) {{
+                for (var i = 0; i < sections.length; i++) {
                     var sec = sections[i];
                     var targetId = sec.target_id || ('region-' + (sec.id || '').toLowerCase());
                     var el = doc.getElementById(targetId);
                     if (!el) continue;
 
                     // 忽略侧边栏中的固定元素（如 region-a）
-                    if (el.closest && el.closest('[data-testid="stSidebar"]')) {{
+                    if (el.closest && el.closest('[data-testid="stSidebar"]')) {
                         continue;
-                    }}
+                    }
 
                     var rect = el.getBoundingClientRect();
                     // 标准 ScrollSpy 判定：顶部到达或穿过焦点线（+50px 容差）
-                    if (rect.top <= focalLine + 50) {{
+                    if (rect.top <= focalLine + 50) {
                         currentActive = targetId;
-                    }}
-                }}
+                    }
+                }
 
-                if (!currentActive) {{
+                if (!currentActive) {
                     currentActive = sections[0].target_id || ('region-' + (sections[0].id || '').toLowerCase());
-                }}
+                }
 
-                if (currentActive) {{
+                if (currentActive) {
                     setActiveItem(currentActive);
-                }}
-            }}
+                }
+            }
 
             var scrollContainer = doc.querySelector('[data-testid="stMain"]') || window.parent;
-            if (doc.__nnScrollListener && doc.__nnScrollContainer) {{
+            if (doc.__nnScrollListener && doc.__nnScrollContainer) {
                 doc.__nnScrollContainer.removeEventListener('scroll', doc.__nnScrollListener);
-            }}
+            }
             doc.__nnScrollListener = updateActiveSection;
             doc.__nnScrollContainer = scrollContainer;
-            scrollContainer.addEventListener('scroll', updateActiveSection, {{ passive: true }});
+            scrollContainer.addEventListener('scroll', updateActiveSection, { passive: true });
 
             setTimeout(updateActiveSection, 300);
             setTimeout(updateActiveSection, 800);
 
-        }} catch(e) {{
+        } catch(e) {
             console.error('Floating HUD error:', e);
-        }}
-    }})();
-    </script></body></html>
-    """
+        }
+    })();
+    </script></body></html>"""
+    js = js_template.replace("__SECTIONS_JSON__", sec_json)
     components.html(js, height=1, width=1)
 
 
