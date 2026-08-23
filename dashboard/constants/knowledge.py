@@ -147,8 +147,8 @@ ACTIVATIONS: dict[str, ActivationMeta] = {
         id="Tanh",
         label="Tanh (双曲正切函数)",
         formula="\\tanh(z) = \\frac{e^z - e^{-z}}{e^z + e^{-z}}",
-        desc="将实数映射至 (-1, 1) 区间，具有零均值（Zero-Centered）对称特性，比 Sigmoid 具有更好的中心化统计分布。",
-        impact="输出均值为 0，能显著减轻下一层权重更新时的锯齿状震荡；但在饱和区依然存在导数接近 0 的梯度消失问题。",
+        desc="将实数映射至 (-1, 1) 区间，函数图像与值域关于 0 对称，比 Sigmoid 具有更好的零对称特性。",
+        impact="在输入分布对称时有助于缓解下一层权重更新时的锯齿状震荡；但在饱和区依然存在导数接近 0 的梯度消失问题。",
         example="异或 (XOR) 问题破解；经典循环神经网络 (RNN/LSTM) 的隐藏状态更新门控。",
     ),
     "LeakyReLU": ActivationMeta(
@@ -224,7 +224,7 @@ INITIALIZERS: dict[str, InitializerMeta] = {
         label="Xavier / Glorot (正态分布)",
         formula="W \\sim \\mathcal{N}\\left(0,\\; \\sigma^2 = \\frac{2}{n_{in} + n_{out}}\\right)",
         desc="针对 Sigmoid / Tanh 等双边对称激活函数推导的方差匹配初始化，平衡输入与输出维度的信号能量。",
-        impact="确保信号在多层线性加权传递中不会指数级放大也不会衰减为零，使浅层与深层网络协同学习。",
+        impact="在零均值、同方差与线性激活等假设近似成立时，有助于维持深层网络前向信号与反向梯度的方差稳定。",
         example="早中期 MLP、自动编码器 (Autoencoder) 以及搭载 Sigmoid/Tanh 的经典神经网络架构。",
     ),
     "random": InitializerMeta(
@@ -232,8 +232,8 @@ INITIALIZERS: dict[str, InitializerMeta] = {
         label="Random (小方差正态分布)",
         formula="W \\sim \\mathcal{N}(0, 0.01)",
         desc="最朴素的纯随机小正态分布初始化，不考虑前后层神经元维度的动态缩放关系。",
-        impact="层数较深（>3层）时，前向激活值在乘法链条中迅速衰减至趋近于 0，极易引发严重的前端梯度消失。",
-        example="教学对照试验，用于清晰演示为什么缺乏方差缩放的随机初始化会毁掉深层网络。",
+        impact="若无残差连接或归一化层，过小的初始化方差会随网络层数加深使前向激活与反向梯度迅速衰减，极易引发严重的前端梯度消失。",
+        example="教学对照试验，用于清晰演示为什么缺乏方差缩放的随机初始化会加剧深层训练难度。",
     ),
     "zeros": InitializerMeta(
         id="zeros",
@@ -303,15 +303,15 @@ REGULARIZERS: dict[str, RegularizerMeta] = {
         label="L2 (Weight Decay / 权重衰减)",
         formula="L_{total} = L_{data} + \\frac{1}{2}\\lambda \\sum W^2",
         desc="在损失函数中增加权重向量的 L2 范数平方和，促使所有权重向 0 均匀平滑衰减。",
-        impact="有效抑制个别超大权重异常突出，使决策边界更加平滑自然，极大提升模型在未知数据上的泛化能力。",
-        example="深度学习工业界最通用的防过拟合策略；在高噪声 (Noise > 0.2) 场景下尤为关键。",
+        impact="通过二次方惩罚抑制过大权重，促使权重分布更加分散；平滑决策边界有助于缓解过拟合，但过强正则化会导致欠拟合。",
+        example="深度学习工业界最通用的防过拟合策略；在高噪声场景下有助于提升泛化稳定性。",
     ),
     "L1": RegularizerMeta(
         id="L1",
         label="L1 (Lasso / 权重稀疏化)",
         formula="L_{total} = L_{data} + \\lambda \\sum |W|",
-        desc="在损失函数中增加权重向量的绝对值和，反向求导时对权重施加固定大小的恒定衰减。",
-        impact="驱动次要或冗余特征的权重直接归零，产生天然的稀疏性 (Sparsity)，实现内置特征选择。",
+        desc="在损失函数中增加权重向量的绝对值和，反向求导时对权重施加固定符号的恒定次梯度。",
+        impact="恒定次梯度促使次要特征权重趋向于 0，在近端优化或软阈值下可实现特征稀疏化与选择。",
         example="高维特征筛选；模型压缩与参数轻量化场景。",
     ),
 }
@@ -517,7 +517,7 @@ MULTIMODAL_ARCH: dict[str, ArchitectureMeta] = {
         label="Diffusion (扩散去噪生成模型)",
         formula="x_t = \\sqrt{\\bar{\\alpha}_t} x_0 + \\sqrt{1 - \\bar{\\alpha}_t} \\epsilon, \\quad L = \\mathbb{E}[\\|\\epsilon - \\epsilon_\\theta(x_t, t)\\|^2]",
         desc="通过马尔可夫链在前向过程中逐步向真实数据注入高斯白噪声，训练神经网络逆向预测并剔除噪声以恢复清晰样本。",
-        impact="在图像、音频、视频生成领域全面超越传统 GAN，具有极高的生成多样性与稳定的训练动态特性。",
+        impact="相比传统对抗生成网络（GAN），扩散模型基于最大似然目标具有更稳定的训练动力学与样本多样性，但多步逆向去噪采样计算开销显著更高。",
         example="Stable Diffusion, DDPM, DiT (Diffusion Transformer)。",
     ),
     "WorldModel": ArchitectureMeta(
@@ -539,7 +539,7 @@ TRAINING_ARCH: dict[str, ArchitectureMeta] = {
         label="MLM (Masked Language Model / 掩码完形填空)",
         formula="L_{\\text{MLM}} = -\\sum_{i \\in \\text{Masked}} \\log p(w_i | w_{\\setminus i})",
         desc="随机遮蔽句子中 15% 的词汇，使用双向全量上下文注意力机制预测被遮蔽位置的真实词。",
-        impact="赋予模型极强的双向句法与深层语义理解能力，擅长文本分类、实体命名与语义相似度计算。",
+        impact="通过自监督完形填空任务迫使模型融合双向上下文表征，为文本分类、命名实体识别与语义匹配提供强大的预训练特征底座。",
         example="BERT, RoBERTa, DeBERTa 等理解类底座。",
     ),
     "CLM": ArchitectureMeta(
@@ -547,7 +547,7 @@ TRAINING_ARCH: dict[str, ArchitectureMeta] = {
         label="CLM (Causal Language Model / 自回归因果接龙)",
         formula="L_{\\text{CLM}} = -\\sum_{t=1}^T \\log p(w_t | w_{<t})",
         desc="利用下三角因果掩码强制模型仅能依赖左侧前文预测下一个 Token，从左到右自回归生成。",
-        impact="赋予模型强大的开放式生成、上下文学习 (In-Context Learning) 与思维链 (CoT) 推理能力。",
+        impact="通过因果自回归下一词预测任务学习单向条件概率分布，为开放式文本生成、In-Context 提示与指令微调提供基础概率底座。",
         example="GPT-4, LLaMA-3, Qwen-2.5, DeepSeek 等主流生成式大模型。",
     ),
     "MAE": ArchitectureMeta(
@@ -563,7 +563,7 @@ TRAINING_ARCH: dict[str, ArchitectureMeta] = {
         label="SFT (Supervised Fine-Tuning / 监督指令微调)",
         formula="L_{\\text{SFT}} = -\\sum_{t \\in \\text{Response}} \\log p(y_t | x, y_{<t})",
         desc="在高质量人类标注的 Prompt-Response 指令问答对上进行有监督微调，仅对回答部分计算交叉熵损失。",
-        impact="将'只会续写废话'的预训练基座模型转化为能够准确理解并遵循人类意图的助手型模型。",
+        impact="通过高质量问答示范数据引导模型从纯文本接龙模式迁移为遵循人类指令与多轮对话交互的助手模式。",
         example="ChatGPT 早期 InstructGPT 阶段、Alpaca, Vicuna 微调技术。",
     ),
     "RLHF": ArchitectureMeta(
@@ -579,8 +579,8 @@ TRAINING_ARCH: dict[str, ArchitectureMeta] = {
         label="DPO (Direct Preference Optimization / 直接偏好优化)",
         formula="L_{\\text{DPO}} = -\\mathbb{E}\\left[ \\log \\sigma\\left( \\beta \\log \\frac{\\pi_\\theta(y_w|x)}{\\pi_{\\text{ref}}(y_w|x)} - \\beta \\log \\frac{\\pi_\\theta(y_l|x)}{\\pi_{\\text{ref}}(y_l|x)} \\right) \\right]",
         desc="通过偏好对直接优化策略与参考策略的相对对数概率，无需在该训练阶段运行 PPO rollout 和显式奖励模型。",
-        impact="避免了偏好对齐阶段部署显式奖励模型与在线采样 Rollout 的开销，在 Rafailov et al. (2023) 实验中展示了显著优于传统 PPO 的训练稳定性和轻量化特征。",
-        example="LLaMA-3, Qwen-2.5, Mistral 等现代开源模型对齐的默认标准。",
+        impact="将偏好优化代换为隐式奖励闭式损失，避免了独立训练奖励模型与在线采样 Rollout 的工程复杂度（但依然高度依赖偏好数据质量且需精调超参 β）。",
+        example="LLaMA-3, Qwen-2.5, Mistral 等现代开源模型对齐探索中广泛应用的高效方案之一。",
     ),
     "LoRA": ArchitectureMeta(
         id="LoRA",

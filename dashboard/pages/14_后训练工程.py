@@ -240,17 +240,17 @@ metric_grid_html = (
         icon_name="layers",
     )
     + render_metric_card(
-        "RLHF REWARD SCORE // 终态奖励分",
-        f"+{rlhf_traj['reward'][-1]:.2f}",
-        delta="人类价值观对齐",
-        delta_type="positive",
+        "SIMULATED REWARD // 模拟目标得分",
+        f"{rlhf_traj['reward'][-1]:.2f}",
+        delta="规则模拟轨迹/非实测指标",
+        delta_type="neutral",
         icon_name="target",
     )
     + render_metric_card(
         "DPO BETA STRENGTH // 偏好优化强度",
         f"β = {dpo_beta:.2f}",
-        delta="零强化学习闭式解",
-        delta_type="positive",
+        delta="隐式奖励约束超参",
+        delta_type="neutral",
         icon_name="activity",
     )
     + "</div>"
@@ -366,7 +366,7 @@ render_live_param_status_bar(
     metrics=[
         ("参数压缩比", f"{lora_stats['compression_ratio']:.1f}x"),
         ("可训练参数减少率", f"{lora_stats['saved_percent']:.1f}%"),
-        ("对齐奖励峰值", f"+{rlhf_traj['reward'][-1]:.2f}"),
+        ("模拟目标得分", f"{rlhf_traj['reward'][-1]:.2f}"),
     ],
     tag=f"LORA PARAM REDUCTION: {lora_stats['saved_percent']:.1f}%",
     tag_color="emerald",

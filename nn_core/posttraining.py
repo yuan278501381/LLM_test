@@ -3,8 +3,8 @@
 nn_core.posttraining - 后训练全生命周期 (SFT -> RLHF -> DPO) 对齐工程与能力演进模型
 
 包含：
-- `AlignmentPipeline`: 模型在预训练、SFT、RLHF 与 DPO 四大阶段下的六维能力画像演进模拟器
-- `generate_before_after_examples`: 同一典型指令在各训练阶段下输出效果的实战对比案例库
+- `AlignmentPipeline`: 模型在预训练、SFT、RLHF 与 DPO 四大阶段下的六维能力画像教学假设演进情景
+- `generate_before_after_examples`: 同一典型指令在各训练阶段下输出效果的教学模板示意对比样例库（人工构造的典型输出样例，非真实模型端到端评测生成）
 """
 
 import logging
@@ -15,8 +15,8 @@ logger = logging.getLogger("nn_core.posttraining")
 
 class AlignmentPipeline:
     """
-    大语言模型后训练对齐流水线全景能力模拟器。
-    涵盖：有用性 (Helpfulness)、无害性 (Harmlessness)、诚实性 (Honesty)、指令跟随 (Instruction Following)、创造力 (Creativity)、安全性 (Safety)。
+    大语言模型后训练对齐流水线教学假设情景模拟器。
+    用于说明有用性 (Helpfulness)、无害性 (Harmlessness)、诚实性 (Honesty)、指令跟随 (Instruction Following)、创造力 (Creativity)、安全性 (Safety) 之间的常见权衡（如对齐税 Alignment Tax、谄媚 Sycophancy 与 Reward Hacking 风险）。
     """
 
     STAGE_SCORES: ClassVar[dict[str, dict[str, int]]] = {
@@ -68,7 +68,7 @@ class AlignmentPipeline:
 
 def generate_before_after_examples() -> list[dict[str, str]]:
     """
-    返回 5 组经典高频指令在【预训练基座】、【SFT 监督微调】与【RLHF 对齐】阶段下的真实效果演变对比。
+    返回 5 组经典高频指令在【预训练基座】、【SFT 监督微调】与【RLHF 对齐】阶段下的教学模板示意对比样例（人工手写教学模板，非真实模型端到端微调生成）。
     """
     return [
         {

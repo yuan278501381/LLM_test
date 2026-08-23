@@ -612,7 +612,7 @@ with col_s_ctrl:
             - **最优 Token 数 $D_{{\\text{{opt}}}}$**：`{opt_res["optimal_tokens_D"] / 1e9:.2f} B` ({opt_res["optimal_tokens_D"] / 1e12:.3f} T Tokens)
             - **最优数据/参数比**：`{opt_res["token_param_ratio"]:.1f} : 1` (按 Approach 3 非对称幂律拟合计算；Chinchilla 70B 论文基准采用等比例近似 $70\\text{{B}} / 1.4\\text{{T}} = 20:1$)
             - **理论预估损失 $L$**：`{opt_res["predicted_loss"]:.4f}`
-            - **H100 训练工期**：`{opt_res["h100_gpu_days"]:.1f}` GPU-Days (MFU=45%)
+            - **H100 训练工期**：`{opt_res["h100_gpu_days"]:.1f}` GPU-Days (按 H100 SXM5 FP16 峰值 989 TFLOPs 与典型集群 MFU=45% 教学假设估算)
             """
         )
 

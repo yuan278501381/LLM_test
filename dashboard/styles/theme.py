@@ -340,7 +340,6 @@ header {background-color: transparent !important;}
 [data-testid="stSidebarNavLink"] span {
     font-weight: 600 !important;
     color: var(--text-secondary) !important;
-    font-size: 0.82rem !important;
     line-height: 36px !important;
     transition: color 0.15s ease !important;
     white-space: nowrap !important;
@@ -358,6 +357,187 @@ header {background-color: transparent !important;}
 [data-testid="stSidebarNavLink"][aria-current="page"] span {
     color: var(--brand-blue) !important;
     font-weight: 600 !important;
+}
+
+/* -------------------------------------------------------------------------
+   侧边栏 18+1 全量菜单 0ms 纯 CSS 终极替换 (基于 Streamlit span[label] 原生机制)
+------------------------------------------------------------------------- */
+[data-testid="stSidebarNavLink"] [data-testid="stMarkdownContainer"],
+[data-testid="stSidebarNavLink"] p,
+[data-testid="stSidebarNav"] [data-testid="stMarkdownContainer"],
+[data-testid="stSidebarNav"] p {
+    display: none !important;
+}
+
+[data-testid="stSidebarNav"] span[label],
+[data-testid="stSidebarNavLink"] span[label] {
+    font-size: 0 !important;
+    position: relative !important;
+    display: inline-block !important;
+    height: 36px !important;
+    line-height: 36px !important;
+}
+
+[data-testid="stSidebarNav"] span[label]::after,
+[data-testid="stSidebarNavLink"] span[label]::after {
+    font-size: 0.82rem !important;
+    font-weight: 500 !important;
+    line-height: 36px !important;
+    color: inherit !important;
+    visibility: visible !important;
+    display: inline-block !important;
+}
+
+[data-testid="stSidebarNav"] a[aria-current="page"] span[label]::after,
+[data-testid="stSidebarNavLink"][aria-current="page"] span[label]::after {
+    font-weight: 700 !important;
+    color: #1d4ed8 !important;
+}
+
+/* 首页 · 导航大厅 */
+[data-testid="stSidebarNav"] a[href$="/"] span[label]::after,
+[data-testid="stSidebarNav"] a[href$="/app"] span[label]::after,
+[data-testid="stSidebarNav"] a[href$="app.py"] span[label]::after,
+[data-testid="stSidebarNavLink"][href$="/"] span[label]::after,
+[data-testid="stSidebarNavLink"][href$="/app"] span[label]::after,
+[data-testid="stSidebarNavLink"][href$="app.py"] span[label]::after,
+[data-testid="stSidebarNavLink"][href$="8501/"] span[label]::after,
+[data-testid="stSidebarNavLink"] span[label="app"]::after,
+[data-testid="stSidebarNavLink"] span[label="App"]::after,
+[data-testid="stSidebarNavLink"] span[label="APP"]::after,
+[data-testid="stSidebarNav"] span[label="app"]::after,
+[data-testid="stSidebarNav"] span[label="App"]::after,
+[data-testid="stSidebarNav"] span[label="APP"]::after {
+    content: "首页 · 导航大厅" !important;
+}
+
+/* M00 · 数学基础 */
+[data-testid="stSidebarNavLink"] span[label="数学基础"]::after,
+[data-testid="stSidebarNavLink"] span[label="0 数学基础"]::after,
+[data-testid="stSidebarNavLink"] span[label="0_数学基础"]::after {
+    content: "M00 · 数学基础" !important;
+}
+
+/* M01 · 单神经元感知器 */
+[data-testid="stSidebarNavLink"] span[label="单神经元感知器"]::after,
+[data-testid="stSidebarNavLink"] span[label="1 单神经元感知器"]::after,
+[data-testid="stSidebarNavLink"] span[label="1_单神经元感知器"]::after {
+    content: "M01 · 单神经元感知器" !important;
+}
+
+/* M02 · 多层网络 */
+[data-testid="stSidebarNavLink"] span[label="多层网络"]::after,
+[data-testid="stSidebarNavLink"] span[label="2 多层网络"]::after,
+[data-testid="stSidebarNavLink"] span[label="2_多层网络"]::after {
+    content: "M02 · 多层网络" !important;
+}
+
+/* M03 · 优化器对比 */
+[data-testid="stSidebarNavLink"] span[label="优化器对比"]::after,
+[data-testid="stSidebarNavLink"] span[label="3 优化器对比"]::after,
+[data-testid="stSidebarNavLink"] span[label="3_优化器对比"]::after {
+    content: "M03 · 优化器对比" !important;
+}
+
+/* M04 · 参数实验室 */
+[data-testid="stSidebarNavLink"] span[label="参数实验室"]::after,
+[data-testid="stSidebarNavLink"] span[label="4 参数实验室"]::after,
+[data-testid="stSidebarNavLink"] span[label="4_参数实验室"]::after {
+    content: "M04 · 参数实验室" !important;
+}
+
+/* M05 · 词嵌入空间 */
+[data-testid="stSidebarNavLink"] span[label="词嵌入空间"]::after,
+[data-testid="stSidebarNavLink"] span[label="5 词嵌入空间"]::after,
+[data-testid="stSidebarNavLink"] span[label="5_词嵌入空间"]::after {
+    content: "M05 · 词嵌入空间" !important;
+}
+
+/* M06 · 序列记忆 */
+[data-testid="stSidebarNavLink"] span[label="序列记忆"]::after,
+[data-testid="stSidebarNavLink"] span[label="6 序列记忆"]::after,
+[data-testid="stSidebarNavLink"] span[label="6_序列记忆"]::after {
+    content: "M06 · 序列记忆" !important;
+}
+
+/* M07 · 注意力机制 */
+[data-testid="stSidebarNavLink"] span[label="注意力机制"]::after,
+[data-testid="stSidebarNavLink"] span[label="7 注意力机制"]::after,
+[data-testid="stSidebarNavLink"] span[label="7_注意力机制"]::after {
+    content: "M07 · 注意力机制" !important;
+}
+
+/* M08 · Transformer */
+[data-testid="stSidebarNavLink"] span[label="Transformer"]::after,
+[data-testid="stSidebarNavLink"] span[label="8 Transformer"]::after,
+[data-testid="stSidebarNavLink"] span[label="8_Transformer"]::after {
+    content: "M08 · Transformer" !important;
+}
+
+/* M09 · Mini-GPT */
+[data-testid="stSidebarNavLink"] span[label="Mini_GPT"]::after,
+[data-testid="stSidebarNavLink"] span[label="Mini GPT"]::after,
+[data-testid="stSidebarNavLink"] span[label="9 Mini_GPT"]::after,
+[data-testid="stSidebarNavLink"] span[label="9 Mini GPT"]::after,
+[data-testid="stSidebarNavLink"] span[label="9_Mini_GPT"]::after {
+    content: "M09 · Mini-GPT" !important;
+}
+
+/* M10 · 视觉感知 */
+[data-testid="stSidebarNavLink"] span[label="视觉感知"]::after,
+[data-testid="stSidebarNavLink"] span[label="10 视觉感知"]::after,
+[data-testid="stSidebarNavLink"] span[label="10_视觉感知"]::after {
+    content: "M10 · 视觉感知" !important;
+}
+
+/* M11 · 音频感知 */
+[data-testid="stSidebarNavLink"] span[label="音频感知"]::after,
+[data-testid="stSidebarNavLink"] span[label="11 音频感知"]::after,
+[data-testid="stSidebarNavLink"] span[label="11_音频感知"]::after {
+    content: "M11 · 音频感知" !important;
+}
+
+/* M12 · 视频与世界模型 */
+[data-testid="stSidebarNavLink"] span[label="视频与世界模型"]::after,
+[data-testid="stSidebarNavLink"] span[label="12 视频与世界模型"]::after,
+[data-testid="stSidebarNavLink"] span[label="12_视频与世界模型"]::after {
+    content: "M12 · 视频与世界模型" !important;
+}
+
+/* M13 · 预训练范式 */
+[data-testid="stSidebarNavLink"] span[label="预训练范式"]::after,
+[data-testid="stSidebarNavLink"] span[label="13 预训练范式"]::after,
+[data-testid="stSidebarNavLink"] span[label="13_预训练范式"]::after {
+    content: "M13 · 预训练范式" !important;
+}
+
+/* M14 · 后训练工程 */
+[data-testid="stSidebarNavLink"] span[label="后训练工程"]::after,
+[data-testid="stSidebarNavLink"] span[label="14 后训练工程"]::after,
+[data-testid="stSidebarNavLink"] span[label="14_后训练工程"]::after {
+    content: "M14 · 后训练工程" !important;
+}
+
+/* M15 · 评估基准 */
+[data-testid="stSidebarNavLink"] span[label="评估基准"]::after,
+[data-testid="stSidebarNavLink"] span[label="15 评估基准"]::after,
+[data-testid="stSidebarNavLink"] span[label="15_评估基准"]::after {
+    content: "M15 · 评估基准" !important;
+}
+
+/* M16 · 强化学习 */
+[data-testid="stSidebarNavLink"] span[label="强化学习"]::after,
+[data-testid="stSidebarNavLink"] span[label="16 强化学习"]::after,
+[data-testid="stSidebarNavLink"] span[label="16_强化学习"]::after {
+    content: "M16 · 强化学习" !important;
+}
+
+/* M17 · 工程陷阱与Harness */
+[data-testid="stSidebarNavLink"] span[label="工程陷阱与Harness"]::after,
+[data-testid="stSidebarNavLink"] span[label="17 工程陷阱与Harness"]::after,
+[data-testid="stSidebarNavLink"] span[label="17_工程陷阱与Harness"]::after,
+[data-testid="stSidebarNavLink"] span[label="17_工程陷阱与harness"]::after {
+    content: "M17 · 工程陷阱与Harness" !important;
 }
 
 /* Tier-2 参数微观控制台内部组件精致卡片化 */
@@ -1199,93 +1379,9 @@ g.updatemenu-button {
                         min-width: 0 !important;
                         max-width: 0 !important;
                         padding: 0 !important;
-                    }
-
-                    /* 当栏位 2 有实际控件时 (M01~M17)，展开为宽幅双栏 700px (全屏幕尺寸通用，彻底消除 1260px 媒体查询断点造成的挤压) */
-                    [data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] [data-testid="stElementContainer"]),
-                    [data-testid="stSidebar"]:has([data-testid="stSidebarUserContent"] [data-testid="stElementContainer"]) > div {
-                        width: 700px !important;
-                        min-width: 670px !important;
-                        max-width: 800px !important;
-                        background-color: #f8fafc !important;
-                        border-right: 1px solid #e2e8f0 !important;
-                    }
-
-                    /* 控制台内部多列、按钮与滑块自适应无截断体系 */
-                    [data-testid="stSidebarUserContent"] [data-testid="stHorizontalBlock"] {
-                        width: 100% !important;
-                        display: flex !important;
-                        flex-direction: row !important;
-                        flex-wrap: wrap !important;
-                        gap: 0.45rem !important;
-                        box-sizing: border-box !important;
-                        margin: 0 !important;
-                    }
-
-                    [data-testid="stSidebarUserContent"] [data-testid="column"] {
-                        min-width: 130px !important;
-                        flex: 1 1 calc(50% - 0.25rem) !important;
-                        max-width: 100% !important;
-                        box-sizing: border-box !important;
-                    }
-
-                    /* 按钮在侧边栏内部自适应完整换行展示，永不截断 */
-                    [data-testid="stSidebarUserContent"] .stButton button {
-                        width: 100% !important;
-                        white-space: normal !important;
-                        word-break: break-word !important;
-                        padding: 0.38rem 0.45rem !important;
-                        font-size: 0.78rem !important;
-                        line-height: 1.3 !important;
-                        min-height: 36px !important;
-                        height: auto !important;
-                        box-sizing: border-box !important;
-                    }
-
-                    /* 分段选择器与单选组自适应换行流式布局 */
-                    [data-testid="stSidebarUserContent"] [data-testid="stSegmentedControl"],
-                    [data-testid="stSidebarUserContent"] [data-testid="stSegmentedControl"] > div {
-                        display: flex !important;
-                        flex-wrap: wrap !important;
-                        width: 100% !important;
-                        gap: 4px !important;
-                    }
-
-                    [data-testid="stSidebarUserContent"] [data-testid="stSegmentedControl"] button {
-                        flex: 1 1 auto !important;
-                        min-width: fit-content !important;
-                        white-space: nowrap !important;
-                        font-size: 0.76rem !important;
-                        padding: 0.35rem 0.55rem !important;
-                        box-sizing: border-box !important;
-                    }
-
-                    /* 工具提示 Help 图标自适应对齐 */
-                    [data-testid="stSidebarUserContent"] [data-testid="stTooltipHoverTarget"] {
-                        margin-left: auto !important;
-                        flex-shrink: 0 !important;
-                    }
-
-                    [data-testid="stSidebarNav"] [data-testid="stSidebarNavShowMore"],
-                    [data-testid="stSidebarNavSeparator"] {
-                        display: none !important;
-                    }
-
-                    [data-testid="stSidebarNav"] ul {
-                        padding: 0 !important;
-                        margin: 0 !important;
-                        list-style: none !important;
-                        display: flex !important;
-                        flex-direction: column !important;
-                        gap: 2px !important;
-                    }
-                    [data-testid="stSidebarNav"] li {
-                        padding: 0 !important;
-                        margin: 0 !important;
-                        list-style: none !important;
-                    }
+                    }}
                     [data-testid="stSidebarNav"] a,
-                    [data-testid="stSidebarNavLink"] {
+                    [data-testid="stSidebarNavLink"] {{
                         display: flex !important;
                         align-items: center !important;
                         padding: 0.42rem 0.65rem !important;
@@ -1305,69 +1401,107 @@ g.updatemenu-button {
                         white-space: nowrap !important;
                         overflow: hidden !important;
                         text-overflow: ellipsis !important;
-                    }
-                    [data-testid="stSidebarNav"] a span {
+                    }}
+                    [data-testid="stSidebarNav"] a span,
+                    [data-testid="stSidebarNavLink"] span {{
                         overflow: hidden !important;
                         text-overflow: ellipsis !important;
                         white-space: nowrap !important;
                         font-size: 0.84rem !important;
                         line-height: 1.25 !important;
                         font-family: inherit !important;
-                    }
-                    [data-testid="stSidebarNav"] a:hover {
+                    }}
+
+                    /* 纯 CSS 0ms 兜底首项菜单：绝不显示 app 原生名称 */
+                    [data-testid="stSidebarNav"] ul li:first-child a span,
+                    [data-testid="stSidebarNav"] a[href$="/"] span,
+                    [data-testid="stSidebarNav"] a[href$="/app"] span,
+                    [data-testid="stSidebarNav"] a[href$="app.py"] span,
+                    [data-testid="stSidebarNavLink"][href$="/"] span,
+                    [data-testid="stSidebarNavLink"][href$="/app"] span,
+                    [data-testid="stSidebarNavLink"][href$="app.py"] span {{
+                        font-size: 0 !important;
+                        position: relative !important;
+                        display: inline-block !important;
+                        height: 36px !important;
+                        line-height: 36px !important;
+                    }}
+
+                    [data-testid="stSidebarNav"] ul li:first-child a span::after,
+                    [data-testid="stSidebarNav"] a[href$="/"] span::after,
+                    [data-testid="stSidebarNav"] a[href$="/app"] span::after,
+                    [data-testid="stSidebarNav"] a[href$="app.py"] span::after,
+                    [data-testid="stSidebarNavLink"][href$="/"] span::after,
+                    [data-testid="stSidebarNavLink"][href$="/app"] span::after,
+                    [data-testid="stSidebarNavLink"][href$="app.py"] span::after {{
+                        content: "首页 · 导航大厅" !important;
+                        font-size: 0.84rem !important;
+                        font-weight: 500 !important;
+                        line-height: 36px !important;
+                        color: inherit !important;
+                        visibility: visible !important;
+                        display: inline-block !important;
+                    }}
+                    [data-testid="stSidebarNav"] a:hover {{
                         background: #f1f5f9 !important;
                         color: #0f172a !important;
-                        transform: translateX(2px) !important;
-                    }
-                    [data-testid="stSidebarNav"] a[aria-current="page"] {
-                        background: #eff6ff !important;
+                    }}
+                    [data-testid="stSidebarNav"] a[aria-current="page"],
+                    [data-testid="stSidebarNavLink"][aria-current="page"] {{
+                        background-color: #eff6ff !important;
+                        border-color: #bfdbfe !important;
                         color: #1d4ed8 !important;
-                        font-weight: 600 !important;
-                        border: 1px solid #bfdbfe !important;
-                        box-shadow: 0 1px 3px rgba(37, 99, 235, 0.08) !important;
-                    }
-                    [data-testid="stSidebarNav"] a svg {
-                        display: none !important;
-                    }
-
-                    [data-testid="stSidebarUserContent"] .stMarkdown h3,
-                    [data-testid="stSidebarUserContent"] .stMarkdown h4 {
-                        font-size: 0.72rem !important;
                         font-weight: 700 !important;
+                    }}
+                    [data-testid="stSidebarNav"] a[aria-current="page"] span,
+                    [data-testid="stSidebarNavLink"][aria-current="page"] span {{
+                        color: #1d4ed8 !important;
+                        font-weight: 700 !important;
+                    }}
+                    [data-testid="stSidebarNav"] a svg,
+                    [data-testid="stSidebarNavLink"] svg {{
+                        display: none !important;
+                    }}
+
+                    /* Tier-2 参数微观控制台内部组件精致卡片化 */
+                    [data-testid="stSidebarUserContent"] .stMarkdown h3,
+                    [data-testid="stSidebarUserContent"] .stMarkdown h4 {{
+                        font-size: 0.78rem !important;
+                        font-weight: 800 !important;
+                        color: #1e40af !important;
+                        letter-spacing: 0.06em !important;
                         text-transform: uppercase !important;
-                        letter-spacing: 0.08em !important;
-                        color: #475569 !important;
-                        margin: 0.9rem 0 0.4rem 0 !important;
+                        margin: 0.75rem 0 0.4rem 0 !important;
                         padding-bottom: 0.25rem !important;
-                        border-bottom: 1px solid #e2e8f0 !important;
-                    }
-                    [data-testid="stSidebarUserContent"] [data-testid="stSlider"],
-                    [data-testid="stSidebarUserContent"] [data-testid="stSelectbox"],
-                    [data-testid="stSidebarUserContent"] [data-testid="stMultiSelect"],
-                    [data-testid="stSidebarUserContent"] [data-testid="stRadio"],
-                    [data-testid="stSidebarUserContent"] [data-testid="stNumberInput"] {
-                        background: #f8fafc !important;
+                        border-bottom: 1.5px solid #dbeafe !important;
+                    }}
+
+                    /* Selectbox, Slider, Radio 现代化亮色质感 */
+                    [data-testid="stSidebarUserContent"] [data-testid="stSelectbox"] > div,
+                    [data-testid="stSidebarUserContent"] [data-testid="stSlider"] > div,
+                    [data-testid="stSidebarUserContent"] [data-testid="stRadio"] > div {{
+                        background: #ffffff !important;
                         border: 1px solid #e2e8f0 !important;
                         border-radius: 8px !important;
                         padding: 0.45rem 0.55rem !important;
                         margin-bottom: 0.45rem !important;
                         box-shadow: 0 1px 3px rgba(15, 23, 42, 0.02) !important;
                         transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
-                    }
+                    }}
 
                     /* MultiSelect 标签徽标与多选下拉 (Linear / Apple 风格高质感设计) */
-                    [data-testid="stMultiSelect"] [data-baseweb="select"] > div {
+                    [data-testid="stMultiSelect"] [data-baseweb="select"] > div {{
                         background-color: #f8fafc !important;
                         border: 1px solid #cbd5e1 !important;
                         border-radius: 8px !important;
                         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
                         padding: 3px 6px !important;
                         min-height: 40px !important;
-                    }
+                    }}
 
                     span[data-baseweb="tag"],
                     [data-testid="stMultiSelect"] span[data-baseweb="tag"],
-                    [data-testid="stMultiSelect"] div[data-baseweb="tag"] {
+                    [data-testid="stMultiSelect"] div[data-baseweb="tag"] {{
                         background: linear-gradient(135deg, #eff6ff 0%, #f1f5f9 100%) !important;
                         border: 1px solid #bfdbfe !important;
                         border-radius: 6px !important;
@@ -1377,89 +1511,84 @@ g.updatemenu-button {
                         height: auto !important;
                         min-height: 26px !important;
                         box-sizing: border-box !important;
-                    }
+                    }}
 
                     span[data-baseweb="tag"] span,
                     [data-testid="stMultiSelect"] span[data-baseweb="tag"] span,
                     span[data-baseweb="tag"] [title],
                     [data-testid="stMultiSelect"] span[data-baseweb="tag"] [title],
-                    span[data-baseweb="tag"] div {
+                    span[data-baseweb="tag"] div {{
                         color: #1e3a8a !important;
                         font-size: 0.80rem !important;
                         font-weight: 650 !important;
                         letter-spacing: -0.01em !important;
                         line-height: 1.4 !important;
-                    }
+                    }}
 
                     span[data-baseweb="tag"] [role="button"],
                     span[data-baseweb="tag"] svg,
                     [data-testid="stMultiSelect"] span[data-baseweb="tag"] svg,
-                    [data-testid="stMultiSelect"] span[data-baseweb="tag"] [role="button"] {
+                    [data-testid="stMultiSelect"] span[data-baseweb="tag"] [role="button"] {{
                         color: #475569 !important;
                         fill: #475569 !important;
                         width: 14px !important;
                         height: 14px !important;
                         border-radius: 4px !important;
                         margin-left: 4px !important;
-                    }
+                    }}
 
                     span[data-baseweb="tag"] [role="button"]:hover,
-                    [data-testid="stMultiSelect"] span[data-baseweb="tag"] [role="button"]:hover svg {
+                    [data-testid="stMultiSelect"] span[data-baseweb="tag"] [role="button"]:hover svg {{
                         color: #dc2626 !important;
                         fill: #dc2626 !important;
                         background-color: #fee2e2 !important;
-                    }
+                    }}
 
-                    [data-testid="stSidebarUserContent"] label {
+                    [data-testid="stSidebarUserContent"] label {{
                         font-weight: 700 !important;
                         font-size: 0.82rem !important;
                         color: #1e293b !important;
-                    }
+                    }}
                 `;
                 doc.head.appendChild(headStyle);
-            }
+            }}
 
-            function checkAndCleanupHud() {
-                var currentPath = (window.parent && window.parent.location && window.parent.location.pathname) || '';
+            function checkAndCleanupHud() {{
+                var currentPath = (window.parent && window.parent.location && window.parent.location.pathname) || (window.location && window.location.pathname) || '';
                 var isHome = currentPath === '/' || currentPath === '' || currentPath.endsWith('/app') || currentPath.endsWith('app.py');
 
                 var activeLink = doc.querySelector('[data-testid="stSidebarNav"] a[aria-current="page"], [data-testid="stSidebarNavLink"][aria-current="page"], [data-testid="stSidebarNav"] a.active, [data-testid="stSidebarNavLink"].active');
-                if (activeLink) {
+                if (activeLink) {{
+                    var aHref = (activeLink.getAttribute('href') || '').trim();
                     var activeText = activeLink.textContent.trim();
-                    if (activeText.indexOf('首页') !== -1 || activeText.indexOf('导航大厅') !== -1) {
+                    if (aHref === '/' || aHref === '/app' || aHref.endsWith('/app') || aHref.endsWith('app.py') || activeText === '首页 · 导航大厅' || activeText === 'app') {{
                         isHome = true;
-                    }
-                }
+                    }}
+                }}
 
                 var hud = doc.getElementById('nn-floating-spatial-hud');
-                if (hud) {
-                    if (isHome) {
+                if (hud) {{
+                    if (isHome) {{
                         hud.remove();
-                        if (doc.__nnCancelPendingNav) {
-                            try { doc.__nnCancelPendingNav(); } catch(e) {}
-                        }
+                        if (doc.__nnCancelPendingNav) {{
+                            try {{ doc.__nnCancelPendingNav(); }} catch(e) {{}}
+                        }}
                         return;
-                    }
+                    }}
 
                     // 检查主工作区中是否存在属于当前 HUD 的目标锚点
                     var hudItems = hud.querySelectorAll('.nn-hud-item');
-                    if (hudItems.length > 0) {
+                    if (hudItems.length > 0) {{
                         var anyFound = false;
-                        for (var i = 0; i < hudItems.length; i++) {
+                        for (var i = 0; i < hudItems.length; i++) {{
                             var tId = hudItems[i].getAttribute('data-target');
-                            if (tId && doc.getElementById(tId)) {
+                            if (tId && doc.getElementById(tId)) {{
                                 anyFound = true;
                                 break;
-                            }
-                        }
-                        if (!anyFound) {
+                            }}
+                        }}
+                        if (!anyFound) {{
                             hud.remove();
-                            if (doc.__nnCancelPendingNav) {
-                                try { doc.__nnCancelPendingNav(); } catch(e) {}
-                            }
-                        }
-                    }
-                }
             }
 
             // 1. 立即执行一次清理
@@ -1471,13 +1600,13 @@ g.updatemenu-button {
                 isFormatting = true;
                 try {
                     var links = doc.querySelectorAll('[data-testid="stSidebarNav"] a, [data-testid="stSidebarNavLink"]');
-                    links.forEach(function(a) {
+                    links.forEach(function(a, idx) {
                         // 绑定 0ms 点击瞬时拦截：点击首页或导航大厅时立即清除 HUD
                         if (!a.getAttribute('data-nn-click-bound')) {
                             a.setAttribute('data-nn-click-bound', '1');
                             var clickHandler = function() {
                                 var linkText = a.textContent.trim();
-                                if (linkText.indexOf('首页') !== -1 || linkText.indexOf('导航大厅') !== -1) {
+                                if (linkText.indexOf('首页') !== -1 || linkText.indexOf('导航大厅') !== -1 || linkText.toLowerCase() === 'app') {
                                     var h = doc.getElementById('nn-floating-spatial-hud');
                                     if (h) h.remove();
                                     if (doc.__nnCancelPendingNav) {
@@ -1489,13 +1618,27 @@ g.updatemenu-button {
                             a.addEventListener('click', clickHandler, { capture: true, passive: true });
                         }
 
+                        var href = (a.getAttribute('href') || '').trim();
+                        var isFirstOrHome = (idx === 0) || href === '/' || href === '/app' || href.endsWith('/app') || href.endsWith('app.py');
+
                         var spans = a.querySelectorAll('span');
                         spans.forEach(function(span) {
                             var text = span.textContent.trim();
-                            if (labelMap[text] && span.textContent !== labelMap[text]) {
+                            if (isFirstOrHome && (text === 'app' || text === 'App' || text === 'APP' || text === 'app.py')) {
+                                span.textContent = '首页 · 导航大厅';
+                            } else if (labelMap[text] && span.textContent !== labelMap[text]) {
                                 span.textContent = labelMap[text];
                             }
                         });
+
+                        if (isFirstOrHome) {
+                            var fullText = a.textContent.trim();
+                            if (fullText === 'app' || fullText === 'App' || fullText === 'APP' || fullText === 'app.py') {
+                                if (spans.length === 0) {
+                                    a.textContent = '首页 · 导航大厅';
+                                }
+                            }
+                        }
                     });
                 } finally {
                     isFormatting = false;

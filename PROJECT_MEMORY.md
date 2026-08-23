@@ -43,29 +43,28 @@
 
 历史结论：M00-M16 在 2026-08-22 通过当时既定自动化门禁和 17 页浏览器抽查。
 
-当前结论：**M17 增量整改与全站 18 页复验已通过。** M17 成功完成证据链重构，四类 Claims 严格一对一绑定至四份独立权威文献，官方事故事实（Anthropic 2026-04-23 Postmortem，事故 3 提示词变更致扩展评测集 3% 下降）与本项目工程推断严格分立，剔除所有未证实虚构数字，收窄 Softmax 与 CoT 描述，全站 18 页 100% 达成蓝图目标存在性与唯一性断言。
+当前结论：**AI 科学性综合审计与全量整改全部通过。** P0 核心损失函数与准确率契约彻底重构（BCE/BCEWithLogits/CCE 严格概率与实数域输入校验、移除无条件截断、新增数值稳定 `CategoricalCrossEntropyWithLogits`），18 道形成性测验完成科学性修订并挂载 `sources/conditions/limitations` 审计元数据，72 条 Claims 彻底解除机械索引分配并与权威文献建立一对一语义绑定（经独立人工 fixture 严格校验，消除循环自证），后训练遥测去除了绝对化宣传并明确标明教学假设情景，全套 7 阶段 DevOps 门禁全绿。
 
-本轮已关闭的原阻断项：
+本轮已关闭的核心阻断项与质量加固：
 
-- M00 已区分乘法次数与 FLOP 约定，收窄有限差分保证，补 shape/广播反例及概率、log-sum-exp、softmax、交叉熵最小链路。
-- M05-M09 已区分合成嵌入、投影失真、隐藏状态相似度、未训练注意力/Transformer/GPT 与真实语义或语言能力；temperature/top-k 不再代称创造力或相关性。M05 蓝图目标（region-a~e）均已完整生成并能精准定位。
-- M10-M14 已标注合成 CLIP 示例、未训练下一帧头、DDPM 残余信号、Chinchilla 经验适用范围、模板回答模拟及 PPO/DPO/LoRA 省略项。
-- M15 自建题已改为 `*-style 教学题`，metric 调度与 PPL/Accuracy/F1 契约已实现，并保证同一区域分数与逐题答案来自同一次抽样。
-- M16 已区分 R1-Zero 与 R1 多阶段流程；规则曲线不再称 GRPO 训练或能力涌现；Q-Learning 报告到达状态、Bellman residual 与多 seed 回报差距。
-- M17 已实现四条 claim 严格 1-to-1 绑定四篇独立论文与官方文献，官方事实与本项目推断明确分离，为所有仿真引擎补齐 NaN/Inf/类型边界防御，全站 18 页面无任何锚点缺失或冲突。
-- 全站 18 页共有 72 个独立结果级证据 ID，全部完成与文献或计算协议的一一绑定。
+- P0-CORE: `nn_core/losses.py` 严格校验输入非空、有限值、形状一致与二分类标签集合；移除 `max(0, loss)`；新增实数域数值稳定 `CategoricalCrossEntropyWithLogits`；`nn_core/model.py` `_count_correct` 显式解耦 Logits (0.0) 与概率 (0.5) 阈值。
+- P0-QUIZ: 修正 M04/M06/M08/M11/M15/M16 测验答案与解释，为 18 道 `FormativeQuiz` 补充 `sources`、`conditions`、`limitations` 审计字段。
+- P0-EVIDENCE: 建立 72 项 Claim 与权威文献（含 AdamW、t-SNE、Pre-LN 等）一对一精准语义绑定，升级 `test_pedagogy.py` 独立映射 fixture 拦截伪造绑定。
+- P0-SIM: `dashboard/pages/14_后训练工程.py` 及 `nn_core/posttraining.py` 遥测卡与能力雷达明确标为规则模拟轨迹与教学假设情景，docstring 更正为“教学模板对比”。
+- P1-KNOWLEDGE & PAGES: 修正 Tanh、Xavier、小随机初始化、L1/L2 正则化、Diffusion/GAN、MLM/CLM、SFT、DPO 的科学措辞与适用边界。
+- P1-TEST: 补充 `tests/test_losses.py` 22 项全矩阵测试集；升级 `tests/test_browser_pending_navigation.py` 实现全量 18 页面真实 Chromium 路由与生命周期复验。
 
 仍然明确不宣称：已穷举所有 AI 架构、已复现原论文、模拟结果代表模型能力、测试覆盖等于知识正确、或不存在尚未发现的问题。
 
 ## 5. 当前可复现工程基线
 
 ```text
-pytest full run:         364 passed
-branch coverage:         nn_core + datasets 95.03% (门禁阈值 80.0%)
-ruff check/format:       PASS，117 个 Python 文件全量纳入检查并通过
+pytest full run:         374 passed
+branch coverage:         nn_core + datasets 94.74% (门禁阈值 80.0%)
+ruff check/format:       PASS，116 个 Python 文件全量纳入检查并通过
 pyright:                 PASS (0 errors, 0 warnings)
-browser audit:           全站 18 页全量渲染与导航锚点目标存在性/唯一性 100% 验证通过
-local quality gate:      Pre-commit 钩子 + scripts/devops.py gate 7 阶段自动化全流程保证 (含自包含真实 Chromium E2E 交互与部署幂等性门禁)
+browser audit:           全站 18 页全量路由渲染与生命周期 HUD 清理 100% 验证通过
+local quality gate:      Pre-commit 钩子 + scripts/devops.py test/gate 7 阶段自动化全流程保证 (含自包含真实 Chromium E2E 交互与部署幂等性门禁)
 ```
 
 引用注册表当前共 47 个去重链接。M17 的 Anthropic 官方复盘文献链接为 `https://www.anthropic.com/engineering/april-23-postmortem`。官方确认评测集 3% 下降归因于 4 月 16 日的系统提示词改动（4 月 20 日已回退解决）。

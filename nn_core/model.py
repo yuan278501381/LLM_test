@@ -250,7 +250,7 @@ class Sequential:
                 optimizer.step(self._layers)
 
                 # 计算准确率
-                epoch_correct += self._count_correct(y_pred, y_batch)
+                epoch_correct += self._count_correct(y_pred, y_batch, loss_fn=loss_fn)
                 epoch_total += batch_n
 
             # ---- 3. Epoch 级别指标 ----
@@ -263,7 +263,7 @@ class Sequential:
             if X_val is not None and y_val is not None:
                 val_pred = self.predict(X_val)
                 val_loss = float(loss_fn.forward(val_pred, y_val))
-                val_correct = self._count_correct(val_pred, y_val)
+                val_correct = self._count_correct(val_pred, y_val, loss_fn=loss_fn)
                 val_accuracy = val_correct / X_val.shape[0]
                 history["val_loss"].append(val_loss)
                 history["val_accuracy"].append(val_accuracy)
@@ -378,20 +378,30 @@ class Sequential:
     # ------------------------------------------------------------------
     # 内部工具
     # ------------------------------------------------------------------
-    def _count_correct(self, y_pred: np.ndarray, y_true: np.ndarray) -> int:
+    def _count_correct(
+        self, y_pred: np.ndarray, y_true: np.ndarray, loss_fn: Any | None = None
+    ) -> int:
         """
-        计算预测正确的样本数。
+        根据任务语义与损失函数契约计算预测正确的样本数。
 
-        自动区分:
-            - 二分类 (y.shape[1] == 1): 以 0.5 为阈值
-            - 多分类 (y.shape[1] > 1): 比较 argmax
+        精确区分:
+            - 回归任务 (如 MSE): 准确率无物理意义，返回 0
+            - 二分类 Logits (如 BCEWithLogitsLoss): 决策阈值为 0.0 (Logit >= 0 对应 P >= 0.5)
+            - 二分类概率 (如 BinaryCrossEntropy): 决策阈值为 0.5
+            - 多分类 (如 CCE / CCEWithLogits 或 y.shape[1] > 1): 比较 argmax 类别
         """
-        if y_true.shape[1] == 1:
-            # 二分类
-            predicted = (y_pred >= 0.5).astype(int)
-            return int(np.sum(predicted == y_true.astype(int)))
+        loss_type_name = loss_fn.__class__.__name__ if loss_fn is not None else ""
+
+        if "MSE" in loss_type_name:
+            return 0
+
+        if y_true.ndim == 1 or y_true.shape[1] == 1:
+            # 二分类任务
+            threshold = 0.0 if "BCEWithLogits" in loss_type_name else 0.5
+            predicted = (y_pred >= threshold).astype(int)
+            return int(np.sum(predicted.ravel() == y_true.astype(int).ravel()))
         else:
-            # 多分类
+            # 多分类任务
             return int(np.sum(np.argmax(y_pred, axis=1) == np.argmax(y_true, axis=1)))
 
     def __repr__(self) -> str:

@@ -74,7 +74,13 @@ from nn_core.kv_cache import KVCache
 from nn_core.layernorm import LayerNorm
 from nn_core.layers import Dense, Dropout
 from nn_core.lora import LoRALayer, compute_param_savings
-from nn_core.losses import MSE, BCEWithLogitsLoss, BinaryCrossEntropy, CategoricalCrossEntropy
+from nn_core.losses import (
+    MSE,
+    BCEWithLogitsLoss,
+    BinaryCrossEntropy,
+    CategoricalCrossEntropy,
+    CategoricalCrossEntropyWithLogits,
+)
 from nn_core.model import Sequential
 from nn_core.observability import (
     GLOBAL_RING_BUFFER,
@@ -146,6 +152,7 @@ __all__ = [
     "BytePairEncoder",
     "CLIPDualEncoder",
     "CategoricalCrossEntropy",
+    "CategoricalCrossEntropyWithLogits",
     "CausalLanguageModel",
     "ClaudeCode2026PostmortemRunner",
     "ContrastiveLearning",

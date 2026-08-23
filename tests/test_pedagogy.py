@@ -59,9 +59,94 @@ def test_every_lesson_has_four_traceable_result_claims():
         assert {claim.kind for claim in lesson_claims} == set(ClaimKind)
         for claim in lesson_claims:
             assert claim.statement and claim.conditions and claim.limitations and claim.sources
-            assert claim.last_verified == "2026-08-22"
+            assert claim.last_verified == "2026-08-23"
             assert get_result_claim(lesson_id, claim.result_id) is claim
             assert claim.evidence_level is not EvidenceLevel.PAPER_REPRODUCTION
+
+
+def test_independent_claim_to_source_semantic_mapping():
+    """使用独立人工审校映射表，消除'代码生成什么，测试断言什么'的自循环验证。"""
+    audited_claim_sources = {
+        "m00-formula": "The Matrix Calculus You Need For Deep Learning",
+        "m00-result": "Numerical Optimization",
+        "m00-history": "The Matrix Calculus You Need For Deep Learning",
+        "m00-failure": "Numerical Optimization",
+        "m01-formula": "The Perceptron",
+        "m01-result": "The Perceptron",
+        "m01-history": "The Perceptron",
+        "m01-failure": "The Perceptron",
+        "m02-formula": "Learning representations by back-propagating errors",
+        "m02-result": "Learning representations by back-propagating errors",
+        "m02-history": "Learning representations by back-propagating errors",
+        "m02-failure": "Learning representations by back-propagating errors",
+        "m03-formula": "Adam: A Method for Stochastic Optimization",
+        "m03-result": "Adam: A Method for Stochastic Optimization",
+        "m03-history": "Adam: A Method for Stochastic Optimization",
+        "m03-failure": "Decoupled Weight Decay Regularization",
+        "m04-formula": "Deep Learning",
+        "m04-result": "Deep Learning",
+        "m04-history": "Deep Learning",
+        "m04-failure": "Deep Learning",
+        "m05-formula": "Efficient Estimation of Word Representations",
+        "m05-result": "Efficient Estimation of Word Representations",
+        "m05-history": "Efficient Estimation of Word Representations",
+        "m05-failure": "Visualizing Data using t-SNE",
+        "m06-formula": "Long Short-Term Memory",
+        "m06-result": "Long Short-Term Memory",
+        "m06-history": "Learning Phrase Representations using RNN Encoder-Decoder",
+        "m06-failure": "Learning long-term dependencies with gradient descent is difficult",
+        "m07-formula": "Attention Is All You Need",
+        "m07-result": "Attention Is All You Need",
+        "m07-history": "Neural Machine Translation by Jointly Learning to Align and Translate",
+        "m07-failure": "Attention is not Explanation",
+        "m08-formula": "Attention Is All You Need",
+        "m08-result": "Attention Is All You Need",
+        "m08-history": "Layer Normalization",
+        "m08-failure": "On Layer Normalization in the Transformer Architecture",
+        "m09-formula": "Language Models are Unsupervised Multitask Learners",
+        "m09-result": "Language Models are Unsupervised Multitask Learners",
+        "m09-history": "Language Models are Unsupervised Multitask Learners",
+        "m09-failure": "Language Models are Unsupervised Multitask Learners",
+        "m10-formula": "Gradient-Based Learning Applied to Document Recognition",
+        "m10-result": "An Image is Worth 16x16 Words",
+        "m10-history": "Learning Transferable Visual Models From Natural Language Supervision",
+        "m10-failure": "Visualizing and Understanding Convolutional Networks",
+        "m11-formula": "A Tutorial on Short-Time Spectrum Analysis",
+        "m11-result": "A Scale for the Measurement of the Psychological Magnitude Pitch",
+        "m11-history": "Robust Speech Recognition via Large-Scale Weak Supervision",
+        "m11-failure": "A Tutorial on Short-Time Spectrum Analysis",
+        "m12-formula": "Denoising Diffusion Probabilistic Models",
+        "m12-result": "Denoising Diffusion Probabilistic Models",
+        "m12-history": "Scalable Diffusion Models with Transformers",
+        "m12-failure": "Denoising Diffusion Probabilistic Models",
+        "m13-formula": "BERT: Pre-training of Deep Bidirectional Transformers",
+        "m13-result": "Training Compute-Optimal Large Language Models",
+        "m13-history": "Neural Machine Translation of Rare Words with Subword Units",
+        "m13-failure": "Training Compute-Optimal Large Language Models",
+        "m14-formula": "LoRA: Low-Rank Adaptation of Large Language Models",
+        "m14-result": "Direct Preference Optimization",
+        "m14-history": "Training language models to follow instructions with human feedback",
+        "m14-failure": "Proximal Policy Optimization Algorithms",
+        "m15-formula": "Speech and Language Processing",
+        "m15-result": "Measuring Massive Multitask Language Understanding",
+        "m15-history": "Holistic Evaluation of Language Models",
+        "m15-failure": "Training Verifiers to Solve Math Word Problems",
+        "m16-formula": "Reinforcement Learning: An Introduction",
+        "m16-result": "Q-learning",
+        "m16-history": "Simple statistical gradient-following algorithms for connectionist reinforcement learning",
+        "m16-failure": "DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning",
+        "m17-formula": "Efficient Streaming Language Models with Attention Sinks",
+        "m17-result": "Lost in the Middle: How Language Models Use Long Contexts",
+        "m17-history": "April 23, 2026: Claude Code Postmortem",
+        "m17-failure": "The Reversal Curse: LLMs trained on 'A is B' fail to learn 'B is A'",
+    }
+    assert len(audited_claim_sources) == 72
+    for claim_id, expected_title in audited_claim_sources.items():
+        assert claim_id in CLAIMS, f"缺失 Claim ID: {claim_id}"
+        actual_title = CLAIMS[claim_id].sources[0].title
+        assert actual_title == expected_title, (
+            f"Claim [{claim_id}] 来源绑定不匹配: expected={expected_title}, actual={actual_title}"
+        )
 
 
 def test_curriculum_dag_and_learning_loops_cover_every_lesson_without_cycles():
@@ -93,6 +178,25 @@ def test_formative_quiz_registry_and_feedback_retry_flow():
         assert len(quiz.options) == 3
         assert len(set(quiz.options)) == 3
         assert 0 <= quiz.correct_index < 3
+        assert quiz.sources, "每道形成性测验必须显式绑定至少一份权威文献"
+        assert quiz.conditions, "每道形成性测验必须注明严格适用条件"
+        assert quiz.limitations, "每道形成性测验必须注明局限性与反例"
+
+    # 关键题目科学语义人工核验
+    assert (
+        "解耦权重衰减" in FORMATIVE_QUIZZES["M04"].options[FORMATIVE_QUIZZES["M04"].correct_index]
+    )
+    assert (
+        "雅可比矩阵连乘" in FORMATIVE_QUIZZES["M06"].options[FORMATIVE_QUIZZES["M06"].correct_index]
+    )
+    assert "Pre-LN" in FORMATIVE_QUIZZES["M08"].options[FORMATIVE_QUIZZES["M08"].correct_index]
+    assert "心理声学" in FORMATIVE_QUIZZES["M11"].options[FORMATIVE_QUIZZES["M11"].correct_index]
+    assert (
+        "分词器词表粒度" in FORMATIVE_QUIZZES["M15"].options[FORMATIVE_QUIZZES["M15"].correct_index]
+    )
+    assert (
+        "悲观下界估计" in FORMATIVE_QUIZZES["M16"].options[FORMATIVE_QUIZZES["M16"].correct_index]
+    )
 
     at = AppTest.from_string(
         "from dashboard.components.pedagogy import render_formative_quiz\n"

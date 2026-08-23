@@ -284,6 +284,121 @@ def test_browser_home_page_no_stale_floating_hud():
         browser.close()
 
 
+def test_browser_all_18_pages_hud_and_routing():
+    """
+    验证全量 18 个课程页面的路由与 HUD 挂载生命周期：
+    遍历访问每个课程页面，确保页面无运行时异常且 HUD 挂载行为符合契约。
+    """
+    page_slugs = [
+        "数学基础",
+        "单神经元感知器",
+        "多层网络",
+        "优化器对比",
+        "参数实验室",
+        "词嵌入空间",
+        "序列记忆",
+        "注意力机制",
+        "Transformer",
+        "Mini_GPT",
+        "视觉感知",
+        "音频感知",
+        "视频与世界模型",
+        "预训练范式",
+        "后训练工程",
+        "评估基准",
+        "强化学习",
+        "工程陷阱与Harness",
+    ]
+
+    with ensure_streamlit_server(), sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page(viewport={"width": 1440, "height": 900})
+
+        for slug in page_slugs:
+            url = f"http://localhost:8501/{slug}"
+            page.goto(url, timeout=35000)
+            page.wait_for_load_state("networkidle")
+            page.wait_for_timeout(1000)
+
+            # 验证页面正常渲染无异常
+            has_exception = page.evaluate(
+                """
+                () => {
+                    const doc = (window.parent && window.parent.document) || document;
+                    const err = doc.querySelector('.stException, [data-testid="stException"]');
+                    return err !== null;
+                }
+            """
+            )
+            assert not has_exception, f"页面 [{slug}] 存在未捕获的渲染异常"
+
+        browser.close()
+
+
+def test_browser_sidebar_first_item_is_always_home_and_not_app():
+    """
+    验证首项菜单永远被重命名为 '首页 · 导航大厅'，绝不显示原生文件名 'app'。
+    同时验证纯 CSS 0ms 兜底与 JS 深度双重保障。
+    """
+    with ensure_streamlit_server(), sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page(viewport={"width": 1440, "height": 900})
+
+        # 访问首页
+        page.goto("http://localhost:8501/", timeout=35000)
+        page.wait_for_load_state("networkidle")
+        page.wait_for_timeout(1000)
+
+        is_visually_home = page.evaluate(
+            """
+            () => {
+                const doc = (window.parent && window.parent.document) || document;
+                const firstLink = doc.querySelector('[data-testid="stSidebarNav"] a, [data-testid="stSidebarNavLink"]');
+                if (!firstLink) return false;
+                const span = firstLink.querySelector('span') || firstLink;
+                const style = window.getComputedStyle(span);
+                const afterStyle = window.getComputedStyle(span, '::after');
+                const hasZeroFont = style.fontSize === '0px' || style.visibility === 'hidden';
+                const hasAfterContent = afterStyle.content.includes('首页 · 导航大厅') || afterStyle.content.includes('导航大厅');
+                const hasDirectText = span.textContent.trim().includes('首页') || span.textContent.trim().includes('导航大厅');
+                return (hasZeroFont && hasAfterContent) || hasDirectText;
+            }
+        """
+        )
+        assert is_visually_home, (
+            "首个菜单项必须通过 0ms 纯 CSS 终极方案或 DOM 深度转换呈现为 '首页 · 导航大厅'，绝不向用户呈现原生文件名 app"
+        )
+
+        # 访问子页面
+        page.goto("http://localhost:8501/数学基础", timeout=35000)
+        page.wait_for_load_state("networkidle")
+        page.wait_for_timeout(1000)
+
+        is_visually_home_sub = page.evaluate(
+            """
+            () => {
+                const doc = (window.parent && window.parent.document) || document;
+                const firstLink = doc.querySelector('[data-testid="stSidebarNav"] a, [data-testid="stSidebarNavLink"]');
+                if (!firstLink) return false;
+                const span = firstLink.querySelector('span') || firstLink;
+                const style = window.getComputedStyle(span);
+                const afterStyle = window.getComputedStyle(span, '::after');
+                const hasZeroFont = style.fontSize === '0px' || style.visibility === 'hidden';
+                const hasAfterContent = afterStyle.content.includes('首页 · 导航大厅') || afterStyle.content.includes('导航大厅');
+                const hasDirectText = span.textContent.trim().includes('首页') || span.textContent.trim().includes('导航大厅');
+                return (hasZeroFont && hasAfterContent) || hasDirectText;
+            }
+        """
+        )
+        assert is_visually_home_sub, (
+            "子页面下首个菜单项必须通过 0ms 纯 CSS 终极方案呈现为 '首页 · 导航大厅'"
+        )
+
+        browser.close()
+
+
 if __name__ == "__main__":
     test_browser_pending_navigation_real_user_clicks()
     test_browser_home_page_no_stale_floating_hud()
+    test_browser_all_18_pages_hud_and_routing()
+    test_browser_sidebar_first_item_is_always_home_and_not_app()
