@@ -237,5 +237,53 @@ def test_browser_pending_navigation_real_user_clicks():
         browser.close()
 
 
+def test_browser_home_page_no_stale_floating_hud():
+    """
+    验证页面生命周期中的 HUD 清理机制：
+    1. 访问带有实验板块的子页面 (M17) 时，右侧浮动 HUD 正常挂载；
+    2. 返回首页导航大厅 (app.py) 时，浮动 HUD 得到彻底清理，不残留在 DOM 中。
+    """
+    with ensure_streamlit_server(), sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page(viewport={"width": 1440, "height": 900})
+
+        # 1. 访问 M17 页面，确认 HUD 存在
+        page.goto("http://localhost:8501/工程陷阱与Harness", timeout=35000)
+        page.wait_for_load_state("networkidle")
+        page.wait_for_timeout(2000)
+
+        hud_exists_on_subpage = page.evaluate(
+            """
+            () => {
+                const doc = (window.parent && window.parent.document) || document;
+                const hud = doc.getElementById('nn-floating-spatial-hud');
+                return hud !== null;
+            }
+        """
+        )
+        assert hud_exists_on_subpage, "M17 实验页面应当挂载浮动导航 HUD"
+
+        # 2. 导航回首页 (导航大厅)
+        page.goto("http://localhost:8501/", timeout=35000)
+        page.wait_for_load_state("networkidle")
+        page.wait_for_timeout(2000)
+
+        hud_exists_on_home = page.evaluate(
+            """
+            () => {
+                const doc = (window.parent && window.parent.document) || document;
+                const hud = doc.getElementById('nn-floating-spatial-hud');
+                return hud !== null;
+            }
+        """
+        )
+        assert not hud_exists_on_home, (
+            "首页 (导航大厅) 必须清理旧页面的浮动 HUD，保持宽阔清爽无残留"
+        )
+
+        browser.close()
+
+
 if __name__ == "__main__":
     test_browser_pending_navigation_real_user_clicks()
+    test_browser_home_page_no_stale_floating_hud()

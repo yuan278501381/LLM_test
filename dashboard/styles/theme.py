@@ -1416,6 +1416,16 @@ g.updatemenu-button {
                     }
                 `;
                 doc.head.appendChild(headStyle);
+            }
+
+            // 每次页面切换或加载时，立即清理宿主 DOM 中可能残留的浮动 HUD 罗盘与未决聚焦观察器
+            var staleHud = doc.getElementById('nn-floating-spatial-hud');
+            if (staleHud) {
+                staleHud.remove();
+            }
+            if (doc.__nnCancelPendingNav) {
+                try { doc.__nnCancelPendingNav(); } catch(e) {}
+            }
 
             var isFormatting = false;
             function updateLayoutAndLabels() {
