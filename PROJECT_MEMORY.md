@@ -60,7 +60,7 @@
 ## 5. 当前可复现工程基线
 
 ```text
-pytest full run:         359 passed
+pytest full run:         364 passed
 branch coverage:         nn_core + datasets 95.03% (门禁阈值 80.0%)
 ruff check/format:       PASS，117 个 Python 文件全量纳入检查并通过
 pyright:                 PASS (0 errors, 0 warnings)

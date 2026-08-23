@@ -74,7 +74,7 @@ from nn_core.kv_cache import KVCache
 from nn_core.layernorm import LayerNorm
 from nn_core.layers import Dense, Dropout
 from nn_core.lora import LoRALayer, compute_param_savings
-from nn_core.losses import MSE, BinaryCrossEntropy, CategoricalCrossEntropy
+from nn_core.losses import MSE, BCEWithLogitsLoss, BinaryCrossEntropy, CategoricalCrossEntropy
 from nn_core.model import Sequential
 from nn_core.observability import (
     GLOBAL_RING_BUFFER,
@@ -130,7 +130,6 @@ from nn_core.world_model import (
 __all__ = [
     "GELU",
     "GLOBAL_RING_BUFFER",
-    # 基础
     "L1",
     "L2",
     "MSE",
@@ -140,7 +139,7 @@ __all__ = [
     "AlignmentPipeline",
     "AttentionSinkSimulator",
     "AudioTokenizer",
-    # 评测体系
+    "BCEWithLogitsLoss",
     "BenchmarkQuestion",
     "BenchmarkTask",
     "BinaryCrossEntropy",
@@ -150,7 +149,6 @@ __all__ = [
     "CausalLanguageModel",
     "ClaudeCode2026PostmortemRunner",
     "ContrastiveLearning",
-    # 视觉与音频
     "Conv2D",
     "DPOLoss",
     "DailyRetentionFileHandler",
@@ -159,7 +157,6 @@ __all__ = [
     "DiffusionScheduler",
     "Dropout",
     "EarlyStopping",
-    # 序列与 Transformer
     "Embedding",
     "EvaluationHarness",
     "ExperimentLogger",
@@ -172,7 +169,6 @@ __all__ = [
     "LoopEngineeringEngine",
     "LostInTheMiddleSimulator",
     "MaskedAutoEncoder",
-    # 预训练与后训练对齐
     "MaskedLanguageModel",
     "MaxPool2D",
     "Momentum",
@@ -221,7 +217,6 @@ __all__ = [
     "contrastive_loss",
     "generate_before_after_examples",
     "generate_chord",
-    # 视频与世界模型
     "generate_synthetic_video",
     "generate_trace_id",
     "generate_waveform",

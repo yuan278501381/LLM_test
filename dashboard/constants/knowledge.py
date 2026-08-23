@@ -178,7 +178,7 @@ OPTIMIZERS: dict[str, OptimizerMeta] = {
         label="Adam (自适应矩估计)",
         formula="\\theta_{t+1} = \\theta_t - \\frac{\\eta}{\\sqrt{\\hat{v}_t} + \\epsilon} \\hat{m}_t",
         desc="结合了 Momentum 的一阶动量（方向惯性）与 RMSProp 的二阶未中心化方差（自适应步长），并包含初始冷启动偏差修正。",
-        impact="对学习率超参数鲁棒，能自适应调节不同参数的更新步长，在极高曲率和鞍点地形中收敛速度远超传统优化器。",
+        impact="能够自适应调节各分量的有效步长并平滑梯度噪声；但在非凸高曲率或特定病态地形下仍可能出现振荡或早熟停滞，最终收敛质量与泛化性仍需结合学习率预热（Warmup）与衰减调度进行实证评估。",
         example="Transformer、视觉模型与生成模型中常见的起点；实际选择常包括 AdamW、SGD 等，并依赖任务与正则化方案。",
     ),
     "SGD": OptimizerMeta(
@@ -571,8 +571,8 @@ TRAINING_ARCH: dict[str, ArchitectureMeta] = {
         label="RLHF (Reinforcement Learning from Human Feedback / 强化学习对齐)",
         formula="\\max_\\theta \\mathbb{E}\\left[ r_\\phi(x, y) - \\beta \\mathbb{D}_{\\text{KL}}(\\pi_\\theta || \\pi_{\\text{ref}}) \\right]",
         desc="先利用人类偏好对训练奖励模型 (Reward Model)，再通过 PPO 算法优化策略模型以最大化人类认可得分并约束 KL 散度。",
-        impact="赋予大模型价值观对齐、有用性、无害性与主动拒绝危险请求的能力，有效缓解大模型胡言乱语与恶意诱导。",
-        example="OpenAI InstructGPT / GPT-4 对齐流程、Anthropic Claude Constitutional AI。",
+        impact="在特定评估分布下显著提升指令遵循、有用性与安全性，并减少明显有害输出（如 InstructGPT 报告在偏好测试中胜率提升，但仍会生成事实错误并可能出现对齐税或谄媚现象）。",
+        example="OpenAI InstructGPT (Ouyang et al., 2022) / GPT-4 对齐流水线；Anthropic 则在后续引入了由 AI 自我反馈对齐的 Constitutional AI (RLAIF)。",
     ),
     "DPO": ArchitectureMeta(
         id="DPO",
@@ -603,7 +603,7 @@ TRAINING_ARCH: dict[str, ArchitectureMeta] = {
         label="Evaluation Harness (标准化自动化综合评测框架)",
         formula="\\text{Score} = \\frac{1}{|\\mathcal{T}|} \\sum_{t \\in \\mathcal{T}} \\text{Metric}_t(\\mathcal{M}(x_t), y_t)",
         desc="通过集成 MMLU (学科知识)、HellaSwag (常识推理)、GSM8K (数学推理)、HumanEval (代码) 等基准套件进行全自动客观考试。",
-        impact="杜绝主观经验偏差，为大模型能力天梯排行榜 (Leaderboard) 提供公认的标准化量化依据。",
+        impact="提供可自动复现的多任务基准测试环境（但评测得分仍高度敏感于 Prompt 格式、Few-shot 示范、选项排序、解码超参数以及测试集污染，无法完全消除系统性偏差）。",
         example="lm-evaluation-harness (EleutherAI), Open LLM Leaderboard (HuggingFace)。",
     ),
 }

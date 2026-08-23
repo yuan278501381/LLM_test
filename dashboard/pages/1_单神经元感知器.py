@@ -26,7 +26,6 @@ from dashboard.components.client_player import (
     render_trajectory_canvas,
 )
 from dashboard.components.param_panel import (
-    ACTIVATION_HINTS,
     OPTIMIZER_HINTS,
     get_visual_hint,
     render_dataset_selector,
@@ -43,9 +42,10 @@ from dashboard.styles.theme import (
     render_metric_card,
     render_page_guide,
 )
-from dashboard.utils.state import get_dataset, resolve_activation, resolve_optimizer
+from dashboard.utils.state import get_dataset, resolve_optimizer
+from nn_core.activations import Sigmoid
 from nn_core.layers import Dense
-from nn_core.losses import MSE, BinaryCrossEntropy
+from nn_core.losses import BinaryCrossEntropy
 from nn_core.model import Sequential
 
 st.set_page_config(
@@ -245,16 +245,16 @@ st.sidebar.markdown(
     unsafe_allow_html=True,
 )
 
-act_list = [m for m in ACTIVATIONS.values() if m.id != "Softmax"]
-act_labels = [m.label for m in act_list]
-selected_act_label = st.sidebar.radio(
-    "激活函数",
-    options=act_labels,
-    format_func=lambda o: f"**{o}**\n\n↳ *{get_visual_hint(o, ACTIVATION_HINTS, ACTIVATIONS)}*",
-    help="非线性激活函数。对单神经元而言，Sigmoid 将实数加权值映射为 (0,1) 的二分类置信概率。",
-    key="m1_act",
+st.sidebar.markdown(
+    """<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:0.4rem 0.6rem;font-size:0.75rem;color:#334155;margin-bottom:0.6rem;">
+    <b>[神经元架构契约]</b>：可微逻辑神经元 (Logistic Neuron)<br/>
+    <code>Input(2) → Dense(2, 1) → Sigmoid → BinaryCrossEntropy</code><br/>
+    以 $P(y=1|x) \\ge 0.5$ 作为严格分类决策面 ($z=0$)。
+    </div>""",
+    unsafe_allow_html=True,
 )
-act_meta = next(m for m in act_list if m.label == selected_act_label)
+
+act_meta = ACTIVATIONS["Sigmoid"]
 
 opt_list = list(OPTIMIZERS.values())
 opt_labels = [m.label for m in opt_list]
@@ -295,18 +295,15 @@ with col2:
 # ---------------------------------------------------------------------------
 X, y = get_dataset(dataset_name, n_samples, noise, random_state)
 
-# 构建单神经元模型: Input(2) -> Dense(2, 1) -> Activation
+# 构建单神经元可微模型: Input(2) -> Dense(2, 1) -> Sigmoid -> BCE
 model = Sequential()
 dense_layer = Dense(2, 1, initializer="random")
 model.add(dense_layer)
+model.add(Sigmoid())
 
-act_cls = resolve_activation(act_meta.id)
-model.add(act_cls())
-
-# 损失函数与激活函数科学匹配：
-# BCE 损失数学上严格要求输入为 (0, 1) 概率值（Sigmoid）；
-# 对于 Linear / ReLU / Tanh 等输出未严格限制在 (0, 1) 的激活，使用 MSE 损失以保证数学严谨性与非负性
-loss_fn = BinaryCrossEntropy() if act_meta.id == "Sigmoid" else MSE()
+# 损失函数与决策规则完全自洽:
+# Sigmoid 激活输出严格概率 P ∈ (0, 1)，搭配 BinaryCrossEntropy 损失与 P >= 0.5 决策阈值
+loss_fn = BinaryCrossEntropy()
 
 opt_cls = resolve_optimizer(opt_meta.id)
 optimizer = opt_cls(learning_rate=float(lr))
@@ -321,10 +318,7 @@ history: dict[str, list[float]] = {"loss": [], "accuracy": []}
 for _ in range(int(epochs)):
     y_pred = model.forward(X, training=True)
     loss = loss_fn.forward(y_pred, y)
-    if act_meta.id == "Tanh":
-        acc = float(np.mean((y_pred >= 0.0).astype(float) == y))
-    else:
-        acc = float(np.mean((y_pred >= 0.5).astype(float) == y))
+    acc = float(np.mean((y_pred >= 0.5).astype(float) == y))
 
     history["loss"].append(loss)
     history["accuracy"].append(acc)

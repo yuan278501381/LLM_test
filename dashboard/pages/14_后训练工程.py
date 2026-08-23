@@ -228,7 +228,7 @@ metric_grid_html = (
     + render_metric_card(
         "LORA COMPRESSION // 参数压缩比",
         f"{lora_stats['compression_ratio']:.1f} ×",
-        delta=f"节约 {lora_stats['saved_percent']:.1f}% 显存",
+        delta=f"减少 {lora_stats['saved_percent']:.1f}% 矩阵可训练参数",
         delta_type="positive",
         icon_name="cpu",
     )
@@ -365,10 +365,10 @@ render_live_param_status_bar(
     ],
     metrics=[
         ("参数压缩比", f"{lora_stats['compression_ratio']:.1f}x"),
-        ("显存节省率", f"{lora_stats['saved_percent']:.1f}%"),
+        ("可训练参数减少率", f"{lora_stats['saved_percent']:.1f}%"),
         ("对齐奖励峰值", f"+{rlhf_traj['reward'][-1]:.2f}"),
     ],
-    tag=f"LORA SAVINGS: {lora_stats['saved_percent']:.1f}% VRAM",
+    tag=f"LORA PARAM REDUCTION: {lora_stats['saved_percent']:.1f}%",
     tag_color="emerald",
 )
 
@@ -532,8 +532,8 @@ with st.expander(
         | **$W_0$** | **预训练原始冻结权重** | $d \\times d$ (如 $4096 \\times 4096$) | LoRA 配置中不更新该矩阵参数；但前向激活、优化器状态及实现细节仍会占用显存。 |
         | **$A$** | **降维投影旁路矩阵** | $d \\times r$ (如 $4096 \\times 8$) | **特征压缩漏斗**。高斯随机初始化，把 4096 维高维特征压缩到极窄的 $r=8$ 维低秩空间。 |
         | **$B$** | **升维重构旁路矩阵** | $r \\times d$ (如 $8 \\times 4096$) | **特征放大镜**。初始化为纯全零，把 $r=8$ 维特征重新放大回 4096 维。因为初始为 0，所以初始状态整个旁路输出为 0，完全不扰动原始模型！ |
-        | **$r$** | **LoRA 秩 (Rank)** | 整数 (如 $4, 8, 16$) | **窄桥的宽度**。$r$ 越小（如 4 或 8），参数量越少（省 99% 显存）；$r$ 越大，微调拟合能力越强。 |
-        | **$\\alpha / r$** | **缩放缩放因子 (Alpha)** | 标量常数 | **微调补丁的音量旋钮**。决定让新增的 LoRA 补丁在最终输出中占多大话语权。 |
+        | **$r$** | **LoRA 秩 (Rank)** | 整数 (如 $4, 8, 16$) | **低秩瓶颈维度**。$r$ 越小，可训练参数与优化器状态越少（单个层可减少 95%~99% 参数，但基座权重、前向激活与 KV-Cache 仍需显存；全量轻量化需配合 QLoRA 4-bit 量化等机制）；$r$ 越大，微调拟合能力越强。 |
+        | **$\\alpha / r$** | **缩放因子 (Alpha / r)** | 标量常数 | **微调补丁的缩放旋钮**。决定让新增的 LoRA 增量在最终组合输出中占多大权重。 |
 
         ---
 
